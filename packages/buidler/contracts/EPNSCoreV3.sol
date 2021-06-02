@@ -445,7 +445,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         // Will save gas as it prevents calldata to be copied unless need be
         if (users[_user].publicKeyRegistered == false) {
         // broadcast it
-        _broadcastPublicKey(msg.sender, _publicKey);
+        _broadcastPublicKey(_user, _publicKey);
         }
 
         // Call actual subscribe
