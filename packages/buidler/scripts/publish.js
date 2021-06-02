@@ -1,6 +1,6 @@
 const fs = require("fs");
 const chalk = require("chalk");
-const bre = require("@nomiclabs/buidler");
+const bre = require("hardhat");
 
 const publishDir = "../react-app/src/contracts";
 
