@@ -49,7 +49,7 @@ interface ILendingPool {
 
 interface IEPNSCore {}
 
-contract EPNSCorev3 is Initializable, ReentrancyGuard  {
+contract EPNSCore is Initializable, ReentrancyGuard  {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -371,7 +371,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees and public key
     function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey)
-        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
+        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -389,7 +389,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees
     function createChannelWithFees(ChannelType _channelType, bytes calldata _identity)
-      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
+      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -614,6 +614,15 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         emit SendNotification(msg.sender, _recipient, _identity);
     }
 
+    /// @dev to send message to reciepient of a group
+    function sendNotificationOverrideChannel(
+        address _channel,
+        address _recipient,
+        bytes calldata _identity
+    ) external onlyChannelOwner(msg.sender) onlyGov {
+        // Emit the message out
+        emit SendNotification(_channel, _recipient, _identity);
+    }
 
     /// @dev to withraw funds coming from delegate fees
     function withdrawDaiFunds() external onlyGov {
@@ -954,7 +963,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
     }
 
         /// @dev withdraw funds from pool
-    function _withdrawFundsFromPool(uint ratio) private nonReentrant {
+    function _withdrawFundsFromPool(uint ratio) private {
         uint totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(address(this));
 
         // // Random for testing
@@ -1101,6 +1110,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         channelNewLastUpdate = block.number;
     }
 
+    
      // Delegated Notifications: Mapping to keep track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => mapping (address => bool)) public delegated_NotificationSenders;
 
