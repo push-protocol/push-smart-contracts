@@ -944,7 +944,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
 
         // Add it to owner kitty
-        ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
+        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
     }
 
     /// @dev deposit funds to pool
