@@ -371,7 +371,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees and public key
     function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey)
-        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
+        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -389,7 +389,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees
     function createChannelWithFees(ChannelType _channelType, bytes calldata _identity)
-      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
+      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -963,7 +963,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
     }
 
         /// @dev withdraw funds from pool
-    function _withdrawFundsFromPool(uint ratio) private nonReentrant {
+    function _withdrawFundsFromPool(uint ratio) private {
         uint totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(address(this));
 
         // // Random for testing
