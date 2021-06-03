@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 
 interface ILendingPoolAddressesProvider {
     function getLendingPoolCore() external view returns (address payable);
@@ -445,7 +445,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         // Will save gas as it prevents calldata to be copied unless need be
         if (users[_user].publicKeyRegistered == false) {
         // broadcast it
-        _broadcastPublicKey(_user, _publicKey);
+        _broadcastPublicKey(msg.sender, _publicKey);
         }
 
         // Call actual subscribe
@@ -944,7 +944,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
 
         // Add it to owner kitty
-        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
+        ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
     }
 
     /// @dev deposit funds to pool

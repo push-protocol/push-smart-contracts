@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 
 interface ILendingPoolAddressesProvider {
     function getLendingPoolCore() external view returns (address payable);
@@ -49,7 +49,7 @@ interface ILendingPool {
 
 interface IEPNSCore {}
 
-contract EPNSCorev3 is Initializable, ReentrancyGuard  {
+contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -445,7 +445,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         // Will save gas as it prevents calldata to be copied unless need be
         if (users[_user].publicKeyRegistered == false) {
         // broadcast it
-        _broadcastPublicKey(_user, _publicKey);
+        _broadcastPublicKey(msg.sender, _publicKey);
         }
 
         // Call actual subscribe
@@ -613,7 +613,6 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         // Emit the message out
         emit SendNotification(msg.sender, _recipient, _identity);
     }
-
 
     /// @dev to withraw funds coming from delegate fees
     function withdrawDaiFunds() external onlyGov {
@@ -935,7 +934,7 @@ contract EPNSCorev3 is Initializable, ReentrancyGuard  {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
 
         // Add it to owner kitty
-        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
+        ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
     }
 
     /// @dev deposit funds to pool
