@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@nomiclabs/buidler/console.sol";
+import "hardhat/console.sol";
 
 interface ILendingPoolAddressesProvider {
     function getLendingPoolCore() external view returns (address payable);
@@ -49,7 +49,7 @@ interface ILendingPool {
 
 interface IEPNSCore {}
 
-contract EPNSCore is Initializable, ReentrancyGuard  {
+contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -371,7 +371,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees and public key
     function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey)
-        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
+        external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -389,7 +389,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
 
     /// @dev Create channel with fees
     function createChannelWithFees(ChannelType _channelType, bytes calldata _identity)
-      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) onlyChannelizationWhitelist(msg.sender) {
+      external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
         // Save gas, Emit the event out
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -445,7 +445,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         // Will save gas as it prevents calldata to be copied unless need be
         if (users[_user].publicKeyRegistered == false) {
         // broadcast it
-        _broadcastPublicKey(_user, _publicKey);
+        _broadcastPublicKey(msg.sender, _publicKey);
         }
 
         // Call actual subscribe
@@ -612,16 +612,6 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
 
         // Emit the message out
         emit SendNotification(msg.sender, _recipient, _identity);
-    }
-
-    /// @dev to send message to reciepient of a group
-    function sendNotificationOverrideChannel(
-        address _channel,
-        address _recipient,
-        bytes calldata _identity
-    ) external onlyChannelOwner(msg.sender) onlyGov {
-        // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
     }
 
     /// @dev to withraw funds coming from delegate fees
@@ -944,7 +934,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
 
         // Add it to owner kitty
-        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
+        ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
     }
 
     /// @dev deposit funds to pool
@@ -963,7 +953,7 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
     }
 
         /// @dev withdraw funds from pool
-    function _withdrawFundsFromPool(uint ratio) private {
+    function _withdrawFundsFromPool(uint ratio) private nonReentrant {
         uint totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(address(this));
 
         // // Random for testing
@@ -1110,7 +1100,6 @@ contract EPNSCore is Initializable, ReentrancyGuard  {
         channelNewLastUpdate = block.number;
     }
 
-    
      // Delegated Notifications: Mapping to keep track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => mapping (address => bool)) public delegated_NotificationSenders;
 
