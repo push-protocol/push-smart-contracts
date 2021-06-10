@@ -445,7 +445,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         // Will save gas as it prevents calldata to be copied unless need be
         if (users[_user].publicKeyRegistered == false) {
         // broadcast it
-        _broadcastPublicKey(msg.sender, _publicKey);
+        _broadcastPublicKey(_user, _publicKey);
         }
 
         // Call actual subscribe
@@ -934,7 +934,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
 
         // Add it to owner kitty
-        ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
+        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
     }
 
     /// @dev deposit funds to pool
