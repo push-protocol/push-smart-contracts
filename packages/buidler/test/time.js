@@ -1,6 +1,7 @@
-const { ethers } = require("@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 
-const BN = require('bn.js');
+const BN = require("bn.js");
+
 async function advanceBlock() {
   return ethers.provider.send("evm_mine");
 }
@@ -40,7 +41,6 @@ async function latestBlock() {
   const block = await ethers.provider.getBlock("latest");
   return new BN(block.number);
 }
-
 // Increases ganache time by the passed duration in seconds
 async function increase(duration) {
   if (!BN.isBN(duration)) {
