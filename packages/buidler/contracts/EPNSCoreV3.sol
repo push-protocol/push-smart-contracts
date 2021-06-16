@@ -202,7 +202,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     event InterestClaimed(address indexed user, uint indexed amount);
 
     // Withdrawl Related
-    event Donation(address indexed donator, uint amt);
     event Withdrawal(address indexed to, address token, uint amount);
 
     /* ***************
@@ -285,28 +284,28 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     }
 
     modifier onlyValidUser(address _addr) {
-        require(users[_addr].userActivated == true, "User not activated yet");
+        require(users[_addr].userActivated, "User not activated yet");
         _;
     }
 
     modifier onlyUserWithNoChannel() {
-        require(users[msg.sender].channellized == false, "User already a Channel Owner");
+        require(!users[msg.sender].channellized, "User already a Channel Owner");
         _;
     }
 
     modifier onlyValidChannel(address _channel) {
-        require(users[_channel].channellized == true, "Channel doesn't Exists");
+        require(users[_channel].channellized, "Channel doesn't Exists");
         _;
     }
 
     modifier onlyActivatedChannels(address _channel) {
-        require(users[_channel].channellized == true && channels[_channel].deactivated == false, "Channel deactivated or doesn't exists");
+        require(users[_channel].channellized && !channels[_channel].deactivated, "Channel deactivated or doesn't exists");
         _;
     }
 
     modifier onlyChannelOwner(address _channel) {
         require(
-        ((users[_channel].channellized == true && msg.sender == _channel) || (msg.sender == governance && _channel == 0x0000000000000000000000000000000000000000)),
+        ((users[_channel].channellized && msg.sender == _channel) || (msg.sender == governance && _channel == 0x0000000000000000000000000000000000000000)),
         "Channel doesn't Exists"
         );
         _;
@@ -322,22 +321,22 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     }
 
     modifier onlySubscribed(address _channel, address _subscriber) {
-        require(channels[_channel].memberExists[_subscriber] == true, "Subscriber doesn't Exists");
+        require(channels[_channel].memberExists[_subscriber], "Subscriber doesn't Exists");
         _;
     }
 
     modifier onlyNonOwnerSubscribed(address _channel, address _subscriber) {
-        require(_channel != _subscriber && channels[_channel].memberExists[_subscriber] == true, "Either Channel Owner or Not Subscribed");
+        require(_channel != _subscriber && channels[_channel].memberExists[_subscriber], "Either Channel Owner or Not Subscribed");
         _;
     }
 
     modifier onlyNonSubscribed(address _channel, address _subscriber) {
-        require(channels[_channel].memberExists[_subscriber] == false, "Subscriber already Exists");
+        require(!channels[_channel].memberExists[_subscriber], "Subscriber already Exists");
         _;
     }
 
     modifier onlyNonGraylistedChannel(address _channel, address _user) {
-        require(users[_user].graylistedChannels[_channel] == false, "Channel is graylisted");
+        require(!users[_user].graylistedChannels[_channel], "Channel is graylisted");
         _;
     }
 
@@ -360,7 +359,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     /// @dev Performs action by the user themself to broadcast their public key
     function broadcastUserPublicKey(bytes calldata _publicKey) external {
         // Will save gas
-        if (users[msg.sender].publicKeyRegistered == true) {
+        if (users[msg.sender].publicKeyRegistered) {
         // Nothing to do, user already registered
         return;
         }
@@ -379,7 +378,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         // @TODO Find a way to save cost
 
         // Will save gas
-        if (users[msg.sender].publicKeyRegistered == false) {
+        if (!users[msg.sender].publicKeyRegistered) {
             _broadcastPublicKey(msg.sender, _publickey);
         }
 
@@ -387,7 +386,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         _createChannelWithFees(msg.sender, _channelType,_amount);
     }
 
- /// @dev Create channel with fees
+/// @dev Create channel with fees
     function createChannelWithFees(ChannelType _channelType, bytes calldata _identity,uint256 _amount)
       external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
         // Save gas, Emit the event out
@@ -400,11 +399,8 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
       /// @dev One time, Create Promoter Channel
     function createPromoterChannel() external {
       // EPNS PROMOTER CHANNEL
-      require(users[address(this)].channellized == false, "Contract has Promoter");
-
-      // NEED TO HAVE ALLOWANCE OF MINIMUM DAI
-      IERC20(daiAddress).approve(address(this), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
+      require(!users[address(this)].channellized, "Contract has Promoter");
+      
       // Check the allowance and transfer funds
       IERC20(daiAddress).transferFrom(msg.sender, address(this), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
@@ -414,7 +410,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
       // Call create channel after fees transfer
       _createChannelAfterTransferOfFees(address(this), ChannelType.ProtocolPromotion, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
     }
-
 
     /// @dev To update channel, only possible if 1 subscriber is present or this is governance
     function updateChannelMeta(address _channel, bytes calldata _identity) external {
@@ -438,7 +433,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         _takeDelegationFees();
 
         // Will save gas as it prevents calldata to be copied unless need be
-        if (users[_user].publicKeyRegistered == false) {
+        if (!users[_user].publicKeyRegistered) {
         // broadcast it
         _broadcastPublicKey(msg.sender, _publicKey);
         }
@@ -459,7 +454,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     /// @dev subscribe to channel with public key
     function subscribeWithPublicKey(address _channel, bytes calldata _publicKey) onlyActivatedChannels(_channel) external {
         // Will save gas as it prevents calldata to be copied unless need be
-        if (users[msg.sender].publicKeyRegistered == false) {
+        if (!users[msg.sender].publicKeyRegistered) {
 
         // broadcast it
         _broadcastPublicKey(msg.sender, _publicKey);
@@ -609,6 +604,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         emit SendNotification(msg.sender, _recipient, _identity);
     }
 
+
     /// @dev to withraw funds coming from delegate fees
     function withdrawDaiFunds() external onlyGov {
         // Get and transfer funds
@@ -645,14 +641,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     /// @dev To fetch user id for a subscriber of a channel
     function getChannelSubscriberUserID(address _channel, uint _subscriberId) external view returns (uint userId) {
         userId = channels[_channel].members[channels[_channel].mapAddressMember[_subscriberId]];
-    }
-
-    /// @dev donate functionality for the smart contract
-    function donate() public payable {
-        require(msg.value >= 0.001 ether, "Minimum Donation amount is 0.001 ether");
-
-        // Emit Event
-        emit Donation(msg.sender, msg.value);
     }
 
     /// @dev to get channel fair share ratio for a given block
@@ -803,12 +791,12 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
       _createChannelAfterTransferOfFees(_channel, _channelType, _amount);
     }
 
-    function _createChannelAfterTransferOfFees(address _channel, ChannelType _channelType, uint _allowedAllowance) private {
+    function _createChannelAfterTransferOfFees(address _channel, ChannelType _channelType, uint _amount) private {
       // Deposit funds to pool
-      _depositFundsToPool(_allowedAllowance);
+      _depositFundsToPool(_amount);
 
       // Call Create Channel
-      _createChannel(_channel, _channelType, _allowedAllowance);
+      _createChannel(_channel, _channelType, _amount);
     }
 
     /// @dev Create channel internal method that runs
@@ -849,11 +837,11 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         }
 
         // If this is a new user than subscribe them to EPNS Channel
-        if (userAlreadyAdded == false && _channel != 0x0000000000000000000000000000000000000000) {
+        if (!userAlreadyAdded && _channel != 0x0000000000000000000000000000000000000000) {
             // Call actual subscribe, owner channel
             _subscribe(governance, _channel);
         }
-         // If channel owner is a new user and is creating the Channel through createChannelWithFeesAndPublicKey function, then execute the following IF Statement
+        // If channel owner is a new user and is creating the Channel through createChannelWithFeesAndPublicKey function, then execute the following IF Statement
         if(users[_channel].publicKeyRegistered){
             // Call actual subscribe, owner channel
             _subscribe(governance, _channel);
