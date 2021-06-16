@@ -202,7 +202,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     event InterestClaimed(address indexed user, uint indexed amount);
 
     // Withdrawl Related
-    event Donation(address indexed donator, uint amt);
     event Withdrawal(address indexed to, address token, uint amount);
 
     /* ***************
@@ -642,14 +641,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     /// @dev To fetch user id for a subscriber of a channel
     function getChannelSubscriberUserID(address _channel, uint _subscriberId) external view returns (uint userId) {
         userId = channels[_channel].members[channels[_channel].mapAddressMember[_subscriberId]];
-    }
-
-    /// @dev donate functionality for the smart contract
-    function donate() public payable {
-        require(msg.value >= 0.001 ether, "Minimum Donation amount is 0.001 ether");
-
-        // Emit Event
-        emit Donation(msg.sender, msg.value);
     }
 
     /// @dev to get channel fair share ratio for a given block
