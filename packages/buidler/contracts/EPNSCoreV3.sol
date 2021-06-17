@@ -85,8 +85,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         mapping(address => uint) subscribed;
         mapping(uint => address) mapAddressSubscribed;
 
-        // keep track of greylist, useful for unsubscribe so the channel can't subscribe you back
-        mapping(address => bool) graylistedChannels;
     }
 
 
@@ -126,12 +124,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         mapping(address => uint) memberLastUpdate;
     }
 
-    /* Create for testnet strict owner only channel whitelist
-     * Will not be available on mainnet since that has real defi involed, use staging contract
-     * for developers looking to try on hand
-    */
-    mapping(address => bool) channelizationWhitelist;
-
     // To keep track of channels
     mapping(address => Channel) public channels;
     mapping(uint => address) public mapAddressChannels;
@@ -167,8 +159,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         For maintaining the #DeFi finances
     */
     uint public poolFunds;
-    uint public ownerDaiFunds;
-
     uint public REFERRAL_CODE;
 
     uint ADD_CHANNEL_MAX_POOL_CONTRIBUTION;
@@ -244,8 +234,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         For maintaining the #DeFi finances
         */
         poolFunds = 0; // Always in DAI
-        ownerDaiFunds = 0;
-
         // Add EPNS Channels
         // First is for all users
         // Second is all channel alerter, amount deposited for both is 0
@@ -265,10 +253,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     }
 
     receive() external payable {}
-
-    fallback() external {
-        console.logString('in fallback of core');
-    }
 
     // Modifiers
 
@@ -335,12 +319,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         _;
     }
 
-    modifier onlyNonGraylistedChannel(address _channel, address _user) {
-        require(!users[_user].graylistedChannels[_channel], "Channel is graylisted");
-        _;
-    }
-
-    function transferGovernance(address _newGovernance) onlyGov public {
+   function transferGovernance(address _newGovernance) onlyGov public {
         require (_newGovernance != address(0), "EPNSCore::transferGovernance, new governance can't be none");
         require (_newGovernance != governance, "EPNSCore::transferGovernance, new governance can't be current governance");
         governance = _newGovernance;
@@ -423,34 +402,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         channels[msg.sender].deactivated = true;
     }
 
-    /// @dev delegate subscription to channel
-    function subscribeWithPublicKeyDelegated(
-        address _channel,
-        address _user,
-    bytes calldata _publicKey
-    ) external onlyActivatedChannels(_channel) onlyNonGraylistedChannel(_channel, _user) {
-        // Take delegation fees
-        _takeDelegationFees();
-
-        // Will save gas as it prevents calldata to be copied unless need be
-        if (!users[_user].publicKeyRegistered) {
-        // broadcast it
-        _broadcastPublicKey(_user, _publicKey);
-        }
-
-        // Call actual subscribe
-        _subscribe(_channel, _user);
-    }
-
-    /// @dev subscribe to channel delegated
-    function subscribeDelegated(address _channel, address _user) external onlyActivatedChannels(_channel) onlyNonGraylistedChannel(_channel, _user) {
-        // Take delegation fees
-        _takeDelegationFees();
-
-        // Call actual subscribe
-        _subscribe(_channel, _user);
-    }
-
     /// @dev subscribe to channel with public key
     function subscribeWithPublicKey(address _channel, bytes calldata _publicKey) onlyActivatedChannels(_channel) external {
         // Will save gas as it prevents calldata to be copied unless need be
@@ -474,9 +425,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     function unsubscribe(address _channel) external onlyValidChannel(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
         // Add the channel to gray list so that it can't subscriber the user again as delegated
         User storage user = users[msg.sender];
-
-        // Treat it as graylisting
-        user.graylistedChannels[_channel] = true;
 
         // first get ratio of earning
         ratio = 0;
@@ -602,20 +550,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
 
         // Emit the message out
         emit SendNotification(msg.sender, _recipient, _identity);
-    }
-
-
-    /// @dev to withraw funds coming from delegate fees
-    function withdrawDaiFunds() external onlyGov {
-        // Get and transfer funds
-        uint funds = ownerDaiFunds;
-        IERC20(daiAddress).safeTransferFrom(address(this), msg.sender, funds);
-
-        // Rest funds to 0
-        ownerDaiFunds = 0;
-
-        // Emit Evenet
-        emit Withdrawal(msg.sender, daiAddress, funds);
     }
 
     /// @dev to withraw funds coming from donate
@@ -841,12 +775,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
             // Call actual subscribe, owner channel
             _subscribe(governance, _channel);
         }
-        // If channel owner is a new user and is creating the Channel through createChannelWithFeesAndPublicKey function, then execute the following IF Statement
-        if(users[_channel].publicKeyRegistered){
-            // Call actual subscribe, owner channel
-            _subscribe(governance, _channel);
-        }
-
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
         if (_channel != 0x0000000000000000000000000000000000000000) {
             _subscribe(0x0000000000000000000000000000000000000000, _channel);
@@ -910,17 +838,6 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
         // Emit it
         emit Subscribe(_channel, _user);
     }
-
-    /// @dev charge delegation fee, small enough for serious players but thwarts bad actors
-    function _takeDelegationFees() private {
-        // Check and transfer funds
-        // require( IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES), "Insufficient Funds");
-        IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), DELEGATED_CONTRACT_FEES);
-
-        // Add it to owner kitty
-        ownerDaiFunds = ownerDaiFunds.add(DELEGATED_CONTRACT_FEES);
-    }
-
     /// @dev deposit funds to pool
     function _depositFundsToPool(uint amount) private {
         // Got the funds, add it to the channels dai pool
