@@ -141,7 +141,6 @@ describe("EPNSCoreV1 Channel tests", function () {
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
     
         beforeEach(async function(){
-          await EPNSCoreV1Proxy.addToChannelizationWhitelist(CHANNEL_CREATOR);
           await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
        });
@@ -354,7 +353,7 @@ describe("EPNSCoreV1 Channel tests", function () {
       beforeEach(async function(){
                   const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
-        await EPNSCoreV1Proxy.addToChannelizationWhitelist(CHANNEL_CREATOR);
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -422,7 +421,7 @@ describe("EPNSCoreV1 Channel tests", function () {
       beforeEach(async function(){
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
-        await EPNSCoreV1Proxy.addToChannelizationWhitelist(CHANNEL_CREATOR);
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -579,7 +578,7 @@ describe("EPNSCoreV1 Channel tests", function () {
        const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
       beforeEach(async function(){
-        await EPNSCoreV1Proxy.addToChannelizationWhitelist(CHANNEL_CREATOR);
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
       });
@@ -803,21 +802,6 @@ describe("EPNSCoreV1 Channel tests", function () {
 
         expect(poolFundsAfter.sub(poolFundsBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         expect(aDAIBalanceAfter.sub(aDAIBalanceBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      });
-
-
-    it("should subscribe creator to EPNS channel if new user", async function(){
-        const CHANNEL_TYPE = 2;
-        const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  
-        const userSubscribed = await EPNSCoreV1Proxy.memberExists(CHANNEL_CREATOR, ADMIN);
-        expect(userSubscribed).to.be.equal(true);
-
       });
   
       it("should subscribe them to EPNS Alerter as well", async function(){
