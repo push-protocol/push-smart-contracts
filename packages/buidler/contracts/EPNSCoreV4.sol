@@ -691,9 +691,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
             mapAddressUsers[usersCount] = _addr;
 
             usersCount = usersCount.add(1);
-
-            // Send Welcome Message, Deprecated
-            // emit SendNotification(governance, _addr, EPNS_FIRST_MESSAGE_HASH);
         }
     }
 
@@ -878,10 +875,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         /// @dev withdraw funds from pool
     function _withdrawFundsFromPool(uint ratio) private nonReentrant {
         uint totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(address(this));
-
-        // // Random for testing
-        // uint totalBalanceWithProfit = ((uint(keccak256(abi.encodePacked(block.timestamp, block.difficulty))) % 24950) + 50) * 10 ** 19; // 10 times
-        // // End Testing
 
         uint totalProfit = totalBalanceWithProfit.sub(poolFunds);
         uint userAmount = totalProfit.mul(ratio);
