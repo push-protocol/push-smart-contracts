@@ -181,7 +181,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
     // Channel Related | // This Event is listened by on All Infra Services
     event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
     event UpdateChannel(address indexed channel, bytes identity);
-    event DeactivateChannel(address indexed channel);
+    event f(address indexed channel);
 
     // Subscribe / Unsubscribe | This Event is listened by on All Infra Services
     event Subscribe(address indexed channel, address indexed user);
@@ -406,6 +406,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
     /// @dev Deactivate channel
     function deactivateChannel() onlyActivatedChannels(msg.sender) external {
         channels[msg.sender].deactivated = true;
+        emit DeactivateChannel(msg.sender);
     }
 
     /// @dev subscribe to channel with public key
