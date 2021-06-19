@@ -172,8 +172,11 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
 
 
 
-    /* ***************
-    * Events
+
+    /* ************** 
+    
+    => IMPERATIVE EVENTS <=
+
     *************** */
     // For Public Key Registration Emit
     event PublicKeyRegistered(address indexed owner, bytes publickey);
@@ -258,9 +261,19 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         success = true;
     }
 
-    receive() external payable {}
-    // Modifiers
+    /* ************** 
+    
+    => FALLBACK FUNCTION <=
 
+    *************** */
+
+    receive() external payable {}
+
+    /* ************** 
+    
+    => MODIFIERS <=
+
+    *************** */
     modifier onlyGov() {
         require (msg.sender == governance, "EPNSCore::onlyGov, user is not governance");
         _;
@@ -318,22 +331,86 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         _;
     }
 
+
+    /* ************** 
+    
+    => IMPERATIVE GETTER & SETTER FUNCTIONS <=
+
+    *************** */
+
+    /// @dev To check if member exists
+    function memberExists(address _user, address _channel) external view returns (bool subscribed) {
+        subscribed = channels[_channel].memberExists[_user];
+    }
+
+    /// @dev To fetch subscriber address for a channel
+    function getChannelSubscriberAddress(address _channel, uint _subscriberId) external view returns (address subscriber) {
+        subscriber = channels[_channel].mapAddressMember[_subscriberId];
+    }
+
+    /// @dev To fetch user id for a subscriber of a channel
+    function getChannelSubscriberUserID(address _channel, uint _subscriberId) external view returns (uint userId) {
+        userId = channels[_channel].members[channels[_channel].mapAddressMember[_subscriberId]];
+    }
+
+
+    /* ************** 
+    
+    => PUBLIC KEY BROADCASTING & USER ADDING FUNCTIONALITIES <=
+
+    *************** */
+
+    /// @dev Add the user to the ecosystem if they don't exists, the returned response is used to deliver a message to the user if they are recently added
+    function _addUser(address _addr) private returns (bool userAlreadyAdded) {
+        if (users[_addr].userActivated) {
+            userAlreadyAdded = true;
+        }
+        else {
+            // Activates the user
+            users[_addr].userStartBlock = block.number;
+            users[_addr].userActivated = true;
+            mapAddressUsers[usersCount] = _addr;
+
+            usersCount = usersCount.add(1);
+        }
+    }
+
+    /* @dev Internal system to handle broadcasting of public key,
+    * is a entry point for subscribe, or create channel but is option
+    */
+    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey) private {
+        // Add the user, will do nothing if added already, but is needed before broadcast
+        _addUser(_userAddr);
+
+        // get address from public key
+        address userAddr = getWalletFromPublicKey(_publicKey);
+
+        if (_userAddr == userAddr) {
+            // Only change it when verification suceeds, else assume the channel just wants to send group message
+            users[userAddr].publicKeyRegistered = true;
+
+            // Emit the event out
+            emit PublicKeyRegistered(userAddr, _publicKey);
+        }
+        else {
+            revert("Public Key Validation Failed");
+        }
+    }
+
+    /// @dev Don't forget to add 0x into it
+    function getWalletFromPublicKey (bytes memory _publicKey) public pure returns (address wallet) {
+        if (_publicKey.length == 64) {
+            wallet = address (uint160 (uint256 (keccak256 (_publicKey))));
+        }
+        else {
+            wallet = 0x0000000000000000000000000000000000000000;
+        }
+    }
+
     function transferGovernance(address _newGovernance) onlyGov public {
         require (_newGovernance != address(0), "EPNSCore::transferGovernance, new governance can't be none");
         require (_newGovernance != governance, "EPNSCore::transferGovernance, new governance can't be current governance");
         governance = _newGovernance;
-    }
-
-    /// @dev allow other addresses to send notifications using your channel
-    function addDelegate(address _delegate) external onlyChannelOwner(msg.sender) {        
-        delegated_NotificationSenders[msg.sender][_delegate] = true;
-        emit AddDelegate(msg.sender, _delegate);
-    }
-
-    /// @dev revoke addresses' permission to send notifications on your behalf
-    function removeDelegate(address _delegate) external onlyChannelOwner(msg.sender) {
-        delegated_NotificationSenders[msg.sender][_delegate] = false;
-        emit RemoveDelegate(msg.sender, _delegate);
     }
 
     /// @dev Performs action by the user themself to broadcast their public key
@@ -347,6 +424,12 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         // broadcast it
         _broadcastPublicKey(msg.sender, _publicKey);
     }
+
+    /* ************** 
+    
+    => CHANNEL CREATION FUNCTIONALITIES <=
+
+    *************** */
 
     /// @dev Create channel with fees and public key
     function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey,uint256 _amount)
@@ -398,330 +481,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
       _updateChannelMeta(_channel);
     }
 
-    /// @dev Deactivate channel
-    function deactivateChannel() onlyActivatedChannels(msg.sender) external {
-        channels[msg.sender].deactivated = true;
-        emit DeactivateChannel(msg.sender);
-    }
-
-    /// @dev subscribe to channel with public key
-    function subscribeWithPublicKey(address _channel, bytes calldata _publicKey) onlyActivatedChannels(_channel) external {
-        // Will save gas as it prevents calldata to be copied unless need be
-        if (!users[msg.sender].publicKeyRegistered) {
-
-        // broadcast it
-        _broadcastPublicKey(msg.sender, _publicKey);
-        }
-
-        // Call actual subscribe
-        _subscribe(_channel, msg.sender);
-    }
-
-    /// @dev subscribe to channel
-    function subscribe(address _channel) onlyActivatedChannels(_channel) external {
-        // Call actual subscribe
-        _subscribe(_channel, msg.sender);
-    }
-
-
-    // @dev to unsubscribe from channel
-    function unsubscribe(address _channel) external onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
-        // Add the channel to gray list so that it can't subscriber the user again as delegated
-        User storage user = users[msg.sender];
-
-        // first get ratio of earning
-        ratio = 0;
-        ratio = calcSingleChannelEarnRatio(_channel, msg.sender, block.number);
-
-        // Take the fair share out
-
-        // Remove the mappings and cleanup
-        // a bit tricky, swap and delete to maintain mapping
-        // Remove From Users mapping
-        // Find the id of the channel and swap it with the last id, use channel.memberCount as index
-        // Slack too deep fix
-        // address usrSubToSwapAdrr = user.mapAddressSubscribed[user.subscribedCount];
-        // uint usrSubSwapID = user.subscribed[_channel];
-
-        // // swap to last one and then
-        // user.subscribed[usrSubToSwapAdrr] = usrSubSwapID;
-        // user.mapAddressSubscribed[usrSubSwapID] = usrSubToSwapAdrr;
-
-        user.subscribed[user.mapAddressSubscribed[user.subscribedCount]] = user.subscribed[_channel];
-        user.mapAddressSubscribed[user.subscribed[_channel]] = user.mapAddressSubscribed[user.subscribedCount];
-
-        // delete the last one and substract
-        delete(user.subscribed[_channel]);
-        delete(user.mapAddressSubscribed[user.subscribedCount]);
-        user.subscribedCount = user.subscribedCount.sub(1);
-
-        // Remove from Channels mapping
-        Channel storage channel = channels[_channel];
-
-        // Set additional flag to false
-        channel.memberExists[msg.sender] = false;
-
-        // Find the id of the channel and swap it with the last id, use channel.memberCount as index
-        // Slack too deep fix
-        // address chnMemToSwapAdrr = channel.mapAddressMember[channel.memberCount];
-        // uint chnMemSwapID = channel.members[msg.sender];
-
-        // swap to last one and then
-        channel.members[channel.mapAddressMember[channel.memberCount]] = channel.members[msg.sender];
-        channel.mapAddressMember[channel.members[msg.sender]] = channel.mapAddressMember[channel.memberCount];
-
-        // delete the last one and substract
-        delete(channel.members[msg.sender]);
-        delete(channel.mapAddressMember[channel.memberCount]);
-        channel.memberCount = channel.memberCount.sub(1);
-
-        // Next readjust fair share
-        (
-            channels[_channel].channelFairShareCount,
-            channels[_channel].channelHistoricalZ,
-            channels[_channel].channelLastUpdate
-        ) = _readjustFairShareOfSubscribers(
-            SubscriberAction.SubscriberRemoved,
-            channels[_channel].channelFairShareCount,
-            channels[_channel].channelHistoricalZ,
-            channels[_channel].channelLastUpdate
-        );
-
-        // Next calculate and send the fair share earning of the user from this channel
-        if (
-          channel.channelType == ChannelType.ProtocolPromotion
-          || channel.channelType == ChannelType.InterestBearingOpen
-          || channel.channelType == ChannelType.InterestBearingMutual
-        ) {
-            _withdrawFundsFromPool(ratio);
-        }
-
-        // Emit it
-        emit Unsubscribe(_channel, msg.sender);
-    }
-
-    /// @dev to claim fair share of all earnings
-    function claimFairShare() onlyValidUser(msg.sender) external returns (uint ratio){
-        // Calculate entire FS Share, since we are looping for reset... let's calculate over there
-        ratio = 0;
-
-        // Reset member last update for every channel that are interest bearing
-        // WARN: This unbounded for loop is an anti-pattern
-        for (uint i = 0; i < users[msg.sender].subscribedCount; i++) {
-            address channel = users[msg.sender].mapAddressSubscribed[i];
-
-            if (
-                channels[channel].channelType == ChannelType.ProtocolPromotion
-                || channels[channel].channelType == ChannelType.InterestBearingOpen
-                || channels[channel].channelType == ChannelType.InterestBearingMutual
-              ) {
-                // Reset last updated block
-                channels[channel].memberLastUpdate[msg.sender] = block.number;
-
-                // Next readjust fair share and that's it
-                (
-                channels[channel].channelFairShareCount,
-                channels[channel].channelHistoricalZ,
-                channels[channel].channelLastUpdate
-                ) = _readjustFairShareOfSubscribers(
-                SubscriberAction.SubscriberUpdated,
-                channels[channel].channelFairShareCount,
-                channels[channel].channelHistoricalZ,
-                channels[channel].channelLastUpdate
-                );
-
-                // Calculate share
-                uint individualChannelShare = calcSingleChannelEarnRatio(channel, msg.sender, block.number);
-                ratio = ratio.add(individualChannelShare);
-            }
-
-        }
-        // Finally, withdraw for user
-        _withdrawFundsFromPool(ratio);
-    }
-
-    /* @dev to send message to reciepient of a group, the first digit of msg type contains rhe push server flag
-    ** So msg type 1 with using push is 11, without push is 10, in the future this can also be 12 (silent push)
-    */
-    function sendNotification(
-        address _recipient,
-        bytes calldata _identity
-    ) external onlyChannelOwner(msg.sender) {
-        // Just check if the msg is a secret, if so the user public key should be in the system
-        // On second thought, leave it upon the channel, they might have used an alternate way to
-        // encrypt the message using the public key
-
-        // Emit the message out
-        emit SendNotification(msg.sender, _recipient, _identity);
-    }
-
-     /// @dev to send message to reciepient of a group
-    function sendNotificationAsDelegate(
-        address _channel,
-        address _recipient,
-        bytes calldata _identity
-    ) external onlyAllowedDelegates(_channel,msg.sender){
-        // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
-    }
-
-
-
-
-    /// @dev to withraw funds coming from donate
-    function withdrawEthFunds() external onlyGov {
-        uint bal = address(this).balance;
-
-        payable(governance).transfer(bal);
-
-        // Emit Event
-        emit Withdrawal(msg.sender, daiAddress, bal);
-    }
-
-    /// @dev To check if member exists
-    function memberExists(address _user, address _channel) external view returns (bool subscribed) {
-        subscribed = channels[_channel].memberExists[_user];
-    }
-
-    /// @dev To fetch subscriber address for a channel
-    function getChannelSubscriberAddress(address _channel, uint _subscriberId) external view returns (address subscriber) {
-        subscriber = channels[_channel].mapAddressMember[_subscriberId];
-    }
-
-    /// @dev To fetch user id for a subscriber of a channel
-    function getChannelSubscriberUserID(address _channel, uint _subscriberId) external view returns (uint userId) {
-        userId = channels[_channel].members[channels[_channel].mapAddressMember[_subscriberId]];
-    }
-
-    /// @dev to get channel fair share ratio for a given block
-    function getChannelFSRatio(address _channel, uint _block) public view returns (uint ratio) {
-        // formula is ratio = da / z + (nxw)
-        // d is the difference of blocks from given block and the last update block of the entire group
-        // a is the actual weight of that specific group
-        // z is the historical constant
-        // n is the number of channels
-        // x is the difference of blocks from given block and the last changed start block of group
-        // w is the normalized weight of the groups
-        uint d = _block.sub(channels[_channel].channelStartBlock); // _block.sub(groupLastUpdate);
-        uint a = channels[_channel].channelWeight;
-        uint z = groupHistoricalZ;
-        uint n = groupFairShareCount;
-        uint x = _block.sub(groupLastUpdate);
-        uint w = groupNormalizedWeight;
-
-        uint nxw = n.mul(x.mul(w));
-        uint z_nxw = z.add(nxw);
-        uint da = d.mul(a);
-
-        ratio = (da.mul(ADJUST_FOR_FLOAT)).div(z_nxw);
-    }
-
-    /// @dev to get subscriber fair share ratio for a given channel at a block
-    function getSubscriberFSRatio(
-        address _channel,
-        address _user,
-        uint _block
-    ) public view onlySubscribed(_channel, _user) returns (uint ratio) {
-        // formula is ratio = d / z + (nx)
-        // d is the difference of blocks from given block and the start block of subscriber
-        // z is the historical constant
-        // n is the number of subscribers of channel
-        // x is the difference of blocks from given block and the last changed start block of channel
-
-        uint d = _block.sub(channels[_channel].memberLastUpdate[_user]);
-        uint z = channels[_channel].channelHistoricalZ;
-        uint x = _block.sub(channels[_channel].channelLastUpdate);
-
-        uint nx = channels[_channel].channelFairShareCount.mul(x);
-
-        ratio = (d.mul(ADJUST_FOR_FLOAT)).div(z.add(nx)); // == d / z + n * x
-    }
-
-    /* @dev to get the fair share of user for a single channel, different from subscriber fair share
-     * as it's multiplication of channel fair share with subscriber fair share
-     */
-    function calcSingleChannelEarnRatio(
-        address _channel,
-        address _user,
-        uint _block
-    ) public view onlySubscribed(_channel, _user) returns (uint ratio) {
-        // First get the channel fair share
-        if (
-          channels[_channel].channelType == ChannelType.ProtocolPromotion
-          || channels[_channel].channelType == ChannelType.InterestBearingOpen
-          || channels[_channel].channelType == ChannelType.InterestBearingMutual
-        ) {
-            uint channelFS = getChannelFSRatio(_channel, _block);
-            uint subscriberFS = getSubscriberFSRatio(_channel, _user, _block);
-
-            ratio = channelFS.mul(subscriberFS).div(ADJUST_FOR_FLOAT);
-        }
-    }
-
-    /// @dev to get the fair share of user overall
-    function calcAllChannelsRatio(address _user, uint _block) onlyValidUser(_user) public view returns (uint ratio) {
-        // loop all channels for the user
-        uint subscribedCount = users[_user].subscribedCount;
-
-        // WARN: This unbounded for loop is an anti-pattern
-        for (uint i = 0; i < subscribedCount; i++) {
-            if (
-              channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.ProtocolPromotion
-              || channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.InterestBearingOpen
-              || channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.InterestBearingMutual
-            ) {
-                uint individualChannelShare = calcSingleChannelEarnRatio(users[_user].mapAddressSubscribed[i], _user, _block);
-                ratio = ratio.add(individualChannelShare);
-            }
-        }
-    }
-
-    /// @dev Add the user to the ecosystem if they don't exists, the returned response is used to deliver a message to the user if they are recently added
-    function _addUser(address _addr) private returns (bool userAlreadyAdded) {
-        if (users[_addr].userActivated) {
-            userAlreadyAdded = true;
-        }
-        else {
-            // Activates the user
-            users[_addr].userStartBlock = block.number;
-            users[_addr].userActivated = true;
-            mapAddressUsers[usersCount] = _addr;
-
-            usersCount = usersCount.add(1);
-        }
-    }
-
-    /* @dev Internal system to handle broadcasting of public key,
-    * is a entry point for subscribe, or create channel but is option
-    */
-    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey) private {
-        // Add the user, will do nothing if added already, but is needed before broadcast
-        _addUser(_userAddr);
-
-        // get address from public key
-        address userAddr = getWalletFromPublicKey(_publicKey);
-
-        if (_userAddr == userAddr) {
-            // Only change it when verification suceeds, else assume the channel just wants to send group message
-            users[userAddr].publicKeyRegistered = true;
-
-            // Emit the event out
-            emit PublicKeyRegistered(userAddr, _publicKey);
-        }
-        else {
-            revert("Public Key Validation Failed");
-        }
-    }
-
-    /// @dev Don't forget to add 0x into it
-    function getWalletFromPublicKey (bytes memory _publicKey) public pure returns (address wallet) {
-        if (_publicKey.length == 64) {
-            wallet = address (uint160 (uint256 (keccak256 (_publicKey))));
-        }
-        else {
-            wallet = 0x0000000000000000000000000000000000000000;
-        }
-    }
 
     /// @dev add channel with fees
     function _createChannelWithFees(address _channel, ChannelType _channelType,uint256 _amount) private {
@@ -814,6 +573,38 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
       channels[msg.sender].channelUpdateBlock = block.number;
     }
 
+
+    /// @dev Deactivate channel
+    function deactivateChannel() onlyActivatedChannels(msg.sender) external {
+        channels[msg.sender].deactivated = true;
+        emit DeactivateChannel(msg.sender);
+    }
+
+    /* ************** 
+    
+    => SUBSCRIBE FUNCTIOANLTIES <=
+
+    *************** */
+
+    /// @dev subscribe to channel with public key
+    function subscribeWithPublicKey(address _channel, bytes calldata _publicKey) onlyActivatedChannels(_channel) external {
+        // Will save gas as it prevents calldata to be copied unless need be
+        if (!users[msg.sender].publicKeyRegistered) {
+
+        // broadcast it
+        _broadcastPublicKey(msg.sender, _publicKey);
+        }
+
+        // Call actual subscribe
+        _subscribe(_channel, msg.sender);
+    }
+
+    /// @dev subscribe to channel
+    function subscribe(address _channel) onlyActivatedChannels(_channel) external {
+        // Call actual subscribe
+        _subscribe(_channel, msg.sender);
+    }
+
     /// @dev private function that eventually handles the subscribing onlyValidChannel(_channel)
     function _subscribe(address _channel, address _user) private onlyNonSubscribed(_channel, _user) {
         // Add the user, will do nothing if added already, but is needed for all outpoints
@@ -852,6 +643,133 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         emit Subscribe(_channel, _user);
     }
 
+    // @dev to unsubscribe from channel
+    function unsubscribe(address _channel) external onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
+        // Add the channel to gray list so that it can't subscriber the user again as delegated
+        User storage user = users[msg.sender];
+
+        // first get ratio of earning
+        ratio = 0;
+        ratio = calcSingleChannelEarnRatio(_channel, msg.sender, block.number);
+
+        // Take the fair share out
+
+        // Remove the mappings and cleanup
+        // a bit tricky, swap and delete to maintain mapping
+        // Remove From Users mapping
+        // Find the id of the channel and swap it with the last id, use channel.memberCount as index
+        // Slack too deep fix
+        // address usrSubToSwapAdrr = user.mapAddressSubscribed[user.subscribedCount];
+        // uint usrSubSwapID = user.subscribed[_channel];
+
+        // // swap to last one and then
+        // user.subscribed[usrSubToSwapAdrr] = usrSubSwapID;
+        // user.mapAddressSubscribed[usrSubSwapID] = usrSubToSwapAdrr;
+
+        user.subscribed[user.mapAddressSubscribed[user.subscribedCount]] = user.subscribed[_channel];
+        user.mapAddressSubscribed[user.subscribed[_channel]] = user.mapAddressSubscribed[user.subscribedCount];
+
+        // delete the last one and substract
+        delete(user.subscribed[_channel]);
+        delete(user.mapAddressSubscribed[user.subscribedCount]);
+        user.subscribedCount = user.subscribedCount.sub(1);
+
+        // Remove from Channels mapping
+        Channel storage channel = channels[_channel];
+
+        // Set additional flag to false
+        channel.memberExists[msg.sender] = false;
+
+        // Find the id of the channel and swap it with the last id, use channel.memberCount as index
+        // Slack too deep fix
+        // address chnMemToSwapAdrr = channel.mapAddressMember[channel.memberCount];
+        // uint chnMemSwapID = channel.members[msg.sender];
+
+        // swap to last one and then
+        channel.members[channel.mapAddressMember[channel.memberCount]] = channel.members[msg.sender];
+        channel.mapAddressMember[channel.members[msg.sender]] = channel.mapAddressMember[channel.memberCount];
+
+        // delete the last one and substract
+        delete(channel.members[msg.sender]);
+        delete(channel.mapAddressMember[channel.memberCount]);
+        channel.memberCount = channel.memberCount.sub(1);
+
+        // Next readjust fair share
+        (
+            channels[_channel].channelFairShareCount,
+            channels[_channel].channelHistoricalZ,
+            channels[_channel].channelLastUpdate
+        ) = _readjustFairShareOfSubscribers(
+            SubscriberAction.SubscriberRemoved,
+            channels[_channel].channelFairShareCount,
+            channels[_channel].channelHistoricalZ,
+            channels[_channel].channelLastUpdate
+        );
+
+        // Next calculate and send the fair share earning of the user from this channel
+        if (
+          channel.channelType == ChannelType.ProtocolPromotion
+          || channel.channelType == ChannelType.InterestBearingOpen
+          || channel.channelType == ChannelType.InterestBearingMutual
+        ) {
+            _withdrawFundsFromPool(ratio);
+        }
+
+        // Emit it
+        emit Unsubscribe(_channel, msg.sender);
+    }
+
+    /* ************** 
+    
+    => SEND NOTIFICATION FUNCTIONALITIES <=
+
+    *************** */
+
+    /// @dev allow other addresses to send notifications using your channel
+    function addDelegate(address _delegate) external onlyChannelOwner(msg.sender) {        
+        delegated_NotificationSenders[msg.sender][_delegate] = true;
+        emit AddDelegate(msg.sender, _delegate);
+    }
+
+    /// @dev revoke addresses' permission to send notifications on your behalf
+    function removeDelegate(address _delegate) external onlyChannelOwner(msg.sender) {
+        delegated_NotificationSenders[msg.sender][_delegate] = false;
+        emit RemoveDelegate(msg.sender, _delegate);
+    }
+
+    /* @dev to send message to reciepient of a group, the first digit of msg type contains rhe push server flag
+    ** So msg type 1 with using push is 11, without push is 10, in the future this can also be 12 (silent push)
+    */
+    function sendNotification(
+        address _recipient,
+        bytes calldata _identity
+    ) external onlyChannelOwner(msg.sender) {
+        // Just check if the msg is a secret, if so the user public key should be in the system
+        // On second thought, leave it upon the channel, they might have used an alternate way to
+        // encrypt the message using the public key
+
+        // Emit the message out
+        emit SendNotification(msg.sender, _recipient, _identity);
+    }
+
+     /// @dev to send message to reciepient of a group
+    function sendNotificationAsDelegate(
+        address _channel,
+        address _recipient,
+        bytes calldata _identity
+    ) external onlyAllowedDelegates(_channel,msg.sender){
+        // Emit the message out
+        emit SendNotification(_channel, _recipient, _identity);
+    }
+
+
+
+    /* ************** 
+    
+    => DEPOSIT & WITHDRAWAL of FUNDS<=
+
+    *************** */
+
 
 
     /// @dev deposit funds to pool
@@ -888,6 +806,145 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
 
         // Emit Event
         emit InterestClaimed(msg.sender, userAmountAdjusted);
+    }
+    /// @dev to withraw funds coming from donate
+    function withdrawEthFunds() external onlyGov {
+        uint bal = address(this).balance;
+
+        payable(governance).transfer(bal);
+
+        // Emit Event
+        emit Withdrawal(msg.sender, daiAddress, bal);
+    }
+
+
+    /* ************** 
+    
+    => FAIR SHARE RATIO CALCULATIONS <=
+
+    *************** */
+
+    /// @dev to get channel fair share ratio for a given block
+    function getChannelFSRatio(address _channel, uint _block) public view returns (uint ratio) {
+        // formula is ratio = da / z + (nxw)
+        // d is the difference of blocks from given block and the last update block of the entire group
+        // a is the actual weight of that specific group
+        // z is the historical constant
+        // n is the number of channels
+        // x is the difference of blocks from given block and the last changed start block of group
+        // w is the normalized weight of the groups
+        uint d = _block.sub(channels[_channel].channelStartBlock); // _block.sub(groupLastUpdate);
+        uint a = channels[_channel].channelWeight;
+        uint z = groupHistoricalZ;
+        uint n = groupFairShareCount;
+        uint x = _block.sub(groupLastUpdate);
+        uint w = groupNormalizedWeight;
+
+        uint nxw = n.mul(x.mul(w));
+        uint z_nxw = z.add(nxw);
+        uint da = d.mul(a);
+
+        ratio = (da.mul(ADJUST_FOR_FLOAT)).div(z_nxw);
+    }
+
+    /// @dev to get subscriber fair share ratio for a given channel at a block
+    function getSubscriberFSRatio(
+        address _channel,
+        address _user,
+        uint _block
+    ) public view onlySubscribed(_channel, _user) returns (uint ratio) {
+        // formula is ratio = d / z + (nx)
+        // d is the difference of blocks from given block and the start block of subscriber
+        // z is the historical constant
+        // n is the number of subscribers of channel
+        // x is the difference of blocks from given block and the last changed start block of channel
+
+        uint d = _block.sub(channels[_channel].memberLastUpdate[_user]);
+        uint z = channels[_channel].channelHistoricalZ;
+        uint x = _block.sub(channels[_channel].channelLastUpdate);
+
+        uint nx = channels[_channel].channelFairShareCount.mul(x);
+
+        ratio = (d.mul(ADJUST_FOR_FLOAT)).div(z.add(nx)); // == d / z + n * x
+    }
+
+    /* @dev to get the fair share of user for a single channel, different from subscriber fair share
+     * as it's multiplication of channel fair share with subscriber fair share
+     */
+    function calcSingleChannelEarnRatio(
+        address _channel,
+        address _user,
+        uint _block
+    ) public view onlySubscribed(_channel, _user) returns (uint ratio) {
+        // First get the channel fair share
+        if (
+          channels[_channel].channelType == ChannelType.ProtocolPromotion
+          || channels[_channel].channelType == ChannelType.InterestBearingOpen
+          || channels[_channel].channelType == ChannelType.InterestBearingMutual
+        ) {
+            uint channelFS = getChannelFSRatio(_channel, _block);
+            uint subscriberFS = getSubscriberFSRatio(_channel, _user, _block);
+
+            ratio = channelFS.mul(subscriberFS).div(ADJUST_FOR_FLOAT);
+        }
+    }
+
+    /// @dev to get the fair share of user overall
+    function calcAllChannelsRatio(address _user, uint _block) onlyValidUser(_user) public view returns (uint ratio) {
+        // loop all channels for the user
+        uint subscribedCount = users[_user].subscribedCount;
+
+        // WARN: This unbounded for loop is an anti-pattern
+        for (uint i = 0; i < subscribedCount; i++) {
+            if (
+              channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.ProtocolPromotion
+              || channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.InterestBearingOpen
+              || channels[users[_user].mapAddressSubscribed[i]].channelType == ChannelType.InterestBearingMutual
+            ) {
+                uint individualChannelShare = calcSingleChannelEarnRatio(users[_user].mapAddressSubscribed[i], _user, _block);
+                ratio = ratio.add(individualChannelShare);
+            }
+        }
+    }
+
+        /// @dev to claim fair share of all earnings
+    function claimFairShare() onlyValidUser(msg.sender) external returns (uint ratio){
+        // Calculate entire FS Share, since we are looping for reset... let's calculate over there
+        ratio = 0;
+
+        // Reset member last update for every channel that are interest bearing
+        // WARN: This unbounded for loop is an anti-pattern
+        for (uint i = 0; i < users[msg.sender].subscribedCount; i++) {
+            address channel = users[msg.sender].mapAddressSubscribed[i];
+
+            if (
+                channels[channel].channelType == ChannelType.ProtocolPromotion
+                || channels[channel].channelType == ChannelType.InterestBearingOpen
+                || channels[channel].channelType == ChannelType.InterestBearingMutual
+              ) {
+                // Reset last updated block
+                channels[channel].memberLastUpdate[msg.sender] = block.number;
+
+                // Next readjust fair share and that's it
+                (
+                channels[channel].channelFairShareCount,
+                channels[channel].channelHistoricalZ,
+                channels[channel].channelLastUpdate
+                ) = _readjustFairShareOfSubscribers(
+                SubscriberAction.SubscriberUpdated,
+                channels[channel].channelFairShareCount,
+                channels[channel].channelHistoricalZ,
+                channels[channel].channelLastUpdate
+                );
+
+                // Calculate share
+                uint individualChannelShare = calcSingleChannelEarnRatio(channel, msg.sender, block.number);
+                ratio = ratio.add(individualChannelShare);
+            }
+
+        }
+        // Finally, withdraw for user
+        _withdrawFundsFromPool(ratio);
     }
 
     /// @dev readjust fair share runs on channel addition, removal or update of channel
