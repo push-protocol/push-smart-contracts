@@ -181,7 +181,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
     // Channel Related | // This Event is listened by on All Infra Services
     event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
     event UpdateChannel(address indexed channel, bytes identity);
-    event f(address indexed channel);
+    event DeactivateChannel(address indexed channel);
 
     // Subscribe / Unsubscribe | This Event is listened by on All Infra Services
     event Subscribe(address indexed channel, address indexed user);
@@ -278,11 +278,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
 
     modifier onlyUserWithNoChannel() {
         require(!users[msg.sender].channellized, "User already a Channel Owner");
-        _;
-    }
-
-    modifier onlyValidChannel(address _channel) {
-        require(users[_channel].channellized, "Channel doesn't Exists");
         _;
     }
 
@@ -428,8 +423,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
         _subscribe(_channel, msg.sender);
     }
 
-    /// @dev to unsubscribe from channel
-    function unsubscribe(address _channel) external onlyValidChannel(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
+
+    // @dev to unsubscribe from channel
+    function unsubscribe(address _channel) external onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
         // Add the channel to gray list so that it can't subscriber the user again as delegated
         User storage user = users[msg.sender];
 
