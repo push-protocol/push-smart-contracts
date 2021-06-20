@@ -1,4 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -1109,7 +1109,7 @@ contract EPNSCoreV3 is Initializable, ReentrancyGuard  {
     }
 
       /// @dev allow other addresses to send notifications using your channel
-    function addDelegate(address _delegate) external onlyChannelOwner(msg.sender) {        
+    function addDelegate(address _delegate) external onlyChannelOwner(msg.sender) {
         delegated_NotificationSenders[msg.sender][_delegate] = true;
         emit AddDelegate(msg.sender, _delegate);
     }

@@ -6,7 +6,7 @@
  *Submitted for verification at Etherscan.io on 2020-09-14
 */
 
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity 0.6.11;
 // From https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/math/Math.sol
 // Subject to the MIT license.
 
