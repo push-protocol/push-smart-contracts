@@ -1,53 +1,45 @@
 {
-  "name": "@scaffold-eth/monorepo",
+  "name": "epns-protocol-staging",
   "version": "1.0.0",
-  "keywords": [
-    "ethereum",
-    "react",
-    "uniswap",
-    "workspaces",
-    "yarn"
-  ],
-  "private": true,
+  "description": "Smart Contracts of EPNS Protocol and Governance",
+  "main": "app.js",
   "scripts": {
-    "react-app:build": "yarn workspace @scaffold-eth/react-app build --max-old-space-size=12288",
-    "react-app:eject": "yarn workspace @scaffold-eth/react-app eject",
-    "react-app:start": "yarn workspace @scaffold-eth/react-app start",
-    "react-app:test": "yarn workspace @scaffold-eth/react-app test",
-    "build": "yarn workspace @scaffold-eth/react-app build --max-old-space-size=12288",
-    "chain": "yarn workspace @scaffold-eth/buidler chain",
-    "node": "yarn workspace @scaffold-eth/buidler chain",
-    "test": "yarn workspace @scaffold-eth/buidler test",
-    "start": "yarn workspace @scaffold-eth/react-app start",
-    "compile": "yarn workspace @scaffold-eth/buidler compile",
-    "deploy": "yarn workspace @scaffold-eth/buidler deploy",
-    "watch": "yarn workspace @scaffold-eth/buidler watch",
-    "accounts": "yarn workspace @scaffold-eth/buidler accounts",
-    "balance": "yarn workspace @scaffold-eth/buidler balance",
-    "send": "yarn workspace @scaffold-eth/buidler send",
-    "ipfs": "yarn workspace @scaffold-eth/react-app ipfs",
-    "surge": "yarn workspace @scaffold-eth/react-app surge",
-    "s3": "yarn workspace @scaffold-eth/react-app s3",
-    "ship": "yarn workspace @scaffold-eth/react-app ship",
-    "generate": "cd packages/buidler && npx buidler generate",
-    "account": "cd packages/buidler && npx buidler account",
-    "flatten": "cd packages/buidler && npx buidler flatten"
+    "start": "node app.js"
   },
-  "workspaces": {
-    "packages": [
-      "packages/*"
-    ]
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethereum-push-notification-service/epns-smart-contracts-staging.git"
+  },
+  "author": "Ethereum Push Notification Service",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethereum-push-notification-service/epns-smart-contracts-staging/issues"
+  },
+  "homepage": "https://github.com/ethereum-push-notification-service/epns-smart-contracts-staging#readme",
+  "devDependencies": {
+    "@nomiclabs/hardhat-etherscan": "2.1.0",
+    "@nomiclabs/hardhat-waffle": "2.0.1",
+    "@nomiclabs/hardhat-web3": "2.0.0",
+    "@openzeppelin/test-helpers": "^0.5.10",
+    "chai": "4.2.0",
+    "chalk": "^4.1.0",
+    "ethereum-waffle": "3.2.1",
+    "ethers": "5.0.24",
+    "hardhat-gas-reporter": "1.0.4"
   },
   "dependencies": {
-    "@openzeppelin/buidler-upgrades": "^1.1.0",
-    "@openzeppelin/upgrades": "^2.8.0"
-  },
-  "devDependencies": {
-    "@nomiclabs/buidler": "1.4.8",
-    "@nomiclabs/buidler-ethers": "2.0.2",
-    "@nomiclabs/buidler-etherscan": "2.1.0",
-    "@nomiclabs/buidler-waffle": "2.1.0",
-    "ethereum-waffle": "3.1.1",
-    "ethers": "5.0.18"
+    "@nomiclabs/hardhat-ethers": "file:local/nomiclabs-hardhat-ethers-v2.0.2-rc.1-custom.tgz",
+    "@openzeppelin/contracts": "^3.4.0",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "bip39": "3.0.3",
+    "cryptr": "6.0.2",
+    "dotenv": "8.2.0",
+    "eip-712": "0.4.2",
+    "envfile": "6.14.0",
+    "ethereumjs-wallet": "1.0.1",
+    "hardhat": "file:local/hardhat-v2.0.8-custom.tgz",
+    "mocha": "8.2.1",
+    "moments": "0.0.2",
+    "qrcode-terminal": "0.12.0"
   }
 }

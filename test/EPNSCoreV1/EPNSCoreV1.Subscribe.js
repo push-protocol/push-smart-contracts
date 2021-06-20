@@ -120,7 +120,7 @@ describe("EPNSCoreV1 tests", function () {
     EPNSCoreV1Proxy = null
   });
 
- 
+
  describe("Testing subscribe realted functions", function(){
         /**
      * "subscribe" Function CHECKPOINTS
@@ -132,13 +132,13 @@ describe("EPNSCoreV1 tests", function () {
      * Should update the FAIRSHARE COUNTS
     //  */
 
-    describe("Testing the Base SUBSCRIBE Function", function(){ 
+    describe("Testing the Base SUBSCRIBE Function", function(){
       const CHANNEL_TYPE = 2;
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
@@ -155,7 +155,7 @@ describe("EPNSCoreV1 tests", function () {
        it("Function should revert if user already subscribed", async function () {
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribe(CHANNEL_CREATOR);
-        
+
         await expect(tx).to.be.revertedWith("Subscriber already Exists");
       });
 
@@ -168,7 +168,7 @@ describe("EPNSCoreV1 tests", function () {
           const userDetails_after = await EPNSCoreV1Proxy.users(BOB);
           const userActivatedAfter= userDetails_after[0];
           const totalUsers_after =  await EPNSCoreV1Proxy.usersCount();
-   
+
 
           expect(userActivatedBefore).to.be.equals(false);
           expect(userActivatedAfter).to.be.equals(true);
@@ -179,7 +179,7 @@ describe("EPNSCoreV1 tests", function () {
       it("Should Update the User & Channel Subscription Details on the Contract", async ()=>{
           const userDetails = await EPNSCoreV1Proxy.users(BOB);
           const channelDetails = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-          
+
           const userSubscribeCount_before = userDetails[4];
           const channelMemberCount_before = channelDetails[3];
 
@@ -208,22 +208,22 @@ describe("EPNSCoreV1 tests", function () {
         const _channelFairShareCount = channel.channelFairShareCount;
         const _channelHistoricalZ = channel.channelHistoricalZ;
         const _channelLastUpdate = channel.channelLastUpdate;
-        
+
         const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         const blockNumber = tx.blockNumber;
-        
-        const { 
-          channelNewFairShareCount, 
-          channelNewHistoricalZ, 
-          channelNewLastUpdate, 
+
+        const {
+          channelNewFairShareCount,
+          channelNewHistoricalZ,
+          channelNewLastUpdate,
         } = readjustFairShareOfSubscribers(SubscriberAction.SubscriberAdded, _channelFairShareCount, _channelHistoricalZ, _channelLastUpdate, bn(blockNumber));
-        
+
         const channelNew = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const _channelNewFairShareCountNew = channelNew.channelFairShareCount;
         const _channelHistoricalZNew = channelNew.channelHistoricalZ;
         const _channelLastUpdateNew = channelNew.channelLastUpdate;
-        
+
         expect(_channelNewFairShareCountNew).to.equal(channelNewFairShareCount);
         expect(_channelHistoricalZNew).to.equal(channelNewHistoricalZ);
         expect(_channelLastUpdateNew).to.equal(channelNewLastUpdate);
@@ -248,10 +248,10 @@ describe("EPNSCoreV1 tests", function () {
     describe("Testing the unsubscribe function", function(){
       const CHANNEL_TYPE = 2;
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
@@ -265,7 +265,7 @@ describe("EPNSCoreV1 tests", function () {
         const userDetails = await EPNSCoreV1Proxy.users(BOB);
         const isChannnalized = userDetails[2];
         const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(BOB);
-        
+
         await expect(isChannnalized).to.be.equals(false)
         await expect(tx).to.be.revertedWith("Channel doesn't Exists");
       })
@@ -296,7 +296,7 @@ describe("EPNSCoreV1 tests", function () {
           await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
          // grayListed Mapping before UnSubscribing
          const isGrayListed_before = await EPNSCoreV1Proxy.getGrayListedChannels(BOB,CHANNEL_CREATOR);
-          
+
         await EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
           // grayListed Mapping after UnSubscribing
          const isGrayListed_after = await EPNSCoreV1Proxy.getGrayListedChannels(BOB,CHANNEL_CREATOR);
@@ -304,30 +304,30 @@ describe("EPNSCoreV1 tests", function () {
 
         await expect(isGrayListed_before).to.be.equals(false)
         await expect(isGrayListed_after).to.be.equals(true)
-     
+
 
       }).timeout(12000);
 
       it(" Should Update Imperative On-Chain Information for User",async()=>{
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
-        
+
         // Contract State Before Unsubscribing
         const isMemberExists_before = await EPNSCoreV1Proxy.memberExists(BOB,CHANNEL_CREATOR);
         const userBefore = await EPNSCoreV1Proxy.users(BOB);
         const channelBefore = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-       
+
         await EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
-                
+
         // Contract State After Unsubscribing
 
         const userAfter = await EPNSCoreV1Proxy.users(BOB);
         const channelAfter = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
         const isMemberExists_after = await EPNSCoreV1Proxy.memberExists(BOB,CHANNEL_CREATOR);
-        
+
         await expect(isMemberExists_before).to.be.equals(true)
         await expect(isMemberExists_after).to.be.equals(false)
         expect(userAfter.subscribedCount).to.equal(userBefore.subscribedCount.sub(1))
-        expect(channelAfter.memberCount).to.equal(channelBefore.memberCount.sub(1))      
+        expect(channelAfter.memberCount).to.equal(channelBefore.memberCount.sub(1))
 
       }).timeout(200000);
 
@@ -339,22 +339,22 @@ describe("EPNSCoreV1 tests", function () {
         const _channelFairShareCount = channel.channelFairShareCount;
         const _channelHistoricalZ = channel.channelHistoricalZ;
         const _channelLastUpdate = channel.channelLastUpdate;
-      
+
         const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
         const blockNumber = tx.blockNumber;
-        
-        const { 
-          channelNewFairShareCount, 
-          channelNewHistoricalZ, 
-          channelNewLastUpdate, 
+
+        const {
+          channelNewFairShareCount,
+          channelNewHistoricalZ,
+          channelNewLastUpdate,
         } = readjustFairShareOfSubscribers(SubscriberAction.SubscriberRemoved, _channelFairShareCount, _channelHistoricalZ, _channelLastUpdate, bn(blockNumber));
-        
+
         const channelNew = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const _channelNewFairShareCountNew = channelNew.channelFairShareCount;
         const _channelHistoricalZNew = channelNew.channelHistoricalZ;
         const _channelLastUpdateNew = channelNew.channelLastUpdate;
-        
+
         expect(_channelNewFairShareCountNew).to.equal(channelNewFairShareCount);
         expect(_channelHistoricalZNew).to.equal(channelNewHistoricalZ);
         expect(_channelLastUpdateNew).to.equal(channelNewLastUpdate);
@@ -387,10 +387,10 @@ describe("EPNSCoreV1 tests", function () {
   describe("Testing the subscribeDelegated function", function(){
       const CHANNEL_TYPE = 2;
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
@@ -398,10 +398,10 @@ describe("EPNSCoreV1 tests", function () {
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(DELEGATED_CONTRACT_FEES);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, DELEGATED_CONTRACT_FEES);
       })
-  
+
       it("Function should  revert subscribe if channels are deactivated", async function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-        
+
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
         await expect(tx).to.be.revertedWith("Channel deactivated or doesn't exists");
       });
@@ -409,26 +409,26 @@ describe("EPNSCoreV1 tests", function () {
       // it("should revert subscribe if channels are graylisted", async function () {
       //   await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
       //   await EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
-        
+
       //   const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
       //   await expect(tx).to.be.revertedWith("Channel is graylisted");
       // });
 
       it("Function should deduct delegation fees from user wallet", async function () {
         const channelCreatorDAIBalanceBefore = await MOCKDAI.balanceOf(CHANNEL_CREATOR);
-  
+
         const ownerDaiFundsBefore = await EPNSCoreV1Proxy.ownerDaiFunds();
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
-        
+
         const userSubscribed = await EPNSCoreV1Proxy.memberExists(BOB, CHANNEL_CREATOR);
         expect(userSubscribed).to.equal(true);
 
         const channelCreatorDAIBalanceAfter = await MOCKDAI.balanceOf(CHANNEL_CREATOR);
-  
-  
+
+
         const ownerDaiFundsAfter = await EPNSCoreV1Proxy.ownerDaiFunds();
-  
+
 
         expect(channelCreatorDAIBalanceAfter).to.equal(channelCreatorDAIBalanceBefore.sub(DELEGATED_CONTRACT_FEES));
         expect(ownerDaiFundsAfter).to.equal(ownerDaiFundsBefore.add(DELEGATED_CONTRACT_FEES));
@@ -437,7 +437,7 @@ describe("EPNSCoreV1 tests", function () {
       it("should revert if already subscribed", async function () {
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
-        
+
         await expect(tx).to.be.revertedWith("Subscriber already Exists");
       });
 
@@ -448,22 +448,22 @@ describe("EPNSCoreV1 tests", function () {
         const _channelFairShareCount = channel.channelFairShareCount;
         const _channelHistoricalZ = channel.channelHistoricalZ;
         const _channelLastUpdate = channel.channelLastUpdate;
-        
+
         const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
         const blockNumber = tx.blockNumber;
-        
-        const { 
-          channelNewFairShareCount, 
-          channelNewHistoricalZ, 
-          channelNewLastUpdate, 
+
+        const {
+          channelNewFairShareCount,
+          channelNewHistoricalZ,
+          channelNewLastUpdate,
         } = readjustFairShareOfSubscribers(SubscriberAction.SubscriberAdded, _channelFairShareCount, _channelHistoricalZ, _channelLastUpdate, bn(blockNumber));
-        
+
         const channelNew = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const _channelNewFairShareCountNew = channelNew.channelFairShareCount;
         const _channelHistoricalZNew = channelNew.channelHistoricalZ;
         const _channelLastUpdateNew = channelNew.channelLastUpdate;
-        
+
         expect(_channelNewFairShareCountNew).to.equal(channelNewFairShareCount);
         expect(_channelHistoricalZNew).to.equal(channelNewHistoricalZ);
         expect(_channelLastUpdateNew).to.equal(channelNewLastUpdate);
@@ -478,7 +478,7 @@ describe("EPNSCoreV1 tests", function () {
       });
     });
 
-    
+
    /**
      * "subscribeWithPublicKeyDelegated" Function CHECKPOINTS
      * Should only be called for Activated Channels
@@ -492,14 +492,14 @@ describe("EPNSCoreV1 tests", function () {
      * Should  execute Subscribe Function and EMit events as expected
      * Should update the FAIRSHARE COUNTS correctly
      */
-  
+
   describe("Testing the subscribeWithPublicKeyDelegated function", function(){
       const CHANNEL_TYPE = 2;
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
@@ -507,12 +507,12 @@ describe("EPNSCoreV1 tests", function () {
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(DELEGATED_CONTRACT_FEES);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, DELEGATED_CONTRACT_FEES);
       })
-  
+
 
        it("Function should only be called for ACTIVATED CHANNELS", async function () {
       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
         await expect(tx).to.be.revertedWith("Channel deactivated or doesn't exists");
       });
@@ -520,9 +520,9 @@ describe("EPNSCoreV1 tests", function () {
      it("Function Should only be called for NonGraylistedChannel Channels", async ()=>{
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         await EPNSCoreV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
-        
+
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
         await expect(tx).to.be.revertedWith("Channel is graylisted");
      }).timeout(12000);
@@ -533,13 +533,13 @@ describe("EPNSCoreV1 tests", function () {
 
         const publicKey = await getPubKey(BOBSIGNER)
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
-        
+
         const userSubscribed = await EPNSCoreV1Proxy.memberExists(BOB, CHANNEL_CREATOR);
         expect(userSubscribed).to.be.equal(true);
 
         const channelCreatorDAIBalanceAfter = await MOCKDAI.balanceOf(CHANNEL_CREATOR);
         const ownerDaiFundsAfter = await EPNSCoreV1Proxy.ownerDaiFunds();
-  
+
         expect(channelCreatorDAIBalanceAfter).to.equal(channelCreatorDAIBalanceBefore.sub(DELEGATED_CONTRACT_FEES));
         expect(ownerDaiFundsAfter).to.equal(ownerDaiFundsBefore.add(DELEGATED_CONTRACT_FEES));
      }).timeout(9000)
@@ -547,9 +547,9 @@ describe("EPNSCoreV1 tests", function () {
       it(" Function should revert if user is already subscribed", async function () {
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
-        
+
         await expect(tx).to.be.revertedWith("Subscriber already Exists");
       }).timeout(9000);
 
@@ -558,9 +558,9 @@ describe("EPNSCoreV1 tests", function () {
         const usersCountBefore = await EPNSCoreV1Proxy.usersCount()
         const user = await EPNSCoreV1Proxy.users(BOB);
         const isUserKeyRegistered_before = user.publicKeyRegistered;
-        
+
         const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
-        
+
         const user_after = await EPNSCoreV1Proxy.users(BOB);
         const isUserKeyRegistered_after = user_after.publicKeyRegistered;
         const usersCountAfter = await EPNSCoreV1Proxy.usersCount()
@@ -577,7 +577,7 @@ describe("EPNSCoreV1 tests", function () {
         const publicKey = await getPubKey(BOBSIGNER)
         const user = await EPNSCoreV1Proxy.users(BOB);
         const isUserKeyRegistered_before = user.publicKeyRegistered;
-        
+
         await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
 
         const user_after = await EPNSCoreV1Proxy.users(BOB);
@@ -605,7 +605,7 @@ describe("EPNSCoreV1 tests", function () {
         const channelBefore = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
 
         const userAfter = await EPNSCoreV1Proxy.users(BOB);
@@ -621,23 +621,23 @@ describe("EPNSCoreV1 tests", function () {
         const _channelFairShareCount = channel.channelFairShareCount;
         const _channelHistoricalZ = channel.channelHistoricalZ;
         const _channelLastUpdate = channel.channelLastUpdate;
-        
+
         const publicKey = await getPubKey(BOBSIGNER)
         const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
         const blockNumber = tx.blockNumber;
-        
-        const { 
-          channelNewFairShareCount, 
-          channelNewHistoricalZ, 
-          channelNewLastUpdate, 
+
+        const {
+          channelNewFairShareCount,
+          channelNewHistoricalZ,
+          channelNewLastUpdate,
         } = readjustFairShareOfSubscribers(SubscriberAction.SubscriberAdded, _channelFairShareCount, _channelHistoricalZ, _channelLastUpdate, bn(blockNumber));
-        
+
         const channelNew = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const _channelNewFairShareCountNew = channelNew.channelFairShareCount;
         const _channelHistoricalZNew = channelNew.channelHistoricalZ;
         const _channelLastUpdateNew = channelNew.channelLastUpdate;
-        
+
         expect(_channelNewFairShareCountNew).to.equal(channelNewFairShareCount);
         expect(_channelHistoricalZNew).to.equal(channelNewHistoricalZ);
         expect(_channelLastUpdateNew).to.equal(channelNewLastUpdate);
@@ -656,7 +656,7 @@ describe("EPNSCoreV1 tests", function () {
 
       it("should subscribe and emit Subscribe event", async function () {
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeWithPublicKeyDelegated(CHANNEL_CREATOR, BOB, publicKey.slice(1));
 
         await expect(tx)
@@ -677,23 +677,23 @@ describe("EPNSCoreV1 tests", function () {
      * Should  execute Subscribe Function and EMit events as expected
      * Should update the FAIRSHARE COUNTS correctly
      */
-  
+
     describe("Testing subscribeWithPublicKey", function(){
       const CHANNEL_TYPE = 2;
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
       })
-  
+
       it("should revert subscribe if channels are deactivated", async function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).subscribeWithPublicKey(CHANNEL_CREATOR, publicKey.slice(1));
         await expect(tx).to.be.revertedWith("Channel deactivated or doesn't exists");
       });
@@ -701,19 +701,19 @@ describe("EPNSCoreV1 tests", function () {
       it("should revert if already subscribed", async function () {
         await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).subscribeWithPublicKey(CHANNEL_CREATOR, publicKey.slice(1));
-        
+
         await expect(tx).to.be.revertedWith("Subscriber already Exists");
       });
 
       it("Should add user to epns contract when subscribing if new user", async function(){
         const usersCountBefore = await EPNSCoreV1Proxy.usersCount()
-        
+
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribeWithPublicKey(CHANNEL_CREATOR, publicKey.slice(1));
-        
+
         const user = await EPNSCoreV1Proxy.users(BOB);
         const usersCountAfter = await EPNSCoreV1Proxy.usersCount()
 
@@ -777,23 +777,23 @@ describe("EPNSCoreV1 tests", function () {
         const _channelFairShareCount = channel.channelFairShareCount;
         const _channelHistoricalZ = channel.channelHistoricalZ;
         const _channelLastUpdate = channel.channelLastUpdate;
-        
+
         const publicKey = await getPubKey(BOBSIGNER)
         const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribeWithPublicKey(CHANNEL_CREATOR, publicKey.slice(1));
         const blockNumber = tx.blockNumber;
-        
-        const { 
-          channelNewFairShareCount, 
-          channelNewHistoricalZ, 
-          channelNewLastUpdate, 
+
+        const {
+          channelNewFairShareCount,
+          channelNewHistoricalZ,
+          channelNewLastUpdate,
         } = readjustFairShareOfSubscribers(SubscriberAction.SubscriberAdded, _channelFairShareCount, _channelHistoricalZ, _channelLastUpdate, bn(blockNumber));
-        
+
         const channelNew = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         const _channelNewFairShareCountNew = channelNew.channelFairShareCount;
         const _channelHistoricalZNew = channelNew.channelHistoricalZ;
         const _channelLastUpdateNew = channelNew.channelLastUpdate;
-        
+
         expect(_channelNewFairShareCountNew).to.equal(channelNewFairShareCount);
         expect(_channelHistoricalZNew).to.equal(channelNewHistoricalZ);
         expect(_channelLastUpdateNew).to.equal(channelNewLastUpdate);
@@ -801,7 +801,7 @@ describe("EPNSCoreV1 tests", function () {
 
       it("should subscribe and emit Subscribe event", async function () {
         const publicKey = await getPubKey(BOBSIGNER)
-        
+
         const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).subscribeWithPublicKey(CHANNEL_CREATOR, publicKey.slice(1));
 
         await expect(tx)
@@ -809,6 +809,4 @@ describe("EPNSCoreV1 tests", function () {
           .withArgs(CHANNEL_CREATOR, BOB)
       });
     });
-});
-
 });

@@ -1,8 +1,8 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-import "../EPNSProxy.sol";
-import "../EPNSCore.sol";
-import "@nomiclabs/buidler/console.sol";
+import "./EPNSProxy.sol";
+import "./EPNSCore.sol";
+import "hardhat/console.sol";
 
 contract EPNSProxyMock {
 
