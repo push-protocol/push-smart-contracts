@@ -88,14 +88,14 @@ describe("EPNSCoreV1 tests", function () {
     const EPNSTOKEN = await ethers.getContractFactory("EPNS");
     EPNS = await EPNSTOKEN.deploy();
 
-    const EPNSCoreV1 = await ethers.getContractFactory("EPNSCoreV1");
+    const EPNSCoreV1 = await ethers.getContractFactory("EPNSCoreV1", {gasLimit: 15000000});
     LOGIC = await EPNSCoreV1.deploy();
 
     const TimeLock = await ethers.getContractFactory("Timelock");
     TIMELOCK = await TimeLock.deploy(ADMIN, delay);
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
-    PROXYADMIN = await proxyAdmin.deploy();
+    PROXYADMIN = await proxyAdmin.deploy({gasLimit: 5000000});
     await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSPROXYContract = await ethers.getContractFactory("EPNSProxy");
@@ -119,7 +119,7 @@ describe("EPNSCoreV1 tests", function () {
     EPNSProxy = null
     EPNSCoreV1Proxy = null
   });
-  
+
   describe("Testing send Notification related functions", function(){
     describe("Testing sendNotification", function(){
       beforeEach(async function(){
@@ -127,10 +127,10 @@ describe("EPNSCoreV1 tests", function () {
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 5000000});
 
         // await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(DELEGATED_CONTRACT_FEES);
         // await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, DELEGATED_CONTRACT_FEES);
@@ -153,69 +153,69 @@ describe("EPNSCoreV1 tests", function () {
     });
 
     /**
-     * Test Objectives 
+     * Test Objectives
      * No address should be able to access sendNotificationAsDelegate unless added as a Delegate by Channel Owner
      * Channel Owner should be able to Add/Revoke Delegate to send notifications on behalf of a particular channel.
      * Only Owner should be able to call the Add/Revoke functionalities
      * Address added as Delegate should be able to send notification for the channel.
-     * Address whose Delegate notification sending permission is revoked, shouldn't be able to send any notifications 
+     * Address whose Delegate notification sending permission is revoked, shouldn't be able to send any notifications
     */
 
-    describe("Testing sendNotificationAsDelegate function", function(){
-      beforeEach(async function(){
-        const CHANNEL_TYPE = 2;
-        const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+    // describe("Testing sendNotificationAsDelegate function", function(){
+    //   beforeEach(async function(){
+    //     const CHANNEL_TYPE = 2;
+    //     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+    //
+    //     await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
+    //
+    //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+    //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+    //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
+    //   });
+    //
+    //   it("No one except a Delegate should be able to send notification on behalf of a Channel", async function(){
+    //     const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+    //     const tx =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
+    //     await expect(tx).to.be.revertedWith("Not authorised to send messages");
+    //   });
+    //
+    //   it("BOB Should be able to Send Delegated Notification once Allowed", async function(){
+    //     // Adding BOB As Delate Notification Seder
+    //     const tx_addDelegate =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(BOB);
+    //     const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
+    //
+    //     // BOB Sending Delegated Notification
+    //     const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+    //     const tx_sendNotif =  await EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,ALICE,msg);
+    //
+    //     await expect(tx_sendNotif)
+    //       .to.emit(EPNSCoreV1Proxy, 'SendNotification')
+    //       .withArgs(CHANNEL_CREATOR, ALICE, ethers.utils.hexlify(msg));
+    //     await expect(isBobAllowed).to.be.equal(true);
+    //     await expect(tx_addDelegate)
+    //       .to.emit(EPNSCoreV1Proxy, 'AddDelegate')
+    //       .withArgs(CHANNEL_CREATOR, BOB);
+    //   })
+    //
+    //    it("BOB Should NOT be able to Send Delegated Notification once Permission is Revoked", async function(){
+    //     // Revoking Permission from BOB
+    //     const tx_removeDelegate =  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).removeDelegate(BOB);
+    //     const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
+    //
+    //     // BOB Sending Delegated Notification
+    //      const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+    //     const tx_sendNotif =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
+    //
+    //
+    //     await expect(tx_sendNotif).to.be.revertedWith("Not authorised to send messages");
+    //     await expect(isBobAllowed).to.be.equal(false);
+    //       await expect(tx_removeDelegate)
+    //       .to.emit(EPNSCoreV1Proxy, 'RemoveDelegate')
+    //       .withArgs(CHANNEL_CREATOR, BOB);
+    //   })
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
-      });
-
-      it("No one except a Delegate should be able to send notification on behalf of a Channel", async function(){
-        const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-        const tx =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
-        await expect(tx).to.be.revertedWith("Not authorised to send messages");
-      });
-
-      it("BOB Should be able to Send Delegated Notification once Allowed", async function(){
-        // Adding BOB As Delate Notification Seder
-        const tx_addDelegate =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(BOB);
-        const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
-        
-        // BOB Sending Delegated Notification
-        const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-        const tx_sendNotif =  await EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,ALICE,msg);
-        
-        await expect(tx_sendNotif)
-          .to.emit(EPNSCoreV1Proxy, 'SendNotification')
-          .withArgs(CHANNEL_CREATOR, ALICE, ethers.utils.hexlify(msg));
-        await expect(isBobAllowed).to.be.equal(true);
-        await expect(tx_addDelegate)
-          .to.emit(EPNSCoreV1Proxy, 'AddDelegate')
-          .withArgs(CHANNEL_CREATOR, BOB);
-      })
-      
-       it("BOB Should NOT be able to Send Delegated Notification once Permission is Revoked", async function(){
-        // Revoking Permission from BOB
-        const tx_removeDelegate =  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).removeDelegate(BOB);
-        const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
-
-        // BOB Sending Delegated Notification
-         const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-        const tx_sendNotif =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
-        
-
-        await expect(tx_sendNotif).to.be.revertedWith("Not authorised to send messages");
-        await expect(isBobAllowed).to.be.equal(false);
-          await expect(tx_removeDelegate)
-          .to.emit(EPNSCoreV1Proxy, 'RemoveDelegate')
-          .withArgs(CHANNEL_CREATOR, BOB);
-      })
 
 
-   
     });
   });
 });

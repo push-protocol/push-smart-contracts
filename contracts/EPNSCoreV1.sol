@@ -807,24 +807,24 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard  {
     function _createChannelWithFees(address _channel, ChannelType _channelType) private {
       // This module should be completely independent from the private _createChannel() so constructor can do it's magic
       // Get the approved allowance
-      uint allowedAllowance = IERC20(daiAddress).allowance(_channel, address(this));
-
-      // Check if it's equal or above Channel Pool Contribution
-      require(
-          allowedAllowance >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION && allowedAllowance <= ADD_CHANNEL_MAX_POOL_CONTRIBUTION,
-          "Insufficient Funds or max ceiling reached"
-      );
-
-      // Check and transfer funds
-      IERC20(daiAddress).safeTransferFrom(_channel, address(this), allowedAllowance);
-
-      // Call create channel after fees transfer
-      _createChannelAfterTransferOfFees(_channel, _channelType, allowedAllowance);
+      // uint allowedAllowance = IERC20(daiAddress).allowance(_channel, address(this));
+      //
+      // // Check if it's equal or above Channel Pool Contribution
+      // require(
+      //     allowedAllowance >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION && allowedAllowance <= ADD_CHANNEL_MAX_POOL_CONTRIBUTION,
+      //     "Insufficient Funds or max ceiling reached"
+      // );
+      //
+      // // Check and transfer funds
+      // IERC20(daiAddress).safeTransferFrom(_channel, address(this), allowedAllowance);
+      //
+      // // Call create channel after fees transfer
+      _createChannelAfterTransferOfFees(_channel, _channelType, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
     }
 
     function _createChannelAfterTransferOfFees(address _channel, ChannelType _channelType, uint _allowedAllowance) private {
       // Deposit funds to pool
-      _depositFundsToPool(_allowedAllowance);
+      // _depositFundsToPool(_allowedAllowance);
 
       // Call Create Channel
       _createChannel(_channel, _channelType, _allowedAllowance);

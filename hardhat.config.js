@@ -35,17 +35,16 @@ module.exports = {
 
   networks: {
     hardhat: {
-      // forking: {
-      //   url:
-      //     `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
-      // },
+      forking: {
+        url:
+          `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
+      },
     },
     localhost: {
-      url: "http://localhost:8545",
-      /*
-        notice no mnemonic here? it will just use account 0 of the buidler node to deploy
-        (you can put in a mnemonic here to set the deployer locally)
-      */
+      forking: {
+        url:
+          `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
+      },
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)

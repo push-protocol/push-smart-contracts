@@ -25,7 +25,7 @@ describe("Benchmaking Contracts", async function () {
   // Initialize
   before(async function () {
     [owner, alice, bob, charles, eventualAdmin] = await ethers.getSigners()
-    
+
     const TimeLock = await ethers.getContractFactory("Timelock");
     const TIMELOCK = await TimeLock.deploy(owner.address, delay);
 
@@ -40,10 +40,6 @@ describe("Benchmaking Contracts", async function () {
         changes: "EPNSCoreV1 Testing",
         args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
         functions: [
-          {
-            call: `_createChannelWithFees('${charles.address}',${CHANNEL_TYPE},'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
-            from: owner.address
-          },
           {
             call: `addToChannelizationWhitelist('${charles.address}')`,
             from: owner.address
@@ -140,7 +136,7 @@ describe("Benchmaking Contracts", async function () {
         const deployedContract = await Contract.deploy()
 
         const EPNSPROXYContract = await ethers.getContractFactory("EPNSProxy");
-        
+
         EPNSProxy = await EPNSPROXYContract.deploy(
           deployedContract.address,
           ...item.args
@@ -152,7 +148,7 @@ describe("Benchmaking Contracts", async function () {
           name: item.name,
           contract: deployedContractProxy,
           calls: item.functions
-        } 
+        }
         deployments.push(deployedProxy)
       }
 
