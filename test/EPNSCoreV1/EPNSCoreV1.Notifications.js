@@ -1,6 +1,12 @@
-const { ethers } = require("hardhat");
-const { use, expect } = require("chai");
-const { solidity } = require("ethereum-waffle");
+
+const hre = require("hardhat");
+
+const fs = require("fs");
+const chalk = require("chalk");
+const { config, ethers } = require("hardhat");
+
+const { expect } = require("chai")
+
 const {
   advanceBlockTo,
   latestBlock,
@@ -11,12 +17,11 @@ const {
 } = require("../time");
 const { calcChannelFairShare, calcSubscriberFairShare, getPubKey, bn, tokens, tokensBN, bnToInt, ChannelAction, readjustFairShareOfChannels, SubscriberAction, readjustFairShareOfSubscribers } = require("../../helpers/utils");
 
-use(solidity);
-
 describe("EPNSCoreV1 tests", function () {
-  const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
-  const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
-  const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
+  const AAVE_LENDING_POOL = "0x24a42fD28C976A61Df5D00D0599C34c4f90748c8"; // Mainnet Lending pool of AAVE, will work with mainnet fork only
+  const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f"; // Mainnet DAI Address, will work with mainnet fork only
+  const DAI_WHALE = '0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503'; // Mainnet DAI Whale address
+  const ADAI = "0xfC1E690f61EFd961294b3e1Ce3313fBD8aa4f85d"; // Mainnet aDAI Address, will work with mainnet fork only
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
@@ -56,14 +61,6 @@ describe("EPNSCoreV1 tests", function () {
   // time. It receives a callback, which can be async.
 
   before(async function (){
-    const MOCKDAITOKEN = await ethers.getContractFactory("MockDAI");
-    MOCKDAI = MOCKDAITOKEN.attach(DAI);
-
-    const ADAITOKENS = await ethers.getContractFactory("MockDAI");
-    ADAICONTRACT = ADAITOKENS.attach(ADAI);
-  });
-
-  beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     const [
       adminSigner,
@@ -85,7 +82,28 @@ describe("EPNSCoreV1 tests", function () {
     CHARLIE = await charlieSigner.getAddress();
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
-    const EPNSTOKEN = await ethers.getContractFactory("EPNS");
+    MOCKDAI = await ethers.getContractAt("MockDAI", DAI)
+    ADAICONTRACT = await ethers.getContractAt("MockDAI", ADAI)
+
+    // Connect and transfer DAI from DAI Whale
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [DAI_WHALE]}
+    )
+
+    const signer = await ethers.provider.getSigner(DAI_WHALE)
+
+    const balance = await MOCKDAI.balanceOf(DAI_WHALE)
+    console.log(chalk.gray(`    Transferring ${balance.toString()} DAI from ${DAI_WHALE} to ${ADMIN}`))
+
+    await MOCKDAI.connect(signer).transfer(ADMIN, balance)
+    const admin_balance = await MOCKDAI.balanceOf(ADMIN)
+
+    console.log(chalk.gray(`    New Balance of ${ADMIN} is ${admin_balance}`))
+  });
+
+  beforeEach(async function () {
+    const EPNSTOKEN = await ethers.getContractFactory("EPNS", {gasLimit: 15000000});
     EPNS = await EPNSTOKEN.deploy();
 
     const EPNSCoreV1 = await ethers.getContractFactory("EPNSCoreV1", {gasLimit: 15000000});
@@ -120,6 +138,13 @@ describe("EPNSCoreV1 tests", function () {
     EPNSCoreV1Proxy = null
   });
 
+  after(async function () {
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [DAI_WHALE]}
+    )
+  });
+
   describe("Testing send Notification related functions", function(){
     describe("Testing sendNotification", function(){
       beforeEach(async function(){
@@ -128,18 +153,18 @@ describe("EPNSCoreV1 tests", function () {
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
 
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await MOCKDAI.connect(ADMINSIGNER).transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+        const balance = await MOCKDAI.balanceOf(CHANNEL_CREATOR)
+        //console.log(chalk.gray(`        New Balance of ${CHANNEL_CREATOR} is ${balance}`))
+
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 5000000});
-
-        // await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(DELEGATED_CONTRACT_FEES);
-        // await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, DELEGATED_CONTRACT_FEES);
       });
 
       it("should revert if anyone other than owner calls the function", async function(){
         const msg = ethers.utils.toUtf8Bytes("This is notification message");
-        const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).sendNotification(BOB, msg);
-        await expect(tx).to.be.revertedWith("Channel doesn't Exists");
+        await expect(EPNSCoreV1Proxy.connect(CHARLIESIGNER).sendNotification(BOB, msg))
+          .to.be.revertedWith("Channel doesn't Exists");
       });
 
       it("should emit SendNotification when owner calls", async function(){
@@ -213,9 +238,6 @@ describe("EPNSCoreV1 tests", function () {
     //       .to.emit(EPNSCoreV1Proxy, 'RemoveDelegate')
     //       .withArgs(CHANNEL_CREATOR, BOB);
     //   })
-
-
-
-    });
+    // });
   });
 });
