@@ -19,6 +19,8 @@ describe("Benchmaking Contracts", async function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
   const CHANNEL_TYPE = 2;
+  const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
   // To load benchmarks
   let EPNSBenchmarks
 
@@ -41,26 +43,26 @@ describe("Benchmaking Contracts", async function () {
         args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
         functions: [
           {
-            call: `_createChannelWithFees('${charles.address}',${CHANNEL_TYPE},'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
+            call: `createChannelWithFees(${CHANNEL_TYPE},${testChannel}'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
             from: owner.address
           },
           {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
+            call: `createChannelWithFees(${CHANNEL_TYPE},${testChannel}'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
             from: owner.address
           },
           {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
+            call: `createChannelWithFees(${CHANNEL_TYPE},${testChannel}'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
             from: owner.address
           },
           {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
+            call: `createChannelWithFees(${CHANNEL_TYPE},${testChannel}'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
             from: owner.address
           },
         ]
       },
       {
-        name: "EPNSCoreV1",
-        changes: "EPNSCoreV2 Testing",
+        name: "EPNSStagingV1",
+        changes: "EPNS_StagingV1 Testing",
         args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
         functions: [
           {
@@ -81,52 +83,52 @@ describe("Benchmaking Contracts", async function () {
           },
         ]
       },
-      {
-        name: "EPNSCoreV1",
-        changes: "EPNSCoreV3 Testing",
-        args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
-        functions: [
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-        ]
-      },
-      {
-        name: "EPNSCoreV1",
-        changes: "EPNSCoreV4 Testing",
-        args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
-        functions: [
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-          {
-            call: `addToChannelizationWhitelist('${charles.address}')`,
-            from: owner.address
-          },
-        ]
-      },
+      // {
+      //   name: "EPNSCoreV1",
+      //   changes: "EPNSCoreV3 Testing",
+      //   args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
+      //   functions: [
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //   ]
+      // },
+      // {
+      //   name: "EPNSCoreV1",
+      //   changes: "EPNSCoreV4 Testing",
+      //   args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
+      //   functions: [
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //     {
+      //       call: `addToChannelizationWhitelist('${charles.address}')`,
+      //       from: owner.address
+      //     },
+      //   ]
+      // },
     ]
   })
 
@@ -168,7 +170,7 @@ describe("Benchmaking Contracts", async function () {
         for (const func of item.calls) {
           const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
-          let execute = new AsyncFunction('contract', 'func', `await contract.${func.call}`)
+          let execute = new AsyncFunction(`contract`,`func`,`await contract.${func.call}`)
           const tx = await execute(contract, func)
         }
       }
