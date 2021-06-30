@@ -83,52 +83,29 @@ describe("Benchmaking Contracts", async function () {
           },
         ]
       },
-      // {
-      //   name: "EPNSCoreV1",
-      //   changes: "EPNSCoreV3 Testing",
-      //   args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
-      //   functions: [
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //   ]
-      // },
-      // {
-      //   name: "EPNSCoreV1",
-      //   changes: "EPNSCoreV4 Testing",
-      //   args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
-      //   functions: [
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //     {
-      //       call: `addToChannelizationWhitelist('${charles.address}')`,
-      //       from: owner.address
-      //     },
-      //   ]
-      // },
+      {
+        name: "EPNSStagingV1",
+        changes: "EPNSCoreV3 Testing",
+        args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
+        functions: [
+          {
+            call: `addToChannelizationWhitelist('${charles.address}')`,
+            from: owner.address
+          },
+          {
+            call: `addToChannelizationWhitelist('${charles.address}')`,
+            from: owner.address
+          },
+          {
+            call: `addToChannelizationWhitelist('${charles.address}')`,
+            from: owner.address
+          },
+          {
+            call: `addToChannelizationWhitelist('${charles.address}')`,
+            from: owner.address
+          },
+        ]
+      },
     ]
   })
 
@@ -170,7 +147,7 @@ describe("Benchmaking Contracts", async function () {
         for (const func of item.calls) {
           const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
 
-          let execute = new AsyncFunction(`contract`,`func`,`await contract.${func.call}`)
+          let execute = new AsyncFunction('contract', 'func', + `await contract.${func.call}`)
           const tx = await execute(contract, func)
         }
       }
