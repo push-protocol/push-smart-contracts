@@ -120,150 +120,90 @@ describe("EPNSCoreV1 tests", function () {
     EPNSCoreV1Proxy = null
   });
 
-  describe("Testing broadcastUserPublicKey", function(){
-    it("Should broadcast user public key", async function(){
-      const publicKey = await getPubKey(BOBSIGNER)
+  // describe("Testing broadcastUserPublicKey", function(){
+  //   it("Should broadcast user public key", async function(){
+  //     const publicKey = await getPubKey(BOBSIGNER)
 
-      const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
-      const user = await EPNSCoreV1Proxy.users(BOB)
+  //     const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //     const user = await EPNSCoreV1Proxy.users(BOB)
 
-      expect(user.publicKeyRegistered).to.equal(true);
-    });
+  //     expect(user.publicKeyRegistered).to.equal(true);
+  //   });
 
-    it("Should emit PublicKeyRegistered when broadcast user public key", async function(){
-      const publicKey = await getPubKey(BOBSIGNER)
+  //   it("Should emit PublicKeyRegistered when broadcast user public key", async function(){
+  //     const publicKey = await getPubKey(BOBSIGNER)
 
-      const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //     const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
 
-      await expect(tx)
-      .to.emit(EPNSCoreV1Proxy, 'PublicKeyRegistered')
-      .withArgs(BOB, ethers.utils.hexlify(publicKey.slice(1)))
-    });
+  //     await expect(tx)
+  //     .to.emit(EPNSCoreV1Proxy, 'PublicKeyRegistered')
+  //     .withArgs(BOB, ethers.utils.hexlify(publicKey.slice(1)))
+  //   });
 
-    it("Should not broadcast user public key twice", async function(){
-      const publicKey = await getPubKey(BOBSIGNER)
-      await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
-      const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //   it("Should not broadcast user public key twice", async function(){
+  //     const publicKey = await getPubKey(BOBSIGNER)
+  //     await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //     const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
       
-      await expect(tx)
-      .to.not.emit(EPNSCoreV1Proxy, 'PublicKeyRegistered')
-      .withArgs(BOB, ethers.utils.hexlify(publicKey.slice(1)))
-    });
+  //     await expect(tx)
+  //     .to.not.emit(EPNSCoreV1Proxy, 'PublicKeyRegistered')
+  //     .withArgs(BOB, ethers.utils.hexlify(publicKey.slice(1)))
+  //   });
 
-    it("Should revert if broadcast user public does not match with sender address", async function(){
-      const publicKey = await getPubKey(ALICESIGNER)
-      const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //   it("Should revert if broadcast user public does not match with sender address", async function(){
+  //     const publicKey = await getPubKey(ALICESIGNER)
+  //     const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
       
-      await expect(tx).to.be.revertedWith("Public Key Validation Failed")
-    });
+  //     await expect(tx).to.be.revertedWith("Public Key Validation Failed")
+  //   });
 
-    it("Should update relevant details after broadcast public key", async function(){
-      const publicKey = await getPubKey(BOBSIGNER)
+  //   it("Should update relevant details after broadcast public key", async function(){
+  //     const publicKey = await getPubKey(BOBSIGNER)
 
-      const usersCountBefore = await EPNSCoreV1Proxy.usersCount()
-      const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+  //     const usersCountBefore = await EPNSCoreV1Proxy.usersCount()
+  //     const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
       
-      const user = await EPNSCoreV1Proxy.users(BOB);
-      const usersCountAfter = await EPNSCoreV1Proxy.usersCount()
+  //     const user = await EPNSCoreV1Proxy.users(BOB);
+  //     const usersCountAfter = await EPNSCoreV1Proxy.usersCount()
 
-      expect(user.userStartBlock).to.equal(tx.blockNumber);
-      expect(user.userActivated).to.equal(true);
+  //     expect(user.userStartBlock).to.equal(tx.blockNumber);
+  //     expect(user.userActivated).to.equal(true);
 
-      expect(usersCountBefore.add(1)).to.equal(usersCountAfter);
-    });
-  });
+  //     expect(usersCountBefore.add(1)).to.equal(usersCountAfter);
+  //   });
+  // });
 
-  describe("Testing funds functions", function(){
-    describe("Testing withdrawDaiFunds", function(){
-      beforeEach(async function(){
-        const CHANNEL_TYPE = 2;
-        const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+  // describe("Testing funds functions", function(){
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
+  //   describe("Testing withdrawEthFunds", function(){
+  //     beforeEach(async function(){
+  //       const CHANNEL_TYPE = 2;
+  //       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+  //       await CHANNEL_CREATORSIGNER.sendTransaction({
+  //         from: CHANNEL_CREATOR,
+  //         to: EPNSCoreV1Proxy.address,
+  //         value: ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+  //       });
+  //       await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+  //       await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+  //       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+  //     });
+
+  //     it("should revert if anyone other than gov calls the function", async function(){
+  //       const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).withdrawEthFunds();
+  //       await expect(tx).to.be.revertedWith("EPNSCore::onlyGov, user is not governance");
+  //     });
+
+  //     it("should emit Withdrawal when gov calls the function", async function(){
+  //       const tx = EPNSCoreV1Proxy.withdrawEthFunds();
         
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(DELEGATED_CONTRACT_FEES);
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, DELEGATED_CONTRACT_FEES);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).subscribeDelegated(CHANNEL_CREATOR, BOB);
-      });
-
-      it("should revert if anyone other than gov calls the function", async function(){
-        const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).withdrawDaiFunds();
-        await expect(tx).to.be.revertedWith("EPNSCore::onlyGov, user is not governance");
-      });
-
-      it("should withdraw dai funds and update correct values", async function(){
-
-        const ownerDaiFundsBefore = await EPNSCoreV1Proxy.ownerDaiFunds();
-        const proxyDaiBalanceBefore = await MOCKDAI.balanceOf(EPNSCoreV1Proxy.address);
-        const govDaiBalanceBefore = await MOCKDAI.balanceOf(ADMIN);
-
-        await EPNSCoreV1Proxy.withdrawDaiFunds();
-
-        const ownerDaiFundsAfter = await EPNSCoreV1Proxy.ownerDaiFunds();
-        const proxyDaiBalanceAfter = await MOCKDAI.balanceOf(EPNSCoreV1Proxy.address);
-        const govDaiBalanceAfter = await MOCKDAI.balanceOf(ADMIN);
-
-        // expect(ownerDaiFundsBefore.sub(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)).to.equal(ownerDaiFundsAfter);
-        expect(proxyDaiBalanceBefore.sub(DELEGATED_CONTRACT_FEES)).to.equal(proxyDaiBalanceAfter);
-        expect(govDaiBalanceBefore.add(DELEGATED_CONTRACT_FEES)).to.equal(govDaiBalanceAfter);
-      });
-
-      it("should emit Withdrawal when gov calls the function", async function(){
-        const tx = EPNSCoreV1Proxy.withdrawDaiFunds();
-        
-        await expect(tx)
-          .to.emit(EPNSCoreV1Proxy, 'Withdrawal')
-          .withArgs(ADMIN, MOCKDAI.address, DELEGATED_CONTRACT_FEES);
-      });
-    });
-
-    describe("Testing withdrawEthFunds", function(){
-      beforeEach(async function(){
-        const CHANNEL_TYPE = 2;
-        const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-        await CHANNEL_CREATORSIGNER.sendTransaction({
-          from: CHANNEL_CREATOR,
-          to: EPNSCoreV1Proxy.address,
-          value: ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-        });
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, {gasLimit: 2000000});
-      });
-
-      it("should revert if anyone other than gov calls the function", async function(){
-        const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).withdrawEthFunds();
-        await expect(tx).to.be.revertedWith("EPNSCore::onlyGov, user is not governance");
-      });
-
-      // it("should withdraw dai funds and update correct values", async function(){
-      //   const govEthBalanceBefore = await ADMINSIGNER.getBalance();
-      //   console.log("qqqwqqw",govEthBalanceBefore.toString())
-      //   const tx = await EPNSCoreV1Proxy.withdrawEthFunds();
-      //   console.log(tx, "tx")
-      //   const txFees = tx.gasPrice.mul(tx.gasLimit);
-      //   console.log(txFees.toString())
-      //   console.log("ADmin", ADD_CHANNEL_MIN_POOL_CONTRIBUTION.toString());
-      //   const govEthBalanceAfter = await ADMINSIGNER.getBalance();
-      //   console.log("qwew",govEthBalanceAfter.toString())
-      //   expect(govEthBalanceBefore.sub(txFees).add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)).to.equal(govEthBalanceAfter);
-      // });
-
-      it("should emit Withdrawal when gov calls the function", async function(){
-        const tx = EPNSCoreV1Proxy.withdrawEthFunds();
-        
-        await expect(tx)
-          .to.emit(EPNSCoreV1Proxy, 'Withdrawal')
-          .withArgs(ADMINSIGNER.address, MOCKDAI.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      });
-    });
-  });
+  //       await expect(tx)
+  //         .to.emit(EPNSCoreV1Proxy, 'Withdrawal')
+  //         .withArgs(ADMINSIGNER.address, MOCKDAI.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+  //     });
+  //   });
+  // });
 
   describe("Testing getter functions", function(){
     it("should return the correct address from public key", async function(){
@@ -275,7 +215,6 @@ describe("EPNSCoreV1 tests", function () {
 
     it("should return true if member exists", async function(){
       const CHANNEL_TYPE = 2;
-      await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
       
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");        
 
@@ -283,7 +222,7 @@ describe("EPNSCoreV1 tests", function () {
       await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
       const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-      const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+      const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1),ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
       await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
 
       const exists = await EPNSCoreV1Proxy.memberExists(BOB, CHANNEL_CREATOR);
@@ -293,14 +232,13 @@ describe("EPNSCoreV1 tests", function () {
     describe("testing getChannelFSRatio", function(){
       it("should return correct values for getChannelFSRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");        
 
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1),ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         const subsTx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
 
         const ratioContract = await EPNSCoreV1Proxy.getChannelFSRatio(CHANNEL_CREATOR, subsTx.blockNumber)
@@ -326,14 +264,13 @@ describe("EPNSCoreV1 tests", function () {
 
       it("randomised test cases for getChannelFSRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1),ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const randomEntrance = [
           [BOB, BOBSIGNER, bn(Math.floor(Math.random() * 100))],
@@ -345,7 +282,7 @@ describe("EPNSCoreV1 tests", function () {
         for (let x = 0; x < randomEntrance.length; x++) {
           const [signerAddress, signer, blockDiff] = randomEntrance[x];
 
-          const advanceTo = currentBlock.add(blockDiff)
+          const advanceTo = currentBlock.add(blockDiff.add(200))
           const subsTx = await EPNSCoreV1Proxy.connect(signer).subscribe(CHANNEL_CREATOR);
           await advanceBlockTo(advanceTo.toString());
 
@@ -375,7 +312,6 @@ describe("EPNSCoreV1 tests", function () {
     describe("testing getSubscriberFSRatio", function(){
       it("should return correct values for getSubscriberFSRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");        
 
@@ -383,7 +319,7 @@ describe("EPNSCoreV1 tests", function () {
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         const subsTx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
 
         const getRatioContract = await EPNSCoreV1Proxy.getSubscriberFSRatio(CHANNEL_CREATOR, BOB, subsTx.blockNumber)
@@ -403,14 +339,13 @@ describe("EPNSCoreV1 tests", function () {
 
       it("randomised test cases for getSubscriberFSRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const randomEntrance = [
           [BOB, BOBSIGNER, bn(Math.floor(Math.random() * 100))],
@@ -421,7 +356,7 @@ describe("EPNSCoreV1 tests", function () {
         for (let x = 0; x < randomEntrance.length; x++) {
           const [signerAddress, signer, blockDiff] = randomEntrance[x];
 
-          const advanceTo = currentBlock.add(blockDiff)
+          const advanceTo = currentBlock.add(blockDiff.add(1000))
           const subsTx = await EPNSCoreV1Proxy.connect(signer).subscribe(CHANNEL_CREATOR);
           await advanceBlockTo(advanceTo.toString());
 
@@ -451,7 +386,6 @@ describe("EPNSCoreV1 tests", function () {
     describe("testing calcSingleChannelEarnRatio", function(){
       it("should return correct values for calcSingleChannelEarnRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");        
 
@@ -459,7 +393,7 @@ describe("EPNSCoreV1 tests", function () {
         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         const subsTx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         
         const channelFSRatio = await EPNSCoreV1Proxy.getChannelFSRatio(CHANNEL_CREATOR, subsTx.blockNumber)
@@ -474,7 +408,6 @@ describe("EPNSCoreV1 tests", function () {
     describe("testing calcAllChannelsRatio", function(){
       it("should return correct values for calcAllChannelsRatio", async function(){
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
         
         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");        
 
@@ -485,7 +418,7 @@ describe("EPNSCoreV1 tests", function () {
         const subscribedCount = user.subscribedCount;
         
         const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), {gasLimit: 2000000});
+        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFeesAndPublicKey(CHANNEL_TYPE, testChannel, publicKey.slice(1), ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         const subsTx = await EPNSCoreV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
         
         const channelFSRatio = await EPNSCoreV1Proxy.getChannelFSRatio(CHANNEL_CREATOR, subsTx.blockNumber)
