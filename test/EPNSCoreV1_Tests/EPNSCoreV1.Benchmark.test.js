@@ -47,7 +47,7 @@ describe("Benchmaking Contracts", async function () {
             from: owner.address
           },
           {
-            call: `createChannelWithFees(${CHANNEL_TYPE},${testChannel}'${ADD_CHANNEL_MIN_POOL_CONTRIBUTION}')`,
+            call: `createPromoterChannel()`,
             from: owner.address
           },
           {
