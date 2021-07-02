@@ -879,8 +879,8 @@
       ]
     },
     "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV4.sol": {
-      "lastModificationDate": 1625234641930,
-      "contentHash": "ba4129c8bfddf78b57f6f5fc06ad5a83",
+      "lastModificationDate": 1625235449445,
+      "contentHash": "620e4ac9212667b2802955a9bbdae230",
       "sourceName": "contracts/EPNS_StagingV4.sol",
       "solcConfig": {
         "version": "0.6.11",

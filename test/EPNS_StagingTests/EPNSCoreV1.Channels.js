@@ -186,17 +186,6 @@ describe("EPNSStagingV4 Channel tests", function () {
   
         await expect(tx).to.be.revertedWith("Insufficient Funds or max ceiling reached")
       });
-
-      it("should revert if allowance is greater than max fees", async function(){
-        const CHANNEL_TYPE = 2;
-  
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MAX_POOL_CONTRIBUTION.add(ADD_CHANNEL_MAX_POOL_CONTRIBUTION));
-        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MAX_POOL_CONTRIBUTION.add(ADD_CHANNEL_MAX_POOL_CONTRIBUTION));
-  
-        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MAX_POOL_CONTRIBUTION.add(ADD_CHANNEL_MAX_POOL_CONTRIBUTION));
-  
-        await expect(tx).to.be.revertedWith("Insufficient Funds or max ceiling reached")
-      });
     
         it("should revert if amount being transferred is greater than actually approved", async function(){
         const CHANNEL_TYPE = 2;
@@ -849,7 +838,8 @@ describe("EPNSStagingV4 Channel tests", function () {
         const userSubscribed = await EPNSCoreV1Proxy.memberExists(CHANNEL_CREATOR, CHANNEL_CREATOR);
         expect(userSubscribed).to.equal(true);
       });
-    });
+    
+  });
 
 });
 });
