@@ -13,7 +13,7 @@ const { calcChannelFairShare, calcSubscriberFairShare, getPubKey, bn, tokens, to
 
 use(solidity);
 
-describe("EPNSCoreV1 tests", function () {
+describe("EPNSStagingV4 tests", function () {
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
   const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
   const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
@@ -88,8 +88,8 @@ describe("EPNSCoreV1 tests", function () {
     const EPNSTOKEN = await ethers.getContractFactory("EPNS");
     EPNS = await EPNSTOKEN.deploy();
 
-    const EPNSCoreV1 = await ethers.getContractFactory("EPNSCoreV1");
-    LOGIC = await EPNSCoreV1.deploy();
+    const EPNSStagingV4 = await ethers.getContractFactory("EPNSStagingV4");
+    LOGIC = await EPNSStagingV4.deploy();
 
     const TimeLock = await ethers.getContractFactory("Timelock");
     TIMELOCK = await TimeLock.deploy(ADMIN, delay);
@@ -109,7 +109,7 @@ describe("EPNSCoreV1 tests", function () {
     );
 
     await EPNSProxy.changeAdmin(ALICESIGNER.address);
-    EPNSCoreV1Proxy = EPNSCoreV1.attach(EPNSProxy.address)
+    EPNSCoreV1Proxy = EPNSStagingV4.attach(EPNSProxy.address)
   });
 
   afterEach(function () {

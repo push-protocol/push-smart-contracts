@@ -38,8 +38,8 @@ describe("Benchmaking Contracts", async function () {
     // Define all benchmarks
     EPNSBenchmarks = [
       {
-        name: "EPNSCoreV1",
-        changes: "EPNSCoreV1 Testing",
+        name: "EPNSStagingV4",
+        changes: "EPNSStagingV4 Testing",
         args: [owner.address, AAVE_LENDING_POOL, DAI, ADAI, referralCode],
         functions: [
           {
