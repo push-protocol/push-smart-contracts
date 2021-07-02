@@ -289,52 +289,8 @@
         "Address"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNSCoreV1.sol": {
-      "lastModificationDate": 1624952611257,
-      "contentHash": "061e6a5bcc9c08dfd4da67473e94d6af",
-      "sourceName": "contracts/EPNSCoreV1.sol",
-      "solcConfig": {
-        "version": "0.6.11",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/math/SafeMath.sol",
-        "@openzeppelin/contracts/proxy/Initializable.sol",
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
-        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        ">=0.6.0 <0.7.0"
-      ],
-      "artifacts": [
-        "EPNSCoreV1",
-        "IEPNSCore",
-        "ILendingPool",
-        "ILendingPoolAddressesProvider"
-      ]
-    },
     "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV3.sol": {
-      "lastModificationDate": 1624952611265,
+      "lastModificationDate": 1625234602482,
       "contentHash": "a7108f5e11354d0964489f0732c4f28b",
       "sourceName": "contracts/EPNS_StagingV3.sol",
       "solcConfig": {
@@ -920,6 +876,50 @@
       ],
       "artifacts": [
         "VersionedInitializable"
+      ]
+    },
+    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV4.sol": {
+      "lastModificationDate": 1625234641930,
+      "contentHash": "ba4129c8bfddf78b57f6f5fc06ad5a83",
+      "sourceName": "contracts/EPNS_StagingV4.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts/proxy/Initializable.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSStagingV4",
+        "IEPNSCore",
+        "ILendingPool",
+        "ILendingPoolAddressesProvider"
       ]
     }
   }
