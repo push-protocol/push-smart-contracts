@@ -486,8 +486,7 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     function _createChannelWithFees(address _channel, ChannelType _channelType, uint256 _amount) private {
       // Check if it's equal or above Channel Pool Contribution
       // removed allowance -
-      require(
-          _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,"Insufficient Funds or max ceiling reached");
+      require(_amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,"Insufficient Funds or max ceiling reached");
       // Check and transfer funds
       IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
 
