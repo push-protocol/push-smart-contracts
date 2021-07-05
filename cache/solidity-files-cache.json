@@ -1,8 +1,8 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV1.sol": {
-      "lastModificationDate": 1625149392519,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNS_StagingV1.sol": {
+      "lastModificationDate": 1624962512980,
       "contentHash": "11b459f880cede7891a7ed6ff9d5b366",
       "sourceName": "contracts/EPNS_StagingV1.sol",
       "solcConfig": {
@@ -45,8 +45,8 @@
         "ILendingPoolAddressesProvider"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
-      "lastModificationDate": 1624952657697,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1625474576044,
       "contentHash": "e03e12206057e809eb76c5f681170c32",
       "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
       "solcConfig": {
@@ -79,8 +79,8 @@
         "SafeMath"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Initializable.sol": {
-      "lastModificationDate": 1624952654753,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Initializable.sol": {
+      "lastModificationDate": 1625474575979,
       "contentHash": "1efacd801320f8f9413700ddbcf00647",
       "sourceName": "@openzeppelin/contracts/proxy/Initializable.sol",
       "solcConfig": {
@@ -115,8 +115,8 @@
         "Initializable"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1624952654269,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1625474575931,
       "contentHash": "e0a41531d159d3a32f84b7a3ecf9fabb",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
@@ -149,8 +149,8 @@
         "IERC20"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
-      "lastModificationDate": 1624952657549,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
+      "lastModificationDate": 1625474576039,
       "contentHash": "33e22842646d746e5c4124c2fdc051aa",
       "sourceName": "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
       "solcConfig": {
@@ -187,8 +187,8 @@
         "SafeERC20"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
-      "lastModificationDate": 1624952656629,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
+      "lastModificationDate": 1625474576030,
       "contentHash": "1c60f58cee45c61469e1aea31e4dd879",
       "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
       "solcConfig": {
@@ -221,8 +221,8 @@
         "ReentrancyGuard"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1624952694794,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1625474577325,
       "contentHash": "cc4777addd464ea56fa35b1c45df0591",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
@@ -255,8 +255,8 @@
         "console"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1624952649706,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1625474575584,
       "contentHash": "7aa46886ff5abe7515496208a5e2ce5a",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
@@ -289,8 +289,52 @@
         "Address"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV3.sol": {
-      "lastModificationDate": 1625234602482,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNS_StagingV4.sol": {
+      "lastModificationDate": 1625468248225,
+      "contentHash": "d959ccbefe6894eb89a05fa5443b4961",
+      "sourceName": "contracts/EPNS_StagingV4.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts/proxy/Initializable.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+        "hardhat/console.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSStagingV4",
+        "IEPNSCore",
+        "ILendingPool",
+        "ILendingPoolAddressesProvider"
+      ]
+    },
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNS_StagingV3.sol": {
+      "lastModificationDate": 1624962512981,
       "contentHash": "a7108f5e11354d0964489f0732c4f28b",
       "sourceName": "contracts/EPNS_StagingV3.sol",
       "solcConfig": {
@@ -333,8 +377,8 @@
         "ILendingPoolAddressesProvider"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV2.sol": {
-      "lastModificationDate": 1624952611265,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNS_StagingV2.sol": {
+      "lastModificationDate": 1624962512980,
       "contentHash": "37b304871f656acac5a917afa75fabcd",
       "sourceName": "contracts/EPNS_StagingV2.sol",
       "solcConfig": {
@@ -377,8 +421,8 @@
         "ILendingPoolAddressesProvider"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1624952650926,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1625474575763,
       "contentHash": "8065b340476f61365c076897199425f1",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
@@ -415,8 +459,8 @@
         "ERC20"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1624952650038,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1625474575622,
       "contentHash": "2adbd82f6d055a4751566d4671512b03",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -449,8 +493,8 @@
         "Context"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1624952655881,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1625474576004,
       "contentHash": "6748815a5b45c4aeeda56819f41190e0",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -485,8 +529,8 @@
         "Ownable"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/ProxyAdmin.sol": {
-      "lastModificationDate": 1624952656533,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/ProxyAdmin.sol": {
+      "lastModificationDate": 1625474576021,
       "contentHash": "61e1e11a965a3a8df0f2252ea2828584",
       "sourceName": "@openzeppelin/contracts/proxy/ProxyAdmin.sol",
       "solcConfig": {
@@ -522,8 +566,8 @@
         "ProxyAdmin"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
-      "lastModificationDate": 1624952658109,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
+      "lastModificationDate": 1625474576069,
       "contentHash": "572da86d0eb185b41f85df7d2d75378b",
       "sourceName": "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol",
       "solcConfig": {
@@ -558,8 +602,8 @@
         "TransparentUpgradeableProxy"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
-      "lastModificationDate": 1624952658185,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
+      "lastModificationDate": 1625474576074,
       "contentHash": "c163cbd51d0173b71c8137b0ddf1e0ba",
       "sourceName": "@openzeppelin/contracts/proxy/UpgradeableProxy.sol",
       "solcConfig": {
@@ -595,8 +639,8 @@
         "UpgradeableProxy"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
-      "lastModificationDate": 1624952656513,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
+      "lastModificationDate": 1625474576016,
       "contentHash": "52841a5095656ecbf7bc86cd6c114699",
       "sourceName": "@openzeppelin/contracts/proxy/Proxy.sol",
       "solcConfig": {
@@ -629,8 +673,8 @@
         "Proxy"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNSProxy.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSProxy.sol": {
+      "lastModificationDate": 1624962512980,
       "contentHash": "63f55beeccfa82e4fa1a52463d02837c",
       "sourceName": "contracts/EPNSProxy.sol",
       "solcConfig": {
@@ -665,8 +709,8 @@
         "EPNSProxy"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNSAdmin.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSAdmin.sol": {
+      "lastModificationDate": 1624530375566,
       "contentHash": "b25382a7b43387c6b7507751312f0051",
       "sourceName": "contracts/EPNSAdmin.sol",
       "solcConfig": {
@@ -701,10 +745,10 @@
         "EPNSAdmin"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/MockDai.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/mocks/MockDai.sol": {
+      "lastModificationDate": 1625483277532,
       "contentHash": "ee92f38bb2ffc4440abb131bf28b5005",
-      "sourceName": "contracts/MockDai.sol",
+      "sourceName": "contracts/mocks/MockDai.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
@@ -739,42 +783,8 @@
         "MockDAI"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS.sol": {
-      "lastModificationDate": 1624952611257,
-      "contentHash": "a5f3fbe564dd1c431f510ed35b2679e7",
-      "sourceName": "contracts/EPNS.sol",
-      "solcConfig": {
-        "version": "0.6.11",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.6.0 <0.7.0"
-      ],
-      "artifacts": [
-        "EPNS"
-      ]
-    },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/GovernorAlpha.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/GovernorAlpha.sol": {
+      "lastModificationDate": 1624962512981,
       "contentHash": "d544d9056824d99f9c4d80617a528d3e",
       "sourceName": "contracts/GovernorAlpha.sol",
       "solcConfig": {
@@ -809,8 +819,8 @@
         "TimelockInterface"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/Timelock.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/Timelock.sol": {
+      "lastModificationDate": 1624962512981,
       "contentHash": "8ed9ed69d8e3963be69376ea1adb8f08",
       "sourceName": "contracts/Timelock.sol",
       "solcConfig": {
@@ -844,8 +854,42 @@
         "Timelock"
       ]
     },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/VerzionedInitializable.sol": {
-      "lastModificationDate": 1624952611261,
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/token/EPNS.sol": {
+      "lastModificationDate": 1625483256958,
+      "contentHash": "a317bac9c0aed77179bc6977d5c575d4",
+      "sourceName": "contracts/token/EPNS.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.11"
+      ],
+      "artifacts": [
+        "EPNS"
+      ]
+    },
+    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/VerzionedInitializable.sol": {
+      "lastModificationDate": 1624962512982,
       "contentHash": "8d88d014b6c3607d9718f1eda5a395d4",
       "sourceName": "contracts/VerzionedInitializable.sol",
       "solcConfig": {
@@ -876,50 +920,6 @@
       ],
       "artifacts": [
         "VersionedInitializable"
-      ]
-    },
-    "/home/zaryab/blockchain_begins/all_about_ethereum/EPNS_begins/onlySELF/epns_Staging_toHardhat/epns-protocol-staging/contracts/EPNS_StagingV4.sol": {
-      "lastModificationDate": 1625235449445,
-      "contentHash": "620e4ac9212667b2802955a9bbdae230",
-      "sourceName": "contracts/EPNS_StagingV4.sol",
-      "solcConfig": {
-        "version": "0.6.11",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/math/SafeMath.sol",
-        "@openzeppelin/contracts/proxy/Initializable.sol",
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
-        "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
-        "hardhat/console.sol"
-      ],
-      "versionPragmas": [
-        ">=0.6.0 <0.7.0"
-      ],
-      "artifacts": [
-        "EPNSStagingV4",
-        "IEPNSCore",
-        "ILendingPool",
-        "ILendingPoolAddressesProvider"
       ]
     }
   }

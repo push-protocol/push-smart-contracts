@@ -20,7 +20,7 @@ build
 
 # misc
 .DS_Store
-.env*
+.env
 
 # debug
 npm-debug.log*
@@ -30,3 +30,7 @@ yarn-error.log*
 .idea
 /cache
 /wallets/*.txt
+/artifacts
+.txt
+package-lock.json
+yarn.lock

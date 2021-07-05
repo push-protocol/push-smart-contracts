@@ -1,4 +1,5 @@
-const { utils } = require("ethers");
+// Load Libraries
+const chalk = require('chalk');
 const fs = require("fs");
 
 require("@nomiclabs/hardhat-waffle");
@@ -6,20 +7,18 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 
-const { isAddress, getAddress, formatUnits, parseUnits } = utils;
+const { ethers } = require("ethers");
+const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
 
-/*
-📡 This is where you configure your deploy configuration for 🏗 scaffold-eth
+// Check ENV File first and load ENV
+verifyENV();
+async function verifyENV() {
+  const envVerifierLoader = require('./loaders/envVerifier');
+  envVerifierLoader(true);
+}
 
-check out `packages/scripts/deploy.js` to customize your deployment
+require('dotenv').config();
 
-out of the box it will auto deploy anything in the `contracts` folder and named *.sol
-plus it will use *.args for constructor args
-*/
-
-//
-// Select the network you want to deploy to here:
-//
 const defaultNetwork = "hardhat";
 
 function mnemonic() {
@@ -47,8 +46,8 @@ module.exports = {
     hardhat: {
       forking: {
         url:
-          "https://eth-ropsten.alchemyapi.io/v2/tezbMNziquI9pIY267iqY868SlHvvgQR",
-        blockNumber: 10191400
+          `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
+          blockNumber: 10191400
       },
     },
     localhost: {
@@ -59,22 +58,20 @@ module.exports = {
       */
     },
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/55ff6a94e665489384d0245fc6edc3fa", // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
     },
     ropsten: {
-      url: "https://ropsten.infura.io/v3/55ff6a94e665489384d0245fc6edc3fa", // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
     },
     mainnet: {
-      url: "https://mainnet.infura.io/v3/55ff6a94e665489384d0245fc6edc3fa", // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: getPrivateKey(),
     },
     xdai: {
       url: "https://dai.poa.network",
@@ -99,8 +96,8 @@ module.exports = {
     },
   },
 };
-
-const DEBUG = false;
+// ENABLE / DISABLE DEBUG
+const DEBUG = true;
 
 function debug(text) {
   if (DEBUG) {
@@ -108,38 +105,89 @@ function debug(text) {
   }
 }
 
+// To Generate mnemonic
+function mnemonic() {
+  try {
+    return fs.readFileSync("./wallets/main_mnemonic.txt").toString().trim();
+  } catch (e) {
+    if (defaultNetwork !== "localhost") {
+      console.log(
+        "☢️ WARNING: No mnemonic file created for a deploy account. Try `npx hardhat generate` and then `npx hardhat account`."
+      );
+    }
+  }
+  return "";
+}
+
+function getPrivateKey() {
+  try {
+    const key = fs.readFileSync("./wallets/main_privateKey.txt").toString().trim();
+    return [key];
+  } catch (e) {
+    if (defaultNetwork !== "localhost") {
+      console.log(
+        "☢️ WARNING: No mnemonic / private key file created for a deploy account. Try `npx hardhat generate` and then `npx hardhat account`."
+      );
+    }
+  }
+
+  return "";
+}
+
 task(
   "generate",
-  "Create a mnemonic for hardhat deploys",
+  "Create a mnemonic for builder deploys",
   async (_, { ethers }) => {
-    const bip39 = require("bip39");
-    const hdkey = require("ethereumjs-wallet/hdkey");
-    const mnemonic = bip39.generateMnemonic();
-    if (DEBUG) console.log("mnemonic", mnemonic);
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    if (DEBUG) console.log("seed", seed);
-    const hdwallet = hdkey.fromMasterSeed(seed);
-    const wallet_hdpath = "m/44'/60'/0'/0/";
-    const account_index = 0;
-    const fullPath = wallet_hdpath + account_index;
-    if (DEBUG) console.log("fullPath", fullPath);
-    const wallet = hdwallet.derivePath(fullPath).getWallet();
-    const privateKey = "0x" + wallet._privKey.toString("hex");
-    if (DEBUG) console.log("privateKey", privateKey);
-    const EthUtil = require("ethereumjs-util");
-    const address =
-      "0x" + EthUtil.privateToAddress(wallet._privKey).toString("hex");
-    console.log(
-      "🔐 Account Generated as " +
-        address +
-        ".txt and set as mnemonic in packages/buidler"
-    );
-    console.log(
-      "💬 Use 'yarn run account' to get more information about the deployment account."
-    );
+    const generate = async (isSecondary) => {
+      const bip39 = require("bip39");
+      const { hdkey } = require('ethereumjs-wallet')
 
-    fs.writeFileSync("./" + address + ".txt", mnemonic.toString());
-    fs.writeFileSync("./mnemonic.txt", mnemonic.toString());
+      const mnemonic = bip39.generateMnemonic();
+      const seed = await bip39.mnemonicToSeed(mnemonic);
+      const hdwallet = hdkey.fromMasterSeed(seed);
+      const wallet_hdpath = "m/44'/60'/0'/0/";
+      const account_index = 0;
+      const fullPath = wallet_hdpath + account_index;
+      const wallet = hdwallet.derivePath(fullPath).getWallet();
+      const privateKey = "0x" + wallet.privateKey.toString("hex");
+
+
+      if (DEBUG) console.log(chalk.bgGreen.bold.black(`\n\t\t\t`))
+      if (DEBUG) console.log(chalk.bgBlack.bold.white(` 💰 Wallet - ${isSecondary ? "alt_wallet" : "main_wallet"} | ${privateKey} `))
+      if (DEBUG) console.log(chalk.bgGreen.bold.black(`\t\t\t\n`))
+      if (DEBUG) console.log("mnemonic", mnemonic);
+      if (DEBUG) console.log("seed", seed);
+      if (DEBUG) console.log("fullPath", fullPath);
+      if (DEBUG) console.log("privateKey", privateKey);
+
+      const EthUtil = require("ethereumjs-util");
+      const address = "0x" + EthUtil.privateToAddress(wallet.privateKey).toString("hex");
+
+      console.log(
+        "🔐 Account Generated as " +
+          address +
+          ".txt and set as mnemonic in packages/buidler"
+      );
+      console.log(
+        "💬 Use 'npx hardhat account' to get more information about the deployment account."
+      );
+
+      if (isSecondary) {
+        fs.writeFileSync("./wallets/alt_" + address + ".txt", mnemonic.toString() + "\n" + privateKey);
+        fs.writeFileSync("./wallets/alt_mnemonic.txt", mnemonic.toString());
+        fs.writeFileSync("./wallets/alt_private.txt", privateKey.toString());
+      }
+      else {
+        fs.writeFileSync("./wallets/main_" + address + ".txt", mnemonic.toString() + "\n" + privateKey);
+        fs.writeFileSync("./wallets/main_mnemonic.txt", mnemonic.toString());
+        fs.writeFileSync("./wallets/main_privatekey.txt", privateKey.toString());
+      }
+
+      if (DEBUG) console.log("\n------\n");
+    }
+
+    await generate()
+    await generate(true)
   }
 );
 
@@ -147,46 +195,61 @@ task(
   "account",
   "Get balance informations for the deployment account.",
   async (_, { ethers }) => {
-    const hdkey = require("ethereumjs-wallet/hdkey");
-    const bip39 = require("bip39");
-    const mnemonic = fs.readFileSync("./mnemonic.txt").toString().trim();
-    if (DEBUG) console.log("mnemonic", mnemonic);
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    if (DEBUG) console.log("seed", seed);
-    const hdwallet = hdkey.fromMasterSeed(seed);
-    const wallet_hdpath = "m/44'/60'/0'/0/";
-    const account_index = 0;
-    const fullPath = wallet_hdpath + account_index;
-    if (DEBUG) console.log("fullPath", fullPath);
-    const wallet = hdwallet.derivePath(fullPath).getWallet();
-    const privateKey = "0x" + wallet._privKey.toString("hex");
-    if (DEBUG) console.log("privateKey", privateKey);
-    const EthUtil = require("ethereumjs-util");
-    const address =
-      "0x" + EthUtil.privateToAddress(wallet._privKey).toString("hex");
+    const showAccount = async (walletName) => {
 
-    const qrcode = require("qrcode-terminal");
-    qrcode.generate(address);
-    console.log("‍📬 Deployer Account is " + address);
-    for (const n in config.networks) {
-      // console.log(config.networks[n],n)
-      try {
-        const provider = new ethers.providers.JsonRpcProvider(
-          config.networks[n].url
-        );
-        const balance = await provider.getBalance(address);
-        console.log(" -- " + n + " --  -- -- 📡 ");
-        console.log("   balance: " + ethers.utils.formatEther(balance));
-        console.log(
-            // eslint-disable-next-line no-await-in-loop
-          "   nonce: " + (await provider.getTransactionCount(address))
-        );
-      } catch (e) {
-        if (DEBUG) {
-          console.log(e);
+      const { hdkey } = require('ethereumjs-wallet')
+
+      const bip39 = require("bip39");
+      const mnemonic = fs.readFileSync(`./wallets/${walletName}_mnemonic.txt`).toString().trim();
+      const seed = await bip39.mnemonicToSeed(mnemonic);
+      const hdwallet = hdkey.fromMasterSeed(seed);
+      const wallet_hdpath = "m/44'/60'/0'/0/";
+      const account_index = 0;
+      const fullPath = wallet_hdpath + account_index;
+      const wallet = hdwallet.derivePath(fullPath).getWallet();
+      const privateKey = "0x" + wallet.privateKey.toString("hex");
+      const EthUtil = require("ethereumjs-util");
+      const address =
+        "0x" + EthUtil.privateToAddress(wallet.privateKey).toString("hex");
+
+
+      if (DEBUG) console.log(chalk.bgGreen.bold.black(`\n\t\t\t`))
+      if (DEBUG) console.log(chalk.bgBlack.bold.white(` 💰 Wallet - ${walletName} | ${privateKey} `))
+      if (DEBUG) console.log(chalk.bgGreen.bold.black(`\t\t\t\n`))
+
+      if (DEBUG) console.log("mnemonic", mnemonic);
+      if (DEBUG) console.log("seed", seed);
+      if (DEBUG) console.log("fullPath", fullPath);
+      if (DEBUG) console.log("privateKey", privateKey);
+      if (DEBUG) console.log("‍📬 Deployer Account is " + address);
+      const qrcode = require("qrcode-terminal");
+      qrcode.generate(address);
+
+      for (const n in config.networks) {
+        // console.log(config.networks[n],n)
+        try {
+          const provider = new ethers.providers.JsonRpcProvider(
+            config.networks[n].url
+          );
+          const balance = await provider.getBalance(address);
+          console.log(" -- " + n + " --  -- -- 📡 ");
+          console.log("   balance: " + ethers.utils.formatEther(balance));
+          console.log(
+              // eslint-disable-next-line no-await-in-loop
+            "   nonce: " + (await provider.getTransactionCount(address))
+          );
+        } catch (e) {
+          if (DEBUG) {
+            console.log(e);
+          }
         }
       }
+
+      if (DEBUG) console.log("\n------\n");
     }
+
+    await showAccount("main")
+    await showAccount("alt")
   }
 );
 

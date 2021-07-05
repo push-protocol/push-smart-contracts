@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+require('dotenv').config()
 
 module.exports = async (failOnNoVerification) => {
   if (!failOnNoVerification) console.log(chalk.green('✌️   Verifying ENV'));
