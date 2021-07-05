@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
 interface ILendingPoolAddressesProvider {
@@ -575,6 +576,70 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     function deactivateChannel() onlyActivatedChannels(msg.sender) external {
         channels[msg.sender].deactivated = true;
         emit DeactivateChannel(msg.sender);
+    }
+
+    /* ************** 
+    
+    => User & Channel Notification Settings Functionalities <=
+    *************** */
+    
+    // FOR USERS
+
+    //@dev - Maps the User's Address to Channel Owner's address to Deliminated Notification Settings String selected by the USER 
+    mapping(address => mapping(address => string)) public userToChannelNotifs;
+    
+    event UserNotifcationSettingsAdded(address _channel, address _user, uint256 _notifID,string _notifSettings);
+
+    // @notice - Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
+    // For instance: 3+1-0+2-0+3-1+4-98
+    
+    // 3 -> Decimal Representation of the Notification Options selected by the User
+   
+    // For Boolean Type Notif Options
+        // 1-0 -> 1 stands for Option 1 - 0 Means the user didn't choose that Notif Option.
+        // 3-1 stands for Option 3      - 1 Means the User Selected the 3rd boolean Option
+
+    // For SLIDER TYPE Notif Options
+        // 2-0 -> 2 stands for Option 2 - 0 is user's Choice
+        // 4-98-> 4 stands for Option 4 - 98is user's Choice
+    
+    // @param _channel - Address of the Channel for which the user is creating the Notif settings
+    // @param _notifID- Decimal Representation of the Options selected by the user
+    // @param _notifSettings - Deliminated string that depicts the User's Notifcation Settings
+
+    function subscribeToSpecificNotification(address _channel,uint256 _notifID,string calldata _notifSettings) external onlySubscribed(_channel,msg.sender){
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID),"+",_notifSettings));
+        userToChannelNotifs[msg.sender][_channel] = notifSetting;
+        emit UserNotifcationSettingsAdded(_channel,msg.sender,_notifID,notifSetting);
+    }
+
+    // FOR CHANNELS
+
+    //@dev - Maps the Channel Owner's address to Deliminated Notification Settings 
+    mapping(address => string) public channelNotifSettings;
+
+    event ChannelNotifcationSettingsAdded(address _channel, uint256 totalNotifOptions,string _notifSettings,string _notifDescription);
+
+    // @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
+    // For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
+    // 5 -> Total Notification Options provided by a Channel owner
+   
+    // For Boolean Type Notif Options
+        // 1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
+        // 1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
+
+    // For SLIDER TYPE Notif Options
+        // 2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
+        // 2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
+    
+    // @param _notifOptions - Total Notification options provided by the Channel Owner
+    // @param _notifSettings- Deliminated String of Notification Settings
+    // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
+
+    function createChannelNotificationSettings(uint256 _notifOptions,string calldata _notifSettings, string calldata _notifDescription) external onlyActivatedChannels(msg.sender){
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions),"+",_notifSettings));
+        channelNotifSettings[msg.sender] = notifSetting;
+        emit ChannelNotifcationSettingsAdded(msg.sender,_notifOptions,notifSetting,_notifDescription);  
     }
 
     /* ************** 
