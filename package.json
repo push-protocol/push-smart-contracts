@@ -1,7 +1,14 @@
 {
-  "name": "hardhat-project",
+  "name": "epns-protocol-staging",
   "version": "1.0.0",
-  "main": "hardhat.config.js",
+  "description": "Staging Smart Contracts of EPNS Protocol",
+  "main": "app.js",
+  "author": "Ethereum Push Notification Service",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethereum-push-notification-service/epns-protocol-staging/issues"
+  },
+  "homepage": "https://github.com/ethereum-push-notification-service/epns-protocol-staging#readme",
   "scripts": {
     "start": "node app.js",
     "chain": "hardhat node --network hardhat",
@@ -31,8 +38,4 @@
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
 }
