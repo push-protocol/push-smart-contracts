@@ -9,6 +9,17 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
+interface IUniswapV2Router {
+    function swapExactTokensForTokens(
+      uint amountIn,
+      uint amountOutMin,
+      address[] calldata path,
+      address to,
+      uint deadline
+    ) external returns (uint[] memory amounts); 
+}
+
+
 interface ILendingPoolAddressesProvider {
     function getLendingPoolCore() external view returns (address payable);
 
@@ -171,6 +182,8 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     uint ADJUST_FOR_FLOAT;
     uint ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
+    address private UNISWAP_V2_ROUTER;
+    address private PUSH_TOKEN_ADDRESS;
 
 
 
@@ -221,6 +234,9 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         REFERRAL_CODE = _referralCode;
+        UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        PUSH_TOKEN_ADDRESS = 0xf418588522d5dd018b425E472991E52EBBeEEEEE;
+
 
         DELEGATED_CONTRACT_FEES = 1 * 10 ** 17; // 0.1 DAI to perform any delegate call
 
@@ -832,8 +848,10 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
 
     *************** */
 
-
-
+    function updateUniswapV2Address(address _newAddress) onlyGov external{
+        UNISWAP_V2_ROUTER = _newAddress;
+    }
+    
     /// @dev deposit funds to pool
     function _depositFundsToPool(uint amount) private {
         // Got the funds, add it to the channels dai pool
@@ -863,9 +881,8 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         // Add to interest claimed
         usersInterestClaimed[msg.sender] = usersInterestClaimed[msg.sender].add(userAmountAdjusted);
 
-        // Finally transfer
-        IERC20(aDaiAddress).transfer(msg.sender, userAmountAdjusted);
-
+        // Finally SWAP aDAI to PUSH, and TRANSFER TO USER
+        swapAndTransferaDaiToPUSH(msg.sender, userAmountAdjusted);
         // Emit Event
         emit InterestClaimed(msg.sender, userAmountAdjusted);
     }
@@ -878,6 +895,29 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         // Emit Event
         emit Withdrawal(msg.sender, daiAddress, bal);
     }
+
+    /*
+     * @dev Swaps aDai to PUSH Tokens and Transfers to the USER Address
+     * @param _user address of the user that will recieve the PUSH Tokens
+     * @param __userAmount the amount of aDai to be swapped and transferred
+    */
+    function swapAndTransferaDaiToPUSH(address _user, uint256 _userAmount) internal returns(bool){
+        IERC20(aDaiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
+
+        address[] memory path;
+        path[0] = aDaiAddress;
+        path[1] = PUSH_TOKEN_ADDRESS;
+
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _userAmount,
+            1,
+            path,
+            _user,
+            block.timestamp
+        );
+        return true;
+    }
+    
 
 
     /* ************** 
