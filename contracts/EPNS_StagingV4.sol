@@ -150,6 +150,9 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     // Delegated Notifications: Mapping to keep track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => mapping (address => bool)) public delegated_NotificationSenders;
 
+    /// @notice A record of states for signing / validating signatures
+    mapping (address => uint) public nonces;
+
     /**
         Address Lists
     */
@@ -185,6 +188,13 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     address private UNISWAP_V2_ROUTER;
     address private PUSH_TOKEN_ADDRESS;
 
+    string public constant name = "EPNS STAGING V4";
+     /// @notice The EIP-712 typehash for the contract's domain
+    bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+    /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+    bytes32 public constant SUBSCRIBE_TYPEHASH = keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)");
+     /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+    bytes32 public constant UNSUBSCRIBE_TYPEHASH = keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)");
 
 
     /* ************** 
@@ -677,11 +687,41 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         _subscribe(_channel, msg.sender);
     }
 
+    function subscribeBySignature(address channel, uint nonce, uint expiry, uint8 v, bytes32 r, bytes32 s) public {
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+        bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, nonce, expiry));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "Invalid signature");
+        require(nonce == nonces[signatory]++, "Invalid nonce");
+        require(now <= expiry, "Signature expired");
+        _subscribe(channel, signatory);
+    }
+
+    function unsubscribeBySignature(address channel, uint nonce, uint expiry, uint8 v, bytes32 r, bytes32 s) public {
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+        bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, nonce, expiry));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "Invalid signature");
+        require(nonce == nonces[signatory]++, "Invalid nonce");
+        require(now <= expiry, "Signature expired");
+        _unsubscribe(channel, signatory);
+    }
+
+
     /// @dev subscribe to channel
     function subscribe(address _channel) onlyActivatedChannels(_channel) external {
         // Call actual subscribe
         _subscribe(_channel, msg.sender);
     }
+
+    /// @dev unsubscribe to channel
+    function unsubscribe(address _channel) onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) external {
+        // Call actual unsubscribe
+        _unsubscribe(_channel, msg.sender);
+    }
+
 
     /// @dev private function that eventually handles the subscribing onlyValidChannel(_channel)
     function _subscribe(address _channel, address _user) private onlyNonSubscribed(_channel, _user) {
@@ -722,7 +762,7 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     }
 
     // @dev to unsubscribe from channel
-    function unsubscribe(address _channel) external onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
+    function _unsubscribe(address _channel, address _user) private returns (uint ratio) {
         // Add the channel to gray list so that it can't subscriber the user again as delegated
         User storage user = users[msg.sender];
 
@@ -1170,5 +1210,11 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         channelNewFairShareCount = channelModCount;
         channelNewHistoricalZ = z;
         channelNewLastUpdate = block.number;
+    }
+
+    function getChainId() internal pure returns (uint) {
+        uint256 chainId;
+        assembly { chainId := chainid() }
+        return chainId;
     }
 }
