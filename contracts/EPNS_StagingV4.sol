@@ -6,7 +6,19 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
+
+interface IUniswapV2Router {
+    function swapExactTokensForTokens(
+      uint amountIn,
+      uint amountOutMin,
+      address[] calldata path,
+      address to,
+      uint deadline
+    ) external returns (uint[] memory amounts); 
+}
+
 
 interface ILendingPoolAddressesProvider {
     function getLendingPoolCore() external view returns (address payable);
@@ -138,6 +150,9 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     // Delegated Notifications: Mapping to keep track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => mapping (address => bool)) public delegated_NotificationSenders;
 
+    /// @notice A record of states for signing / validating signatures
+    mapping (address => uint) public nonces;
+
     /**
         Address Lists
     */
@@ -170,7 +185,16 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     uint ADJUST_FOR_FLOAT;
     uint ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
+    address private UNISWAP_V2_ROUTER;
+    address private PUSH_TOKEN_ADDRESS;
 
+    string public constant name = "EPNS STAGING V4";
+     /// @notice The EIP-712 typehash for the contract's domain
+    bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+    /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+    bytes32 public constant SUBSCRIBE_TYPEHASH = keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)");
+     /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+    bytes32 public constant UNSUBSCRIBE_TYPEHASH = keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)");
 
 
     /* ************** 
@@ -220,6 +244,9 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         REFERRAL_CODE = _referralCode;
+        UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        PUSH_TOKEN_ADDRESS = 0xf418588522d5dd018b425E472991E52EBBeEEEEE;
+
 
         DELEGATED_CONTRACT_FEES = 1 * 10 ** 17; // 0.1 DAI to perform any delegate call
 
@@ -579,6 +606,70 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
 
     /* ************** 
     
+    => User & Channel Notification Settings Functionalities <=
+    *************** */
+    
+    // FOR USERS
+
+    //@dev - Maps the User's Address to Channel Owner's address to Deliminated Notification Settings String selected by the USER 
+    mapping(address => mapping(address => string)) public userToChannelNotifs;
+    
+    event UserNotifcationSettingsAdded(address _channel, address _user, uint256 _notifID,string _notifSettings);
+
+    // @notice - Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
+    // For instance: 3+1-0+2-0+3-1+4-98
+    
+    // 3 -> Decimal Representation of the Notification Options selected by the User
+   
+    // For Boolean Type Notif Options
+        // 1-0 -> 1 stands for Option 1 - 0 Means the user didn't choose that Notif Option.
+        // 3-1 stands for Option 3      - 1 Means the User Selected the 3rd boolean Option
+
+    // For SLIDER TYPE Notif Options
+        // 2-0 -> 2 stands for Option 2 - 0 is user's Choice
+        // 4-98-> 4 stands for Option 4 - 98is user's Choice
+    
+    // @param _channel - Address of the Channel for which the user is creating the Notif settings
+    // @param _notifID- Decimal Representation of the Options selected by the user
+    // @param _notifSettings - Deliminated string that depicts the User's Notifcation Settings
+
+    function subscribeToSpecificNotification(address _channel,uint256 _notifID,string calldata _notifSettings) external onlySubscribed(_channel,msg.sender){
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID),"+",_notifSettings));
+        userToChannelNotifs[msg.sender][_channel] = notifSetting;
+        emit UserNotifcationSettingsAdded(_channel,msg.sender,_notifID,notifSetting);
+    }
+
+    // FOR CHANNELS
+
+    //@dev - Maps the Channel Owner's address to Deliminated Notification Settings 
+    mapping(address => string) public channelNotifSettings;
+
+    event ChannelNotifcationSettingsAdded(address _channel, uint256 totalNotifOptions,string _notifSettings,string _notifDescription);
+
+    // @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
+    // For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
+    // 5 -> Total Notification Options provided by a Channel owner
+   
+    // For Boolean Type Notif Options
+        // 1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
+        // 1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
+
+    // For SLIDER TYPE Notif Options
+        // 2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
+        // 2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
+    
+    // @param _notifOptions - Total Notification options provided by the Channel Owner
+    // @param _notifSettings- Deliminated String of Notification Settings
+    // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
+
+    function createChannelNotificationSettings(uint256 _notifOptions,string calldata _notifSettings, string calldata _notifDescription) external onlyActivatedChannels(msg.sender){
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions),"+",_notifSettings));
+        channelNotifSettings[msg.sender] = notifSetting;
+        emit ChannelNotifcationSettingsAdded(msg.sender,_notifOptions,notifSetting,_notifDescription);  
+    }
+
+    /* ************** 
+    
     => SUBSCRIBE FUNCTIOANLTIES <=
 
     *************** */
@@ -596,11 +687,41 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         _subscribe(_channel, msg.sender);
     }
 
+    function subscribeBySignature(address channel, uint nonce, uint expiry, uint8 v, bytes32 r, bytes32 s) public {
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+        bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, nonce, expiry));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "Invalid signature");
+        require(nonce == nonces[signatory]++, "Invalid nonce");
+        require(now <= expiry, "Signature expired");
+        _subscribe(channel, signatory);
+    }
+
+    function unsubscribeBySignature(address channel, uint nonce, uint expiry, uint8 v, bytes32 r, bytes32 s) public {
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+        bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, nonce, expiry));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "Invalid signature");
+        require(nonce == nonces[signatory]++, "Invalid nonce");
+        require(now <= expiry, "Signature expired");
+        _unsubscribe(channel, signatory);
+    }
+
+
     /// @dev subscribe to channel
     function subscribe(address _channel) onlyActivatedChannels(_channel) external {
         // Call actual subscribe
         _subscribe(_channel, msg.sender);
     }
+
+    /// @dev unsubscribe to channel
+    function unsubscribe(address _channel) onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) external {
+        // Call actual unsubscribe
+        _unsubscribe(_channel, msg.sender);
+    }
+
 
     /// @dev private function that eventually handles the subscribing onlyValidChannel(_channel)
     function _subscribe(address _channel, address _user) private onlyNonSubscribed(_channel, _user) {
@@ -641,7 +762,7 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
     }
 
     // @dev to unsubscribe from channel
-    function unsubscribe(address _channel) external onlyActivatedChannels(_channel) onlyNonOwnerSubscribed(_channel, msg.sender) returns (uint ratio) {
+    function _unsubscribe(address _channel, address _user) private returns (uint ratio) {
         // Add the channel to gray list so that it can't subscriber the user again as delegated
         User storage user = users[msg.sender];
 
@@ -767,8 +888,10 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
 
     *************** */
 
-
-
+    function updateUniswapV2Address(address _newAddress) onlyGov external{
+        UNISWAP_V2_ROUTER = _newAddress;
+    }
+    
     /// @dev deposit funds to pool
     function _depositFundsToPool(uint amount) private {
         // Got the funds, add it to the channels dai pool
@@ -798,9 +921,8 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         // Add to interest claimed
         usersInterestClaimed[msg.sender] = usersInterestClaimed[msg.sender].add(userAmountAdjusted);
 
-        // Finally transfer
-        IERC20(aDaiAddress).transfer(msg.sender, userAmountAdjusted);
-
+        // Finally SWAP aDAI to PUSH, and TRANSFER TO USER
+        swapAndTransferaDaiToPUSH(msg.sender, userAmountAdjusted);
         // Emit Event
         emit InterestClaimed(msg.sender, userAmountAdjusted);
     }
@@ -813,6 +935,29 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         // Emit Event
         emit Withdrawal(msg.sender, daiAddress, bal);
     }
+
+    /*
+     * @dev Swaps aDai to PUSH Tokens and Transfers to the USER Address
+     * @param _user address of the user that will recieve the PUSH Tokens
+     * @param __userAmount the amount of aDai to be swapped and transferred
+    */
+    function swapAndTransferaDaiToPUSH(address _user, uint256 _userAmount) internal returns(bool){
+        IERC20(aDaiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
+
+        address[] memory path;
+        path[0] = aDaiAddress;
+        path[1] = PUSH_TOKEN_ADDRESS;
+
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _userAmount,
+            1,
+            path,
+            _user,
+            block.timestamp
+        );
+        return true;
+    }
+    
 
 
     /* ************** 
@@ -1065,5 +1210,11 @@ contract EPNSStagingV4 is Initializable, ReentrancyGuard  {
         channelNewFairShareCount = channelModCount;
         channelNewHistoricalZ = z;
         channelNewLastUpdate = block.number;
+    }
+
+    function getChainId() internal pure returns (uint) {
+        uint256 chainId;
+        assembly { chainId := chainid() }
+        return chainId;
     }
 }
