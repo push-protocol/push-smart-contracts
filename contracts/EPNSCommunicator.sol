@@ -1,6 +1,8 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
+// SPDX-License-Identifier: MIT
+
 /**
  * EPNS Communicator, as the name suggests, is more of a Communictation Layer
  * between END USERS and EPNS Core Protocol.
@@ -14,6 +16,7 @@ pragma experimental ABIEncoderV2;
 
 // Essential Imports
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -21,7 +24,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
-contract EPNSCommunicator is Initializable, ReentrancyGuard {
+contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -52,16 +55,20 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
     /** STATE VARIABLES **/
     uint256 public usersCount;
+    address public EPNSCoreAddress;
     string public constant name = "EPNSCommunicator";
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
             "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
-        ); /// @notice The EIP-712 typehash for the contract's domain
+        );
     bytes32 public constant SUBSCRIBE_TYPEHASH =
-        keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)"); // The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+        keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)");
     bytes32 public constant UNSUBSCRIBE_TYPEHASH =
-        keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)"); //The EIP-712 typehash for the SUBSCRIBE struct used by the contract
-
+        keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)");
+    bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
+        keccak256(
+            "SendNotification(address channel,address delegate,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
+        );
     /** EVENTS **/
     event AddDelegate(address channel, address delegate); // Addition/Removal of Delegete Events
     event RemoveDelegate(address channel, address delegate);
@@ -76,6 +83,11 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
     /** MODIFIERS **/
 
+    modifier onlyEPNSCore() {
+        require(msg.sender == EPNSCoreAddress, "Caller is NOT EPNSCore");
+        _;
+    }
+
     modifier onlyValidUser(address _user) {
         require(users[_user].userActivated, "User not activated yet");
         _;
@@ -88,8 +100,40 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         );
         _;
     }
+    // TEMP - REMOVED governance state variable for now. TBD
+    modifier sendNotifRequirements(
+        address _channel,
+        address _notificationSender,
+        address _recipient
+    ) {
+        require(
+            (_channel == 0x0000000000000000000000000000000000000000) ||
+                (delegated_NotificationSenders[_channel][_notificationSender] &&
+                    msg.sender == _notificationSender) ||
+                (_recipient == msg.sender),
+            "SendNotif Error: Invalid Channel, Delegate or Subscriber"
+        );
+        _;
+    }
 
-   
+    modifier sendNotifViaSignRequirements(
+        address _channel,
+        address _notificationSender,
+        address _recipient,
+        address signatory
+    ) {
+        require(
+            (delegated_NotificationSenders[_channel][_notificationSender] &&
+                _notificationSender == signatory) || (_recipient == signatory),
+            "SendNotif Via Sig Error: Invalid Channel, Delegate Or Subscriber"
+        );
+        _;
+    }
+
+    function setEPNSCoreAddress(address _coreAddress) external onlyOwner {
+        EPNSCoreAddress = _coreAddress;
+    }
+
     /**************** 
     
     => SUBSCRIBE & UNSUBSCRIBE FUNCTIOANLTIES <=
@@ -149,7 +193,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
     /**
      * @notice External Subscribe Function that allows users to Diretly interact with the Base Subscribe function
-     * @dev Subscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
+     * @dev Subscribers the caller of the function to a channel - Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
      **/
     function subscribe(address _channel) external returns (bool) {
@@ -192,15 +236,31 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     }
 
     /**
+     * @notice AllowsEPNSCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
+     *         This ensures that the Channel Owner is automatically subscribed to some imperative EPNS Channels as well as his/her own Channel.
+     *
+     * @dev    Only Callable by the EPNSCore. This is to ensure that Users should only able to Subscribe for their own addresses.
+     *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the EPNSCore contract
+     *
+     * @param _channel address of the channel that the user is subscribing to
+     * @param _user address of the Subscriber of a Channel
+     **/
+    function subscribeViaCore(address _channel, address _user)
+        external
+        onlyEPNSCore
+        returns (bool)
+    {
+        _subscribe(_channel, _user);
+        return true;
+    }
+
+    /**
      * @notice Base Usubscribe Function that allows users to UNSUBSCRIBE from a Particular Channel and Keeps track of it
      * @dev Modifies the User Struct with crucial details about the Channel Unsubscription
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber
      **/
-    function _unsubscribe(address _channel, address _user)
-        private
-        returns (uint256 ratio)
-    {
+    function _unsubscribe(address _channel, address _user) private {
         require(
             isUserSubscribed(_channel, _user),
             "User is NOT Subscribed to the Channel Yet"
@@ -349,6 +409,162 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
         // broadcast it
         _broadcastPublicKey(msg.sender, _publicKey);
+    }
+
+    /* ************** 
+    
+    => SEND NOTIFICATION FUNCTIONALITIES <=
+
+    *************** */
+
+    /**
+     * @notice Allows a Channel Owner to ADD a Delegate who will be able to send Notification on the Channel's Behalf
+     * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * @param _channel address of the Channel
+     * @param _delegate address of the delegate who is allowed to Send Notifications
+     * @return true if function executes successfully.
+     **/
+    function addDelegate(address _channel, address _delegate)
+        external
+        onlyEPNSCore
+        returns (bool)
+    {
+        delegated_NotificationSenders[_channel][_delegate] = true;
+        return true;
+        emit AddDelegate(msg.sender, _delegate);
+    }
+
+    /**
+     * @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
+     * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * @param _channel address of the Channel
+     * @param _delegate address of the delegate who is allowed to Send Notifications
+     * @return true if function executes successfully.
+     **/
+    function removeDelegate(address _channel, address _delegate)
+        external
+        onlyEPNSCore
+        returns (bool)
+    {
+        delegated_NotificationSenders[_channel][_delegate] = false;
+        return true;
+        emit RemoveDelegate(msg.sender, _delegate);
+    }
+
+    /***
+      THREE main CALLERS for this function- 
+        1. Channel Owner sends Notif to Recipients
+        2. Delegatee of Channel sends Notif to Recipients
+        3. Recipients sends Notifs to Themselvs via a Channel
+    <------------------------------------------------------------------------------------->
+     
+     * When a CHANNEL OWNER Calls the Function and sends a Notif-> We check "if (channel owner is the caller) and if(Is Channel Valid)"
+     * NOTE - This check is performed via the PUSH NODES
+     * 
+     * When a Delegatee wants to send Notif to Recipient-> We check "if(delegate is the Caller) and If( Is delegatee Valid)":
+     * 
+     * When Recipient wants to Send a Notif to themselves -> We check that the If(Caller of the function is Recipient himself)
+    
+    */
+
+    /**
+     * @notice Allows a Channel Owners, Delegates as well as Users to send Notifications
+     * @dev Emits out notification details once all the requirements are passed.
+     * @param _channel address of the Channel
+     * @param _delegate address of the delegate who is allowed to Send Notifications
+     * @param _recipient address of the reciever of the Notification
+     * @param _identity Info about the Notification
+     **/
+    function sendNotification(
+        address _channel,
+        address _delegate,
+        address _recipient,
+        bytes calldata _identity
+    ) public sendNotifRequirements(_channel, _delegate, _recipient) {
+        // Emit the message out
+        emit SendNotification(_channel, _recipient, _identity);
+    }
+
+    /**
+     * @notice Base Notification Function that Allows a Channel Owners, Delegates as well as Users to send Notifications
+     *
+     * @dev   Specifically designed to be called via the EIP 712 send notif function.
+     *        Takes into consideration the Signatory address to perform all the imperative checks
+     *
+     * @param _channel address of the Channel
+     * @param _delegate address of the delegate who is allowed to Send Notifications
+     * @param _recipient address of the reciever of the Notification
+     * @param _signatory address of the SIGNER of the Send Notif Function call transaction
+     * @param _identity Info about the Notification
+     **/
+    function _sendNotification(
+        address _channel,
+        address _delegate,
+        address _recipient,
+        address _signatory,
+        bytes calldata _identity
+    )
+        private
+        sendNotifViaSignRequirements(
+            _channel,
+            _delegate,
+            _recipient,
+            _signatory
+        )
+    {
+        // Emit the message out
+        emit SendNotification(_channel, _recipient, _identity);
+    }
+
+    /**
+     * @notice Meta transaction function for Sending Notifications
+     * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
+     **/
+
+    function sendNotifBySig(
+        address _channel,
+        address _delegate,
+        address _recipient,
+        bytes calldata _identity,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                getChainId(),
+                address(this)
+            )
+        );
+        bytes32 structHash = keccak256(
+            abi.encode(
+                SEND_NOTIFICATION_TYPEHASH,
+                _channel,
+                _delegate,
+                _recipient,
+                _identity,
+                nonce,
+                expiry
+            )
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+        );
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "Invalid signature");
+        require(nonce == nonces[signatory]++, "Invalid nonce");
+        require(now <= expiry, "Signature expired");
+        _sendNotification(
+            _channel,
+            _delegate,
+            _recipient,
+            signatory,
+            _identity
+        );
     }
 
     function getChainId() internal pure returns (uint256) {
