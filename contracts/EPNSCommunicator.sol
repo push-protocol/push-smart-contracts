@@ -41,7 +41,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         uint256 subscriberCount; // (If User is Channel), Keep track of Total Subscriber for a Channel Address
         mapping(address => uint8) isSubscribed; // (1-> True. 0-> False )Depicts if User subscribed to a Specific Channel Address
         // keep track of all subscribed channels
-        // TEMP - NOT SURE IF THESE MAPPING SERVE A SPECIFIC PURPOSE YET
+        // TBD - NOT SURE IF THESE MAPPING SERVE A SPECIFIC PURPOSE YET
         mapping(address => uint256) subscribed;
         mapping(uint256 => address) mapAddressSubscribed;
     }
@@ -100,7 +100,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         );
         _;
     }
-    // TEMP - REMOVED governance state variable for now. TBD
+    // TBD - REMOVED governance state variable for now. TBD
     modifier sendNotifRequirements(
         address _channel,
         address _notificationSender,
@@ -115,7 +115,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         );
         _;
     }
-
+   // TBD - Should "recipient == signator" be a check for this modifier?
     modifier sendNotifViaSignRequirements(
         address _channel,
         address _notificationSender,
@@ -174,14 +174,14 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         User storage user = users[_user];
         // Important Details to be stored on Communicator
         // a. Mark a User as a Subscriber for a Specific Channel
-        // b. Update Channel's Subscribed Count for User - TEMP-not sure yet
+        // b. Update Channel's Subscribed Count for User - TBD-not sure yet
         // c. Update User Subscribed Count for Channel
         // d. Usual Subscribe Track
 
         user.isSubscribed[_channel] = 1;
 
         // treat the count as index and update user struct
-        // TEMP - NOT SURE IF THE LINES BELOW SERVE A SPECIFIC PURPOSE YET
+        // TBD - NOT SURE IF THE LINES BELOW SERVE A SPECIFIC PURPOSE YET
         user.subscribed[_channel] = user.subscribedCount;
         user.mapAddressSubscribed[user.subscribedCount] = _channel;
 
