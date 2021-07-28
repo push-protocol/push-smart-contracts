@@ -46,45 +46,33 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     /** MAPPINGS **/
     mapping(address => User) public users;
     mapping(uint256 => address) public mapAddressUsers;
-
-    // Delegated Notifications: Mapping to keep track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => mapping(address => bool))
-        public delegated_NotificationSenders;
-
-    /// @notice A record of states for signing / validating signatures
-    mapping(address => uint256) public nonces;
+        public delegated_NotificationSenders; // Keeps track of addresses allowed to send notifications on Behalf of a Channel
+    mapping(address => uint256) public nonces; // A record of states for signing / validating signatures
 
     /** STATE VARIABLES **/
     uint256 public usersCount;
-
-    // State variables for EIP-712
     string public constant name = "EPNSCommunicator";
-    /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
             "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
-        );
-    /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+        ); /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant SUBSCRIBE_TYPEHASH =
-        keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)");
-    /// @notice The EIP-712 typehash for the SUBSCRIBE struct used by the contract
+        keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)"); // The EIP-712 typehash for the SUBSCRIBE struct used by the contract
     bytes32 public constant UNSUBSCRIBE_TYPEHASH =
-        keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)");
+        keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)"); //The EIP-712 typehash for the SUBSCRIBE struct used by the contract
 
     /** EVENTS **/
-    // Subscribe / Unsubscribe | This Event is listened by on All Infra Services
-    event Subscribe(address indexed channel, address indexed user);
+    event AddDelegate(address channel, address delegate); // Addition/Removal of Delegete Events
+    event RemoveDelegate(address channel, address delegate);
+    event Subscribe(address indexed channel, address indexed user); // Subscribe / Unsubscribe | This Event is listened by on All Infra Services
     event Unsubscribe(address indexed channel, address indexed user);
-    // Send Notification | This Event is listened by on All Infra Services
+    event PublicKeyRegistered(address indexed owner, bytes publickey);
     event SendNotification(
         address indexed channel,
         address indexed recipient,
         bytes identity
     );
-    event PublicKeyRegistered(address indexed owner, bytes publickey);
-    // Addition/Removal of Delegete Events
-    event AddDelegate(address channel, address delegate);
-    event RemoveDelegate(address channel, address delegate);
 
     /** MODIFIERS **/
 
@@ -101,39 +89,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         _;
     }
 
-    modifier onlyChannelOwnerOrAllowedDelegatesOrSelfRecipients(
-        address _channel,
-        address _notificationSender,
-        address _recipient
-    ) {
-        require(
-            ((users[_channel].channellized && msg.sender == _channel) ||
-                // (msg.sender == governance &&
-                //     _channel == 0x0000000000000000000000000000000000000000) ||
-                (delegated_NotificationSenders[_channel][_notificationSender] &&
-                    msg.sender == _notificationSender) ||
-                (_recipient == msg.sender)),
-            "SendNotif Error: Invalid Channel, Delegate or Subscriber"
-        );
-        _;
-    }
-
-    modifier onlyChannelOwnerOrAllowedDelegates(
-        address _channel,
-        address _notificationSender,
-        address _recipient,
-        address signatory
-    ) {
-        require(
-            ((users[_channel].channellized && _channel == signatory) ||
-                (delegated_NotificationSenders[_channel][_notificationSender] &&
-                    _notificationSender == signatory)),
-            //|| (_recipient == signatory)),
-            "SendNotif Via Sig Error: Invalid Channel, Delegate Or Subscriber"
-        );
-        _;
-    }
-
+   
     /**************** 
     
     => SUBSCRIBE & UNSUBSCRIBE FUNCTIOANLTIES <=
@@ -196,7 +152,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      * @dev Subscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
      **/
-    function subscribe(address _channel) external returns(bool){
+    function subscribe(address _channel) external returns (bool) {
         // Call actual subscribe
         _subscribe(_channel, msg.sender);
         return true;
