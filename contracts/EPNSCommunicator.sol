@@ -50,7 +50,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     mapping(address => User) public users;
     mapping(uint256 => address) public mapAddressUsers;
     mapping(address => mapping(address => bool))
-        public delegated_NotificationSenders; // Keeps track of addresses allowed to send notifications on Behalf of a Channel
+        public delegatedNotificationSenders; // Keeps track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => uint256) public nonces; // A record of states for signing / validating signatures
 
     /** STATE VARIABLES **/
@@ -100,7 +100,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         );
         _;
     }
-    // TBD - REMOVED governance state variable for now. TBD
+    // TBD - REMOVED governance state variable for now. BUT who should be msg.sender for Channel 0x00 TBD
     modifier sendNotifRequirements(
         address _channel,
         address _notificationSender,
@@ -108,14 +108,15 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     ) {
         require(
             (_channel == 0x0000000000000000000000000000000000000000) ||
-                (delegated_NotificationSenders[_channel][_notificationSender] &&
+                (_channel == msg.sender) ||
+                (delegatedNotificationSenders[_channel][_notificationSender] &&
                     msg.sender == _notificationSender) ||
                 (_recipient == msg.sender),
             "SendNotif Error: Invalid Channel, Delegate or Subscriber"
         );
         _;
     }
-   // TBD - Should "recipient == signator" be a check for this modifier?
+    // TBD - Should "recipient == signator" be a check for this modifier?
     modifier sendNotifViaSignRequirements(
         address _channel,
         address _notificationSender,
@@ -123,8 +124,10 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         address signatory
     ) {
         require(
-            (delegated_NotificationSenders[_channel][_notificationSender] &&
-                _notificationSender == signatory) || (_recipient == signatory),
+            (_channel == signatory) ||
+                (delegatedNotificationSenders[_channel][_notificationSender] &&
+                    _notificationSender == signatory) ||
+                (_recipient == signatory),
             "SendNotif Via Sig Error: Invalid Channel, Delegate Or Subscriber"
         );
         _;
@@ -420,34 +423,22 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     /**
      * @notice Allows a Channel Owner to ADD a Delegate who will be able to send Notification on the Channel's Behalf
      * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
-     * @param _channel address of the Channel
+     *      The verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES
      * @param _delegate address of the delegate who is allowed to Send Notifications
-     * @return true if function executes successfully.
      **/
-    function addDelegate(address _channel, address _delegate)
-        external
-        onlyEPNSCore
-        returns (bool)
-    {
-        delegated_NotificationSenders[_channel][_delegate] = true;
-        return true;
+    function addDelegate(address _delegate) external {
+        delegatedNotificationSenders[msg.sender][_delegate] = true;
         emit AddDelegate(msg.sender, _delegate);
     }
 
     /**
      * @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
      * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
-     * @param _channel address of the Channel
+     *      The verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES
      * @param _delegate address of the delegate who is allowed to Send Notifications
-     * @return true if function executes successfully.
      **/
-    function removeDelegate(address _channel, address _delegate)
-        external
-        onlyEPNSCore
-        returns (bool)
-    {
-        delegated_NotificationSenders[_channel][_delegate] = false;
-        return true;
+    function removeDelegate(address _delegate) external {
+        delegatedNotificationSenders[msg.sender][_delegate] = false;
         emit RemoveDelegate(msg.sender, _delegate);
     }
 
