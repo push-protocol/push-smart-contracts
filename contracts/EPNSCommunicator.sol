@@ -52,6 +52,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     mapping(address => mapping(address => bool))
         public delegatedNotificationSenders; // Keeps track of addresses allowed to send notifications on Behalf of a Channel
     mapping(address => uint256) public nonces; // A record of states for signing / validating signatures
+    mapping(address => uint256) channelToSubscriberCount; // Keeps track of total number of Subscribers for a particular channel
+    mapping(address => mapping(address => string)) public userToChannelNotifs;
 
     /** STATE VARIABLES **/
     uint256 public usersCount;
@@ -79,6 +81,12 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         address indexed channel,
         address indexed recipient,
         bytes identity
+    );
+    event UserNotifcationSettingsAdded(
+        address _channel,
+        address _user,
+        uint256 _notifID,
+        string _notifSettings
     );
 
     /** MODIFIERS **/
@@ -555,6 +563,49 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
             _recipient,
             signatory,
             _identity
+        );
+    }
+
+    /* ************** 
+    
+    => User Notification Settings Function <=
+    *************** */
+
+    // @notice - Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
+    // For instance: 3+1-0+2-0+3-1+4-98
+
+    // 3 -> Decimal Representation of the Notification Options selected by the User
+
+    // For Boolean Type Notif Options
+    // 1-0 -> 1 stands for Option 1 - 0 Means the user didn't choose that Notif Option.
+    // 3-1 stands for Option 3      - 1 Means the User Selected the 3rd boolean Option
+
+    // For SLIDER TYPE Notif Options
+    // 2-0 -> 2 stands for Option 2 - 0 is user's Choice
+    // 4-98-> 4 stands for Option 4 - 98is user's Choice
+
+    // @param _channel - Address of the Channel for which the user is creating the Notif settings
+    // @param _notifID- Decimal Representation of the Options selected by the user
+    // @param _notifSettings - Deliminated string that depicts the User's Notifcation Settings
+
+    function subscribeToSpecificNotification(
+        address _channel,
+        uint256 _notifID,
+        string calldata _notifSettings
+    ) external {
+        require(
+            isUserSubscribed(_channel, msg.sender),
+            "User is Not Subscribed to this Channel"
+        );
+        string memory notifSetting = string(
+            abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings)
+        );
+        userToChannelNotifs[msg.sender][_channel] = notifSetting;
+        emit UserNotifcationSettingsAdded(
+            _channel,
+            msg.sender,
+            _notifID,
+            notifSetting
         );
     }
 
