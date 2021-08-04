@@ -2,8 +2,13 @@ pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 /**
- * EPNS Core, is the main protocol that deals with the imperative
- * features and functionalities like Channel Creation, Governance etc.
+ * EPNS Core is the main protocol that deals with the imperative
+ * features and functionalities like Channel Creation, admin etc.
+ *
+ * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
+ * protocols can be deployed on Multiple Chains.
+ * The EPNS Core is more inclined towards the storing and handling the Channel related
+ * Functionalties.
  **/
 
 // Essential Imports
@@ -54,8 +59,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     struct Channel {
         // Channel Type
         ChannelType channelType;
-        uint8 isActivated; // Flag to check if Channel is Activated
-        uint8 isBlocked; // Flag to check if Channel is Compltely blocked
+        uint8 channelState; // Channel State Details: 0 -> INACTIVE, 1 -> ACTIVATED, 2 -> DeActivated By Channel Owner, 3 -> BLOCKED by ADMIN/Governance
         // Channel Pool Contribution
         uint256 poolContribution;
         uint256 memberCount;
@@ -71,6 +75,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         //mapping(address => bool) memberExists;  // To keep track of subscribers info
         // For iterable mapping
+
         mapping(address => uint256) members;
         mapping(uint256 => address) mapAddressMember; // This maps to the user
         // To calculate fair share of profit for a subscriber
@@ -82,6 +87,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     /** MAPPINGS **/
     mapping(address => Channel) public channels;
     mapping(uint256 => address) public mapAddressChannels;
+    mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
     mapping(address => uint256) public usersInterestInWallet;
 
@@ -94,7 +100,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     address public lendingPoolProviderAddress;
     address public daiAddress;
     address public aDaiAddress;
-    address public governance;
+    address public admin;
 
     uint256 public channelsCount; // Record of total Channels in the protocol
     //  Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
@@ -115,6 +121,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /** EVENTS **/
     event DeactivateChannel(address indexed channel);
+    event ReactivateChannel(address indexed channel);
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed amount);
@@ -123,6 +130,12 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         ChannelType indexed channelType,
         bytes identity
     );
+    event ChannelNotifcationSettingsAdded(
+        address _channel,
+        uint256 totalNotifOptions,
+        string _notifSettings,
+        string _notifDescription
+    );
 
     /* ************** 
     
@@ -130,31 +143,52 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     ***************/
     modifier onlyGov() {
+        require(msg.sender == admin, "EPNSCore::onlyGov, user is not admin");
+        _;
+    }
+    // TBD - Information -> onlyActivatedChannels redesigned
+    modifier onlyActivatedChannels(address _channel) {
         require(
-            msg.sender == governance,
-            "EPNSCore::onlyGov, user is not governance"
+            channels[_channel].channelState == 1,
+            "Channel Deactivated, Blocked or Doesn't Exist"
+        );
+        _;
+    }
+    // TBD - Information -> onlyUserWithNoChannel became onlyInactiveChannels
+    modifier onlyInactiveChannels(address _channel) {
+        require(
+            channels[_channel].channelState == 0,
+            "Channel is already activated "
         );
         _;
     }
 
-    // THESE 3 USE USER struct, WILL HAVE TO REDEISGN THEM
-    // modifier onlyUserWithNoChannel() {
-    //     require(!users[msg.sender].channellized, "User already a Channel Owner");
-    //     _;
-    // }
+    modifier onlyDeactivatedChannels(address _channel) {
+        require(
+            channels[_channel].channelState == 2,
+            "Channel is already activated "
+        );
+        _;
+    }
 
-    // modifier onlyActivatedChannels(address _channel) {
-    //     require(users[_channel].channellized && !channels[_channel].deactivated, "Channel deactivated or doesn't exists");
-    //     _;
-    // }
+    modifier onlyUnblockedChannels(address _channel) {
+        require(
+            channels[_channel].channelState != 3,
+            "Channel is Completely BLOCKED"
+        );
+        _;
+    }
 
-    // modifier onlyChannelOwner(address _channel) {
-    //     require(
-    //     ((users[_channel].channellized && msg.sender == _channel) || (msg.sender == governance && _channel == 0x0000000000000000000000000000000000000000)),
-    //     "Channel doesn't Exists"
-    //     );
-    //     _;
-    // }
+    // TBD - Information -> onlyChannelOwner redesigned
+    modifier onlyChannelOwner(address _channel) {
+        require(
+            ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
+                (msg.sender == admin &&
+                    _channel == 0x0000000000000000000000000000000000000000)),
+            "Channel doesn't Exists or Invalid Channel Owner"
+        );
+        _;
+    }
 
     modifier onlyUserAllowedChannelType(ChannelType _channelType) {
         require(
@@ -166,27 +200,12 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         _;
     }
 
+    // THESE 3 USE USER struct, WILL HAVE TO REDEISGN THEM
+
     // modifier onlySubscribed(address _channel, address _subscriber) {
     //     require(channels[_channel].memberExists[_subscriber], "Subscriber doesn't Exists");
     //     _;
     // }
-
-    modifier onlyNonOwnerSubscribed(address _channel, address _subscriber) {
-        require(
-            _channel != _subscriber &&
-                channels[_channel].memberExists[_subscriber],
-            "Either Channel Owner or Not Subscribed"
-        );
-        _;
-    }
-
-    modifier onlyNonSubscribed(address _channel, address _subscriber) {
-        require(
-            !channels[_channel].memberExists[_subscriber],
-            "Subscriber already Exists"
-        );
-        _;
-    }
 
     /* ***************
         INITIALIZER
@@ -194,14 +213,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     *************** */
 
     function initialize(
-        address _governance,
+        address _admin,
         address _lendingPoolProviderAddress,
         address _daiAddress,
         address _aDaiAddress,
         uint256 _referralCode
     ) public initializer returns (bool success) {
         // setup addresses
-        governance = _governance; // multisig/timelock, also controls the proxy
+        admin = _admin; // multisig/timelock, also controls the proxy
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
@@ -211,7 +230,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         DELEGATED_CONTRACT_FEES = 1 * 10**17; // 0.1 DAI to perform any delegate call
 
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 * 10**18; // 50 DAI or above to create the channel
+        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250000 * 50 * 10**18; // 250k DAI or below, we don't want channel to make a costly mistake as well
 
         groupLastUpdate = block.number;
@@ -227,11 +246,11 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         // EPNS ALL USERS
         emit AddChannel(
-            governance,
+            admin,
             ChannelType.ProtocolNonInterest,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
-        _createChannel(governance, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be governance in this case?
+        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
 
         // EPNS ALERTER CHANNEL
         emit AddChannel(
@@ -258,9 +277,146 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /* ***********************************
+        Channel HELPER Functions
+
+    **************************************/
+    function getChannelState(address _channel) public returns (uint256 state) {
+        state = channels[_channel].channelState;
+    }
+
+    /* ***********************************
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
+
+    // TBD - IS THIS FUNCTION REQUIRED? It uses broadcastPublicKey function from EPNS Communicator
+    //    /// @dev Create channel with fees and public key
+    // function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey,uint256 _amount)
+    //     external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
+    //     // Save gas, Emit the event out
+    //     emit AddChannel(msg.sender, _channelType, _identity);
+
+    //     // Broadcast public key
+    //     // @TODO Find a way to save cost
+
+    //     // Will save gas
+    //     if (!users[msg.sender].publicKeyRegistered) {
+    //         _broadcastPublicKey(msg.sender, _publickey);
+    //     }
+
+    //     // Bubble down to create channel
+    //     _createChannelWithFees(msg.sender, _channelType,_amount);
+    // }
+
+    /// @dev To update channel, only possible if 1 subscriber is present or this is governance
+    function updateChannelMeta(address _channel, bytes calldata _identity)
+        external
+    {
+        emit UpdateChannel(_channel, _identity);
+
+        _updateChannelMeta(_channel);
+    }
+
+    // TBD - Getting subscribercount is difficult from Multi CHain-> Should we include PUSH Nodes for that purpose?
+    /// @dev private function to update channel meta
+    function _updateChannelMeta(address _channel)
+        internal
+        onlyChannelOwner(_channel)
+    {
+        // // check if special channel
+        // if (msg.sender == governance && (_channel == governance || _channel == 0x0000000000000000000000000000000000000000 || _channel == address(this))) {
+        //   // don't do check for 1 as these are special channels
+
+        // }
+        // else {
+        //   // do check for 1
+        //   require (channels[_channel].memberCount == 1, "Channel has external subscribers");
+        // }
+
+        channels[msg.sender].channelUpdateBlock = block.number;
+    }
+
+    /// @dev One time, Create Promoter Channel
+    function createPromoterChannel()
+        external
+        onlyInactiveChannels(address(this))
+    {
+        // EPNS PROMOTER CHANNEL
+        // Check the allowance and transfer funds
+        IERC20(daiAddress).transferFrom(
+            msg.sender,
+            address(this),
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+
+        // Then Add Promoter Channel
+        emit AddChannel(
+            address(this),
+            ChannelType.ProtocolPromotion,
+            "1+QmRcewnNpdt2DWYuud3LxHTwox2RqQ8uyZWDJ6eY6iHkfn"
+        );
+
+        // Call create channel after fees transfer
+        _createChannelAfterTransferOfFees(
+            address(this),
+            ChannelType.ProtocolPromotion,
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+    }
+
+    /**
+     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of DAI.
+     * @dev    Only allows users to Create One Channel for a specific address.
+     *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
+     *         Validates and Transfers the amount of DAI from the Channel Creator to this Contract Address
+     *         Deposits the Funds the Lending Pool and creates the Channel for the msg.sender.
+     * @param  _channelType the type of the Channel Being created
+     * @param  _identity the bytes value of the identity of the Channel
+     * @param  _amount Amount of DAI to be deposited before Creating the Channel
+     **/
+    function createChannelWithFees(
+        ChannelType _channelType,
+        bytes calldata _identity,
+        uint256 _amount
+    )
+        external
+        onlyInactiveChannels(msg.sender)
+        onlyUserAllowedChannelType(_channelType)
+    {
+        // Save gas, Emit the event out
+        emit AddChannel(msg.sender, _channelType, _identity);
+
+        // Bubble down to create channel
+        _createChannelWithFees(msg.sender, _channelType, _amount);
+    }
+
+    /// @dev add channel with fees
+    function _createChannelWithFees(
+        address _channel,
+        ChannelType _channelType,
+        uint256 _amount
+    ) private {
+        // Check if it's equal or above Channel Pool Contribution
+        // removed allowance -
+        require(
+            _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            "Insufficient Funds or max ceiling reached"
+        );
+        IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
+        _createChannelAfterTransferOfFees(_channel, _channelType, _amount);
+    }
+
+    function _createChannelAfterTransferOfFees(
+        address _channel,
+        ChannelType _channelType,
+        uint256 _amount
+    ) private {
+        // Deposit funds to pool
+        _depositFundsToPool(_amount);
+
+        // Call Create Channel
+        _createChannel(_channel, _channelType, _amount);
+    }
 
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
@@ -269,7 +425,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *         -Increases Channel Counts and Readjusts the FS of Channels
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
-     * @param _amonutDeposited The total amount being deposited while Channel Creation
+     * @param _amountDeposited The total amount being deposited while Channel Creation
      **/
     function _createChannel(
         address _channel,
@@ -282,7 +438,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         );
 
         // Next create the channel and mark user as channellized
-        channels[_channel].isActivated = 1;
+        channels[_channel].channelState = 1;
 
         channels[_channel].poolContribution = _amountDeposited;
         channels[_channel].channelType = _channelType;
@@ -316,7 +472,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         }
 
         // Subscribe them to their own channel as well
-        if (_channel != governance) {
+        if (_channel != admin) {
             IEPNSCommunicator(epnsCommunicator).subscribeViaCore(
                 _channel,
                 _channel
@@ -330,13 +486,158 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
                 _channel
             );
             IEPNSCommunicator(epnsCommunicator).subscribeViaCore(
-                governance,
+                admin,
                 _channel
             );
         }
     }
 
-     /* ************** 
+    // @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
+    // For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
+    // 5 -> Total Notification Options provided by a Channel owner
+
+    // For Boolean Type Notif Options
+    // 1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
+    // 1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
+
+    // For SLIDER TYPE Notif Options
+    // 2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
+    // 2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
+
+    // @param _notifOptions - Total Notification options provided by the Channel Owner
+    // @param _notifSettings- Deliminated String of Notification Settings
+    // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
+
+    function createChannelNotificationSettings(
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription
+    ) external onlyActivatedChannels(msg.sender) {
+        string memory notifSetting = string(
+            abi.encodePacked(
+                Strings.toString(_notifOptions),
+                "+",
+                _notifSettings
+            )
+        );
+        channelNotifSettings[msg.sender] = notifSetting;
+        emit ChannelNotifcationSettingsAdded(
+            msg.sender,
+            _notifOptions,
+            notifSetting,
+            _notifDescription
+        );
+    }
+
+    /**
+     * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
+     * @dev    -Updates the State of the Channel(channelState) in the Channel's Struct.
+     *         -Function can only be Called by Already Activated Channels
+     *
+     **/
+    function deactivateChannel() external onlyActivatedChannels(msg.sender) {
+        channels[msg.sender].channelState = 2;
+        emit DeactivateChannel(msg.sender);
+    }
+
+    /**
+     * @notice Allows Channel Owner to Reactivate his/her Channel again.
+     * @dev    -Updates the State of the Channel(channelState) in the Channel's Struct.
+     *         -Function can only be called by previously Deactivated Channels
+     *
+     **/
+    function reActivateChannel() external onlyDeactivatedChannels(msg.sender) {
+        channels[msg.sender].channelState = 1;
+        emit ReactivateChannel(msg.sender);
+    }
+
+    /* ************** 
+    
+    => DEPOSIT & WITHDRAWAL of FUNDS<=
+
+    *************** */
+
+    function updateUniswapV2Address(address _newAddress) external onlyGov {
+        UNISWAP_V2_ROUTER = _newAddress;
+    }
+
+    /// @dev deposit funds to pool
+    function _depositFundsToPool(uint256 amount) private {
+        // Got the funds, add it to the channels dai pool
+        poolFunds = poolFunds.add(amount);
+
+        // Next swap it via AAVE for aDAI
+        // mainnet address, for other addresses: https://docs.aave.com/developers/developing-on-aave/deployed-contract-instances
+        ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
+            lendingPoolProviderAddress
+        );
+        ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
+        IERC20(daiAddress).approve(provider.getLendingPoolCore(), amount);
+
+        // Deposit to AAVE
+        lendingPool.deposit(daiAddress, amount, uint16(REFERRAL_CODE)); // set to 0 in constructor presently
+    }
+
+    /// @dev withdraw funds from pool
+    function _withdrawFundsFromPool(uint256 ratio) private nonReentrant {
+        uint256 totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(
+            address(this)
+        );
+
+        uint256 totalProfit = totalBalanceWithProfit.sub(poolFunds);
+        uint256 userAmount = totalProfit.mul(ratio);
+
+        // adjust poolFunds first
+        uint256 userAmountAdjusted = userAmount.div(ADJUST_FOR_FLOAT);
+        poolFunds = poolFunds.sub(userAmountAdjusted);
+
+        // Add to interest claimed
+        usersInterestClaimed[msg.sender] = usersInterestClaimed[msg.sender].add(
+            userAmountAdjusted
+        );
+
+        // Finally SWAP aDAI to PUSH, and TRANSFER TO USER
+        swapAndTransferaDaiToPUSH(msg.sender, userAmountAdjusted);
+        // Emit Event
+        emit InterestClaimed(msg.sender, userAmountAdjusted);
+    }
+
+    /// @dev to withraw funds coming from donate
+    function withdrawEthFunds() external onlyGov {
+        uint256 bal = address(this).balance;
+
+        payable(admin).transfer(bal);
+
+        // Emit Event
+        emit Withdrawal(msg.sender, daiAddress, bal);
+    }
+
+    /*
+     * @dev Swaps aDai to PUSH Tokens and Transfers to the USER Address
+     * @param _user address of the user that will recieve the PUSH Tokens
+     * @param __userAmount the amount of aDai to be swapped and transferred
+     */
+    function swapAndTransferaDaiToPUSH(address _user, uint256 _userAmount)
+        internal
+        returns (bool)
+    {
+        IERC20(aDaiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
+
+        address[] memory path;
+        path[0] = aDaiAddress;
+        path[1] = PUSH_TOKEN_ADDRESS;
+
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _userAmount,
+            1,
+            path,
+            _user,
+            block.timestamp
+        );
+        return true;
+    }
+
+    /* ************** 
     
     => FAIR SHARE RATIO CALCULATIONS <=
 
