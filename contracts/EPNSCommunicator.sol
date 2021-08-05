@@ -16,7 +16,6 @@ pragma experimental ABIEncoderV2;
 
 // Essential Imports
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -24,7 +23,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
-contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
+contract EPNSCommunicator is Initializable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -56,6 +55,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     mapping(address => mapping(address => string)) public userToChannelNotifs;
 
     /** STATE VARIABLES **/
+    address public admin;
     uint256 public usersCount;
     address public EPNSCoreAddress;
     string public constant name = "EPNSCommunicator";
@@ -91,6 +91,11 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
 
     /** MODIFIERS **/
 
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
+        _;
+    }
+
     modifier onlyEPNSCore() {
         require(msg.sender == EPNSCoreAddress, "Caller is NOT EPNSCore");
         _;
@@ -108,14 +113,15 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         );
         _;
     }
-    // TBD - REMOVED governance state variable for now. BUT who should be msg.sender for Channel 0x00 TBD
+    // TBD - REMOVED admin state variable for now. BUT who should be msg.sender for Channel 0x00 TBD
     modifier sendNotifRequirements(
         address _channel,
         address _notificationSender,
         address _recipient
     ) {
         require(
-            (_channel == 0x0000000000000000000000000000000000000000) ||
+            (_channel == 0x0000000000000000000000000000000000000000 &&
+                msg.sender == admin) ||
                 (_channel == msg.sender) ||
                 (delegatedNotificationSenders[_channel][_notificationSender] &&
                     msg.sender == _notificationSender) ||
@@ -141,8 +147,19 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
         _;
     }
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyOwner {
+    function initialize(address _admin) public initializer returns (bool) {
+        admin = _admin;
+        return true;
+    }
+
+    function setEPNSCoreAddress(address _coreAddress) external onlyAdmin {
         EPNSCoreAddress = _coreAddress;
+    }
+
+    function transferAdminControl(address _newAdmin) public onlyAdmin {
+        require(_newAdmin != address(0), "Invalid Address");
+        require(_newAdmin != admin, "New admin can't be current admin");
+        admin = _newAdmin;
     }
 
     /**************** 
@@ -571,22 +588,27 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard, Ownable {
     => User Notification Settings Function <=
     *************** */
 
-    // @notice - Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
-    // For instance: 3+1-0+2-0+3-1+4-98
-
-    // 3 -> Decimal Representation of the Notification Options selected by the User
-
-    // For Boolean Type Notif Options
-    // 1-0 -> 1 stands for Option 1 - 0 Means the user didn't choose that Notif Option.
-    // 3-1 stands for Option 3      - 1 Means the User Selected the 3rd boolean Option
-
-    // For SLIDER TYPE Notif Options
-    // 2-0 -> 2 stands for Option 2 - 0 is user's Choice
-    // 4-98-> 4 stands for Option 4 - 98is user's Choice
-
-    // @param _channel - Address of the Channel for which the user is creating the Notif settings
-    // @param _notifID- Decimal Representation of the Options selected by the user
-    // @param _notifSettings - Deliminated string that depicts the User's Notifcation Settings
+    /**
+     * @notice  Allows Users to Create and Subscribe to a Specific Notication Setting for a Channel.
+     * @dev     Updates the userToChannelNotifs mapping to keep track of a User's Notification Settings for a Specific Channel
+     *
+     *          Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
+     *          For instance, for a Notif Setting that looks like -> 3+1-0+2-0+3-1+4-98
+     *          3 -> Decimal Representation of the Notification Options selected by the User
+     *
+     *          For Boolean Type Notif Options
+     *          1-0 -> 1 stands for Option 1 - 0 Means the user didn't choose that Notif Option.
+     *          3-1 stands for Option 3      - 1 Means the User Selected the 3rd boolean Option
+     *
+     *          For SLIDER TYPE Notif Options
+     *          2-0 -> 2 stands for Option 2 - 0 is user's Choice
+     *          4-98-> 4 stands for Option 4 - 98is user's Choice
+     *
+     * @param   _channel - Address of the Channel for which the user is creating the Notif settings
+     * @param   _notifID- Decimal Representation of the Options selected by the user
+     * @param   _notifSettings - Deliminated string that depicts the User's Notifcation Settings
+     *
+     **/
 
     function subscribeToSpecificNotification(
         address _channel,
