@@ -142,8 +142,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     => MODIFIERS <=
 
     ***************/
-    modifier onlyGov() {
-        require(msg.sender == admin, "EPNSCore::onlyGov, user is not admin");
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
         _;
     }
     // TBD - Information -> onlyActivatedChannels redesigned
@@ -271,9 +271,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     //TBD - Use of onlyOwner and Setter function for communicator?
     function setEpnsCommunicatorAddress(address _commAddress)
         external
-        onlyOwner
+        onlyAdmin
     {
         epnsCommunicator = _commAddress;
+    }
+
+    function transferAdminControl(address _newAdmin) public onlyAdmin {
+        require(_newAdmin != address(0), "Invalid Address");
+        require(_newAdmin != admin, "New admin can't be current admin");
+        admin = _newAdmin;
     }
 
     /* ***********************************
@@ -291,22 +297,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     // TBD - IS THIS FUNCTION REQUIRED? It uses broadcastPublicKey function from EPNS Communicator
     //    /// @dev Create channel with fees and public key
-    // function createChannelWithFeesAndPublicKey(ChannelType _channelType, bytes calldata _identity, bytes calldata _publickey,uint256 _amount)
-    //     external onlyUserWithNoChannel onlyUserAllowedChannelType(_channelType) {
-    //     // Save gas, Emit the event out
-    //     emit AddChannel(msg.sender, _channelType, _identity);
-
-    //     // Broadcast public key
-    //     // @TODO Find a way to save cost
-
-    //     // Will save gas
-    //     if (!users[msg.sender].publicKeyRegistered) {
-    //         _broadcastPublicKey(msg.sender, _publickey);
-    //     }
-
-    //     // Bubble down to create channel
-    //     _createChannelWithFees(msg.sender, _channelType,_amount);
-    // }
 
     /// @dev To update channel, only possible if 1 subscriber is present or this is governance
     function updateChannelMeta(address _channel, bytes calldata _identity)
@@ -323,15 +313,21 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         internal
         onlyChannelOwner(_channel)
     {
-        // // check if special channel
-        // if (msg.sender == governance && (_channel == governance || _channel == 0x0000000000000000000000000000000000000000 || _channel == address(this))) {
-        //   // don't do check for 1 as these are special channels
-
-        // }
-        // else {
-        //   // do check for 1
-        //   require (channels[_channel].memberCount == 1, "Channel has external subscribers");
-        // }
+        // check if special channel
+        if (
+            msg.sender == admin &&
+            (_channel == admin ||
+                _channel == 0x0000000000000000000000000000000000000000 ||
+                _channel == address(this))
+        ) {
+            // don't do check for 1 as these are special channels
+        } else {
+            // do check for 1
+            require(
+                channels[_channel].memberCount == 1,
+                "Channel has external subscribers"
+            );
+        }
 
         channels[msg.sender].channelUpdateBlock = block.number;
     }
@@ -557,7 +553,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     *************** */
 
-    function updateUniswapV2Address(address _newAddress) external onlyGov {
+    function updateUniswapV2Address(address _newAddress) external onlyAdmin {
         UNISWAP_V2_ROUTER = _newAddress;
     }
 
@@ -603,7 +599,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /// @dev to withraw funds coming from donate
-    function withdrawEthFunds() external onlyGov {
+    function withdrawEthFunds() external onlyAdmin {
         uint256 bal = address(this).balance;
 
         payable(admin).transfer(bal);
