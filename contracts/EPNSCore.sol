@@ -116,15 +116,23 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     uint256 public poolFunds;
     uint256 public REFERRAL_CODE;
     uint256 DELEGATED_CONTRACT_FEES;
+    uint256 CHANNEL_DEACTIVATION_FEES;
     uint256 ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
     uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION;
 
     /** EVENTS **/
-    event DeactivateChannel(address indexed channel);
-    event ReactivateChannel(address indexed channel);
+
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed amount);
+    event DeactivateChannel(
+        address indexed channel,
+        uint256 indexed amountRefunded
+    );
+    event ReactivateChannel(
+        address indexed channel,
+        uint256 indexed amountDeposited
+    );
     event AddChannel(
         address indexed channel,
         ChannelType indexed channelType,
@@ -230,6 +238,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         DELEGATED_CONTRACT_FEES = 1 * 10**17; // 0.1 DAI to perform any delegate call
 
+        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250000 * 50 * 10**18; // 250k DAI or below, we don't want channel to make a costly mistake as well
 
@@ -393,7 +402,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         uint256 _amount
     ) private {
         // Check if it's equal or above Channel Pool Contribution
-        // removed allowance -
         require(
             _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "Insufficient Funds or max ceiling reached"
@@ -488,22 +496,22 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         }
     }
 
-    // @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
-    // For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
-    // 5 -> Total Notification Options provided by a Channel owner
+    /** @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
+     * For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
+     *  5 -> Total Notification Options provided by a Channel owner
+     *
+     *  For Boolean Type Notif Options
+     *  1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
+     *  1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
+     *  
+     *  For SLIDER TYPE Notif Options
+     *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
+     *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
 
-    // For Boolean Type Notif Options
-    // 1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
-    // 1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
-
-    // For SLIDER TYPE Notif Options
-    // 2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
-    // 2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
-
-    // @param _notifOptions - Total Notification options provided by the Channel Owner
+     *  @param _notifOptions - Total Notification options provided by the Channel Owner
     // @param _notifSettings- Deliminated String of Notification Settings
     // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
-
+**/
     function createChannelNotificationSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
@@ -527,24 +535,93 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
-     * @dev    -Updates the State of the Channel(channelState) in the Channel's Struct.
-     *         -Function can only be Called by Already Activated Channels
-     *
+     * @dev    - Function can only be Called by Already Activated Channels
+     *         - Calculates the Total DAI Deposited by Channel Owner while Channel Creation.
+     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
+     *         - Calculates the New Channel Weight and Readjusts the FS Ratio accordingly.
+     *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
+     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
      **/
+
+    // TBD -> YET TO BE COMPLETED, DISCUSS THE FS PART and Channel Weight Updation Part
     function deactivateChannel() external onlyActivatedChannels(msg.sender) {
+        Channel memory channelData = channels[msg.sender];
+
+        uint256 totalAmountDeposited = channelData
+            .channelWeight
+            .mul(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+            .div(ADJUST_FOR_FLOAT);
+        uint256 totalRefundableAmount = totalAmountDeposited.sub(
+            CHANNEL_DEACTIVATION_FEES
+        );
+
+        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+            .mul(ADJUST_FOR_FLOAT)
+            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        (
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        ) = _readjustFairShareOfChannels(
+            ChannelAction.ChannelUpdated,
+            _newChannelWeight,
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        );
+
+        channels[msg.sender].channelWeight = _newChannelWeight;
         channels[msg.sender].channelState = 2;
-        emit DeactivateChannel(msg.sender);
+
+        swapAndTransferaDaiToPUSH(msg.sender, totalRefundableAmount);
+        emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
     /**
      * @notice Allows Channel Owner to Reactivate his/her Channel again.
-     * @dev    -Updates the State of the Channel(channelState) in the Channel's Struct.
-     *         -Function can only be called by previously Deactivated Channels
-     *
+     * @dev    - Function can only be called by previously Deactivated Channels
+     *         - Channel Owner must Depost at least minimum amount of DAI to reactivate his/her channel.
+     *         - Deposited Dai goes thorugh similar procedure and is deposited to AAVE .
+     *         - Calculation of the new Channel Weight is performed and the FairShare is Readjusted once again with relevant details
+     *         - Updates the State of the Channel(channelState) in the Channel's Struct.
+     * @param _amount Amount of Dai to be deposited
      **/
-    function reActivateChannel() external onlyDeactivatedChannels(msg.sender) {
+
+    function reActivateChannel(uint256 _amount)
+        external
+        onlyDeactivatedChannels(msg.sender)
+    {
+        require(
+            _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            "Insufficient Funds or max ceiling reached"
+        );
+        IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
+        _depositFundsToPool(_amount);
+
+        uint256 _channelWeight = _amount.mul(ADJUST_FOR_FLOAT).div(
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+
+        (
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        ) = _readjustFairShareOfChannels(
+            ChannelAction.ChannelUpdated,
+            _channelWeight,
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        );
+
+        channels[msg.sender].channelWeight = _channelWeight;
         channels[msg.sender].channelState = 1;
-        emit ReactivateChannel(msg.sender);
+        emit ReactivateChannel(msg.sender, _amount);
     }
 
     /* ************** 
