@@ -323,23 +323,36 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     **************************************/
 
-    function updateChannelMeta(address _channel, bytes calldata _identity)
+   /**
+     * @notice Allows Channel Owner to update their Channel Description/Detail
+     * 
+     * @dev    Emits an event with the new identity for the respective Channel Address
+     *         Records the Block Number of the Block at which the Channel is being updated with a New Identity
+     * 
+     * @param _channel     address of the Channel
+     * @param _newIdentity bytes Value for the New Identity of the Channel
+     **/
+    function updateChannelMeta(address _channel, bytes calldata _newIdentity)
         external
+        onlyChannelOwner(_channel)
     {
-        emit UpdateChannel(_channel, _identity);
+        emit UpdateChannel(_channel, _newIdentity);
 
         _updateChannelMeta(_channel);
     }
 
-    // TBD - Getting subscribercount is difficult from Multi CHain-> Should we include PUSH Nodes for that purpose?
-    /// @dev private function to update channel meta
     function _updateChannelMeta(address _channel)
         internal
-        onlyChannelOwner(_channel)
     {
         channels[msg.sender].channelUpdateBlock = block.number;
     }
 
+    /**
+     * @notice Allows the Creation of a EPNS Promoter Channel
+     * 
+     * @dev    Can only be called once for the Core Contract Address.
+     *         Follows the usual procedure for Channel Creation   
+     **/
     /// @dev One time, Create Promoter Channel
     function createPromoterChannel()
         external
@@ -394,7 +407,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         _createChannelWithFees(msg.sender, _channelType, _amount);
     }
 
-    /// @dev add channel with fees
     function _createChannelWithFees(
         address _channel,
         ChannelType _channelType,
@@ -633,7 +645,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         UNISWAP_V2_ROUTER = _newAddress;
     }
 
-    /// @dev deposit funds to pool
+    /**
+     * @notice  Function is used for Handling the entire procedure of Depositing the Funds
+     * 
+     * @dev     Updates the Relevant state variable during Deposit of DAI
+     *          Lends the DAI to AAVE protocol.          
+     * 
+     * @param   amount - Amount that is to be deposited
+    **/ 
     function _depositFundsToPool(uint256 amount) private {
         // Got the funds, add it to the channels dai pool
         poolFunds = poolFunds.add(amount);
@@ -650,7 +669,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         lendingPool.deposit(daiAddress, amount, uint16(REFERRAL_CODE)); // set to 0 in constructor presently
     }
 
-    /// @dev withdraw funds from pool
+    /**
+     * @notice  Withdraw function that allows Users to withdraw their funds from the protocol
+     * 
+     * @dev     Privarte function that is called for Withdrawal of funds for a particular user
+     *          Calculates the total Claimable amount and Updates the Relevant State variables
+     *          Swaps the aDai to Push and transfers the PUSH Tokens back to the User 
+     * 
+     * @param   ratio -ratio of the Total Amount to be transferred to the Caller
+    **/    
     function _withdrawFundsFromPool(uint256 ratio) private nonReentrant {
         uint256 totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(
             address(this)
@@ -674,18 +701,18 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         emit InterestClaimed(msg.sender, userAmountAdjusted);
     }
 
-    /// @dev to withraw funds coming from donate
+    // TBD - Significance of this function is not very clear
     function withdrawEthFunds() external onlyAdmin {
         uint256 bal = address(this).balance;
 
         payable(admin).transfer(bal);
 
-        // Emit Event
         emit Withdrawal(msg.sender, daiAddress, bal);
     }
 
     /**
-     * @dev Swaps aDai to PUSH Tokens and Transfers to the USER Address
+     * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
+     * 
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
