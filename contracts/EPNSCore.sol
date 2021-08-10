@@ -121,15 +121,16 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION;
 
     /** EVENTS **/
-
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed amount);
     event DeactivateChannel(
+        // INFO -> Added new parameter - amountRefunded
         address indexed channel,
         uint256 indexed amountRefunded
     );
     event ReactivateChannel(
+        // INFO -> Added new parameter - amountDeposited
         address indexed channel,
         uint256 indexed amountDeposited
     );
@@ -154,7 +155,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
         _;
     }
-    // TBD - Information -> onlyActivatedChannels redesigned
+    // INFO -> onlyActivatedChannels redesigned
     modifier onlyActivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 1,
@@ -162,7 +163,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         );
         _;
     }
-    // TBD - Information -> onlyUserWithNoChannel became onlyInactiveChannels
+    // INFO -> onlyUserWithNoChannel became onlyInactiveChannels
     modifier onlyInactiveChannels(address _channel) {
         require(
             channels[_channel].channelState == 0,
@@ -187,7 +188,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         _;
     }
 
-    // TBD - Information -> onlyChannelOwner redesigned
+    // INFO -> onlyChannelOwner redesigned
     modifier onlyChannelOwner(address _channel) {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
@@ -207,13 +208,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         _;
     }
-
-    // THESE 3 USE USER struct, WILL HAVE TO REDEISGN THEM
-
-    // modifier onlySubscribed(address _channel, address _subscriber) {
-    //     require(channels[_channel].memberExists[_subscriber], "Subscriber doesn't Exists");
-    //     _;
-    // }
 
     /* ***************
         INITIALIZER
@@ -277,12 +271,42 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         success = true;
     }
 
-    //TBD - Use of onlyOwner and Setter function for communicator?
+    /* ***************
+        SETTER FUNCTIONS
+
+    *************** */
+
+    //TBD - Use of onlyADMIN vs onlyGov in Setter functions below:
+
     function setEpnsCommunicatorAddress(address _commAddress)
         external
         onlyAdmin
     {
         epnsCommunicator = _commAddress;
+    }
+
+    function setChannelDeactivationFees(uint256 _newFees) external onlyAdmin {
+        require(
+            _newFees > 0,
+            "Channel Deactivation Fees must be greater than ZERO"
+        );
+        CHANNEL_DEACTIVATION_FEES = _newFees;
+    }
+
+    function setMinChannelCreationFees(uint256 _newFees) external onlyAdmin {
+        require(
+            _newFees > 0,
+            "Channel MIN Creation Fees must be greater than ZERO"
+        );
+        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = _newFees;
+    }
+
+    function setMaxChannelCreationFees(uint256 _newFees) external onlyAdmin {
+        require(
+            _newFees > 0,
+            "Channel MAX Creation Fees must be greater than ZERO"
+        );
+        ADD_CHANNEL_MAX_POOL_CONTRIBUTION = _newFees;
     }
 
     function transferAdminControl(address _newAdmin) public onlyAdmin {
@@ -790,136 +814,137 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     // TBD FUNCTIONS BELOW
     //---------------------------------------------------------------
     /// @dev to claim fair share of all earnings
-    function claimFairShare()
-        external
-        onlyValidUser(msg.sender)
-        returns (uint256 ratio)
-    {
-        // Calculate entire FS Share, since we are looping for reset... let's calculate over there
-        ratio = 0;
+    // function claimFairShare()
+    //     external
+    //     onlyValidUser(msg.sender)
+    //     returns (uint256 ratio)
+    // {
+    //     // Calculate entire FS Share, since we are looping for reset... let's calculate over there
+    //     ratio = 0;
 
-        // Reset member last update for every channel that are interest bearing
-        // WARN: This unbounded for loop is an anti-pattern
-        for (uint256 i = 0; i < users[msg.sender].subscribedCount; i++) {
-            address channel = users[msg.sender].mapAddressSubscribed[i];
+    //     // Reset member last update for every channel that are interest bearing
+    //     // WARN: This unbounded for loop is an anti-pattern
+    //     for (uint256 i = 0; i < users[msg.sender].subscribedCount; i++) {
+    //         address channel = users[msg.sender].mapAddressSubscribed[i];
 
-            if (
-                channels[channel].channelType ==
-                ChannelType.ProtocolPromotion ||
-                channels[channel].channelType ==
-                ChannelType.InterestBearingOpen ||
-                channels[channel].channelType ==
-                ChannelType.InterestBearingMutual
-            ) {
-                // Reset last updated block
-                channels[channel].memberLastUpdate[msg.sender] = block.number;
+    //         if (
+    //             channels[channel].channelType ==
+    //             ChannelType.ProtocolPromotion ||
+    //             channels[channel].channelType ==
+    //             ChannelType.InterestBearingOpen ||
+    //             channels[channel].channelType ==
+    //             ChannelType.InterestBearingMutual
+    //         ) {
+    //             // Reset last updated block
+    //             channels[channel].memberLastUpdate[msg.sender] = block.number;
 
-                // Next readjust fair share and that's it
-                (
-                    channels[channel].channelFairShareCount,
-                    channels[channel].channelHistoricalZ,
-                    channels[channel].channelLastUpdate
-                ) = _readjustFairShareOfSubscribers(
-                    SubscriberAction.SubscriberUpdated,
-                    channels[channel].channelFairShareCount,
-                    channels[channel].channelHistoricalZ,
-                    channels[channel].channelLastUpdate
-                );
+    //             // Next readjust fair share and that's it
+    //             (
+    //                 channels[channel].channelFairShareCount,
+    //                 channels[channel].channelHistoricalZ,
+    //                 channels[channel].channelLastUpdate
+    //             ) = _readjustFairShareOfSubscribers(
+    //                 SubscriberAction.SubscriberUpdated,
+    //                 channels[channel].channelFairShareCount,
+    //                 channels[channel].channelHistoricalZ,
+    //                 channels[channel].channelLastUpdate
+    //             );
 
-                // Calculate share
-                uint256 individualChannelShare = calcSingleChannelEarnRatio(
-                    channel,
-                    msg.sender,
-                    block.number
-                );
-                ratio = ratio.add(individualChannelShare);
-            }
-        }
-        // Finally, withdraw for user
-        _withdrawFundsFromPool(ratio);
-    }
-    /* @dev to get the fair share of user for a single channel, different from subscriber fair share
-     * as it's multiplication of channel fair share with subscriber fair share
-     */
+    //             // Calculate share
+    //             uint256 individualChannelShare = calcSingleChannelEarnRatio(
+    //                 channel,
+    //                 msg.sender,
+    //                 block.number
+    //             );
+    //             ratio = ratio.add(individualChannelShare);
+    //         }
+    //     }
+    //     // Finally, withdraw for user
+    //     _withdrawFundsFromPool(ratio);
+    // }
 
-    function calcSingleChannelEarnRatio(
-        address _channel,
-        address _user,
-        uint256 _block
-    ) public view onlySubscribed(_channel, _user) returns (uint256 ratio) {
-        // First get the channel fair share
-        if (
-            channels[_channel].channelType == ChannelType.ProtocolPromotion ||
-            channels[_channel].channelType == ChannelType.InterestBearingOpen ||
-            channels[_channel].channelType == ChannelType.InterestBearingMutual
-        ) {
-            uint256 channelFS = getChannelFSRatio(_channel, _block);
-            uint256 subscriberFS = getSubscriberFSRatio(
-                _channel,
-                _user,
-                _block
-            );
+    // /* @dev to get the fair share of user for a single channel, different from subscriber fair share
+    //  * as it's multiplication of channel fair share with subscriber fair share
+    //  */
 
-            ratio = channelFS.mul(subscriberFS).div(ADJUST_FOR_FLOAT);
-        }
-    }
+    // function calcSingleChannelEarnRatio(
+    //     address _channel,
+    //     address _user,
+    //     uint256 _block
+    // ) public view onlySubscribed(_channel, _user) returns (uint256 ratio) {
+    //     // First get the channel fair share
+    //     if (
+    //         channels[_channel].channelType == ChannelType.ProtocolPromotion ||
+    //         channels[_channel].channelType == ChannelType.InterestBearingOpen ||
+    //         channels[_channel].channelType == ChannelType.InterestBearingMutual
+    //     ) {
+    //         uint256 channelFS = getChannelFSRatio(_channel, _block);
+    //         uint256 subscriberFS = getSubscriberFSRatio(
+    //             _channel,
+    //             _user,
+    //             _block
+    //         );
 
-    /// @dev to get the fair share of user overall
-    function calcAllChannelsRatio(address _user, uint256 _block)
-        public
-        view
-        onlyValidUser(_user)
-        returns (uint256 ratio)
-    {
-        // loop all channels for the user
-        uint256 subscribedCount = users[_user].subscribedCount;
+    //         ratio = channelFS.mul(subscriberFS).div(ADJUST_FOR_FLOAT);
+    //     }
+    // }
 
-        // WARN: This unbounded for loop is an anti-pattern
-        for (uint256 i = 0; i < subscribedCount; i++) {
-            if (
-                channels[users[_user].mapAddressSubscribed[i]].channelType ==
-                ChannelType.ProtocolPromotion ||
-                channels[users[_user].mapAddressSubscribed[i]].channelType ==
-                ChannelType.InterestBearingOpen ||
-                channels[users[_user].mapAddressSubscribed[i]].channelType ==
-                ChannelType.InterestBearingMutual
-            ) {
-                uint256 individualChannelShare = calcSingleChannelEarnRatio(
-                    users[_user].mapAddressSubscribed[i],
-                    _user,
-                    _block
-                );
-                ratio = ratio.add(individualChannelShare);
-            }
-        }
-    }
+    // /// @dev to get the fair share of user overall
+    // function calcAllChannelsRatio(address _user, uint256 _block)
+    //     public
+    //     view
+    //     onlyValidUser(_user)
+    //     returns (uint256 ratio)
+    // {
+    //     // loop all channels for the user
+    //     uint256 subscribedCount = users[_user].subscribedCount;
 
-    /// @dev to get channel fair share ratio for a given block
-    function getChannelFSRatio(address _channel, uint256 _block)
-        public
-        view
-        returns (uint256 ratio)
-    {
-        // formula is ratio = da / z + (nxw)
-        // d is the difference of blocks from given block and the last update block of the entire group
-        // a is the actual weight of that specific group
-        // z is the historical constant
-        // n is the number of channels
-        // x is the difference of blocks from given block and the last changed start block of group
-        // w is the normalized weight of the groups
-        uint256 d = _block.sub(channels[_channel].channelStartBlock); // _block.sub(groupLastUpdate);
-        uint256 a = channels[_channel].channelWeight;
-        uint256 z = groupHistoricalZ;
-        uint256 n = groupFairShareCount;
-        uint256 x = _block.sub(groupLastUpdate);
-        uint256 w = groupNormalizedWeight;
+    //     // WARN: This unbounded for loop is an anti-pattern
+    //     for (uint256 i = 0; i < subscribedCount; i++) {
+    //         if (
+    //             channels[users[_user].mapAddressSubscribed[i]].channelType ==
+    //             ChannelType.ProtocolPromotion ||
+    //             channels[users[_user].mapAddressSubscribed[i]].channelType ==
+    //             ChannelType.InterestBearingOpen ||
+    //             channels[users[_user].mapAddressSubscribed[i]].channelType ==
+    //             ChannelType.InterestBearingMutual
+    //         ) {
+    //             uint256 individualChannelShare = calcSingleChannelEarnRatio(
+    //                 users[_user].mapAddressSubscribed[i],
+    //                 _user,
+    //                 _block
+    //             );
+    //             ratio = ratio.add(individualChannelShare);
+    //         }
+    //     }
+    // }
 
-        uint256 nxw = n.mul(x.mul(w));
-        uint256 z_nxw = z.add(nxw);
-        uint256 da = d.mul(a);
+    // /// @dev to get channel fair share ratio for a given block
+    // function getChannelFSRatio(address _channel, uint256 _block)
+    //     public
+    //     view
+    //     returns (uint256 ratio)
+    // {
+    //     // formula is ratio = da / z + (nxw)
+    //     // d is the difference of blocks from given block and the last update block of the entire group
+    //     // a is the actual weight of that specific group
+    //     // z is the historical constant
+    //     // n is the number of channels
+    //     // x is the difference of blocks from given block and the last changed start block of group
+    //     // w is the normalized weight of the groups
+    //     uint256 d = _block.sub(channels[_channel].channelStartBlock); // _block.sub(groupLastUpdate);
+    //     uint256 a = channels[_channel].channelWeight;
+    //     uint256 z = groupHistoricalZ;
+    //     uint256 n = groupFairShareCount;
+    //     uint256 x = _block.sub(groupLastUpdate);
+    //     uint256 w = groupNormalizedWeight;
 
-        ratio = (da.mul(ADJUST_FOR_FLOAT)).div(z_nxw);
-    }
+    //     uint256 nxw = n.mul(x.mul(w));
+    //     uint256 z_nxw = z.add(nxw);
+    //     uint256 da = d.mul(a);
+
+    //     ratio = (da.mul(ADJUST_FOR_FLOAT)).div(z_nxw);
+    // }
 
     function getChainId() internal pure returns (uint256) {
         uint256 chainId;
