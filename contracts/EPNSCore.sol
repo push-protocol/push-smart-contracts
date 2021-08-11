@@ -55,9 +55,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         // Channel Type
         ChannelType channelType;
         uint8 channelState; // Channel State Details: 0 -> INACTIVE, 1 -> ACTIVATED, 2 -> DeActivated By Channel Owner, 3 -> BLOCKED by ADMIN/Governance
-        // Channel Pool Contribution
+        uint8 isChannelVerified; // Channel Verification Status: 0 -> UnVerified Channels, 1 -> Verified by Admin, 2 -> Verified by Channel Owners
         uint256 poolContribution;
-        uint256 memberCount;
         uint256 channelHistoricalZ;
         uint256 channelFairShareCount;
         uint256 channelLastUpdate; // The last update block number, used to calculate fair share
@@ -84,7 +83,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     mapping(uint256 => address) public mapAddressChannels;
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
-    mapping(address => uint256) public usersInterestInWallet;
+    mapping(address => address[]) public verifiedViaAdminRecords;
+    mapping(address => address[]) public verifiedViaChannelRecords;
 
     /** STATE VARIABLES **/
     string public constant name = "EPNS CORE V4";
@@ -119,6 +119,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed amount);
+    event ChannelVerified(
+        address indexed verifiedChannel,
+        address indexed verifier
+    );
     event DeactivateChannel(
         // INFO -> Added new parameter - amountRefunded
         address indexed channel,
@@ -201,6 +205,39 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             "Channel Type Invalid"
         );
 
+        _;
+    }
+
+    modifier onlyUnverifiedChannels(address _channel) {
+        require(
+            channels[_channel].isChannelVerified == 0,
+            "Channel is Already Verified"
+        );
+        _;
+    }
+
+    modifier onlyAdminVerifiedChannels(address _channel) {
+        require(
+            channels[_channel].isChannelVerified == 1,
+            "Channel is Verified By ADMIN"
+        );
+        _;
+    }
+
+    modifier onlyChannelVerifiedChannels(address _channel) {
+        require(
+            channels[_channel].isChannelVerified == 2,
+            "Channel is Verified By Other Channel"
+        );
+        _;
+    }
+
+    modifier onlyVerifiedChannels(address _channel) {
+        require(
+            channels[_channel].isChannelVerified == 1 ||
+                channels[_channel].isChannelVerified == 2,
+            "Channel is Not Verified Yet"
+        );
         _;
     }
 
@@ -323,12 +360,12 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     **************************************/
 
-   /**
+    /**
      * @notice Allows Channel Owner to update their Channel Description/Detail
-     * 
+     *
      * @dev    Emits an event with the new identity for the respective Channel Address
      *         Records the Block Number of the Block at which the Channel is being updated with a New Identity
-     * 
+     *
      * @param _channel     address of the Channel
      * @param _newIdentity bytes Value for the New Identity of the Channel
      **/
@@ -341,17 +378,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         _updateChannelMeta(_channel);
     }
 
-    function _updateChannelMeta(address _channel)
-        internal
-    {
+    function _updateChannelMeta(address _channel) internal {
         channels[msg.sender].channelUpdateBlock = block.number;
     }
 
     /**
      * @notice Allows the Creation of a EPNS Promoter Channel
-     * 
+     *
      * @dev    Can only be called once for the Core Contract Address.
-     *         Follows the usual procedure for Channel Creation   
+     *         Follows the usual procedure for Channel Creation
      **/
     /// @dev One time, Create Promoter Channel
     function createPromoterChannel()
@@ -637,6 +672,128 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /* ************** 
     
+    => CHANNEL VERIFICATION FUNCTIONALTIES <=
+
+    *************** */
+
+    /**
+     * PLAN FOR CHANNEL VERIFICATION FEATURES
+     * 1. Update Channel Struct with a isChannelVerified uint8 value
+     * 2. isChannelVerified => 0 when not verified, 1 when verified by Admin, 2 when verified by Other ChannelOwner
+     * 3. Create 2 Mappings:
+     *                         1. mapping(address => address[]) public verifiedViaChannelRecord;
+     *                         2. mapping(address => address[]) public verifiedViaAdminRecord;
+     * 4. Create Relevant Modifiers:
+     *                         1. onlyNonVerifiedChannels
+     *                         2. onlyVerifiedChannels;
+     *                         3. onlyAdminVerifiedChannels;
+     *                         4. onlyChannelVerifiedChannels;
+     * 5. Create Imperative Functions:
+     *                         1. verifyChannelViaAdmin()
+     *                         2. verifyChannelViaChannelOwners()
+     *                         3. getAllVerifiedChannelsViaChannelOwners()
+     *                         4. getChannelVerificationStatus()
+     *                         5. revokeChannelVerification();
+     * 6. ANY ADDITIONAL FEATURE ???
+     **/
+
+    function getTotalVerifiedChannels(address _verifier)
+        public
+        view
+        returns (uint256 totalVerifiedChannels)
+    {
+        totalVerifiedChannels = verifiedViaChannelRecords[_verifier].length;
+    }
+
+    function getChannelVerificationStatus(address _channel)
+        public
+        view
+        returns (string memory verificationStatus)
+    {
+        Channel memory channelDetails = channels[_channel];
+
+        if (channelDetails.isChannelVerified == 1) {
+            verificationStatus = "Channel verified by ADMIN";
+        } else if (channelDetails.isChannelVerified == 2) {
+            verificationStatus = "Channel verified by Verified CHANNEL Owners";
+        } else {
+            verificationStatus = "Channel NOT Verified";
+        }
+    }
+
+    /**
+     * @notice    Function is designed specifically for the Admin to verify any particular Channel
+     * @dev       Can only be Called by the Admin
+     *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
+     * @param    _channel  Address of the channel to be Verified
+     **/
+
+    function verifyChannelViaAdmin(address _channel)
+        external
+        onlyAdmin
+        returns (bool)
+    {
+        _verifyChannel(_channel, msg.sender, 1);
+        return true;
+    }
+
+    /**
+     * @notice    Function is designed specifically for the Verified CHANNEL Owners to verify any particular Channel
+     * @dev       Can only be Called by the Channel Owners who themselves have been verified by the ADMIN first
+     *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
+     *
+     * @param    _channel  Address of the channel to be Verified
+     **/
+
+    function verifyChannelViaChannelOwners(address _channel)
+        external
+        onlyAdminVerifiedChannels(msg.sender)
+        returns (bool)
+    {
+        _verifyChannel(_channel, msg.sender, 2);
+        return true;
+    }
+
+    /**
+     * @notice    Base function that allows Admin or Channel Owners to Verify other Channels
+     *
+     * @dev       Can only be Called for UnVerified Channels
+     *            Checks if the Caller of this function is an ADMIN or other Verified Channel Owners and Proceeds Accordingly
+     *            If Caller is Admin:
+     *                                a. Marks Channel Verification Status as '1'.
+     *                                b. Updates the verifiedViaAdminRecords Mapping
+     *                                c. Emits Relevant Events
+     *            If Caller is Verified Channel Owners:
+     *                                a. Marks Channel Verification Status as '2'.
+     *                                b. Updates the verifiedViaChannelRecords Mapping
+     *                                c. Emits Relevant Events
+     *
+     * @param     _channel        Address of the channel to be Verified
+     * @param     _verifier       Address of the Caller who is verifiying the Channel
+     * @param     _verifierFlag   uint Value to indicate the Caller of this Base Verification function
+     **/
+    function _verifyChannel(
+        address _channel,
+        address _verifier,
+        uint8 _verifierFlag
+    ) private onlyActivatedChannels(_channel) onlyUnverifiedChannels(_channel) {
+        Channel memory channelDetails = channels[_channel];
+
+        if (_verifierFlag == 1) {
+            channelDetails.isChannelVerified = 1;
+            verifiedViaAdminRecords[_verifier].push(_channel);
+            emit ChannelVerified(_channel, _verifier);
+        } else {
+            channelDetails.isChannelVerified = 2;
+            verifiedViaChannelRecords[_verifier].push(_channel);
+            emit ChannelVerified(_channel, _verifier);
+        }
+
+        channels[_channel] = channelDetails;
+    }
+
+    /* ************** 
+    
     => DEPOSIT & WITHDRAWAL of FUNDS<=
 
     *************** */
@@ -647,12 +804,12 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /**
      * @notice  Function is used for Handling the entire procedure of Depositing the Funds
-     * 
+     *
      * @dev     Updates the Relevant state variable during Deposit of DAI
-     *          Lends the DAI to AAVE protocol.          
-     * 
+     *          Lends the DAI to AAVE protocol.
+     *
      * @param   amount - Amount that is to be deposited
-    **/ 
+     **/
     function _depositFundsToPool(uint256 amount) private {
         // Got the funds, add it to the channels dai pool
         poolFunds = poolFunds.add(amount);
@@ -671,13 +828,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /**
      * @notice  Withdraw function that allows Users to withdraw their funds from the protocol
-     * 
+     *
      * @dev     Privarte function that is called for Withdrawal of funds for a particular user
      *          Calculates the total Claimable amount and Updates the Relevant State variables
-     *          Swaps the aDai to Push and transfers the PUSH Tokens back to the User 
-     * 
+     *          Swaps the aDai to Push and transfers the PUSH Tokens back to the User
+     *
      * @param   ratio -ratio of the Total Amount to be transferred to the Caller
-    **/    
+     **/
     function _withdrawFundsFromPool(uint256 ratio) private nonReentrant {
         uint256 totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(
             address(this)
@@ -712,7 +869,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /**
      * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
-     * 
+     *
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
