@@ -681,32 +681,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     *************** */
 
-    /**
-     * PLAN FOR CHANNEL VERIFICATION FEATURES
-     *
-     * 1. Update Channel Struct with a isChannelVerified uint8 value
-     * 2. isChannelVerified => 0 when not verified, 1 when verified by Admin, 2 when verified by Other ChannelOwner
-     * 3. Create 2 Mappings:
-     *                         1. mapping(address => address[]) public verifiedViaChannelRecord;
-     *                         2. mapping(address => address[]) public verifiedViaAdminRecord;
-     *                         3. mapping(address => address) public verifiedBy;
-     *
-     * 4. Create Relevant Modifiers:
-     *                         1. onlyNonVerifiedChannels
-     *                         2. onlyVerifiedChannels;
-     *                         3. onlyAdminVerifiedChannels;
-     *                         4. onlyChannelVerifiedChannels;
-     *
-     * 5. Create Imperative Functions:
-     *                         1. verifyChannelViaAdmin()
-     *                         2. verifyChannelViaChannelOwners()
-     *                         3. getAllVerifiedChannelsViaChannelOwners()
-     *                         4. getChannelVerificationStatus()
-     *                         5. revokeChannelVerification();
-     *
-     * 6. ANY ADDITIONAL FEATURE ???
-     **/
-
     function getTotalVerifiedChannels(address _verifier)
         public
         view
