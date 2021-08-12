@@ -27,6 +27,11 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    enum SubscriberAction {
+        SubscriberRemoved,
+        SubscriberAdded,
+        SubscriberUpdated
+    }
     /**
      * @notice User Struct that involves imperative details about
      * a specific User.
@@ -186,6 +191,32 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     }
 
     /**
+     * @notice External Subscribe Function that allows users to Diretly interact with the Base Subscribe function
+     * @dev Subscribers the caller of the function to a channel - Takes into Consideration the "msg.sender"
+     * @param _channel address of the channel that the user is subscribing to
+    **/
+    function subscribe(address _channel) external returns (bool) {
+        // Call actual subscribe
+        _subscribe(_channel, msg.sender);
+        return true;
+    }
+
+
+    /**
+     * @notice This Function that allows users unsubscribe from a List of Channels at once
+     * 
+     * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
+    **/
+    function batchSubscribe(address[] memory _channelList) external returns(bool){
+        
+        for( uint256 i=0; i < _channelList.length; i++ ){
+            _subscribe(_channelList[i], msg.sender);
+        }
+        return true;
+    }
+    
+
+    /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel and Keeps track of it
      * @dev Initializes the User Struct with crucial details about the Channel Subscription
      * @param _channel address of the channel that the user is subscribing to
@@ -217,17 +248,6 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
         // Emit it
         emit Subscribe(_channel, _user);
-    }
-
-    /**
-     * @notice External Subscribe Function that allows users to Diretly interact with the Base Subscribe function
-     * @dev Subscribers the caller of the function to a channel - Takes into Consideration the "msg.sender"
-     * @param _channel address of the channel that the user is subscribing to
-     **/
-    function subscribe(address _channel) external returns (bool) {
-        // Call actual subscribe
-        _subscribe(_channel, msg.sender);
-        return true;
     }
 
     /**
@@ -282,6 +302,29 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         return true;
     }
 
+     /**
+     * @notice External Unsubcribe Function that allows users to Diretly interact with the Base Unsubscribe function
+     * @dev UnSubscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
+     * @param _channel address of the channel that the user is subscribing to
+     **/
+    function unsubscribe(address _channel) external {
+        // Call actual unsubscribe
+        _unsubscribe(_channel, msg.sender);
+    }
+
+    /**
+     * @notice This Function that allows users unsubscribe from a List of Channels at once
+     * 
+     * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
+    **/
+    function batchUnsubscribe(address[] memory _channelList) external returns(bool){
+        
+        for( uint256 i=0; i < _channelList.length; i++ ){
+            _unsubscribe(_channelList[i], msg.sender);
+        }
+        return true;
+    }
+
     /**
      * @notice Base Usubscribe Function that allows users to UNSUBSCRIBE from a Particular Channel and Keeps track of it
      * @dev Modifies the User Struct with crucial details about the Channel Unsubscription
@@ -321,16 +364,6 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
         // Emit it
         emit Unsubscribe(_channel, _user);
-    }
-
-    /**
-     * @notice External Unsubcribe Function that allows users to Diretly interact with the Base Unsubscribe function
-     * @dev UnSubscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
-     * @param _channel address of the channel that the user is subscribing to
-     **/
-    function unsubscribe(address _channel) external {
-        // Call actual unsubscribe
-        _unsubscribe(_channel, msg.sender);
     }
 
     /**
