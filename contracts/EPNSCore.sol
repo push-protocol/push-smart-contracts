@@ -83,8 +83,11 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     mapping(uint256 => address) public mapAddressChannels;
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
-    mapping(address => address[]) public verifiedViaAdminRecords;
-    mapping(address => address[]) public verifiedViaChannelRecords;
+    /** CHANNEL VERIFICATION MAPPINGS **/
+    mapping(address => address) public channelVerifiedBy; // Keeps track of Channel Being Verified => The VERIFIER CHANNEL
+    mapping(address => uint256) public verifiedChannelCount; // Keeps track of Verifier Channel Address => Total Number of Channels it Verified
+    mapping(address => address[]) public verifiedViaAdminRecords; // Array of All Channels verified by ADMIN
+    mapping(address => address[]) public verifiedViaChannelRecords; // Array of All Channels verified by CHANNEL OWNERS
 
     /** STATE VARIABLES **/
     string public constant name = "EPNS CORE V4";
@@ -123,13 +126,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         address indexed verifiedChannel,
         address indexed verifier
     );
+    event ChannelVerificationRevoked(
+        address indexed trargetChannel,
+        address indexed verificationRevoker
+    );
     event DeactivateChannel(
-        // INFO -> Added new parameter - amountRefunded
         address indexed channel,
         uint256 indexed amountRefunded
     );
     event ReactivateChannel(
-        // INFO -> Added new parameter - amountDeposited
         address indexed channel,
         uint256 indexed amountDeposited
     );
@@ -678,22 +683,27 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /**
      * PLAN FOR CHANNEL VERIFICATION FEATURES
+     *
      * 1. Update Channel Struct with a isChannelVerified uint8 value
      * 2. isChannelVerified => 0 when not verified, 1 when verified by Admin, 2 when verified by Other ChannelOwner
      * 3. Create 2 Mappings:
      *                         1. mapping(address => address[]) public verifiedViaChannelRecord;
      *                         2. mapping(address => address[]) public verifiedViaAdminRecord;
+     *                         3. mapping(address => address) public verifiedBy;
+     *
      * 4. Create Relevant Modifiers:
      *                         1. onlyNonVerifiedChannels
      *                         2. onlyVerifiedChannels;
      *                         3. onlyAdminVerifiedChannels;
      *                         4. onlyChannelVerifiedChannels;
+     *
      * 5. Create Imperative Functions:
      *                         1. verifyChannelViaAdmin()
      *                         2. verifyChannelViaChannelOwners()
      *                         3. getAllVerifiedChannelsViaChannelOwners()
      *                         4. getChannelVerificationStatus()
      *                         5. revokeChannelVerification();
+     *
      * 6. ANY ADDITIONAL FEATURE ???
      **/
 
@@ -702,23 +712,36 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         view
         returns (uint256 totalVerifiedChannels)
     {
-        totalVerifiedChannels = verifiedViaChannelRecords[_verifier].length;
+        totalVerifiedChannels = verifiedChannelCount[_verifier];
     }
 
     function getChannelVerificationStatus(address _channel)
         public
         view
-        returns (string memory verificationStatus)
+        returns (uint8 _verificationStatus)
     {
-        Channel memory channelDetails = channels[_channel];
+        _verificationStatus = channels[_channel].isChannelVerified;
+    }
 
-        if (channelDetails.isChannelVerified == 1) {
-            verificationStatus = "Channel verified by ADMIN";
-        } else if (channelDetails.isChannelVerified == 2) {
-            verificationStatus = "Channel verified by Verified CHANNEL Owners";
+    function getAllVerifiedChannel(address _verifier)
+        public
+        view
+        returns (address[] memory)
+    {
+        uint256 totalVerified = getTotalVerifiedChannels(_verifier);
+        address[] memory result = new address[](totalVerified);
+
+        if (_verifier == admin) {
+            for (uint256 i; i < totalVerified; i++) {
+                result[i] = verifiedViaAdminRecords[_verifier][i];
+            }
         } else {
-            verificationStatus = "Channel NOT Verified";
+            for (uint256 i; i < totalVerified; i++) {
+                result[i] = verifiedViaChannelRecords[_verifier][i];
+            }
         }
+
+        return result;
     }
 
     /**
@@ -733,7 +756,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         onlyAdmin
         returns (bool)
     {
-        _verifyChannel(_channel, msg.sender, 1);
+        _verifyChannel(_channel, admin, 1);
         return true;
     }
 
@@ -766,7 +789,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *            If Caller is Verified Channel Owners:
      *                                a. Marks Channel Verification Status as '2'.
      *                                b. Updates the verifiedViaChannelRecords Mapping
-     *                                c. Emits Relevant Events
+     *                                c. Updates the channelToChannelVerificationRecords mapping
+     *                                d. Emits Relevant Events
      *
      * @param     _channel        Address of the channel to be Verified
      * @param     _verifier       Address of the Caller who is verifiying the Channel
@@ -782,15 +806,127 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         if (_verifierFlag == 1) {
             channelDetails.isChannelVerified = 1;
             verifiedViaAdminRecords[_verifier].push(_channel);
-            emit ChannelVerified(_channel, _verifier);
         } else {
             channelDetails.isChannelVerified = 2;
             verifiedViaChannelRecords[_verifier].push(_channel);
-            emit ChannelVerified(_channel, _verifier);
         }
 
+        channelVerifiedBy[_channel] = _verifier;
+        verifiedChannelCount[_verifier] += 1;
         channels[_channel] = channelDetails;
+        emit ChannelVerified(_channel, _verifier);
     }
+
+    /**
+     * @notice    The revokeVerificationViaAdmin allows the ADMIN of the Contract to Revoke any Specific Channel's Verified Tag
+     *            Can be called for any Target Channel that has been verified either by Admin or other Channels
+     *
+     * @dev       Can only be Called for Verified Channels
+     *            Can only be Called by the ADMIN of the contract
+     *            Involves 2 Main CASES: 
+                                         a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by ADMIN directly) or,
+     *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by ADMIN)
+     *            If Target Channel CHILD:
+     *                                   -> Checks for its Parent Channel.
+     *                                   -> Update the verifiedViaChannelRecords mapping for Parent's Channel
+     *                                   -> Update the channelVerifiedBy mapping for Target Channel.
+     *                                   -> Revoke Verification of Target Channel                
+     *            If Target Channel PARENT:
+     *                                   -> Checks total number of Channels verified by Parent Channel
+     *                                   -> Removes Verification for all Channels that were verified by the Target Parent Channel
+     *                                   -> Update the channelVerifiedBy mapping for every Target Channel Target Channel.
+     *                                   -> Deletes the verifiedViaChannelRecords for Parent's Channel
+     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.
+     *                               
+     * @param     _tragetChannel  Address of the channel whose Verification is to be Revoked
+     **/
+
+    function revokeVerificationViaAdmin(address _tragetChannel)
+        external
+        onlyVerifiedChannels(_tragetChannel)
+        onlyAdmin
+        returns (bool)
+    {
+        Channel memory channelDetails = channels[_tragetChannel];
+
+        if (channelDetails.isChannelVerified == 1) {
+            uint256 _totalChannelsVerified = getTotalVerifiedChannels(
+                _tragetChannel
+            );
+
+            for (uint256 i; i < _totalChannelsVerified; i++) {
+                address childChannel = verifiedViaChannelRecords[
+                    _tragetChannel
+                ][i];
+                channels[childChannel].isChannelVerified = 0;
+                delete channelVerifiedBy[childChannel];
+            }
+            delete verifiedViaChannelRecords[_tragetChannel];
+            delete verifiedChannelCount[_tragetChannel];
+            channels[_tragetChannel].isChannelVerified == 0;
+        } else {
+            address parentChannel = channelVerifiedBy[_tragetChannel];
+            uint256 _totalChannelsVerified = getTotalVerifiedChannels(
+                parentChannel
+            );
+
+            for (uint256 i; i < _totalChannelsVerified; i++) {
+                if (
+                    verifiedViaChannelRecords[parentChannel][i] !=
+                    _tragetChannel
+                ) {
+                    continue;
+                } else {
+                    address childChannel = verifiedViaChannelRecords[
+                        parentChannel
+                    ][i];
+                    verifiedViaChannelRecords[parentChannel][
+                        i
+                    ] = verifiedViaChannelRecords[parentChannel][
+                        _totalChannelsVerified - 1
+                    ];
+                    verifiedViaChannelRecords[parentChannel][
+                        _totalChannelsVerified - 1
+                    ] = childChannel;
+                    delete verifiedViaChannelRecords[parentChannel][
+                        _totalChannelsVerified - 1
+                    ];
+                    verifiedChannelCount[parentChannel] = verifiedChannelCount[
+                        parentChannel
+                    ].sub(1);
+                    channels[childChannel].isChannelVerified = 0;
+                }
+            }
+        }
+
+        emit ChannelVerificationRevoked(_tragetChannel, msg.sender);
+    }
+
+    // function revokeChannelVerification(
+    //     address _channel
+    // ) public onlyVerifiedChannels(_channel) onlyAdmin(){
+    //     Channel memory channelDetails = channels[_channel];
+
+    //     if (channelDetails.isChannelVerified == 1) {
+    //         uint256 totalChannelsVerified = getTotalVerifiedChannels(admin);
+    //         for(uint256 i; i < totalChannelsVerified; i++){
+    //             if(verifiedViaAdminRecords[admin][i] != _channel){
+    //                 continue;
+    //             }else{
+    //                 // address targetChannel = verifiedViaAdminRecords[admin][i];
+    //                 verifiedViaAdminRecords[admin][i] = verifiedViaAdminRecords[admin][totalChannelsVerified - 1];
+    //                 delete verifiedViaAdminRecords[admin][totalChannelsVerified - 1];
+
+    //             }
+    //         }
+
+    //     } else {
+    //         channelDetails.isChannelVerified = 2;
+    //         verifiedViaChannelRecords[_verifier].push(_channel);
+    //     }
+
+    //     channels[_channel] = channelDetails;
+    // }
 
     /* ************** 
     
