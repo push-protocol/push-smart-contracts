@@ -810,7 +810,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             channelDetails.isChannelVerified = 2;
             verifiedViaChannelRecords[_verifier].push(_channel);
         }
-
         channelVerifiedBy[_channel] = _verifier;
         verifiedChannelCount[_verifier] += 1;
         channels[_channel] = channelDetails;
@@ -860,7 +859,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
                 channels[childChannel].isChannelVerified = 0;
                 delete channelVerifiedBy[childChannel];
             }
-
             delete verifiedViaChannelRecords[_targetChannel];
             delete verifiedChannelCount[_targetChannel];
             channels[_targetChannel].isChannelVerified = 0;
@@ -873,7 +871,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             channels[_targetChannel].isChannelVerified = 0;
 
         }
-
         emit ChannelVerificationRevoked(_targetChannel, msg.sender);
     }
 
@@ -938,9 +935,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
              for (uint256 i; i < _totalVerifiedChannel; i++) {
                 if ( verifiedViaChannelRecords[_verifierChannel][i] != _targetChannel) {
                     continue;
-
                 } else {
-
                     address target = verifiedViaChannelRecords[_verifierChannel][i];
                     verifiedViaChannelRecords[_verifierChannel][i] = verifiedViaChannelRecords[_verifierChannel][_totalVerifiedChannel - 1];
                     verifiedViaChannelRecords[_verifierChannel][_totalVerifiedChannel - 1] = target;
