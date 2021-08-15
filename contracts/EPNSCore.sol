@@ -986,15 +986,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         emit InterestClaimed(msg.sender, userAmountAdjusted);
     }
 
-    // TBD - Significance of this function is not very clear
-    function withdrawEthFunds() external onlyAdmin {
-        uint256 bal = address(this).balance;
-
-        payable(admin).transfer(bal);
-
-        emit Withdrawal(msg.sender, daiAddress, bal);
-    }
-
     /**
      * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
      *
