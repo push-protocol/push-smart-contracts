@@ -63,7 +63,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     address public admin;
     uint256 public usersCount;
     address public EPNSCoreAddress;
-    string public constant name = "EPNSCommunicator";
+    string public constant name = "EPNS COMMUNICATOR";
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
             "EIP712Domain(string name,uint256 chainId,address verifyingContract)"

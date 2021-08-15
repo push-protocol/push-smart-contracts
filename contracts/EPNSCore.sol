@@ -88,7 +88,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     mapping(address => address[]) public verifiedViaChannelRecords; // Array of All Channels verified by CHANNEL OWNERS
 
     /** STATE VARIABLES **/
-    string public constant name = "EPNS CORE V4";
+    string public constant name = "EPNS CORE";
     bool oneTimeCheck;
     uint256 ADJUST_FOR_FLOAT;
 
