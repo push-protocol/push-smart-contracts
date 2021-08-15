@@ -11,8 +11,6 @@ pragma experimental ABIEncoderV2;
  * Functionalties.
  **/
 
-// Essential Imports
-
 import "./interfaces/ILendingPool.sol";
 import "./interfaces/IUniswapV2Router.sol";
 import "./interfaces/IEPNSCommunicator.sol";
@@ -91,7 +89,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     /** STATE VARIABLES **/
     string public constant name = "EPNS CORE V4";
-
+    bool oneTimeCheck;
     uint256 ADJUST_FOR_FLOAT;
 
     address public epnsCommunicator;
@@ -278,32 +276,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         ADJUST_FOR_FLOAT = 10**7;
 
-        // Add EPNS Channels
-        // First is for all users
-        // Second is all channel alerter, amount deposited for both is 0
-        // to save gas, emit both the events out
-        // identity = payloadtype + payloadhash
-
-        // EPNS ALL USERS
-        emit AddChannel(
-            admin,
-            ChannelType.ProtocolNonInterest,
-            "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
-        );
-        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
-
-        // EPNS ALERTER CHANNEL
-        emit AddChannel(
-            0x0000000000000000000000000000000000000000,
-            ChannelType.ProtocolNonInterest,
-            "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
-        );
-        _createChannel(
-            0x0000000000000000000000000000000000000000,
-            ChannelType.ProtocolNonInterest,
-            0
-        );
-
         // Create Channel
         success = true;
     }
@@ -321,6 +293,40 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     {
         epnsCommunicator = _commAddress;
     }
+
+    function createChannelForAdmin() external onlyAdmin() {
+        require (!oneTimeCheck,"Function can only be called Once");
+        
+        // Add EPNS Channels
+        // First is for all users
+        // Second is all channel alerter, amount deposited for both is 0
+        // to save gas, emit both the events out
+        // identity = payloadtype + payloadhash
+
+        // EPNS ALL USERS
+
+        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
+         emit AddChannel(
+            admin,
+            ChannelType.ProtocolNonInterest,
+            "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
+        );
+        
+        // EPNS ALERTER CHANNEL
+        _createChannel(
+            0x0000000000000000000000000000000000000000,
+            ChannelType.ProtocolNonInterest,
+            0
+        );
+        emit AddChannel(
+        0x0000000000000000000000000000000000000000,
+        ChannelType.ProtocolNonInterest,
+        "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
+        );
+
+        oneTimeCheck = true;
+    }
+    
 
     function setChannelDeactivationFees(uint256 _newFees) external onlyAdmin {
         require(
@@ -352,10 +358,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         admin = _newAdmin;
     }
 
-    /* ***********************************
-        Channel HELPER Functions
-
-    **************************************/
     function getChannelState(address _channel) public returns (uint256 state) {
         state = channels[_channel].channelState;
     }
@@ -392,7 +394,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *
      * @dev    Can only be called once for the Core Contract Address.
      *         Follows the usual procedure for Channel Creation
-     **/
+    **/
     /// @dev One time, Create Promoter Channel
     function createPromoterChannel()
         external
@@ -738,7 +740,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @notice    Function is designed specifically for the Verified CHANNEL Owners to verify any particular Channel
      * @dev       Can only be Called by the Channel Owners who themselves have been verified by the ADMIN first
      *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
-     *
      * @param    _channel  Address of the channel to be Verified
      **/
 
@@ -765,7 +766,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *                                b. Updates the verifiedViaChannelRecords Mapping
      *                                c. Updates the channelToChannelVerificationRecords mapping
      *                                d. Emits Relevant Events
-     *
      * @param     _channel        Address of the channel to be Verified
      * @param     _verifier       Address of the Caller who is verifiying the Channel
      * @param     _verifierFlag   uint Value to indicate the Caller of this Base Verification function
@@ -809,8 +809,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *                                   -> Removes Verification for all Channels that were verified by the Target Parent Channel
      *                                   -> Update the channelVerifiedBy mapping for every Target Channel Target Channel.
      *                                   -> Deletes the verifiedViaChannelRecords for Parent's Channel
-     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.
-     *                               
+     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.                               
      * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
      **/
 
@@ -855,8 +854,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @dev       Can only be called by Channels who were Verified directly by the ADMIN
      *            The _targetChannel must be have been verified by the Channel calling this function.
      *            Delets the Record of _targetChannel from the verifiedViaChannelRecords mapping
-     *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function 
-     *                                        
+     *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function                                      
      * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
      **/
     function revokeVerificationViaChannelOwners(address _targetChannel)
@@ -935,7 +933,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *
      * @dev     Updates the Relevant state variable during Deposit of DAI
      *          Lends the DAI to AAVE protocol.
-     *
      * @param   amount - Amount that is to be deposited
      **/
     function _depositFundsToPool(uint256 amount) private {
@@ -960,7 +957,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @dev     Privarte function that is called for Withdrawal of funds for a particular user
      *          Calculates the total Claimable amount and Updates the Relevant State variables
      *          Swaps the aDai to Push and transfers the PUSH Tokens back to the User
-     *
      * @param   ratio -ratio of the Total Amount to be transferred to the Caller
      **/
     function _withdrawFundsFromPool(uint256 ratio) private nonReentrant {
@@ -1017,8 +1013,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     => FAIR SHARE RATIO CALCULATIONS <=
 
     *************** */
-
-    /*
+    /**
      * @notice  Helps keeping trakc of the FAIR Share Details whenever a specific Channel Action occur
      * @dev     Updates some of the imperative Fair Share Data based whenever a paricular channel action is performed.
      *          Takes into consideration 3 major Channel Actions, i.e., Channel Creation, Channel Removal or Channel Deactivation/Reactivation.
@@ -1029,7 +1024,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @param _groupNormalizedWeight  Normalized weight value
      * @param _groupHistoricalZ       The Historical Constant - Z
      * @param _groupLastUpdate        Holds the block number of the last update.
-     */
+     **/
     function _readjustFairShareOfChannels(
         ChannelAction _action,
         uint256 _channelWeight,
