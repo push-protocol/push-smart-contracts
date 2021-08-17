@@ -253,8 +253,6 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
         const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR)
         const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
 
-        console.log(verifiedRecordsArray_after)
-
         await expect(verifiedByForCharlie).to.equal(ADMIN);
         await expect(verifiedByForChannelCreator).to.equal(ADMIN);
         await expect(channelDataForCharlie.isChannelVerified).to.equal(1);
@@ -555,6 +553,15 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
         await expect(isCharlieRecordAvailable_before).to.equal(true)
         await expect(isCharlieRecordAvailable_after).to.equal(false);
     });
+
+    it("CASE-1: Function Should emit Relevant Events", async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx =  await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
+
+        await expect(tx)
+          .to.emit(EPNSCoreV1Proxy, 'ChannelVerificationRevoked')
+          .withArgs(CHANNEL_CREATOR, ADMIN);
+      });
 
   });
 
