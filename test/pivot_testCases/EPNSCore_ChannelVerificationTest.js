@@ -158,243 +158,243 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
   });
 
 
-  // describe("Testing Channel Verification Functions for Admin", function()
-  //   {
-  //        beforeEach(async function(){
-  //         const CHANNEL_TYPE = 2;
-  //         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  //         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-  //         await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-  //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //      });
+  describe("Testing Channel Verification Functions for Admin", function()
+    {
+         beforeEach(async function(){
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+          await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       });
  
 
-  //   /**
-  //    * "verifyChannelViaAdmin" Function CHECKPOINTS
-  //    *
-  //    * REVERT CHECKS
-  //    * Should revert if Caller is not ADMIN
-  //    * Should revert if Channel is Not ACTIVATED
-  //    * Should revert if CHANNEL IS Already Verified
-  //    * 
-  //    * FUNCTION Execution CHECKS
-  //    * "isChannelVerified" flag should be assigned to 1 
-  //    * "verifiedViaAdminRecords" mapping should be updated accordingly 
-  //    * "channelVerifiedBy" mapping should be updated with Verifier address
-  //    * "verifiedChannelCount" should increase for the Verifier
-  //    * Should emit relevant Events
-  //    **/
+    /**
+     * "verifyChannelViaAdmin" Function CHECKPOINTS
+     *
+     * REVERT CHECKS
+     * Should revert if Caller is not ADMIN
+     * Should revert if Channel is Not ACTIVATED
+     * Should revert if CHANNEL IS Already Verified
+     * 
+     * FUNCTION Execution CHECKS
+     * "isChannelVerified" flag should be assigned to 1 
+     * "verifiedViaAdminRecords" mapping should be updated accordingly 
+     * "channelVerifiedBy" mapping should be updated with Verifier address
+     * "verifiedChannelCount" should increase for the Verifier
+     * Should emit relevant Events
+     **/
 
     
-  //     it("Function should revert if Caller is Not Admin", async function(){
-  //       const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+      it("Function should revert if Caller is Not Admin", async function(){
+        const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
-  //     });
+        await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
+      });
 
-  //     it("Function should revert if Channel is Not ACTIVATED", async function(){
-  //       const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(BOB);
+      it("Function should revert if Channel is Not ACTIVATED", async function(){
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(BOB);
 
-  //       await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist")
-  //     });
+        await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist")
+      });
 
-  //     it("Function should revert if CHANNEL IS Already Verified", async function(){
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+      it("Function should revert if CHANNEL IS Already Verified", async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       await expect(tx).to.be.revertedWith("Channel is Already Verified")
-  //     });
+        await expect(tx).to.be.revertedWith("Channel is Already Verified")
+      });
 
-  //     it("Function should Execute adequately and Update State variables accordingly", async function(){
-  //       const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+      it("Function should Execute adequately and Update State variables accordingly", async function(){
+        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
         
-  //       const channel = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
-  //       const verifiedBy = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);
-  //       const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-  //       const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+        const channel = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
+        const verifiedBy = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);
+        const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+        const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-  //       const isRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR)
-  //       const isRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
+        const isRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR)
+        const isRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
 
-  //       await expect(verifiedBy).to.equal(ADMIN);
-  //       await expect(channel.isChannelVerified).to.equal(1);
-  //       await expect(channelVerificationCount).to.equal(1);
-  //       await expect(isRecordAvailable_before).to.equal(false)
-  //       await expect(isRecordAvailable_after).to.equal(true);
-  //     });
+        await expect(verifiedBy).to.equal(ADMIN);
+        await expect(channel.isChannelVerified).to.equal(1);
+        await expect(channelVerificationCount).to.equal(1);
+        await expect(isRecordAvailable_before).to.equal(false)
+        await expect(isRecordAvailable_after).to.equal(true);
+      });
 
-  //      it("Function should Allow ADMIN to verifiy more than ONE CHANNELS", async function(){
-  //       const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+       it("Function should Allow ADMIN to verifiy more than ONE CHANNELS", async function(){
+        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-        
-
-  //       const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-  //       const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
         
 
-  //       const channelDataForCharlie = await EPNSCoreV1Proxy.channels(CHARLIE)
-  //       const verifiedByForCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE)
-  //       const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
-  //       const isCharlieRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
+        const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+        const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+        
+
+        const channelDataForCharlie = await EPNSCoreV1Proxy.channels(CHARLIE)
+        const verifiedByForCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE)
+        const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
+        const isCharlieRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
 
 
-  //       const channelDataForChannelCreator = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
-  //       const verifiedByForChannelCreator = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
-  //       const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR)
-  //       const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
+        const channelDataForChannelCreator = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+        const verifiedByForChannelCreator = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+        const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR)
+        const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
 
-  //       console.log(verifiedRecordsArray_after)
+        console.log(verifiedRecordsArray_after)
 
-  //       await expect(verifiedByForCharlie).to.equal(ADMIN);
-  //       await expect(verifiedByForChannelCreator).to.equal(ADMIN);
-  //       await expect(channelDataForCharlie.isChannelVerified).to.equal(1);
-  //       await expect(channelDataForChannelCreator.isChannelVerified).to.equal(1);
-  //       await expect(channelVerificationCount).to.equal(2);
-  //       await expect(isCharlieRecordAvailable_before).to.equal(false)
-  //       await expect(isCharlieRecordAvailable_after).to.equal(true);
-  //       await expect(isChannelCreatorRecordAvailable_before).to.equal(false)
-  //       await expect(isChannelCreatorRecordAvailable_after).to.equal(true);
-  //     });
+        await expect(verifiedByForCharlie).to.equal(ADMIN);
+        await expect(verifiedByForChannelCreator).to.equal(ADMIN);
+        await expect(channelDataForCharlie.isChannelVerified).to.equal(1);
+        await expect(channelDataForChannelCreator.isChannelVerified).to.equal(1);
+        await expect(channelVerificationCount).to.equal(2);
+        await expect(isCharlieRecordAvailable_before).to.equal(false)
+        await expect(isCharlieRecordAvailable_after).to.equal(true);
+        await expect(isChannelCreatorRecordAvailable_before).to.equal(false)
+        await expect(isChannelCreatorRecordAvailable_after).to.equal(true);
+      });
 
-  //     it("Function Should emit Relevant Events", async function(){
-  //       const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+      it("Function Should emit Relevant Events", async function(){
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       await expect(tx)
-  //         .to.emit(EPNSCoreV1Proxy, 'ChannelVerified')
-  //         .withArgs(CHANNEL_CREATOR, ADMIN);
-  //     });
+        await expect(tx)
+          .to.emit(EPNSCoreV1Proxy, 'ChannelVerified')
+          .withArgs(CHANNEL_CREATOR, ADMIN);
+      });
 
-  // });
+  });
 
-  // describe("Testing Channel Verification Function for Channel Owners", function()
-  //   {
-  //        beforeEach(async function(){
-  //         const CHANNEL_TYPE = 2;
-  //         const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-  //         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-  //         await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-  //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //         await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-  //      });
+  describe("Testing Channel Verification Function for Channel Owners", function()
+    {
+         beforeEach(async function(){
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+          await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       });
  
-  //   /**
-  //    * "verifyChannelViaChannelOwners" Function CHECKPOINTS
-  //    *
-  //    * REVERT CHECKS
-  //    * Should revert if Caller is not Admin Verified Channel Owners
-  //    * Should revert if Channel is Not ACTIVATED
-  //    * Should revert if CHANNEL IS Already Verified
-  //    * 
-  //    * FUNCTION Execution CHECKS
-  //    * "isChannelVerified" flag should be assigned to "2" if Verifier is CHANNEL OWNERS
-  //    * "verifiedViaAdminRecords" mapping should be updated accordingly is CHANNEL OWNERS
-  //    * "channelVerifiedBy" mapping should be updated with Verifier address
-  //    * "verifiedChannelCount" should increase for the Verifier
-  //    * Should emit relevant Events
-  //    **/
+    /**
+     * "verifyChannelViaChannelOwners" Function CHECKPOINTS
+     *
+     * REVERT CHECKS
+     * Should revert if Caller is not Admin Verified Channel Owners
+     * Should revert if Channel is Not ACTIVATED
+     * Should revert if CHANNEL IS Already Verified
+     * 
+     * FUNCTION Execution CHECKS
+     * "isChannelVerified" flag should be assigned to "2" if Verifier is CHANNEL OWNERS
+     * "verifiedViaAdminRecords" mapping should be updated accordingly is CHANNEL OWNERS
+     * "channelVerifiedBy" mapping should be updated with Verifier address
+     * "verifiedChannelCount" should increase for the Verifier
+     * Should emit relevant Events
+     **/
     
-  //     it("Function should revert if Caller is Not Channel Owners", async function(){
-  //       const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+      it("Function should revert if Caller is Not Channel Owners", async function(){
+        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-  //       await expect(tx).to.be.revertedWith('Channel is NOT Verified By ADMIN');
-  //     });
+        await expect(tx).to.be.revertedWith('Channel is NOT Verified By ADMIN');
+      });
 
-  //     it("Function should revert if Channel is Not ACTIVATED", async function(){
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-  //       const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
+      it("Function should revert if Channel is Not ACTIVATED", async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
 
-  //       await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist")
-  //     });
+        await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist")
+      });
 
-  //     it("Function should revert if CHANNEL IS Already Verified", async function(){
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+      it("Function should revert if CHANNEL IS Already Verified", async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-  //       const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-  //       await expect(tx).to.be.revertedWith("Channel is Already Verified")
-  //     });
+        await expect(tx).to.be.revertedWith("Channel is Already Verified")
+      });
 
-  //     it("Function should Execute adequately and Update State variables accordingly", async function(){
-  //       const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+      it("Function should Execute adequately and Update State variables accordingly", async function(){
+        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
 
-  //       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
         
-  //       const channel = await EPNSCoreV1Proxy.channels(CHARLIE)
-  //       const verifiedBy = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);
-  //       const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
-  //       const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+        const channel = await EPNSCoreV1Proxy.channels(CHARLIE)
+        const verifiedBy = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);
+        const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+        const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
 
-  //       const isRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
-  //       const isRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
+        const isRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
+        const isRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
 
-  //       await expect(verifiedBy).to.equal(CHANNEL_CREATOR);
-  //       await expect(channel.isChannelVerified).to.equal(2);
-  //       await expect(channelVerificationCount).to.equal(1);
-  //       await expect(isRecordAvailable_before).to.equal(false)
-  //       await expect(isRecordAvailable_after).to.equal(true);
-  //     });
+        await expect(verifiedBy).to.equal(CHANNEL_CREATOR);
+        await expect(channel.isChannelVerified).to.equal(2);
+        await expect(channelVerificationCount).to.equal(1);
+        await expect(isRecordAvailable_before).to.equal(false)
+        await expect(isRecordAvailable_after).to.equal(true);
+      });
 
-  //         it("Function should Allow verified CHANNEL OWNERS to verifiy more than ONE CHANNELS", async function(){
-  //       const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          it("Function should Allow verified CHANNEL OWNERS to verifiy more than ONE CHANNELS", async function(){
+        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-  //       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB); 
-  //       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);        
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB); 
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);        
 
-  //       const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-  //       const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR); 
+        const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+        const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR); 
 
-  //       const channelDataForCharlie = await EPNSCoreV1Proxy.channels(CHARLIE)
-  //       const verifiedByForCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE)
-  //       const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
-  //       const isCharlieRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
+        const channelDataForCharlie = await EPNSCoreV1Proxy.channels(CHARLIE)
+        const verifiedByForCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE)
+        const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE)
+        const isCharlieRecordAvailable_after = verifiedRecordsArray_after.includes(CHARLIE)
 
-  //       const channelDataForBOB = await EPNSCoreV1Proxy.channels(BOB)     
-  //       const verifiedByForBOB = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-  //       const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB)
-  //       const isBOBRecordAvailable_after = verifiedRecordsArray_after.includes(BOB)
+        const channelDataForBOB = await EPNSCoreV1Proxy.channels(BOB)     
+        const verifiedByForBOB = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+        const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB)
+        const isBOBRecordAvailable_after = verifiedRecordsArray_after.includes(BOB)
 
-  //       await expect(verifiedByForBOB).to.equal(CHANNEL_CREATOR);
-  //       await expect(verifiedByForCharlie).to.equal(CHANNEL_CREATOR);
-  //       await expect(channelDataForBOB.isChannelVerified).to.equal(2);
-  //       await expect(channelDataForCharlie.isChannelVerified).to.equal(2);
-  //       await expect(channelVerificationCount).to.equal(2);
-  //       await expect(isCharlieRecordAvailable_before).to.equal(false)
-  //       await expect(isCharlieRecordAvailable_after).to.equal(true);
-  //       await expect(isBOBRecordAvailable_before).to.equal(false)
-  //       await expect(isBOBRecordAvailable_after).to.equal(true);
-  //     });
+        await expect(verifiedByForBOB).to.equal(CHANNEL_CREATOR);
+        await expect(verifiedByForCharlie).to.equal(CHANNEL_CREATOR);
+        await expect(channelDataForBOB.isChannelVerified).to.equal(2);
+        await expect(channelDataForCharlie.isChannelVerified).to.equal(2);
+        await expect(channelVerificationCount).to.equal(2);
+        await expect(isCharlieRecordAvailable_before).to.equal(false)
+        await expect(isCharlieRecordAvailable_after).to.equal(true);
+        await expect(isBOBRecordAvailable_before).to.equal(false)
+        await expect(isBOBRecordAvailable_after).to.equal(true);
+      });
 
-  //     it("Function Should emit Relevant Events", async function(){
-  //       await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-  //       const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+      it("Function Should emit Relevant Events", async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-  //       await expect(tx)
-  //         .to.emit(EPNSCoreV1Proxy, 'ChannelVerified')
-  //         .withArgs(CHARLIE, CHANNEL_CREATOR);
-  //     });
+        await expect(tx)
+          .to.emit(EPNSCoreV1Proxy, 'ChannelVerified')
+          .withArgs(CHARLIE, CHANNEL_CREATOR);
+      });
 
-  // });
+  });
 
   describe("Testing REVOKING Channel's Verification By Admin", function()
    
