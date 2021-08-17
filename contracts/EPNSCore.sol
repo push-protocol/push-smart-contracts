@@ -222,7 +222,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyAdminVerifiedChannels(address _channel) {
         require(
             channels[_channel].isChannelVerified == 1,
-            "Channel is NOT Verified By ADMIN"
+            "Caller is NOT Verified By ADMIN or ADMIN Itself"
         );
         _;
     }
@@ -230,7 +230,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyChannelVerifiedChannels(address _channel) {
         require(
             channels[_channel].isChannelVerified == 2,
-            "Channel is Verified By Other Channel"
+            "Target Channel is Verified By ADMIN"
         );
         _;
     }
@@ -797,7 +797,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @dev       Can only be Called for Verified Channels
      *            Can only be Called by the ADMIN of the contract
      *            Involves 2 Main CASES: 
-                                         a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by ADMIN directly) or,
+     *                                   a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by ADMIN directly) or,
      *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by ADMIN)
      *            If Target Channel CHILD:
      *                                   -> Checks for its Parent Channel.
@@ -815,8 +815,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     function revokeVerificationViaAdmin(address _targetChannel)
         external
-        onlyVerifiedChannels(_targetChannel)
         onlyAdmin()
+        onlyVerifiedChannels(_targetChannel)
         returns (bool)
     {
         Channel memory channelDetails = channels[_targetChannel];
@@ -826,14 +826,17 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             updateVerifiedChannelRecords(admin, _targetChannel, _totalVerifiedByAdmin, 1);
 
             uint256 _totalChannelsVerified = getTotalVerifiedChannels(_targetChannel);
-            for (uint256 i; i < _totalChannelsVerified; i++) {
+            if(_totalChannelsVerified > 0){
+                for (uint256 i; i < _totalChannelsVerified; i++) {
 
                 address childChannel = verifiedViaChannelRecords[_targetChannel][i];
                 channels[childChannel].isChannelVerified = 0;
                 delete channelVerifiedBy[childChannel];
+                }
+                delete verifiedViaChannelRecords[_targetChannel];
+                delete verifiedChannelCount[_targetChannel];
             }
-            delete verifiedViaChannelRecords[_targetChannel];
-            delete verifiedChannelCount[_targetChannel];
+            delete channelVerifiedBy[_targetChannel];
             channels[_targetChannel].isChannelVerified = 0;
 
         } else {
@@ -859,8 +862,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      **/
     function revokeVerificationViaChannelOwners(address _targetChannel)
         external
-        onlyChannelVerifiedChannels(_targetChannel)
         onlyAdminVerifiedChannels(msg.sender)
+        onlyChannelVerifiedChannels(_targetChannel)
         returns (bool)
     {
         address verifierChannel = channelVerifiedBy[_targetChannel];
