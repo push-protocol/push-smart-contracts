@@ -222,7 +222,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyAdminVerifiedChannels(address _channel) {
         require(
             channels[_channel].isChannelVerified == 1,
-            "Channel is Verified By ADMIN"
+            "Channel is NOT Verified By ADMIN"
         );
         _;
     }
