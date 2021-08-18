@@ -659,8 +659,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
           const verifiedByForUSER1_before = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
           const isUSER1RecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(USER1);
 
-          console.log(`ADMIN's ARRAY BEFORE - ${verifiedRecordsArray_before}`)
-          console.log(`CHANNEL CREATOR's ARRAY BEFORE - ${verifiedRecordsArrayChannelCreator_before}`)
+
 
           // Revoking the Verification of CHANNEL_CREATOR's Channel 
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
@@ -683,10 +682,6 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
           const channelDataForUSER1_after = await EPNSCoreV1Proxy.channels(USER1)     
           const verifiedByForUSER1_after = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
           const isUSER1RecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(USER1);
-
-           console.log(`ADMIN's ARRAY AFTER - ${verifiedRecordsArray_afterChannelCreator}`)
-          console.log(`CHANNEL CREATOR's ARRAY AFTER - ${verifiedRecordsArrayChannelCreator_after}`)
-
 
           // Verifying ADMIN DETAILS 
           await expect(channelVerificationCount_before).to.equal(1);
