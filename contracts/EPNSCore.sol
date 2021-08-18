@@ -543,8 +543,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
                 _channel
             );
             IEPNSCommunicator(epnsCommunicator).subscribeViaCore(
-                admin,
-                _channel
+                _channel,
+                admin
             );
         }
     }
