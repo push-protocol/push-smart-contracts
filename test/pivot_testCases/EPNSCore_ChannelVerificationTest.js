@@ -445,159 +445,6 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
           await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       });
-     it("Function Should Revert if Caller is not the ADMIN", async function(){
-        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaAdmin(CHARLIE);
-
-        await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
-    });
-
-    it("Function Should Revert if CHANNEL IS NOT VERIFIED", async function(){
-        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHARLIE);
-
-        await expect(tx).to.be.revertedWith('Channel is Not Verified Yet');
-    });
-
-    it("CASE-1: Function should allow ADMIN to REVOKE Verification of CHANNEL when TARGET CHANNEL HAS NOT VERIFIED ANY OTHER CHANNEL", async function(){ 
-        const zeroAddress = "0x0000000000000000000000000000000000000000";
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
-        
-        // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's Channel
-        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
-        const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-        
-        const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
-        const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
-        const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
-
-        // Revoking the Verification of CHANNEL_CREATOR's Channel
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
-
-        // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
-        const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
-        const channelVerificationCount_after = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-        
-        const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
-        const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
-        const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
-
-        await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
-        await expect(verifiedByForChannelCreator_after).to.equal(zeroAddress);
-        await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
-        await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(0);
-        await expect(channelVerificationCount_before).to.equal(1);
-        await expect(channelVerificationCount_after).to.equal(0);
-        await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
-        await expect(isChannelCreatorRecordAvailable_after).to.equal(false);
-    });
-
-    it("CASE-1: Function should allow ADMIN to REVOKE Verification of MORE THAN ONE CHANNEL when TARGET CHANNELS HAVE NOT VERIFIED ANY OTHER CHANNEL", async function(){ 
-        const zeroAddress = "0x0000000000000000000000000000000000000000";
-
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE); // Verifying CHARLIE'S CHANNEL via ADMIN
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
-      
-        // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
-        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
-        const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-        
-        const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
-        const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
-        const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
-
-        const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
-        const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-        const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
-
-        // Revoking the Verification of CHANNEL_CREATOR's Channel 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
-
-        // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
-        const verifiedRecordsArray_afterChannelCreator = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
-        const channelVerificationCount_afterChannelCreator = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-        
-        const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
-        const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
-        const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_afterChannelCreator.includes(CHANNEL_CREATOR);
-
-        // Revoking the Verification of CHARLIE's Channel 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHARLIE)
-
-        // Checking Records AFTER Revoking the Verification of CHARLIE's Channel
-        const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
-        const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
-
-        const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
-        const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-        const isCharlieRecordAvailable_after = verifiedRecordsArray_afterCharlie.includes(CHARLIE);
-
-
-        // Verifying ADMIN DETAILS 
-        await expect(channelVerificationCount_before).to.equal(2);
-        await expect(channelVerificationCount_afterChannelCreator).to.equal(1);
-        await expect(channelVerificationCount_afterCharlie).to.equal(0);
-
-        //Verifying Channel Creator's Details
-        await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
-        await expect(verifiedByForChannelCreator_after).to.equal(zeroAddress);
-        await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
-        await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(0);
-        await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
-        await expect(isChannelCreatorRecordAvailable_after).to.equal(false);
-
-        //Verifying CHARLIE's Details
-        await expect(verifiedByForCharlie_before).to.equal(ADMIN);
-        await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
-        await expect(channelDataForCharlie_before.isChannelVerified).to.equal(1);
-        await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
-        await expect(isCharlieRecordAvailable_before).to.equal(true)
-        await expect(isCharlieRecordAvailable_after).to.equal(false);
-    });
-
-    it("CASE-1: Function Should emit Relevant Events", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-        const tx =  await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
-
-        await expect(tx)
-          .to.emit(EPNSCoreV1Proxy, 'ChannelVerificationRevoked')
-          .withArgs(CHANNEL_CREATOR, ADMIN);
-      });
-
-  });
-
-describe("Testing REVOKING Channel's Verification By CHANNEL OWNERS", function()
-   /**
-     * "revokeVerificationViaChannelOwners" Function CHECKPOINTS
-     *
-     * REVERT CHECKS
-     * Should revert if Caller is ADMIN
-     * Should revert if Caller is NOT an ADMIN VERIFIED CHANNEL
-     * Should revert if TARGET CHANNEL verified directly by ADMIN
-     * Should revert if CALLER is NOT THE ACTUAL VERIFIER OF THE TARGET CHANNEL
-     * 
-     * FUNCTION Execution CHECKS
-     * 
-     * -> "verifiedViaChannelRecords" mapping should NOT HOLD the TARGET CHANNEL ANYMORE 
-     * -> "verifiedChannelCount" for VERIFIER should be decreased by ONE
-     * -> "isChannelVerified" flag for Target Channel should be '0'
-     * -> "channelVerifiedBy" mapping for Target Channel should be ZERO ADDRESS
-     * -> Emit Relvant EVENTS
-     **/
-    {
-         beforeEach(async function(){
-          const CHANNEL_TYPE = 2;
-          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-          await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await MOCKDAI.connect(USER1SIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await MOCKDAI.connect(USER1SIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await EPNSCoreV1Proxy.connect(USER1SIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -605,121 +452,176 @@ describe("Testing REVOKING Channel's Verification By CHANNEL OWNERS", function()
           await MOCKDAI.connect(USER2SIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           await EPNSCoreV1Proxy.connect(USER2SIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
        });
+       it("Function Should Revert if Caller is not the ADMIN", async function(){
+          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaAdmin(CHARLIE);
 
-      it("Function Should Revert if Caller is the ADMIN itself", async function(){
-        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
-
-        await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+          await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
       });
 
-      it("Function Should Revert if Caller is NOT an ADMIN VERIFIED CHANNEL", async function(){
-          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+      it("Function Should Revert if CHANNEL IS NOT VERIFIED", async function(){
+          const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHARLIE);
 
-          await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+          await expect(tx).to.be.revertedWith('Channel is Not Verified Yet');
       });
 
-      it("Function Should Revert if TARGET CHANNEL verified directly by ADMIN", async function(){
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
-
-          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
-
-          await expect(tx).to.be.revertedWith('Target Channel is Either Verified By ADMIN or UNVERIFIED YET');
-      });
-
-      it("Function Should Revert if CALLER is NOT THE ACTUAL VERIFIER OF THE TARGET CHANNEL", async function(){
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
-          // TARGET CHANNEL(BOB) is VERIFIED BY CHARLIE
-          await EPNSCoreV1Proxy.connect(CHARLIESIGNER).verifyChannelViaChannelOwners(BOB);
-          // VERIFICATION OF BOB IS BEING REVOKED BY CHANNEL_CREATOR instead of CHARLIE
-          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(BOB);
-
-          await expect(tx).to.be.revertedWith('Caller is not the Verifier of the Target Channel');
-      });
-
-      it("Function Should Execute and UPDATE State variables as expected", async function(){
+      it("CASE-1: Function should allow ADMIN to REVOKE Verification of CHANNEL when TARGET CHANNEL HAS NOT VERIFIED ANY OTHER CHANNEL", async function(){ 
           const zeroAddress = "0x0000000000000000000000000000000000000000";
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
+          
+          // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's Channel
+          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+          
+          const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
 
-          // Checking of Channel Creator and CHARLIE Before REVOKATION OPERATION
-          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          // Revoking the Verification of CHANNEL_CREATOR's Channel
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
+
+          // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
+          const verifiedRecordsArray_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_after = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+          
+          const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_after.includes(CHANNEL_CREATOR)
+
+          await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
+          await expect(verifiedByForChannelCreator_after).to.equal(zeroAddress);
+          await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
+          await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(0);
+          await expect(channelVerificationCount_before).to.equal(1);
+          await expect(channelVerificationCount_after).to.equal(0);
+          await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
+          await expect(isChannelCreatorRecordAvailable_after).to.equal(false);
+      });
+
+      it("CASE-1: Function should allow ADMIN to REVOKE Verification of MORE THAN ONE CHANNEL when TARGET CHANNELS HAVE NOT VERIFIED ANY OTHER CHANNEL", async function(){ 
+          const zeroAddress = "0x0000000000000000000000000000000000000000";
+
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE); // Verifying CHARLIE'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
+        
+          // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
+          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+          
+          const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
 
           const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
           const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
           const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
 
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+          // Revoking the Verification of CHANNEL_CREATOR's Channel 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
+
+          // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
+          const verifiedRecordsArray_afterChannelCreator = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_afterChannelCreator = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+          
+          const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_afterChannelCreator.includes(CHANNEL_CREATOR);
+
+          // Revoking the Verification of CHARLIE's Channel 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHARLIE)
 
           // Checking Records AFTER Revoking the Verification of CHARLIE's Channel
-          const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
 
           const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
           const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
           const isCharlieRecordAvailable_after = verifiedRecordsArray_afterCharlie.includes(CHARLIE);
 
-             // Verifying CHANNEL CREATOR's DETAILS 
-          await expect(channelVerificationCount_before).to.equal(1);
+
+          // Verifying ADMIN DETAILS 
+          await expect(channelVerificationCount_before).to.equal(2);
+          await expect(channelVerificationCount_afterChannelCreator).to.equal(1);
           await expect(channelVerificationCount_afterCharlie).to.equal(0);
 
+          //Verifying Channel Creator's Details
+          await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
+          await expect(verifiedByForChannelCreator_after).to.equal(zeroAddress);
+          await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
+          await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(0);
+          await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
+          await expect(isChannelCreatorRecordAvailable_after).to.equal(false);
+
           //Verifying CHARLIE's Details
-          await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
+          await expect(verifiedByForCharlie_before).to.equal(ADMIN);
           await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
-          await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
+          await expect(channelDataForCharlie_before.isChannelVerified).to.equal(1);
           await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
           await expect(isCharlieRecordAvailable_before).to.equal(true)
           await expect(isCharlieRecordAvailable_after).to.equal(false);
       });
 
-      it("Function Should Execute and UPDATE State variables as expected  When VERIFIER has verified more than One Channel", async function(){
-          const zeroAddress = "0x0000000000000000000000000000000000000000";
+      it("CASE-1: Function Should emit Relevant Events", async function(){
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+          const tx =  await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
 
-          // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION
-          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          await expect(tx)
+            .to.emit(EPNSCoreV1Proxy, 'ChannelVerificationRevoked')
+            .withArgs(CHANNEL_CREATOR, ADMIN);
+        });
 
-          const channelDataForBOB_before = await EPNSCoreV1Proxy.channels(BOB)     
-          const verifiedByForBOB_before = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-          const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB);
+      it("CASE-2: Function should allow ADMIN to REVOKE Verification of Target when TARGET CHANNELS HAS VERIFIED ONE OTHER CHANNEL", async function(){ 
+          const zeroAddress = "0x0000000000000000000000000000000000000000";
+
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
+        
+          // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
+          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+
+          const verifiedRecordsArrayChannelCreator_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+          const channelVerificationCountChannelCreator_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          
+          const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
 
           const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
           const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-          const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
+          const isCharlieRecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(CHARLIE);
 
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+          // Revoking the Verification of CHANNEL_CREATOR's Channel 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
 
-          // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of CHARLIE
-          const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
+          const verifiedRecordsArray_afterChannelCreator = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_afterChannelCreator = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
 
-          const channelDataForBOB_afterCharlie = await EPNSCoreV1Proxy.channels(BOB)     
-          const verifiedByForBOB_afterCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-          const isBOBRecordAvailable_afterCharlie = verifiedRecordsArray_afterCharlie.includes(BOB);
+          const verifiedRecordsArrayChannelCreator_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+          const channelVerificationCountChannelCreator_after = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          
+          const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+          const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+          const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_afterChannelCreator.includes(CHANNEL_CREATOR);
 
           const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
           const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-          const isCharlieRecordAvailable_after = verifiedRecordsArray_afterCharlie.includes(CHARLIE);
+          const isCharlieRecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(CHARLIE);
 
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(BOB);
 
-          // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of BOB
-          const verifiedRecordsArray_afterBOB = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_afterBOB = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          // Verifying ADMIN DETAILS 
+          await expect(channelVerificationCount_before).to.equal(1);
+          await expect(channelVerificationCount_afterChannelCreator).to.equal(0);
 
-          const channelDataForBOB_afterBOB = await EPNSCoreV1Proxy.channels(BOB)     
-          const verifiedByForBOB_afterBOB = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-          const isBOBRecordAvailable_afterBOB = verifiedRecordsArray_afterBOB.includes(BOB);
-
-          // Verifying CHANNEL CREATOR's DETAILS 
-          await expect(channelVerificationCount_before).to.equal(2);
-          await expect(channelVerificationCount_afterCharlie).to.equal(1);
-          await expect(channelVerificationCount_afterBOB).to.equal(0);
+          //Verifying Channel Creator's Details
+          await expect(channelVerificationCountChannelCreator_before).to.equal(1);
+          await expect(channelVerificationCountChannelCreator_after).to.equal(0);
+          await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
+          await expect(verifiedByForChannelCreator_after).to.equal(zeroAddress);
+          await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
+          await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(0);
+          await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
+          await expect(isChannelCreatorRecordAvailable_after).to.equal(false);
 
           //Verifying CHARLIE's Details
           await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
@@ -728,101 +630,430 @@ describe("Testing REVOKING Channel's Verification By CHANNEL OWNERS", function()
           await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
           await expect(isCharlieRecordAvailable_before).to.equal(true)
           await expect(isCharlieRecordAvailable_after).to.equal(false);
+      }).timeout(9000);
 
-          //Verifying BOB's Details
-          await expect(verifiedByForBOB_before).to.equal(CHANNEL_CREATOR);
-          await expect(verifiedByForBOB_afterCharlie).to.equal(CHANNEL_CREATOR);
-          await expect(verifiedByForBOB_afterBOB).to.equal(zeroAddress);
-          await expect(channelDataForBOB_before.isChannelVerified).to.equal(2);
-          await expect(channelDataForBOB_afterCharlie.isChannelVerified).to.equal(2);
-          await expect(channelDataForBOB_afterBOB.isChannelVerified).to.equal(0);
-          await expect(isBOBRecordAvailable_before).to.equal(true)
-          await expect(isBOBRecordAvailable_afterCharlie).to.equal(true)
-          await expect(isBOBRecordAvailable_afterBOB).to.equal(false);
-      });
-
-      it("Function Should Execute correctly When Verifier Has More than TWO VERIFIED CHANNELS and REVOKING VERIFICATION OF ONLY ONE", async function(){
+      it("CASE-2: Function should allow ADMIN to REVOKE Verification of Target when TARGET CHANNELS HAS VERIFIED MORE THAN ONE OTHER CHANNELS", async function(){ 
           const zeroAddress = "0x0000000000000000000000000000000000000000";
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER2);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-          // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION
-          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB); // Verifying BOB CHANNELvia CHANNEL_CREATOR
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1); // Verifying BOB CHANNEL via CHANNEL_CREATOR
+        
+          // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's, CHARLIE'S, BOB and USER1's CHANNEL
+          const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+
+          const verifiedRecordsArrayChannelCreator_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+          const channelVerificationCountChannelCreator_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          
+          const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
+          const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+          const isCharlieRecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(CHARLIE);
 
           const channelDataForBOB_before = await EPNSCoreV1Proxy.channels(BOB)     
           const verifiedByForBOB_before = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-          const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB);
-
-          const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
-          const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-          const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
+          const isBOBRecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(BOB);
 
           const channelDataForUSER1_before = await EPNSCoreV1Proxy.channels(USER1)     
           const verifiedByForUSER1_before = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
-          const isUSER1RecordAvailable_before = verifiedRecordsArray_before.includes(USER1);
+          const isUSER1RecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(USER1);
 
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(USER1);
+          console.log(`ADMIN's ARRAY BEFORE - ${verifiedRecordsArray_before}`)
+          console.log(`CHANNEL CREATOR's ARRAY BEFORE - ${verifiedRecordsArrayChannelCreator_before}`)
 
-          // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of CHARLIE
-          const verifiedRecordsArray_afterUSER1 = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-          const channelVerificationCount_afterUSER1 = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          // Revoking the Verification of CHANNEL_CREATOR's Channel 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
+
+          // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
+          const verifiedRecordsArray_afterChannelCreator = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+          const channelVerificationCount_afterChannelCreator = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+
+          const verifiedRecordsArrayChannelCreator_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+          const channelVerificationCountChannelCreator_after = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+          
+          const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
+          const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+          const isCharlieRecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(CHARLIE);
 
           const channelDataForBOB_after = await EPNSCoreV1Proxy.channels(BOB)     
           const verifiedByForBOB_after = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
-          const isBOBRecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(BOB);
-
-          const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
-          const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
-          const isCharlieRecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(CHARLIE);
+          const isBOBRecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(BOB);
 
           const channelDataForUSER1_after = await EPNSCoreV1Proxy.channels(USER1)     
           const verifiedByForUSER1_after = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
-          const isUSER1RecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(USER1);
+          const isUSER1RecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(USER1);
 
-          // Verifying CHANNEL CREATOR's DETAILS 
-          await expect(channelVerificationCount_before).to.equal(4);
-          await expect(channelVerificationCount_afterUSER1).to.equal(3);
+           console.log(`ADMIN's ARRAY AFTER - ${verifiedRecordsArray_afterChannelCreator}`)
+          console.log(`CHANNEL CREATOR's ARRAY AFTER - ${verifiedRecordsArrayChannelCreator_after}`)
 
-          //Verifying CHARLIE's Details Before and After USER1's Revokation Operation
+
+          // Verifying ADMIN DETAILS 
+          await expect(channelVerificationCount_before).to.equal(1);
+          await expect(channelVerificationCount_afterChannelCreator).to.equal(0);
+
+          //Verifying Channel Creator's Details
+          await expect(channelVerificationCountChannelCreator_before).to.equal(3);
+          await expect(channelVerificationCountChannelCreator_after).to.equal(0);
+
+          //Verifying CHARLIE's Details
           await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
-          await expect(verifiedByForCharlie_after).to.equal(CHANNEL_CREATOR);
+          await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
           await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
-          await expect(channelDataForCharlie_after.isChannelVerified).to.equal(2);
+          await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
           await expect(isCharlieRecordAvailable_before).to.equal(true)
-          await expect(isCharlieRecordAvailable_after).to.equal(true);
+          await expect(isCharlieRecordAvailable_after).to.equal(false);
 
-          //Verifying BOB's Details Before and After USER1's Revokation Operation
+          // Verifying BOB's DETAILS
           await expect(verifiedByForBOB_before).to.equal(CHANNEL_CREATOR);
-          await expect(verifiedByForBOB_after).to.equal(CHANNEL_CREATOR);
+          await expect(verifiedByForBOB_after).to.equal(zeroAddress);
           await expect(channelDataForBOB_before.isChannelVerified).to.equal(2);
-          await expect(channelDataForBOB_after.isChannelVerified).to.equal(2);
+          await expect(channelDataForBOB_after.isChannelVerified).to.equal(0);
           await expect(isBOBRecordAvailable_before).to.equal(true)
-          await expect(isBOBRecordAvailable_after).to.equal(true);
+          await expect(isBOBRecordAvailable_after).to.equal(false);
 
-          //Verifying USER1's Details Before and After USER1's Revokation Operation
+          //Verifying USER1's Details
           await expect(verifiedByForUSER1_before).to.equal(CHANNEL_CREATOR);
           await expect(verifiedByForUSER1_after).to.equal(zeroAddress);
           await expect(channelDataForUSER1_before.isChannelVerified).to.equal(2);
           await expect(channelDataForUSER1_after.isChannelVerified).to.equal(0);
           await expect(isUSER1RecordAvailable_before).to.equal(true)
           await expect(isUSER1RecordAvailable_after).to.equal(false);
-      });
 
-   
-    it("Function Should emit Relevant Events", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+        }).timeout(9000);
 
-        const tx =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE)
+    
+      it("CASE-3: Function should allow ADMIN to REVOKE Verification of TARGET CHANNEL that is NOT DIRECTLY VERIFIED BY ADMIN", async function(){ 
+        // ADMIN Verifies Channel Creator
+        // Channel Creator verifies CHARLIE
+        // CHECK RECORDS of ADMIN, CHANNEL CREATOR and CHARLIE before Revokation Operation
+        // ADMIN REVOKES VERIFICATION OF CHARLIE DIRECTLY
+        // CHECK RECORDS of ADMIN, CHANNEL CREATOR and CHARLIE AFTER Revokation Operation
+        // VALIDATE RESULTS
 
-        await expect(tx)
-          .to.emit(EPNSCoreV1Proxy, 'ChannelVerificationRevoked')
-          .withArgs(CHARLIE, CHANNEL_CREATOR);
-      });
+        const zeroAddress = "0x0000000000000000000000000000000000000000";
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
+      
+        // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
+        const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+        const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+
+        const verifiedRecordsArrayChannelCreator_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+        const channelVerificationCountChannelCreator_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+        
+        const channelDataForChannelCreator_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+        const verifiedByForChannelCreator_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+        const isChannelCreatorRecordAvailable_before = verifiedRecordsArray_before.includes(CHANNEL_CREATOR);
+
+        const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
+        const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+        const isCharlieRecordAvailable_before = verifiedRecordsArrayChannelCreator_before.includes(CHARLIE);
+
+        // Revoking the Verification of CHANNEL_CREATOR's Channel 
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHARLIE)
+
+        // Checking Records AFTER Revoking the Verification of CHANNEL_CREATOR's Channel
+        const verifiedRecordsArray_afterChannelCreator = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
+        const channelVerificationCount_afterChannelCreator = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
+
+        const verifiedRecordsArrayChannelCreator_after = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+        const channelVerificationCountChannelCreator_after = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+        
+        const channelDataForChannelCreator_after = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)     
+        const verifiedByForChannelCreator_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);  
+        const isChannelCreatorRecordAvailable_after = verifiedRecordsArray_afterChannelCreator.includes(CHANNEL_CREATOR);
+
+        const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
+        const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+        const isCharlieRecordAvailable_after = verifiedRecordsArrayChannelCreator_after.includes(CHARLIE);
+
+
+        // Verifying ADMIN DETAILS 
+        await expect(channelVerificationCount_before).to.equal(1);
+        await expect(channelVerificationCount_afterChannelCreator).to.equal(1);
+
+        //Verifying Channel Creator's Details
+        await expect(channelVerificationCountChannelCreator_before).to.equal(1);
+        await expect(channelVerificationCountChannelCreator_after).to.equal(0);
+        await expect(verifiedByForChannelCreator_before).to.equal(ADMIN);
+        await expect(verifiedByForChannelCreator_after).to.equal(ADMIN);
+        await expect(channelDataForChannelCreator_before.isChannelVerified).to.equal(1);
+        await expect(channelDataForChannelCreator_after.isChannelVerified).to.equal(1);
+        await expect(isChannelCreatorRecordAvailable_before).to.equal(true)
+        await expect(isChannelCreatorRecordAvailable_after).to.equal(true);
+
+        //Verifying CHARLIE's Details
+        await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
+        await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
+        await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
+        await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
+        await expect(isCharlieRecordAvailable_before).to.equal(true)
+        await expect(isCharlieRecordAvailable_after).to.equal(false);
+
+      }).timeout(9000);
+
+  });
+
+  describe("Testing REVOKING Channel's Verification By CHANNEL OWNERS", function()
+     /**
+       * "revokeVerificationViaChannelOwners" Function CHECKPOINTS
+       *
+       * REVERT CHECKS
+       * Should revert if Caller is ADMIN
+       * Should revert if Caller is NOT an ADMIN VERIFIED CHANNEL
+       * Should revert if TARGET CHANNEL verified directly by ADMIN
+       * Should revert if CALLER is NOT THE ACTUAL VERIFIER OF THE TARGET CHANNEL
+       * 
+       * FUNCTION Execution CHECKS
+       * 
+       * -> "verifiedViaChannelRecords" mapping should NOT HOLD the TARGET CHANNEL ANYMORE 
+       * -> "verifiedChannelCount" for VERIFIER should be decreased by ONE
+       * -> "isChannelVerified" flag for Target Channel should be '0'
+       * -> "channelVerifiedBy" mapping for Target Channel should be ZERO ADDRESS
+       * -> Emit Relvant EVENTS
+       **/
+      {
+           beforeEach(async function(){
+            const CHANNEL_TYPE = 2;
+            const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(USER1SIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(USER1SIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(USER1SIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(USER2SIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(USER2SIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(USER2SIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+        it("Function Should Revert if Caller is the ADMIN itself", async function(){
+          const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+
+          await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+        });
+
+        it("Function Should Revert if Caller is NOT an ADMIN VERIFIED CHANNEL", async function(){
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+
+            await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+        });
+
+        it("Function Should Revert if TARGET CHANNEL verified directly by ADMIN", async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
+
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+
+            await expect(tx).to.be.revertedWith('Target Channel is Either Verified By ADMIN or UNVERIFIED YET');
+        });
+
+        it("Function Should Revert if CALLER is NOT THE ACTUAL VERIFIER OF THE TARGET CHANNEL", async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
+            // TARGET CHANNEL(BOB) is VERIFIED BY CHARLIE
+            await EPNSCoreV1Proxy.connect(CHARLIESIGNER).verifyChannelViaChannelOwners(BOB);
+            // VERIFICATION OF BOB IS BEING REVOKED BY CHANNEL_CREATOR instead of CHARLIE
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(BOB);
+
+            await expect(tx).to.be.revertedWith('Caller is not the Verifier of the Target Channel');
+        });
+
+        it("Function Should Execute and UPDATE State variables as expected", async function(){
+            const zeroAddress = "0x0000000000000000000000000000000000000000";
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+
+            // Checking of Channel Creator and CHARLIE Before REVOKATION OPERATION
+            const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
+
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+
+            // Checking Records AFTER Revoking the Verification of CHARLIE's Channel
+            const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_after = verifiedRecordsArray_afterCharlie.includes(CHARLIE);
+
+               // Verifying CHANNEL CREATOR's DETAILS 
+            await expect(channelVerificationCount_before).to.equal(1);
+            await expect(channelVerificationCount_afterCharlie).to.equal(0);
+
+            //Verifying CHARLIE's Details
+            await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
+            await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
+            await expect(isCharlieRecordAvailable_before).to.equal(true)
+            await expect(isCharlieRecordAvailable_after).to.equal(false);
+        });
+
+        it("Function Should Execute and UPDATE State variables as expected  When VERIFIER has verified more than One Channel", async function(){
+            const zeroAddress = "0x0000000000000000000000000000000000000000";
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+
+            // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION
+            const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForBOB_before = await EPNSCoreV1Proxy.channels(BOB)     
+            const verifiedByForBOB_before = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+            const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB);
+
+            const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
+
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
+
+            // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of CHARLIE
+            const verifiedRecordsArray_afterCharlie = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_afterCharlie = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForBOB_afterCharlie = await EPNSCoreV1Proxy.channels(BOB)     
+            const verifiedByForBOB_afterCharlie = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+            const isBOBRecordAvailable_afterCharlie = verifiedRecordsArray_afterCharlie.includes(BOB);
+
+            const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_after = verifiedRecordsArray_afterCharlie.includes(CHARLIE);
+
+             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(BOB);
+
+            // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of BOB
+            const verifiedRecordsArray_afterBOB = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_afterBOB = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForBOB_afterBOB = await EPNSCoreV1Proxy.channels(BOB)     
+            const verifiedByForBOB_afterBOB = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+            const isBOBRecordAvailable_afterBOB = verifiedRecordsArray_afterBOB.includes(BOB);
+
+            // Verifying CHANNEL CREATOR's DETAILS 
+            await expect(channelVerificationCount_before).to.equal(2);
+            await expect(channelVerificationCount_afterCharlie).to.equal(1);
+            await expect(channelVerificationCount_afterBOB).to.equal(0);
+
+            //Verifying CHARLIE's Details
+            await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForCharlie_after).to.equal(zeroAddress);
+            await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForCharlie_after.isChannelVerified).to.equal(0);
+            await expect(isCharlieRecordAvailable_before).to.equal(true)
+            await expect(isCharlieRecordAvailable_after).to.equal(false);
+
+            //Verifying BOB's Details
+            await expect(verifiedByForBOB_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForBOB_afterCharlie).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForBOB_afterBOB).to.equal(zeroAddress);
+            await expect(channelDataForBOB_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForBOB_afterCharlie.isChannelVerified).to.equal(2);
+            await expect(channelDataForBOB_afterBOB.isChannelVerified).to.equal(0);
+            await expect(isBOBRecordAvailable_before).to.equal(true)
+            await expect(isBOBRecordAvailable_afterCharlie).to.equal(true)
+            await expect(isBOBRecordAvailable_afterBOB).to.equal(false);
+        });
+
+        it("Function Should Execute correctly When Verifier Has More than TWO VERIFIED CHANNELS and REVOKING VERIFICATION OF ONLY ONE", async function(){
+            const zeroAddress = "0x0000000000000000000000000000000000000000";
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER2);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+
+            // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION
+            const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_before = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForBOB_before = await EPNSCoreV1Proxy.channels(BOB)     
+            const verifiedByForBOB_before = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+            const isBOBRecordAvailable_before = verifiedRecordsArray_before.includes(BOB);
+
+            const channelDataForCharlie_before = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_before = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_before = verifiedRecordsArray_before.includes(CHARLIE);
+
+            const channelDataForUSER1_before = await EPNSCoreV1Proxy.channels(USER1)     
+            const verifiedByForUSER1_before = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
+            const isUSER1RecordAvailable_before = verifiedRecordsArray_before.includes(USER1);
+
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(USER1);
+
+            // Checking of Channel Creator, CHARLIE and BOB Before REVOKATION OPERATION of CHARLIE
+            const verifiedRecordsArray_afterUSER1 = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
+            const channelVerificationCount_afterUSER1 = await EPNSCoreV1Proxy.verifiedChannelCount(CHANNEL_CREATOR);
+
+            const channelDataForBOB_after = await EPNSCoreV1Proxy.channels(BOB)     
+            const verifiedByForBOB_after = await EPNSCoreV1Proxy.channelVerifiedBy(BOB);  
+            const isBOBRecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(BOB);
+
+            const channelDataForCharlie_after = await EPNSCoreV1Proxy.channels(CHARLIE)     
+            const verifiedByForCharlie_after = await EPNSCoreV1Proxy.channelVerifiedBy(CHARLIE);  
+            const isCharlieRecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(CHARLIE);
+
+            const channelDataForUSER1_after = await EPNSCoreV1Proxy.channels(USER1)     
+            const verifiedByForUSER1_after = await EPNSCoreV1Proxy.channelVerifiedBy(USER1);  
+            const isUSER1RecordAvailable_after = verifiedRecordsArray_afterUSER1.includes(USER1);
+
+            // Verifying CHANNEL CREATOR's DETAILS 
+            await expect(channelVerificationCount_before).to.equal(4);
+            await expect(channelVerificationCount_afterUSER1).to.equal(3);
+
+            //Verifying CHARLIE's Details Before and After USER1's Revokation Operation
+            await expect(verifiedByForCharlie_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForCharlie_after).to.equal(CHANNEL_CREATOR);
+            await expect(channelDataForCharlie_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForCharlie_after.isChannelVerified).to.equal(2);
+            await expect(isCharlieRecordAvailable_before).to.equal(true)
+            await expect(isCharlieRecordAvailable_after).to.equal(true);
+
+            //Verifying BOB's Details Before and After USER1's Revokation Operation
+            await expect(verifiedByForBOB_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForBOB_after).to.equal(CHANNEL_CREATOR);
+            await expect(channelDataForBOB_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForBOB_after.isChannelVerified).to.equal(2);
+            await expect(isBOBRecordAvailable_before).to.equal(true)
+            await expect(isBOBRecordAvailable_after).to.equal(true);
+
+            //Verifying USER1's Details Before and After USER1's Revokation Operation
+            await expect(verifiedByForUSER1_before).to.equal(CHANNEL_CREATOR);
+            await expect(verifiedByForUSER1_after).to.equal(zeroAddress);
+            await expect(channelDataForUSER1_before.isChannelVerified).to.equal(2);
+            await expect(channelDataForUSER1_after.isChannelVerified).to.equal(0);
+            await expect(isUSER1RecordAvailable_before).to.equal(true)
+            await expect(isUSER1RecordAvailable_after).to.equal(false);
+        });
+
+     
+      it("Function Should emit Relevant Events", async function(){
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
+
+          const tx =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE)
+
+          await expect(tx)
+            .to.emit(EPNSCoreV1Proxy, 'ChannelVerificationRevoked')
+            .withArgs(CHARLIE, CHANNEL_CREATOR);
+        });
 
   });
 
