@@ -114,7 +114,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     uint256 DELEGATED_CONTRACT_FEES;
     uint256 CHANNEL_DEACTIVATION_FEES;
     uint256 ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
-    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION;
 
     /** EVENTS **/
     event UpdateChannel(address indexed channel, bytes identity);
@@ -169,7 +168,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyInactiveChannels(address _channel) {
         require(
             channels[_channel].channelState == 0,
-            "Channel is already activated "
+            "Channel is already activated"
         );
         _;
     }
@@ -269,8 +268,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
-        ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250000 * 50 * 10**18; // 250k DAI or below, we don't want channel to make a costly mistake as well
-
+ 
         groupLastUpdate = block.number;
         groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
 
@@ -344,13 +342,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = _newFees;
     }
 
-    function setMaxChannelCreationFees(uint256 _newFees) external onlyAdmin {
-        require(
-            _newFees > 0,
-            "Channel MAX Creation Fees must be greater than ZERO"
-        );
-        ADD_CHANNEL_MAX_POOL_CONTRIBUTION = _newFees;
-    }
 
     function transferAdminControl(address _newAdmin) public onlyAdmin {
         require(_newAdmin != address(0), "Invalid Address");
@@ -600,10 +591,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     function deactivateChannel() external onlyActivatedChannels(msg.sender) {
         Channel memory channelData = channels[msg.sender];
 
-        uint256 totalAmountDeposited = channelData
-            .channelWeight
-            .mul(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
-            .div(ADJUST_FOR_FLOAT);
+        uint256 totalAmountDeposited = channels[msg.sender].poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
             CHANNEL_DEACTIVATION_FEES
         );
