@@ -178,51 +178,9 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         })
     });
-    /**
-     * "createChannelWithFees" Function CHECKPOINTS
-     * Should revert if User is already a CHannel
-     * Should revert Channel Type is not the ALLOWED TYPES
-     * Should conduct the Allowance based checks for Channel Creation Fees
-     * Transfer of Channel Creation Fees from User to PROXY ADDress should be ensured
-     * Deposit of DAI funds to AAVE and Receiving of aDAI should be checked
-     * Should update User's Subscription details in the contract
-     * Should update the Channel's Subscription Details in the contract
-     * Should update the FAIRSHARE COUNTS
-     * AddChannel Event should be emitted
-     **/
+  
 
-    describe("Testing the Base Create Channel Function", function()
-    {
-         beforeEach(async function(){
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-          await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       });
- 
-    
-         it("EPNS Core Should create Channel with correct details", async function(){
-        const CHANNEL_TYPE = 2;
-        const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-        const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
-
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        const channel = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).channels(CHANNEL_CREATOR)
-
-        const blockNumber = tx.blockNumber;
-        const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        const channelsCountAfter = await EPNSCoreV1Proxy.channelsCount();
-
-        expect(channel.poolContribution).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        expect(channel.channelType).to.equal(CHANNEL_TYPE);
-        expect(channel.channelStartBlock).to.equal(blockNumber);
-        expect(channel.channelUpdateBlock).to.equal(blockNumber);
-        expect(channel.channelWeight).to.equal(channelWeight);
-        expect(await EPNSCoreV1Proxy.mapAddressChannels(channelsCountAfter.sub(1))).to.equal(CHANNEL_CREATOR);
-        expect(channelsCountBefore.add(1)).to.equal(channelsCountAfter);
-      });
-
-
-    });
 });
+
 });
+
