@@ -27,7 +27,7 @@ const {
 
 use(solidity);
 
-describe("EPNS COMMUNCATOR Protocol", function () {
+describe("EPNS COMMUNICATOR Protocol ", function () {
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
   const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
   const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
@@ -58,6 +58,8 @@ describe("EPNS COMMUNCATOR Protocol", function () {
   let ADAICONTRACT;
   let ALICE;
   let BOB;
+  let USER1;
+  let USER2;
   let CHARLIE;
   let CHANNEL_CREATOR;
   let ADMINSIGNER;
@@ -87,6 +89,8 @@ describe("EPNS COMMUNCATOR Protocol", function () {
       bobSigner,
       charlieSigner,
       channelCreatorSigner,
+      user1signer,
+      user2signer,
     ] = await ethers.getSigners();
 
     ADMINSIGNER = adminSigner;
@@ -94,12 +98,16 @@ describe("EPNS COMMUNCATOR Protocol", function () {
     BOBSIGNER = bobSigner;
     CHARLIESIGNER = charlieSigner;
     CHANNEL_CREATORSIGNER = channelCreatorSigner;
+    USER1SIGNER = user1signer;
+    USER2SIGNER = user2signer;
 
     ADMIN = await adminSigner.getAddress();
     ALICE = await aliceSigner.getAddress();
     BOB = await bobSigner.getAddress();
     CHARLIE = await charlieSigner.getAddress();
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
+    USER1 = await user1signer.getAddress();
+    USER2 = await user2signer.getAddress();
 
     const EPNSTOKEN = await ethers.getContractFactory("EPNS");
     EPNS = await EPNSTOKEN.deploy(ADMIN);
@@ -152,6 +160,8 @@ describe("EPNS COMMUNCATOR Protocol", function () {
 
  describe("EPNS COMMUNICATOR: Subscribing, Unsubscribing, Send Notification Tests", function(){
     
+    // BASIC COMMUNICATOR TESTS
+
      describe("Conducting Basic tests", function()
       {
           const CHANNEL_TYPE = 2;
@@ -176,7 +186,8 @@ describe("EPNS COMMUNCATOR Protocol", function () {
 
     });
 
-    describe("Testing BASE SUbscribe FUnction", function()
+    // SUBSCRIBE RELATED TESTS
+  describe("Testing BASE SUbscribe FUnction", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
@@ -189,7 +200,7 @@ describe("EPNS COMMUNCATOR Protocol", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
 
-           /**
+           /*
              * 'subscribe' Function CHECKPOINTS
              * Should revert if User is already subscribed to a Particular Channel
              * 
@@ -205,7 +216,7 @@ describe("EPNS COMMUNCATOR Protocol", function () {
              *         -> subscribed mapping should be updated with User's Current subscribe count
              *         -> subscribedCount variable for user should increase by 1
              * 
-            **/
+            */
 
             it("Should revert if Users try to Subscribe Twice" , async ()=>{
                await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
@@ -257,6 +268,283 @@ describe("EPNS COMMUNCATOR Protocol", function () {
 
     });
 
+
+    // BATCH SUBSCRIBE SUBSCRIBE RELATED TESTS
+    describe("Testing BATCH SUbscribe Function", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+
+      
+            it("Function should Execute and Update State Variables adequately", async() =>{
+                const channelArray = [USER2, CHARLIE, USER1]
+              
+                const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+
+                const isSubscribed_before_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
+                const isSubscribed_before_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
+                const isSubscribed_before_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
+            
+
+                const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchSubscribe(channelArray);
+
+                const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+
+                const isSubscribed_after_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
+                const isSubscribed_after_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
+                const isSubscribed_after_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
+
+                // BOB DETAILS VERIFICATION
+                await expect(isSubscribed_before_USER2).to.equal(false);
+                await expect(isSubscribed_before_CHARLIE).to.equal(false);
+                await expect(isSubscribed_before_USER1).to.equal(false);
+
+                await expect(isSubscribed_after_USER2).to.equal(true);
+                await expect(isSubscribed_after_CHARLIE).to.equal(true);
+                await expect(isSubscribed_after_USER1).to.equal(true);
+
+                await expect(userDetails_before.subscribedCount.toNumber()).to.equal(0);
+                await expect(userDetails_after.subscribedCount.toNumber()).to.equal(3);               
+            })
+
+    });
+
+    // UNSUBSCRIBE RELATED TESTS
+  describe("Testing BASE SUbscribe FUnction", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+           /*
+             * '_unsubscribe' Function CHECKPOINTS
+             * Should revert if User is not subscribed to the Channel
+             * 
+             * Function Execution BODY
+             *         -> 'isSubscribed' for user and Channel should be updated to '0'
+             *         -> subscribed mapping should be updated with User's Current subscribe count
+             *         -> subscribedCount variable for user should decrease by 1
+             * 
+            */
+
+            it("Should revert if Users try to Unsubscribe a Channel Before Subscribing Twice" , async ()=>{
+               const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
+
+               await expect(tx).to.be.revertedWith('User is NOT Subscribed to the Channel Yet');
+            })
+
+            it("Function should Execute and Update State Variables adequately", async() =>{
+                await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR)
+
+                const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+                const isSubscribed_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, BOB);
+
+                const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
+
+                const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+                const isSubscribed_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, BOB);
+
+                await expect(isSubscribed_before).to.equal(true);
+                await expect(isSubscribed_after).to.equal(false);
+                await expect(userDetails_before.subscribedCount.toNumber()).to.equal(1);
+                await expect(userDetails_after.subscribedCount.toNumber()).to.equal(0);
+                
+            })
+
+            it("Function Should emit Relevant Events", async()=>{
+              await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR)
+              const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).unsubscribe(CHANNEL_CREATOR);
+
+              await expect(tx).to.emit(EPNSCommunicatorV1Proxy, 'Unsubscribe')
+               .withArgs(CHANNEL_CREATOR, BOB)
+            })
+
+    });
+
+
+    // BATCH Unsubscribe SUBSCRIBE RELATED TESTS
+  describe("Testing BATCH Unsubscribe Function", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+
+      
+          it("Function should Execute and Update State Variables adequately", async() =>{
+              const channelArray = [USER2, CHARLIE, USER1]
+            
+              await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchSubscribe(channelArray);
+
+              const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+
+              const isSubscribed_before_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
+              const isSubscribed_before_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
+              const isSubscribed_before_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
+          
+
+              await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchUnsubscribe(channelArray);
+
+              const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+
+              const isSubscribed_after_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
+              const isSubscribed_after_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
+              const isSubscribed_after_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
+
+              // BOB DETAILS VERIFICATION
+              await expect(isSubscribed_before_USER2).to.equal(true);
+              await expect(isSubscribed_before_CHARLIE).to.equal(true);
+              await expect(isSubscribed_before_USER1).to.equal(true);
+
+              await expect(isSubscribed_after_USER2).to.equal(false);
+              await expect(isSubscribed_after_CHARLIE).to.equal(false);
+              await expect(isSubscribed_after_USER1).to.equal(false);
+
+              await expect(userDetails_before.subscribedCount.toNumber()).to.equal(3);
+              await expect(userDetails_after.subscribedCount.toNumber()).to.equal(0);               
+          })
+
+    });
+
+
+  // USER NOTIF SETTING FUNCTION TESTS
+
+   describe("Testing BASE SUbscribe FUnction", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const user_notifSettings = "1-1+2-40+3-0+4-98";
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+          
+        it("Should revert if User is NOT a SUBSCRIBER Of the Channel", async function () {
+          const notif_Id = 3;
+          const tx =  EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribeToSpecificNotification(CHANNEL_CREATOR, notif_Id, user_notifSettings);
+ 
+           await expect(tx).to.be.revertedWith("User is Not Subscribed to this Channel")
+        });
+        
+        it("Should update the userToChannelNotifs mapping with the right DATA", async function () {
+          const notif_Id = 3;
+          const notifSettings_final = "3+1-1+2-40+3-0+4-98";
+          const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+          await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+          const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+
+          await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribeToSpecificNotification(CHANNEL_CREATOR, notif_Id, user_notifSettings);
+          const userNotifMapping = await EPNSCommunicatorV1Proxy.userToChannelNotifs(BOB,CHANNEL_CREATOR); 
+
+          expect(userNotifMapping).to.be.equal(notifSettings_final)
+          expect(userDetails_before.userActivated).to.be.equal(false);
+          expect(userDetails_after.userActivated).to.be.equal(true);
+        });
+
+        it("Should Emit out the EVENTS with the right Parameters", async function (){
+          const CHANNEL_TYPE = 2;
+          const notif_Id = 3;
+          await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+          const tx =  EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribeToSpecificNotification(CHANNEL_CREATOR,notif_Id,user_notifSettings);
+          const userNotifMapping = await EPNSCommunicatorV1Proxy.userToChannelNotifs(BOB,CHANNEL_CREATOR);
+
+         await expect(tx).to.emit(EPNSCommunicatorV1Proxy,'UserNotifcationSettingsAdded').withArgs(CHANNEL_CREATOR, BOB, notif_Id, userNotifMapping);
+
+        })
+
+    });
+
+
+   // BROADCASTING THE PUBLIC KEY
+
+  describe("Testing PUBLIC KEY BROADCASTING FUNCTION", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+          
+        it("Should Be able to broadcast user public key", async function(){
+        const publicKey = await getPubKey(BOBSIGNER)
+
+        const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+
+        await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+
+        const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+        
+        await expect(userDetails_before.publicKeyRegistered).to.equal(false);
+        await expect(userDetails_after.publicKeyRegistered).to.equal(true);
+      });
+
+      it("Should not broadcast user public key twice", async function(){
+        const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
+
+        await EPNSCommunicatorV1Proxy.connect(CHANNEL_CREATORSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+
+        const tx = EPNSCommunicatorV1Proxy.connect(CHANNEL_CREATORSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+
+        await expect(tx)
+        .to.not.emit(EPNSCommunicatorV1Proxy, 'PublicKeyRegistered')
+        .withArgs(CHANNEL_CREATOR, ethers.utils.hexlify(publicKey.slice(1)))
+      });
+
+      it("Should REVERT IF CALLER IS Different than the PUBLIC KEY Provided", async function(){
+        const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
+
+        const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+
+        await expect(tx).to.be.revertedWith('Public Key Validation Failed');
+
+      });
+
+      it("Should EMIT RELEVANT EVENTS", async function(){
+        const publicKey = await getPubKey(CHANNEL_CREATORSIGNER)
+
+        const tx = EPNSCommunicatorV1Proxy.connect(CHANNEL_CREATORSIGNER).broadcastUserPublicKey(publicKey.slice(1));
+
+        await expect(tx)
+        .to.emit(EPNSCommunicatorV1Proxy, 'PublicKeyRegistered')
+        .withArgs(CHANNEL_CREATOR, ethers.utils.hexlify(publicKey.slice(1)))
+      });
+
+
+    }); 
 });
 });
 
