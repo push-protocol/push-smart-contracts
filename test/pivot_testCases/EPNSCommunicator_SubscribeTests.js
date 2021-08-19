@@ -151,8 +151,8 @@ describe("EPNS COMMUNCATOR Protocol", function () {
 
 
  describe("EPNS COMMUNICATOR: Subscribing, Unsubscribing, Send Notification Tests", function(){
-
-    describe("Testing BASE SUbscribe FUnction", function()
+    
+     describe("Conducting Basic tests", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
@@ -164,9 +164,96 @@ describe("EPNS COMMUNCATOR Protocol", function () {
             await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
 
-          it("Start First Test", async function () {
-           
-          });
+          it("Should return the NAME of the COMMUNICATOR PROTOCOL", async () =>{
+          const name = await EPNSCommunicatorV1Proxy.name()
+          expect(name).to.be.equal("EPNS COMMUNICATOR");
+          })
+
+          it("Admin should be assigned correctly for EPNS COMMUNICATOR", async () =>{
+          const adminAddress = await EPNSCommunicatorV1Proxy.admin()
+          expect(adminAddress).to.be.equal(ADMIN);
+          })
+
+    });
+
+    describe("Testing BASE SUbscribe FUnction", function()
+      {
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+           beforeEach(async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         });
+
+           /**
+             * 'subscribe' Function CHECKPOINTS
+             * Should revert if User is already subscribed to a Particular Channel
+             * 
+             * Function Execution BODY
+             * 'addUser' function should be executed properly
+             *          -> userStartBlock should be assigned with the right Block number
+             *          -> userActivated should be marked TRUE
+             *          -> mapAddressUsers mapping should be updated
+             *          -> User's count in the protocol should be increased
+             *
+             * In the '_subscribe' function:
+             *         -> 'isSubscribed' for user and Channel should be updated to '1'
+             *         -> subscribed mapping should be updated with User's Current subscribe count
+             *         -> subscribedCount variable for user should increase by 1
+             * 
+            **/
+
+            it("Should revert if Users try to Subscribe Twice" , async ()=>{
+               await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+               const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+
+               await expect(tx).to.be.revertedWith('User is Already Subscribed to this Channel');
+            })
+
+            it("Function should Execute the 'addUser' function adequately", async() =>{
+                const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+                const userCount_before  = await EPNSCommunicatorV1Proxy.usersCount();
+
+                const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+
+
+                const userCount_after  = await EPNSCommunicatorV1Proxy.usersCount();
+                const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+
+
+                await expect(userDetails_before.userActivated).to.equal(false);
+                await expect(userDetails_after.userActivated).to.equal(true);
+                await expect(userCount_before.toNumber()).to.equal(2);
+                await expect(userCount_after.toNumber()).to.equal(3);
+
+            })
+
+            it("Function should Execute and Update State Variables adequately", async() =>{
+                const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
+                const isSubscribed_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, BOB);
+
+                const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+
+                const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
+                const isSubscribed_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, BOB);
+
+                await expect(isSubscribed_before).to.equal(false);
+                await expect(isSubscribed_after).to.equal(true);
+                await expect(userDetails_before.subscribedCount.toNumber()).to.equal(0);
+                await expect(userDetails_after.subscribedCount.toNumber()).to.equal(1);
+                
+            })
+
+            it("Function Should emit Relevant Events", async()=>{
+              const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribe(CHANNEL_CREATOR);
+
+              await expect(tx).to.emit(EPNSCommunicatorV1Proxy,'Subscribe')
+               .withArgs(CHANNEL_CREATOR, BOB)
+            })
 
     });
 
