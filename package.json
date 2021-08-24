@@ -37,5 +37,9 @@
     "hardhat": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1"
+  },
+  "devDependencies": {
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.17"
   }
 }
