@@ -319,7 +319,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     });
 
     // UNSUBSCRIBE RELATED TESTS
-  describe("Testing BASE SUbscribe FUnction", function()
+  describe("Testing BASE UNSUBSCRIBE FUnction", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
