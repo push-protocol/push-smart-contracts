@@ -62,6 +62,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     /** STATE VARIABLES **/
     address public admin;
     uint256 public usersCount;
+    bool public isMigrationComplete;
     address public EPNSCoreAddress;
     string public constant name = "EPNS COMMUNICATOR";
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -167,6 +168,10 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         admin = _newAdmin;
     }
 
+    function completeMigration() external onlyAdmin{
+        isMigrationComplete = true;
+    }
+    
     /**************** 
     
     => SUBSCRIBE & UNSUBSCRIBE FUNCTIOANLTIES <=
@@ -194,27 +199,56 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      * @notice External Subscribe Function that allows users to Diretly interact with the Base Subscribe function
      * @dev Subscribers the caller of the function to a channel - Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
-    **/
+     **/
     function subscribe(address _channel) external returns (bool) {
         // Call actual subscribe
         _subscribe(_channel, msg.sender);
         return true;
     }
 
-
     /**
-     * @notice This Function that allows users unsubscribe from a List of Channels at once
-     * 
-     * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
-    **/
-    function batchSubscribe(address[] memory _channelList) external returns(bool){
-        
-        for( uint256 i=0; i < _channelList.length; i++ ){
+     * @notice This Function allows users unsubscribe from a List of Channels at once
+     *
+     * @param _channelList array of addresses of the channels that the user wishes to Subscribe
+     **/
+    function batchSubscribe(address[] memory _channelList)
+        external
+        returns (bool)
+    {
+        for (uint256 i = 0; i < _channelList.length; i++) {
             _subscribe(_channelList[i], msg.sender);
         }
         return true;
     }
-    
+
+    /**
+     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
+     *
+     * @dev     Can only be called by Admin
+     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be false
+     *          Subscribers the Users to the respective Channels as per the arguments passed to the function
+     * 
+     * @param _channelList array of addresses of the channels 
+     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
+     **/
+    function migrateSubscribeData(
+        address[] memory _channelList,
+        address[] memory _usersList
+    ) external onlyAdmin returns (bool) {
+        require(
+            !isMigrationComplete,
+            "Migration of Subscribe Data is Complete Already"
+        );
+        require(
+            _channelList.length == _usersList.length,
+            "Unequal Arrays passed as Argument"
+        );
+
+        for (uint256 i = 0; i < _channelList.length; i++) {
+            _subscribe(_channelList[i], _usersList[i]);
+        }
+        return true;
+    }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel and Keeps track of it
@@ -302,7 +336,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         return true;
     }
 
-     /**
+    /**
      * @notice External Unsubcribe Function that allows users to Diretly interact with the Base Unsubscribe function
      * @dev UnSubscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
@@ -314,12 +348,14 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
     /**
      * @notice This Function that allows users unsubscribe from a List of Channels at once
-     * 
+     *
      * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
-    **/
-    function batchUnsubscribe(address[] memory _channelList) external returns(bool){
-        
-        for( uint256 i=0; i < _channelList.length; i++ ){
+     **/
+    function batchUnsubscribe(address[] memory _channelList)
+        external
+        returns (bool)
+    {
+        for (uint256 i = 0; i < _channelList.length; i++) {
             _unsubscribe(_channelList[i], msg.sender);
         }
         return true;
