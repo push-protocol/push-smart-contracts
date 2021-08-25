@@ -477,11 +477,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @dev   can only be Called by the ADMIN
      *        DAI required for Channel Creation will be PAID by ADMIN
      * 
+     * @param _startIndex       starting Index for the LOOP
+     * @param _endIndex         Last Index for the LOOP
      * @param _channelAddresses array of address of the Channel
      * @param _channelTypeLst   array of type of the Channel being created 
      * @param _amountList       array of amount of DAI to be depositeds
     **/
     function migrateChannelData(
+        uint256 _startIndex,
+        uint256 _endIndex,
         address[] memory _channelAddresses,
         ChannelType[] memory _channelTypeLst,
         uint256[] memory _amountList
@@ -490,16 +494,21 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             !isMigrationComplete,
             "Migration of Channel Data is Complete Already"
         );
+
         require(
             (_channelAddresses.length == _channelTypeLst.length) && 
             (_channelAddresses.length == _channelAddresses.length),
             "Unequal Arrays passed as Argument"
-        );        
+        );      
 
-        for (uint256 i = 0; i < _channelAddresses.length; i++) {
-            IERC20(daiAddress).safeTransferFrom(admin, address(this), _amountList[i]);
-            _depositFundsToPool(_amountList[i]);
-            _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+                if(channels[_channelAddresses[i]].channelState != 0){
+                    continue;
+            }else{
+                IERC20(daiAddress).safeTransferFrom(admin, address(this), _amountList[i]);
+                _depositFundsToPool(_amountList[i]);
+                _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
+            }
         }
         return true;
     }

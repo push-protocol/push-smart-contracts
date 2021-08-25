@@ -227,11 +227,15 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      * @dev     Can only be called by Admin
      *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be false
      *          Subscribers the Users to the respective Channels as per the arguments passed to the function
-     * 
+     * @param _startIndex       starting Index for the LOOP
+     * @param _endIndex         Last Index for the LOOP
      * @param _channelList array of addresses of the channels 
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      **/
+
     function migrateSubscribeData(
+        uint256 _startIndex,
+        uint256 _endIndex,
         address[] memory _channelList,
         address[] memory _usersList
     ) external onlyAdmin returns (bool) {
@@ -244,8 +248,12 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
             "Unequal Arrays passed as Argument"
         );
 
-        for (uint256 i = 0; i < _channelList.length; i++) {
-            _subscribe(_channelList[i], _usersList[i]);
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+            if(isUserSubscribed(_channelList[i], _usersList[i])){
+                continue;
+            }else{
+                _subscribe(_channelList[i], _usersList[i]);
+            }
         }
         return true;
     }
