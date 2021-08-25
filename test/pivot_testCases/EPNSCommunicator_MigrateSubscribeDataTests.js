@@ -196,14 +196,18 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             */
 
             it("Should revert if Admin is Not the Caller" , async ()=>{
+                const startIndex = 0;
+                const endIndex = 3;
                 const userArray = [USER2, CHARLIE, USER1] 
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
-               const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).migrateSubscribeData(channelArray, userArray);
+               const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, userArray);
 
                await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
             })
 
               it("Should revert Function is being called after MIGRATION is COMPLETED" , async ()=>{
+                const startIndex = 0;
+                const endIndex = 3;
                const userArray = [USER2, CHARLIE, USER1] 
                const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
                const migrationCompleteFlag_before = await EPNSCommunicatorV1Proxy.isMigrationComplete();
@@ -211,7 +215,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).completeMigration();
 
                const migrationCompleteFlag_after = await EPNSCommunicatorV1Proxy.isMigrationComplete();
-               const tx = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(channelArray, userArray);
+               const tx = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, userArray);
 
                expect(migrationCompleteFlag_before).to.equal(false);
                expect(migrationCompleteFlag_after).to.equal(true);
@@ -219,24 +223,28 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             })
 
             it("Should revert if Unequal Array of Argument is PAssed" , async ()=>{
+                const startIndex = 0;
+                const endIndex = 3;
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
                 const wrong_userArray = [USER2, CHARLIE, USER1, BOB]
 
-                const tx =  EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(channelArray, wrong_userArray);
+                const tx =  EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, wrong_userArray);
                await expect(tx).to.be.revertedWith('Unequal Arrays passed as Argument');
             })
 
-            it("Should revert similar Subscribe-To-Channel Data is passed Twice" , async ()=>{
-                
+            it("Should SKIP similar Subscribe-To-Channel Data is passed Twice" , async ()=>{
+                const startIndex = 0;
+                const endIndex = 3;
                 const wrong_userArray = [USER2, CHARLIE, USER2]
                 const wrong_channelArray = [CHANNEL_CREATOR, BOB, CHANNEL_CREATOR]
 
-              const tx =  EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(wrong_channelArray, wrong_userArray);
-               await expect(tx).to.be.revertedWith('User is Already Subscribed to this Channel');
+              const tx =  EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(startIndex, endIndex, wrong_channelArray, wrong_userArray);
             })
 
 
             it("Function should Execute the 'addUser' function adequately", async() =>{
+                const startIndex = 0;
+                const endIndex = 3;
                 const userArray = [USER2, CHARLIE, USER1] 
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
 
@@ -246,7 +254,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
                 const userCount_before  = await EPNSCommunicatorV1Proxy.usersCount();
 
-                await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(channelArray, userArray);
+                await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, userArray);
 
 
                  const USER2Details_after = await EPNSCommunicatorV1Proxy.users(USER2);
@@ -269,6 +277,8 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              })
 
             it("Function should Execute and Update State Variables adequately", async() =>{
+                const startIndex = 0;
+                const endIndex = 3;
                 const userArray = [USER2, CHARLIE, USER1] 
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
 
@@ -280,7 +290,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                 const isCHARLIESubscribed_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(BOB, CHARLIE);
                 const isUSER1Subscribed_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, USER1);
 
-                await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(channelArray, userArray);
+                await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, userArray);
 
                 const USER2Details_after = await EPNSCommunicatorV1Proxy.users(USER2);
                 const CHARLIEDetails_after = await EPNSCommunicatorV1Proxy.users(CHARLIE);
