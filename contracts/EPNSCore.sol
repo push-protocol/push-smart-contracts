@@ -91,6 +91,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     string public constant name = "EPNS CORE";
     bool oneTimeCheck;
     uint256 ADJUST_FOR_FLOAT;
+    bool public isMigrationComplete;
 
     address public epnsCommunicator;
     address public lendingPoolProviderAddress;
@@ -292,6 +293,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         epnsCommunicator = _commAddress;
     }
 
+    function setMigrationComplete() external onlyAdmin{
+        isMigrationComplete = true;
+    }
+
     function createChannelForAdmin() external onlyAdmin() {
         require (!oneTimeCheck,"Function can only be called Once");
         
@@ -465,6 +470,40 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         // Call Create Channel
         _createChannel(_channel, _channelType, _amount);
     }
+
+      /**
+     * @notice Migration function that allows Admin to migrate the previous Channel Data to this protocol
+     * 
+     * @dev   can only be Called by the ADMIN
+     *        DAI required for Channel Creation will be PAID by ADMIN
+     * 
+     * @param _channelAddresses array of address of the Channel
+     * @param _channelTypeLst   array of type of the Channel being created 
+     * @param _amountList       array of amount of DAI to be depositeds
+    **/
+    function migrateChannelData(
+        address[] memory _channelAddresses,
+        ChannelType[] memory _channelTypeLst,
+        uint256[] memory _amountList
+    ) external onlyAdmin returns (bool) {
+        require(
+            !isMigrationComplete,
+            "Migration of Channel Data is Complete Already"
+        );
+        require(
+            (_channelAddresses.length == _channelTypeLst.length) && 
+            (_channelAddresses.length == _channelAddresses.length),
+            "Unequal Arrays passed as Argument"
+        );        
+
+        for (uint256 i = 0; i < _channelAddresses.length; i++) {
+            IERC20(daiAddress).safeTransferFrom(admin, address(this), _amountList[i]);
+            _depositFundsToPool(_amountList[i]);
+            _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
+        }
+        return true;
+    }
+    
 
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
