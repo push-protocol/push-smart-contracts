@@ -311,56 +311,6 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     });
 
 
-    // // BATCH SUBSCRIBE SUBSCRIBE RELATED TESTS
-    // describe("Testing BATCH SUbscribe Function", function()
-    //   {
-    //       const CHANNEL_TYPE = 2;
-    //       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-
-    //        beforeEach(async function(){
-    //         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-    //         await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-    //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-    //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-    //         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-    //      });
-
-
-      
-    //         it("Function should Execute and Update State Variables adequately", async() =>{
-    //             const channelArray = [USER2, CHARLIE, USER1]
-              
-    //             const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
-
-    //             const isSubscribed_before_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
-    //             const isSubscribed_before_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
-    //             const isSubscribed_before_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
-            
-
-    //             const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchSubscribe(channelArray);
-
-    //             const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
-
-    //             const isSubscribed_after_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
-    //             const isSubscribed_after_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
-    //             const isSubscribed_after_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
-
-    //             // BOB DETAILS VERIFICATION
-    //             await expect(isSubscribed_before_USER2).to.equal(false);
-    //             await expect(isSubscribed_before_CHARLIE).to.equal(false);
-    //             await expect(isSubscribed_before_USER1).to.equal(false);
-
-    //             await expect(isSubscribed_after_USER2).to.equal(true);
-    //             await expect(isSubscribed_after_CHARLIE).to.equal(true);
-    //             await expect(isSubscribed_after_USER1).to.equal(true);
-
-    //             await expect(userDetails_before.subscribedCount.toNumber()).to.equal(0);
-    //             await expect(userDetails_after.subscribedCount.toNumber()).to.equal(3);               
-    //         })
-
-    // });
-
-
 });
 });
 
