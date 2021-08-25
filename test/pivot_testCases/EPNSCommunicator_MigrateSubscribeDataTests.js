@@ -158,10 +158,9 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
   });
 
 
- describe("EPNS COMMUNICATOR: Subscribing, Unsubscribing, Send Notification Tests", function(){
+ describe("EPNS COMMUNICATOR: Subscription Data Migration Tests", function(){
     
-    // SUBSCRIBE RELATED TESTS
-  describe("Testing BASE SUbscribe FUnction", function()
+  describe("Testing migrateSubscribeData FUnction", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
