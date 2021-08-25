@@ -27,7 +27,7 @@ const {
 
 use(solidity);
 
-describe("EPNS COMMUNICATOR Protocol ", function () {
+describe("EPNS CORE Protocol ", function () {
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
   const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
   const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
@@ -190,7 +190,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
             it("Should revert if Admin is Not the Caller" , async ()=>{
                 const startIndex = 0;
-                const endIndex = 3;
+                const endIndex = 4;
                 const channelTypeArray = [2,2,2,2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -202,7 +202,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
             it("Should revert  if 'isMigrationComplete' flag is TRUE " , async ()=>{
                 const startIndex = 0;
-                const endIndex = 3;
+                const endIndex = 4;
                 const channelTypeArray = [2,2,2,2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -221,7 +221,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
             it("Should revert  if Unequal Arrays are passed as an Argument" , async ()=>{
                 const startIndex = 0;
-                const endIndex = 3;
+                const endIndex = 4;
                 const channelTypeArray = [2, 2, 2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1, USER2];
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -234,7 +234,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
           it("Migration should transfer the Right Amount of DAI to EPNS PROXY from ADMIN's Balance", async function(){
              const startIndex = 0;
-             const endIndex = 3;
+             const endIndex = 4;
              const channelTypeArray = [2,2,2,2];
              const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
              const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -250,7 +250,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
           it("Migration function should deposit funds to pool and receive aDAI", async function(){
              const startIndex = 0;
-             const endIndex = 3;
+             const endIndex = 4;
              const channelTypeArray = [2,2,2,2];
              const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
              const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -270,7 +270,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
           it("EPNS Core Should create Channel and Update Relevant State variables accordingly", async function(){
             const startIndex = 0;
-            const endIndex = 3;
+            const endIndex = 4;
             const channelTypeArray = [2,2,2,2];
             const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
             const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
@@ -326,7 +326,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
         it("EPNS Core Should Interact with EPNS Communcator and make the necessary Subscriptions", async function(){
           const startIndex = 0;
-          const endIndex = 3;
+          const endIndex = 4;
           const EPNS_ALERTER = '0x0000000000000000000000000000000000000000';
 
           const channelTypeArray = [2,2,2,2];
@@ -407,7 +407,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
         // FS Ration Modifications should be as expected
          it("should create a channel and update fair share values", async function(){
           const startIndex = 0;
-          const endIndex = 3;
+          const endIndex = 4;
           const channelTypeArray = [2,2,2,2];
           const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
           const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
