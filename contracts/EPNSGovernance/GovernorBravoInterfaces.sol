@@ -29,9 +29,6 @@ contract GovernorBravoEvents {
     /// @notice An event emitted when the voting period is set
     event VotingPeriodSet(uint oldVotingPeriod, uint newVotingPeriod);
 
-    /// @notice Emitted when implementation is changed
-    event NewImplementation(address oldImplementation, address newImplementation);
-
     /// @notice Emitted when proposal threshold is set
     event ProposalThresholdSet(uint oldProposalThreshold, uint newProposalThreshold);
 
@@ -48,9 +45,6 @@ contract GovernorBravoDelegatorStorage {
 
     /// @notice Pending administrator for this contract
     address public pendingAdmin;
-
-    /// @notice Active brains of Governor
-    address public implementation;
 }
 
 
@@ -175,4 +169,3 @@ interface TimelockInterface {
 interface EPNSInterface {
     function getPriorVotes(address account, uint blockNumber) external view returns (uint96);
 }
-
