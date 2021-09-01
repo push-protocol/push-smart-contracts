@@ -122,85 +122,85 @@ const { ethers } = require("hardhat");
     });
 
     describe("Testing send Notification related functions", function(){
-      // describe("Testing sendNotification", function(){
-      //      beforeEach(async function(){
-      //     const CHANNEL_TYPE = 2;
-      //     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-      //
-      //     //await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
-      //
-      //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //   });
-      //
-      //   it("should revert if anyone other than owner calls the function", async function(){
-      //     const msg = ethers.utils.toUtf8Bytes("This is notification message");
-      //     const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).sendNotification(BOB, msg);
-      //     await expect(tx).to.be.revertedWith("Channel doesn't Exists");
-      //   });
-      //
-      //   it("should emit SendNotification when owner calls", async function(){
-      //     const msg = ethers.utils.toUtf8Bytes("This is notification message");
-      //     const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).sendNotification(BOB, msg);
-      //
-      //     await expect(tx)
-      //       .to.emit(EPNSCoreV1Proxy, 'SendNotification')
-      //       .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
-      //   });
-      // });
-      //
-      // describe("Testing sendNotificationAsDelegate function", function(){
-      //   beforeEach(async function(){
-      //     const CHANNEL_TYPE = 2;
-      //     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-      //
-      //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //     await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //   });
-      //
-      //    it("No one except a Delegate should be able to send notification on behalf of a Channel", async function(){
-      //     const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-      //     const tx =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
-      //     await expect(tx).to.be.revertedWith("Not authorised to send messages");
-      //   });
-      //
-      //   it("BOB Should be able to Send Delegated Notification once Allowed", async function(){
-      //     // Adding BOB As Delate Notification Seder
-      //     const tx_addDelegate =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(BOB);
-      //     const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
-      //
-      //     // BOB Sending Delegated Notification
-      //     const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-      //     const tx_sendNotif =  await EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,ALICE,msg);
-      //
-      //     await expect(tx_sendNotif)
-      //       .to.emit(EPNSCoreV1Proxy, 'SendNotification')
-      //       .withArgs(CHANNEL_CREATOR, ALICE, ethers.utils.hexlify(msg));
-      //     await expect(isBobAllowed).to.be.equal(true);
-      //     await expect(tx_addDelegate)
-      //       .to.emit(EPNSCoreV1Proxy, 'AddDelegate')
-      //       .withArgs(CHANNEL_CREATOR, BOB);
-      //   })
-      //
-      //    it("BOB Should NOT be able to Send Delegated Notification once Permission is Revoked", async function(){
-      //     // Revoking Permission from BOB
-      //     const tx_removeDelegate =  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).removeDelegate(BOB);
-      //     const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
-      //
-      //     // BOB Sending Delegated Notification
-      //      const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
-      //     const tx_sendNotif =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
-      //
-      //
-      //     await expect(tx_sendNotif).to.be.revertedWith("Not authorised to send messages");
-      //     await expect(isBobAllowed).to.be.equal(false);
-      //       await expect(tx_removeDelegate)
-      //       .to.emit(EPNSCoreV1Proxy, 'RemoveDelegate')
-      //       .withArgs(CHANNEL_CREATOR, BOB);
-      //   })
-      // });
+      describe("Testing sendNotification", function(){
+           beforeEach(async function(){
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+          //await EPNSCoreV1Proxy.connect(ADMINSIGNER).addToChannelizationWhitelist(CHANNEL_CREATOR, {gasLimit: 500000});
+
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        });
+
+        it("should revert if anyone other than owner calls the function", async function(){
+          const msg = ethers.utils.toUtf8Bytes("This is notification message");
+          const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).sendNotification(BOB, msg);
+          await expect(tx).to.be.revertedWith("Channel doesn't Exists");
+        });
+
+        it("should emit SendNotification when owner calls", async function(){
+          const msg = ethers.utils.toUtf8Bytes("This is notification message");
+          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).sendNotification(BOB, msg);
+
+          await expect(tx)
+            .to.emit(EPNSCoreV1Proxy, 'SendNotification')
+            .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
+        });
+      });
+
+      describe("Testing sendNotificationAsDelegate function", function(){
+        beforeEach(async function(){
+          const CHANNEL_TYPE = 2;
+          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        });
+
+         it("No one except a Delegate should be able to send notification on behalf of a Channel", async function(){
+          const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+          const tx =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
+          await expect(tx).to.be.revertedWith("Not authorised to send messages");
+        });
+
+        it("BOB Should be able to Send Delegated Notification once Allowed", async function(){
+          // Adding BOB As Delate Notification Seder
+          const tx_addDelegate =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(BOB);
+          const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
+
+          // BOB Sending Delegated Notification
+          const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+          const tx_sendNotif =  await EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,ALICE,msg);
+
+          await expect(tx_sendNotif)
+            .to.emit(EPNSCoreV1Proxy, 'SendNotification')
+            .withArgs(CHANNEL_CREATOR, ALICE, ethers.utils.hexlify(msg));
+          await expect(isBobAllowed).to.be.equal(true);
+          await expect(tx_addDelegate)
+            .to.emit(EPNSCoreV1Proxy, 'AddDelegate')
+            .withArgs(CHANNEL_CREATOR, BOB);
+        })
+
+         it("BOB Should NOT be able to Send Delegated Notification once Permission is Revoked", async function(){
+          // Revoking Permission from BOB
+          const tx_removeDelegate =  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).removeDelegate(BOB);
+          const isBobAllowed = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).delegated_NotificationSenders(CHANNEL_CREATOR,BOB);
+
+          // BOB Sending Delegated Notification
+           const msg = ethers.utils.toUtf8Bytes("This is DELAGATED notification message");
+          const tx_sendNotif =  EPNSCoreV1Proxy.connect(BOBSIGNER).sendNotificationAsDelegate(CHANNEL_CREATOR,BOB,msg);
+
+
+          await expect(tx_sendNotif).to.be.revertedWith("Not authorised to send messages");
+          await expect(isBobAllowed).to.be.equal(false);
+            await expect(tx_removeDelegate)
+            .to.emit(EPNSCoreV1Proxy, 'RemoveDelegate')
+            .withArgs(CHANNEL_CREATOR, BOB);
+        })
+      });
 
       describe("Testing Advance Subset SendNotif", function(){
         /**
@@ -289,10 +289,3 @@ const { ethers } = require("hardhat");
       });
   });
 });
-
-// const channelArray = [
-//   0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
-//   0x70997970C51812dc3A010C7d01b50e0d17dc79C8,
-//   0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC];
-// const hash = ethers.utils.sha256([ "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" ]);
-// console.log(hash)
