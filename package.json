@@ -36,7 +36,8 @@
     "ethers": "^5.1.4",
     "hardhat": "^2.2.1",
     "hardhat-gas-reporter": "^1.0.4",
-    "node-watch": "^0.7.1"
+    "node-watch": "^0.7.1",
+    "solidity-bytes-utils": "^0.0.9"
   },
   "devDependencies": {
     "prettier": "^2.3.2",
