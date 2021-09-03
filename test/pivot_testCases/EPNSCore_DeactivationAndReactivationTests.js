@@ -177,49 +177,47 @@ describe("EPNS Core Protocol", function () {
           * Channel Owner should be able to Recieve PUSH Tokens
           *
          **/
-        //  // TBD -> FAILING with Invalid Opcode
-        // it("Should Execuet First of all", async function () {
-        //   this.timeout(150000);
-        //   await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        //   await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-        //   setTimeout(150000);
-        // });
-
-        it("Should Revert if Channel is Inactiave", async function () {
-          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-          await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist");
+        // TBD -> FAILING with REvert without String - Failing at the UNISWAP Token Swap part
+        it("Should Execuet First of all", async function () {
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         });
 
-        it("Function execution should update the Channel State to '2' ", async function() {
-            const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        // it("Should Revert if Channel is Inactiave", async function () {
+        //   const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+        //   await expect(tx).to.be.revertedWith("Channel Deactivated, Blocked or Doesn't Exist");
+        // });
 
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-            const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-            await expect(channelState_before.channelState).to.be.equal(0);
-            await expect(channelState_afterCreation.channelState).to.be.equal(1);
-            await expect(channelState_afterDeactivation.channelState).to.be.equal(2);
-        })
-
-        it("Function execution should update the Channel Weight Correctly", async function() {
-            const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-            const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-            const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-            await expect(channelState_before.channelWeight).to.be.equal(0);
-            await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
-            await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
-        })
+        // it("Function execution should update the Channel State to '2' ", async function() {
+        //     const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        //     const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+        //     const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     await expect(channelState_before.channelState).to.be.equal(0);
+        //     await expect(channelState_afterCreation.channelState).to.be.equal(1);
+        //     await expect(channelState_afterDeactivation.channelState).to.be.equal(2);
+        // })
+        //
+        // it("Function execution should update the Channel Weight Correctly", async function() {
+        //     const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        //     const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+        //     const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        //
+        //     const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        //     const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        //
+        //     await expect(channelState_before.channelWeight).to.be.equal(0);
+        //     await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
+        //     await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
+        // })
 
       //  it("Function should update fair share values Correctly", async function(){
       //   const CHANNEL_TYPE = 2;
@@ -254,142 +252,142 @@ describe("EPNS Core Protocol", function () {
 
   });
 
-  describe("Testing Deactivation and Reactivation of Channels", function()
-   {
-       this.timeout(150000);
-       const CHANNEL_TYPE = 2;
-       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-
-        beforeEach(async function(){
-         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-         await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
-         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
-      });
-       /**
-         * "reActivateChannel" Function CheckPoints
-         * REVERT CHECKS
-         * Should revert if Channel Is NOT DeActivated Yet
-         * Should revert if Amount being deposited for Reactivation of Channel is Less than Min amount
-         *
-         * Function EXECUTION CheckPoints
-         * Channel State should be update to '1'
-         * Should transfer DAI from USer and Deposit to AAVE_LENDING_POOL
-         * Channel's Weight should be updated to new weight
-         * Readjustment of FS Ratio should be updated as expected.
-         *
-        **/
-
-       it("Should Revert if Channel is Not Deactivated First", async function () {
-         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         await expect(tx).to.be.revertedWith("Channel is not DeActivated Yet");
-       });
-
-       it("Should Execute if Channel Deactivated before Calling reActivateChannel function", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         await expect(tx)
-           .to.emit(EPNSCoreV1Proxy, 'ReactivateChannel')
-           .withArgs(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       });
-
-
-      it("Should Revert if Minimum Required Amount is not passed while Reactivating Channel", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(CHANNEL_DEACTIVATION_FEES);
-        await expect(tx).to.be.revertedWith("Insufficient Funds Passed for Channel Reactivation");
-      });
-
-       it("Function execution should update the Channel State to '1' ", async function() {
-           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-           const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterReactivation= await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await expect(channelState_before.channelState).to.be.equal(0);
-           await expect(channelState_afterCreation.channelState).to.be.equal(1);
-           await expect(channelState_afterDeactivation.channelState).to.be.equal(2);
-           await expect(channelState_afterReactivation.channelState).to.be.equal(1);
-       })
-
-       it("Function execution should update the Channel Weight Correctly", async function() {
-           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-           const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterReactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-           await expect(channelState_before.channelWeight).to.be.equal(0);
-           await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
-           await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
-           await expect(channelState_afterReactivation.channelWeight).to.be.equal(channelWeihght_OLD);
-       })
-       // it("Function execution should update the Channel Weight Correctly State to '2' ", async function() {
-       //     const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-       //
-       //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       //     const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-       //
-       //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-       //     const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-       //
-       //     const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       //     const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-       //
-       //     await expect(channelState_before.channelWeight).to.be.equal(0);
-       //     await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
-       //     await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
-       // })
-
-     //  it("Function should update fair share values Correctly", async function(){
-     //   const CHANNEL_TYPE = 2;
-     //
-     //   const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-     //   const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
-     //   const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
-     //   const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
-     //   const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
-     //
-     //   const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-     //   await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-     //   const blockNumber = tx.blockNumber;
-     //
-     //   const {
-     //     groupNewCount,
-     //     groupNewNormalizedWeight,
-     //     groupNewHistoricalZ,
-     //     groupNewLastUpdate
-     //   } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, channelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
-     //
-     //   const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
-     //   const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
-     //   const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
-     //   const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
-     //
-     //   expect(_groupFairShareCountNew).to.equal(groupNewCount);
-     //   expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
-     //   expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
-     //   expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
-     // });
-
- });
+ //  describe("Testing Deactivation and Reactivation of Channels", function()
+ //   {
+ //       this.timeout(150000);
+ //       const CHANNEL_TYPE = 2;
+ //       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+ //
+ //        beforeEach(async function(){
+ //         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
+ //         await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+ //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
+ //         await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
+ //      });
+ //       /**
+ //         * "reActivateChannel" Function CheckPoints
+ //         * REVERT CHECKS
+ //         * Should revert if Channel Is NOT DeActivated Yet
+ //         * Should revert if Amount being deposited for Reactivation of Channel is Less than Min amount
+ //         *
+ //         * Function EXECUTION CheckPoints
+ //         * Channel State should be update to '1'
+ //         * Should transfer DAI from USer and Deposit to AAVE_LENDING_POOL
+ //         * Channel's Weight should be updated to new weight
+ //         * Readjustment of FS Ratio should be updated as expected.
+ //         *
+ //        **/
+ //
+ //       it("Should Revert if Channel is Not Deactivated First", async function () {
+ //         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //         await expect(tx).to.be.revertedWith("Channel is not DeActivated Yet");
+ //       });
+ //
+ //       it("Should Execute if Channel Deactivated before Calling reActivateChannel function", async function () {
+ //        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //         await expect(tx)
+ //           .to.emit(EPNSCoreV1Proxy, 'ReactivateChannel')
+ //           .withArgs(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //       });
+ //
+ //
+ //      it("Should Revert if Minimum Required Amount is not passed while Reactivating Channel", async function () {
+ //        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(CHANNEL_DEACTIVATION_FEES);
+ //        await expect(tx).to.be.revertedWith("Insufficient Funds Passed for Channel Reactivation");
+ //      });
+ //
+ //       it("Function execution should update the Channel State to '1' ", async function() {
+ //           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //           const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //           const channelState_afterReactivation= await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await expect(channelState_before.channelState).to.be.equal(0);
+ //           await expect(channelState_afterCreation.channelState).to.be.equal(1);
+ //           await expect(channelState_afterDeactivation.channelState).to.be.equal(2);
+ //           await expect(channelState_afterReactivation.channelState).to.be.equal(1);
+ //       })
+ //
+ //       it("Function execution should update the Channel Weight Correctly", async function() {
+ //           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //           const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reActivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //           const channelState_afterReactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //
+ //           const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //           const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //
+ //           await expect(channelState_before.channelWeight).to.be.equal(0);
+ //           await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
+ //           await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
+ //           await expect(channelState_afterReactivation.channelWeight).to.be.equal(channelWeihght_OLD);
+ //       })
+ //       // it("Function execution should update the Channel Weight Correctly State to '2' ", async function() {
+ //       //     const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //       //
+ //       //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //       //     const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //       //
+ //       //     await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //       //     const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+ //       //
+ //       //     const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //       //     const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //       //
+ //       //     await expect(channelState_before.channelWeight).to.be.equal(0);
+ //       //     await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
+ //       //     await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
+ //       // })
+ //
+ //     //  it("Function should update fair share values Correctly", async function(){
+ //     //   const CHANNEL_TYPE = 2;
+ //     //
+ //     //   const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //     //   const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
+ //     //   const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
+ //     //   const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
+ //     //   const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
+ //     //
+ //     //   const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+ //     //   await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
+ //     //   const blockNumber = tx.blockNumber;
+ //     //
+ //     //   const {
+ //     //     groupNewCount,
+ //     //     groupNewNormalizedWeight,
+ //     //     groupNewHistoricalZ,
+ //     //     groupNewLastUpdate
+ //     //   } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, channelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
+ //     //
+ //     //   const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
+ //     //   const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
+ //     //   const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
+ //     //   const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
+ //     //
+ //     //   expect(_groupFairShareCountNew).to.equal(groupNewCount);
+ //     //   expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
+ //     //   expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
+ //     //   expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
+ //     // });
+ //
+ // });
 
 });
 });
