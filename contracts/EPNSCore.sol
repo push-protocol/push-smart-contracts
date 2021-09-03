@@ -24,6 +24,11 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "hardhat/console.sol";
+pragma solidity >=0.6.0 <0.7.0;
+
+interface ADaiInterface {
+    function redeem(uint256 _amount) external;
+}
 
 contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     using SafeMath for uint256;
@@ -148,8 +153,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         string _notifDescription
     );
 
-    /* ************** 
-    
+    /* **************
+
     => MODIFIERS <=
 
     ***************/
@@ -177,7 +182,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyDeactivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 2,
-            "Channel is already activated "
+            "Channel is not DeActivated Yet"
         );
         _;
     }
@@ -269,7 +274,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
- 
+
         groupLastUpdate = block.number;
         groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
 
@@ -299,7 +304,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     function createChannelForAdmin() external onlyAdmin() {
         require (!oneTimeCheck,"Function can only be called Once");
-        
+
         // Add EPNS Channels
         // First is for all users
         // Second is all channel alerter, amount deposited for both is 0
@@ -314,7 +319,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             ChannelType.ProtocolNonInterest,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
-        
+
         // EPNS ALERTER CHANNEL
         _createChannel(
             0x0000000000000000000000000000000000000000,
@@ -329,7 +334,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         oneTimeCheck = true;
     }
-    
+
 
     function setChannelDeactivationFees(uint256 _newFees) external onlyAdmin {
         require(
@@ -473,14 +478,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
       /**
      * @notice Migration function that allows Admin to migrate the previous Channel Data to this protocol
-     * 
+     *
      * @dev   can only be Called by the ADMIN
      *        DAI required for Channel Creation will be PAID by ADMIN
-     * 
+     *
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
      * @param _channelAddresses array of address of the Channel
-     * @param _channelTypeLst   array of type of the Channel being created 
+     * @param _channelTypeLst   array of type of the Channel being created
      * @param _amountList       array of amount of DAI to be depositeds
     **/
     function migrateChannelData(
@@ -496,10 +501,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         );
 
         require(
-            (_channelAddresses.length == _channelTypeLst.length) && 
+            (_channelAddresses.length == _channelTypeLst.length) &&
             (_channelAddresses.length == _channelAddresses.length),
             "Unequal Arrays passed as Argument"
-        );      
+        );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
                 if(channels[_channelAddresses[i]].channelState != 0){
@@ -512,7 +517,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         }
         return true;
     }
-    
+
 
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
@@ -595,7 +600,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *  For Boolean Type Notif Options
      *  1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
      *  1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
-     *  
+     *
      *  For SLIDER TYPE Notif Options
      *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
      *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
@@ -685,7 +690,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     {
         require(
             _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "Insufficient Funds or max ceiling reached"
+            "Insufficient Funds Passed for Channel Reactivation"
         );
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
         _depositFundsToPool(_amount);
@@ -713,8 +718,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         emit ReactivateChannel(msg.sender, _amount);
     }
 
-    /* ************** 
-    
+    /* **************
+
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
 
     *************** */
@@ -832,20 +837,20 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *
      * @dev       Can only be Called for Verified Channels
      *            Can only be Called by the ADMIN of the contract
-     *            Involves 2 Main CASES: 
+     *            Involves 2 Main CASES:
      *                                   a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by ADMIN directly) or,
      *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by ADMIN)
      *            If Target Channel CHILD:
      *                                   -> Checks for its Parent Channel.
      *                                   -> Update the verifiedViaChannelRecords mapping for Parent's Channel
      *                                   -> Update the channelVerifiedBy mapping for Target Channel.
-     *                                   -> Revoke Verification of Target Channel                
+     *                                   -> Revoke Verification of Target Channel
      *            If Target Channel PARENT:
      *                                   -> Checks total number of Channels verified by Parent Channel
      *                                   -> Removes Verification for all Channels that were verified by the Target Parent Channel
      *                                   -> Update the channelVerifiedBy mapping for every Target Channel Target Channel.
      *                                   -> Deletes the verifiedViaChannelRecords for Parent's Channel
-     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.                               
+     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.
      * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
      **/
 
@@ -893,7 +898,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @dev       Can only be called by Channels who were Verified directly by the ADMIN
      *            The _targetChannel must be have been verified by the Channel calling this function.
      *            Delets the Record of _targetChannel from the verifiedViaChannelRecords mapping
-     *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function                                      
+     *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function
      * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
      **/
     function revokeVerificationViaChannelOwners(address _targetChannel)
@@ -904,23 +909,23 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     {
         address verifierChannel = channelVerifiedBy[_targetChannel];
         require (verifierChannel == msg.sender, "Caller is not the Verifier of the Target Channel");
-        
+
         uint256 _totalVerifiedByVerifierChannel = getTotalVerifiedChannels(verifierChannel);
 
         updateVerifiedChannelRecords(verifierChannel, _targetChannel, _totalVerifiedByVerifierChannel, 2);
         delete channelVerifiedBy[_targetChannel];
         channels[_targetChannel].isChannelVerified = 0;
-        
+
         emit ChannelVerificationRevoked(_targetChannel, msg.sender);
     }
 
    /**
      * @notice   Private Helper function that updates the Verified Channel Records in the  verifiedViaAdminRecords & verifiedViaChannelRecords Mapping
-     *           Only Called when a Channel's Verification is Revoked 
-     *  
+     *           Only Called when a Channel's Verification is Revoked
+     *
      * @dev      Performs a SWAP and DELETION of the Target Channel from CHANNEL's and ADMIN's record(Array) of Verified Chanenl
-     *           Also updates the verifiedChannelCount mapping => The Count of Total verified channels by the Caller of the Function 
-     *                             
+     *           Also updates the verifiedChannelCount mapping => The Count of Total verified channels by the Caller of the Function
+     *
      * @param    _verifierChannel      Address of the channel who verified the Channel initially (And is now Revoking its Verification)
      * @param     _targetChannel         Address of the channel whose Verification is to be Revoked
      * @param     _totalVerifiedChannel  Total Number of Channels verified by the Verifier(Caller) of the Functions
@@ -957,8 +962,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         }
     }
 
-    /* ************** 
-    
+    /* **************
+
     => DEPOSIT & WITHDRAWAL of FUNDS<=
 
     *************** */
@@ -1031,12 +1036,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         internal
         returns (bool)
     {
-        IERC20(aDaiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
+        swapADaiForDai(_userAmount);
+        IERC20(daiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
 
-        address[] memory path;
-        path[0] = aDaiAddress;
+        address[] memory path = new address[](2);
+        path[0] = daiAddress;
         path[1] = PUSH_TOKEN_ADDRESS;
 
+        // THIS IS THE PART THAT FAILS
         IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
             _userAmount,
             1,
@@ -1046,9 +1053,19 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         );
         return true;
     }
+    // CHECK THIS FUNCTION OUT AS WELL, ALTHOUGH IT WORKS FINE AS OF NOW
+    function swapADaiForDai(uint256 _amount) private{
+      ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
+        lendingPoolProviderAddress
+      );
+      ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
+      IERC20(aDaiAddress).approve(provider.getLendingPoolCore(), _amount);
 
-    /* ************** 
-    
+      ADaiInterface(aDaiAddress).redeem(_amount);
+    }
+
+    /* **************
+
     => FAIR SHARE RATIO CALCULATIONS <=
 
     *************** */
