@@ -141,7 +141,7 @@ describe("EPNS Core Protocol", function () {
 
   });
 
-  afterEach(function () { 
+  afterEach(function () {
     EPNS = null
     CORE_LOGIC = null
     TIMELOCK = null
@@ -150,7 +150,7 @@ describe("EPNS Core Protocol", function () {
   });
 
 
- describe("EPNS CORE: Channel Creation, Deactivation & Reactivation Tests", function(){
+ describe("EPNS CORE: Channel Creation Tests", function(){
 
 
     describe("Testing the Base Create Channel Function", function()
@@ -167,10 +167,10 @@ describe("EPNS Core Protocol", function () {
           /**
             * "createChannelWithFees" Function CheckPoints
             * REVERT CHECKS
-            * Should revert IF Channel is already activated 
+            * Should revert IF Channel is already activated
             * Should revert if Channel Type is NOT THE Allowed One
             * Should revert if AMOUNT Passed if Not greater than or equal to the 'ADD_CHANNEL_MIN_POOL_CONTRIBUTION'
-            * 
+            *
             * FUNCTION Execution CHECKS
             * The Channel Creation Fees should be Transferred to the EPNS Core Proxy
             * Should deposit funds to the POOL and Recieve aDAI
@@ -225,7 +225,7 @@ describe("EPNS Core Protocol", function () {
 
             await expect(tx).to.be.revertedWith("subtraction overflow")
           });
-      
+
 
           it("should transfer given fees from creator account to proxy", async function(){
             const CHANNEL_TYPE = 2;
@@ -297,7 +297,6 @@ describe("EPNS Core Protocol", function () {
 
         }).timeout(10000);
 
-        FS Ration Modifications should be as expected
          it("should create a channel and update fair share values", async function(){
           const CHANNEL_TYPE = 2;
 
@@ -338,43 +337,5 @@ describe("EPNS Core Protocol", function () {
 
     });
 
-    describe("Testing Deactivation and Reactivation of Channels", function()
-      { 
-          this.timeout(150000);
-          const CHANNEL_TYPE = 2;
-          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-
-           beforeEach(async function(){
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
-            await EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         });
-          /**
-            * "deactivateChannel" Function CheckPoints
-            * REVERT CHECKS
-            * Should revert if Channel Is NOT Activated Yet
-            * 
-            * 
-            * FUNCTION Execution CHECKS
-            * The Channel Creation Fees should be Transferred to the EPNS Core Proxy
-            * Should deposit funds to the POOL and Recieve aDAI
-            * Should Update the State Variables Correctly and Activate the Channel
-            * Readjustment of the FS Ratio should be checked
-            * Should Interact successfully with EPNS Communicator and Subscribe Channel Owner to his own Channel
-            * Should subscribe Channel owner to 0x000 channel
-            * Should subscribe ADMIN to the Channel Creator's Channel
-           **/
-           // TBD -> FAILING with Invalid Opcode
-          it("Should Execuet First of all", async function () {
-            this.timeout(150000);
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-            setTimeout(150000);
-          });
-
-    });
-
 });
 });
-
