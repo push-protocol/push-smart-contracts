@@ -322,40 +322,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         isMigrationComplete = true;
     }
 
-    function createChannelForAdmin() external onlyAdmin() {
-        require (!oneTimeCheck,"Function can only be called Once");
-
-        // Add EPNS Channels
-        // First is for all users
-        // Second is all channel alerter, amount deposited for both is 0
-        // to save gas, emit both the events out
-        // identity = payloadtype + payloadhash
-
-        // EPNS ALL USERS
-
-        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
-         emit AddChannel(
-            admin,
-            ChannelType.ProtocolNonInterest,
-            "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
-        );
-
-        // EPNS ALERTER CHANNEL
-        _createChannel(
-            0x0000000000000000000000000000000000000000,
-            ChannelType.ProtocolNonInterest,
-            0
-        );
-        emit AddChannel(
-        0x0000000000000000000000000000000000000000,
-        ChannelType.ProtocolNonInterest,
-        "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
-        );
-
-        oneTimeCheck = true;
-    }
-
-
     function setChannelDeactivationFees(uint256 _newFees) external onlyAdmin {
         require(
             _newFees > 0,
@@ -408,6 +374,39 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     function _updateChannelMeta(address _channel) internal {
         channels[msg.sender].channelUpdateBlock = block.number;
+    }
+
+    function createChannelForAdmin() external onlyAdmin() {
+        require (!oneTimeCheck,"Function can only be called Once");
+
+        // Add EPNS Channels
+        // First is for all users
+        // Second is all channel alerter, amount deposited for both is 0
+        // to save gas, emit both the events out
+        // identity = payloadtype + payloadhash
+
+        // EPNS ALL USERS
+
+        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
+         emit AddChannel(
+            admin,
+            ChannelType.ProtocolNonInterest,
+            "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
+        );
+
+        // EPNS ALERTER CHANNEL
+        _createChannel(
+            0x0000000000000000000000000000000000000000,
+            ChannelType.ProtocolNonInterest,
+            0
+        );
+        emit AddChannel(
+        0x0000000000000000000000000000000000000000,
+        ChannelType.ProtocolNonInterest,
+        "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
+        );
+
+        oneTimeCheck = true;
     }
 
     /**
