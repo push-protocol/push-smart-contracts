@@ -9,7 +9,7 @@ pragma experimental ABIEncoderV2;
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols
 
- * Some imperative functionalities that the EPNS Communicator Protocol allows 
+ * Some imperative functionalities that the EPNS Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
  * Notifications to a particular recipient etc.
 **/
@@ -37,15 +37,29 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      * a specific User.
      **/
     struct User {
-        bool userActivated; // Whether a user is activated or not
-        bool publicKeyRegistered; // Will be false until public key is emitted
-        bool channellized; // Marks if a user has opened a channel
-        uint256 userStartBlock; // Events should not be polled before this block as user doesn't exist
-        uint256 subscribedCount; // Keep track of subscribers
-        uint256 subscriberCount; // (If User is Channel), Keep track of Total Subscriber for a Channel Address
-        mapping(address => uint8) isSubscribed; // (1-> True. 0-> False )Depicts if User subscribed to a Specific Channel Address
-        // keep track of all subscribed channels
-        // TBD - NOT SURE IF THESE MAPPING SERVE A SPECIFIC PURPOSE YET
+        // @notice Depicts whether or not a user is ACTIVE
+        bool userActivated;
+
+        // @notice Will be false until public key is emitted
+        bool publicKeyRegistered;
+
+        // @notice Marks if a user has opened a channel
+        bool channellized;
+
+        // @notice Events should not be polled before this block as user doesn't exist
+        uint256 userStartBlock;
+
+        // @notice Keep track of subscribers
+        uint256 subscribedCount;
+
+        /**
+         * @notice Depicts if User subscribed to a Specific Channel Address
+         * 1 -> User is Subscribed
+         * 0 -> User is NOT SUBSCRIBED
+         **/
+        mapping(address => uint8) isSubscribed; // (1-> True. 0-> False )
+
+        // @notice Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;
         mapping(uint256 => address) mapAddressSubscribed;
     }
@@ -54,9 +68,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     mapping(address => User) public users;
     mapping(uint256 => address) public mapAddressUsers;
     mapping(address => mapping(address => bool))
-        public delegatedNotificationSenders; // Keeps track of addresses allowed to send notifications on Behalf of a Channel
-    mapping(address => uint256) public nonces; // A record of states for signing / validating signatures
-    mapping(address => uint256) channelToSubscriberCount; // Keeps track of total number of Subscribers for a particular channel
+        public delegatedNotificationSenders;
+    mapping(address => uint256) public nonces; 
     mapping(address => mapping(address => string)) public userToChannelNotifs;
 
     /** STATE VARIABLES **/
@@ -171,9 +184,9 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     function completeMigration() external onlyAdmin{
         isMigrationComplete = true;
     }
-    
-    /**************** 
-    
+
+    /****************
+
     => SUBSCRIBE & UNSUBSCRIBE FUNCTIOANLTIES <=
 
     ****************/
@@ -229,7 +242,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      *          Subscribers the Users to the respective Channels as per the arguments passed to the function
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
-     * @param _channelList array of addresses of the channels 
+     * @param _channelList array of addresses of the channels
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      **/
 
@@ -443,8 +456,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         _unsubscribe(channel, signatory);
     }
 
-    /* ************** 
-    
+    /* **************
+
     => PUBLIC KEY BROADCASTING & USER ADDING FUNCTIONALITIES <=
 
     *************** */
@@ -516,8 +529,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         _broadcastPublicKey(msg.sender, _publicKey);
     }
 
-    /* ************** 
-    
+    /* **************
+
     => SEND NOTIFICATION FUNCTIONALITIES <=
 
     *************** */
@@ -545,19 +558,17 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     }
 
     /***
-      THREE main CALLERS for this function- 
+      THREE main CALLERS for this function-
         1. Channel Owner sends Notif to Recipients
         2. Delegatee of Channel sends Notif to Recipients
         3. Recipients sends Notifs to Themselvs via a Channel
     <------------------------------------------------------------------------------------->
-     
+
      * When a CHANNEL OWNER Calls the Function and sends a Notif-> We check "if (channel owner is the caller) and if(Is Channel Valid)"
      * NOTE - This check is performed via the PUSH NODES
-     * 
      * When a Delegatee wants to send Notif to Recipient-> We check "if(delegate is the Caller) and If( Is delegatee Valid)":
-     * 
      * When Recipient wants to Send a Notif to themselves -> We check that the If(Caller of the function is Recipient himself)
-    
+
     */
 
     /**
@@ -660,8 +671,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         );
     }
 
-    /* ************** 
-    
+    /* **************
+
     => User Notification Settings Function <=
     *************** */
 
