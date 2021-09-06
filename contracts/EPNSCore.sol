@@ -111,8 +111,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     uint256 public groupLastUpdate;
     uint256 public groupFairShareCount;
 
-    address private UNISWAP_V2_ROUTER;
-    address private PUSH_TOKEN_ADDRESS;
+    address public WETH_ADDRESS;
+    address public UNISWAP_V2_ROUTER;
+    address public PUSH_TOKEN_ADDRESS;
 
     // Necessary variables for Defi
     uint256 public poolFunds;
@@ -267,6 +268,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         REFERRAL_CODE = _referralCode;
+        WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
         UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
         PUSH_TOKEN_ADDRESS = 0xf418588522d5dd018b425E472991E52EBBeEEEEE;
 
@@ -667,8 +669,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             groupLastUpdate
         );
 
-        channels[msg.sender].channelWeight = _newChannelWeight;
         channels[msg.sender].channelState = 2;
+        poolFunds = poolFunds.sub(totalRefundableAmount);
+        channels[msg.sender].channelWeight = _newChannelWeight;
 
         swapAndTransferaDaiToPUSH(msg.sender, totalRefundableAmount);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
@@ -698,7 +701,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         uint256 _channelWeight = _amount.mul(ADJUST_FOR_FLOAT).div(
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
-
         (
             groupFairShareCount,
             groupNormalizedWeight,
@@ -713,8 +715,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             groupLastUpdate
         );
 
-        channels[msg.sender].channelWeight = _channelWeight;
         channels[msg.sender].channelState = 1;
+        channels[msg.sender].channelWeight = _channelWeight;
+
         emit ReactivateChannel(msg.sender, _amount);
     }
 
@@ -983,8 +986,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         // Got the funds, add it to the channels dai pool
         poolFunds = poolFunds.add(amount);
 
-        // Next swap it via AAVE for aDAI
-        // mainnet address, for other addresses: https://docs.aave.com/developers/developing-on-aave/deployed-contract-instances
         ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
             lendingPoolProviderAddress
         );
@@ -1020,7 +1021,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             userAmountAdjusted
         );
 
-        // Finally SWAP aDAI to PUSH, and TRANSFER TO USER
+        // Finally SWAP aDAI to DAI to PUSH, and TRANSFER PUSH TO USER
         swapAndTransferaDaiToPUSH(msg.sender, userAmountAdjusted);
         // Emit Event
         emit InterestClaimed(msg.sender, userAmountAdjusted);
@@ -1039,21 +1040,21 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         swapADaiForDai(_userAmount);
         IERC20(daiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
 
-        address[] memory path = new address[](2);
+        address[] memory path = new address[](3);
         path[0] = daiAddress;
-        path[1] = PUSH_TOKEN_ADDRESS;
+        path[1] = WETH_ADDRESS;
+        path[2] = PUSH_TOKEN_ADDRESS;
 
-        // THIS IS THE PART THAT FAILS
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-            _userAmount,
-            1,
-            path,
-            _user,
-            block.timestamp
-        );
+        // IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+        //     _userAmount,
+        //     1,
+        //     path,
+        //     _user,
+        //     block.timestamp
+        // );
         return true;
     }
-    // CHECK THIS FUNCTION OUT AS WELL, ALTHOUGH IT WORKS FINE AS OF NOW
+
     function swapADaiForDai(uint256 _amount) private{
       ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
         lendingPoolProviderAddress
@@ -1108,21 +1109,21 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         // Increment or decrement count based on flag
         if (_action == ChannelAction.ChannelAdded) {
             groupModCount = groupModCount.add(1);
-
             totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
             totalWeight = totalWeight.add(_channelWeight);
+
         } else if (_action == ChannelAction.ChannelRemoved) {
             groupModCount = groupModCount.sub(1);
-
             totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
             totalWeight = totalWeight.sub(_channelWeight);
+
         } else if (_action == ChannelAction.ChannelUpdated) {
             totalWeight = adjustedNormalizedWeight.mul(prevGroupCount.sub(1));
             totalWeight = totalWeight.add(_channelWeight);
+
         } else {
             revert("Invalid Channel Action");
         }
-
         // now calculate the historical constant
         // z = z + nxw
         // z is the historical constant
