@@ -132,6 +132,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     address public PUSH_TOKEN_ADDRESS;
     address public lendingPoolProviderAddress;
 
+    uint256 public REFERRAL_CODE;
     uint256 ADJUST_FOR_FLOAT;
     uint256 public channelsCount;
 
@@ -143,7 +144,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     // @notice Necessary variables for Keeping track of Funds and Fees
     uint256 public poolFunds;
-    uint256 public REFERRAL_CODE;
+    uint256 public protocolFeePool;
     uint256 public DELEGATED_CONTRACT_FEES;
     uint256 public CHANNEL_DEACTIVATION_FEES;
     uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
@@ -168,6 +169,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         address indexed channel,
         uint256 indexed amountDeposited
     );
+    event ChannelBlocked(
+        address indexed channel
+    );
     event AddChannel(
         address indexed channel,
         ChannelType indexed channelType,
@@ -189,19 +193,18 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
         _;
     }
-    // INFO -> onlyActivatedChannels redesigned
-    modifier onlyActivatedChannels(address _channel) {
-        require(
-            channels[_channel].channelState == 1,
-            "Channel Deactivated, Blocked or Doesn't Exist"
-        );
-        _;
-    }
-    // INFO -> onlyUserWithNoChannel became onlyInactiveChannels
+
     modifier onlyInactiveChannels(address _channel) {
         require(
             channels[_channel].channelState == 0,
-            "Channel is already activated"
+            "Channel is already Activated"
+        );
+        _;
+    }
+    modifier onlyActivatedChannels(address _channel) {
+        require(
+            channels[_channel].channelState == 1,
+            "Channel Deactivated, Blocked or Does Not Exist"
         );
         _;
     }
@@ -214,15 +217,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         _;
     }
 
-    modifier onlyUnblockedChannels(address _channel) {
+    modifier onlyUnBlockedChannels(address _channel) {
         require(
-            channels[_channel].channelState != 3,
-            "Channel is Completely BLOCKED"
+            ((channels[_channel].channelState != 3) &&
+              (channels[_channel].channelState != 0)),
+            "Channel is BLOCKED Already or Not Activated Yet"
         );
         _;
     }
 
-    // INFO -> onlyChannelOwner redesigned
     modifier onlyChannelOwner(address _channel) {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
@@ -629,7 +632,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *  For SLIDER TYPE Notif Options
      *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
      *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
-
+     *
      *  @param _notifOptions - Total Notification options provided by the Channel Owner
     // @param _notifSettings- Deliminated String of Notification Settings
     // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
@@ -668,7 +671,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     function deactivateChannel() external onlyActivatedChannels(msg.sender) {
         Channel memory channelData = channels[msg.sender];
 
-        uint256 totalAmountDeposited = channels[msg.sender].poolContribution;
+        uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
             CHANNEL_DEACTIVATION_FEES
         );
@@ -691,10 +694,11 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             groupLastUpdate
         );
 
-        channels[msg.sender].channelState = 2;
+        channelData.channelState = 2;
         poolFunds = poolFunds.sub(totalRefundableAmount);
-        channels[msg.sender].channelWeight = _newChannelWeight;
+        channelData.channelWeight = _newChannelWeight;
 
+        channels[msg.sender] = channelData;
         swapAndTransferaDaiToPUSH(msg.sender, totalRefundableAmount);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
@@ -742,6 +746,57 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         emit ReactivateChannel(msg.sender, _amount);
     }
+
+    /**
+     * @notice ALlows the ADMIN to Block any particular channel Completely.
+     *
+     * @dev    - Can only be called by ADMIN
+     *         - Can only be Called for Activated Channels
+     *         - Can only Be Called for NON-BLOCKED Channels
+     *
+     *         - Updates channel's state to BLOCKED ('3')
+     *         - Updates Channel's Pool Contribution to ZERO
+     *         - Updates Channel's Weight to ZERO
+     *         - Increases the Protocol Fee Pool
+     *         - Decreases the Channel Count
+     *         - Readjusts the FS Ratio
+     *         - Emit 'ChannelBlocked' Event
+     * @param _channelAddress Address of the Channel to be blocked
+     **/
+
+     function blockChannel(address _channelAddress)
+     external
+     onlyAdmin()
+     onlyUnBlockedChannels(_channelAddress){
+       Channel memory channelData = channels[_channelAddress];
+
+       channelsCount = channelsCount.sub(1);
+
+       uint256 totalAmountDeposited = channelData.poolContribution;
+       protocolFeePool = protocolFeePool.add(totalAmountDeposited);
+
+       channelData.channelState = 3;
+       channelData.channelWeight = 0;
+       channelData.poolContribution = 0;
+       channelData.channelUpdateBlock = block.number;
+
+       (
+           groupFairShareCount,
+           groupNormalizedWeight,
+           groupHistoricalZ,
+           groupLastUpdate
+       ) = _readjustFairShareOfChannels(
+           ChannelAction.ChannelRemoved,
+           0,
+           groupFairShareCount,
+           groupNormalizedWeight,
+           groupHistoricalZ,
+           groupLastUpdate
+       );
+
+       channels[_channelAddress] = channelData;
+       emit ChannelBlocked(_channelAddress);
+     }
 
     /* **************
 
