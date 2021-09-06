@@ -104,41 +104,49 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     mapping(uint256 => address) public mapAddressChannels;
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
+
     /** CHANNEL VERIFICATION MAPPINGS **/
-    mapping(address => address) public channelVerifiedBy; // Keeps track of Channel Being Verified => The VERIFIER CHANNEL
-    mapping(address => uint256) public verifiedChannelCount; // Keeps track of Verifier Channel Address => Total Number of Channels it Verified
-    mapping(address => address[]) public verifiedViaAdminRecords; // Array of All Channels verified by ADMIN
-    mapping(address => address[]) public verifiedViaChannelRecords; // Array of All Channels verified by CHANNEL OWNERS
+    // @notice Keeps track of Channel Being Verified => The VERIFIER CHANNEL
+    mapping(address => address) public channelVerifiedBy;
+
+    // @notice Keeps track of Verifier Channel Address => Total Number of Channels it Verified
+    mapping(address => uint256) public verifiedChannelCount;
+
+    // @notice Array of All Channels verified by ADMIN
+    mapping(address => address[]) public verifiedViaAdminRecords;
+
+    // @notice Array of All Channels verified by CHANNEL OWNERS
+    mapping(address => address[]) public verifiedViaChannelRecords;
 
     /** STATE VARIABLES **/
     string public constant name = "EPNS CORE";
     bool oneTimeCheck;
-    uint256 ADJUST_FOR_FLOAT;
     bool public isMigrationComplete;
 
-    address public epnsCommunicator;
-    address public lendingPoolProviderAddress;
+    address public admin;
     address public daiAddress;
     address public aDaiAddress;
-    address public admin;
+    address public WETH_ADDRESS;
+    address public epnsCommunicator;
+    address public UNISWAP_V2_ROUTER;
+    address public PUSH_TOKEN_ADDRESS;
+    address public lendingPoolProviderAddress;
 
-    uint256 public channelsCount; // Record of total Channels in the protocol
-    //  Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
+    uint256 ADJUST_FOR_FLOAT;
+    uint256 public channelsCount;
+
+    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
     uint256 public groupNormalizedWeight;
     uint256 public groupHistoricalZ;
     uint256 public groupLastUpdate;
     uint256 public groupFairShareCount;
 
-    address public WETH_ADDRESS;
-    address public UNISWAP_V2_ROUTER;
-    address public PUSH_TOKEN_ADDRESS;
-
-    // Necessary variables for Defi
+    // @notice Necessary variables for Keeping track of Funds and Fees
     uint256 public poolFunds;
     uint256 public REFERRAL_CODE;
-    uint256 DELEGATED_CONTRACT_FEES;
-    uint256 CHANNEL_DEACTIVATION_FEES;
-    uint256 ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+    uint256 public DELEGATED_CONTRACT_FEES;
+    uint256 public CHANNEL_DEACTIVATION_FEES;
+    uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
     /** EVENTS **/
     event UpdateChannel(address indexed channel, bytes identity);
@@ -308,8 +316,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         SETTER FUNCTIONS
 
     *************** */
-
-    //TBD - Use of onlyADMIN vs onlyGov in Setter functions below:
 
     function setEpnsCommunicatorAddress(address _commAddress)
         external
@@ -659,7 +665,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
      **/
 
-    // TBD -> YET TO BE COMPLETED, DISCUSS THE FS PART and Channel Weight Updation Part
     function deactivateChannel() external onlyActivatedChannels(msg.sender) {
         Channel memory channelData = channels[msg.sender];
 
