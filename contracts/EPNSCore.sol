@@ -55,29 +55,47 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * a specific Channel.
      **/
     struct Channel {
-        // Channel Type
+        // @notice Denotes the Channel Type
         ChannelType channelType;
-        uint8 channelState; // Channel State Details: 0 -> INACTIVE, 1 -> ACTIVATED, 2 -> DeActivated By Channel Owner, 3 -> BLOCKED by ADMIN/Governance
-        uint8 isChannelVerified; // Channel Verification Status: 0 -> UnVerified Channels, 1 -> Verified by Admin, 2 -> Verified by Channel Owners
-        uint256 poolContribution;
-        uint256 channelHistoricalZ;
-        uint256 channelFairShareCount;
-        uint256 channelLastUpdate; // The last update block number, used to calculate fair share
-        // To calculate fair share of profit from the pool of channels generating interest
-        uint256 channelStartBlock; // Helps in defining when channel started for pool and profit calculation
-        uint256 channelUpdateBlock; // Helps in outlining when channel was updated
-        uint256 channelWeight; // The individual weight to be applied as per pool contribution
-        // TBD -> THE FOLLOWING STRUCT ELEMENTS' SIGNIFICANCE NEEDS TO BE DISCUSSED.
-        // TBD -> memberExists has been removed
-        // These were either used to keep track of Subscribers or used in the subscribe/unsubscribe functions to calculate the FS Ratio
 
-        // For iterable mapping
+        /** @notice Symbolizes Channel's State:
+         * 0 -> INACTIVE,
+         * 1 -> ACTIVATED
+         * 2 -> DeActivated By Channel Owner,
+         * 3 -> BLOCKED by ADMIN/Governance
+        **/
+        uint8 channelState;
+
+        /** @notice Symbolizes Channel's Verification Status:
+         * 0 -> UnVerified Channels,
+         * 1 -> Verified by Admin,
+         * 2 -> Verified by other Channel Owners
+        **/
+        uint8 isChannelVerified;
+
+        //@ notice Total Amount of Dai deposited during Channel Creation
+        uint256 poolContribution;
+
+        // @notice Represents the Historical Constant
+        uint256 channelHistoricalZ;
+
+        // @notice Represents the FS Count
+        uint256 channelFairShareCount;
+
+        // @notice The last update block number, used to calculate fair share
+        uint256 channelLastUpdate;
+
+        // @notice Helps in defining when channel started for pool and profit calculation
+        uint256 channelStartBlock;
+
+        // @notice Helps in outlining when channel was updated
+        uint256 channelUpdateBlock;
+
+        // @notice The individual weight to be applied as per pool contribution
+        uint256 channelWeight;
 
         mapping(address => uint256) members;
-        mapping(uint256 => address) mapAddressMember; // This maps to the user
-        // To calculate fair share of profit for a subscriber
-        // The historical constant that is applied with (wnx0 + wnx1 + .... + wnxZ)
-        // Read more in the repo: https://github.com/ethereum-push-notification-system
+        mapping(uint256 => address) mapAddressMember;
         mapping(address => uint256) memberLastUpdate;
     }
 
