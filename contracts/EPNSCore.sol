@@ -93,7 +93,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         // @notice The individual weight to be applied as per pool contribution
         uint256 channelWeight;
-
+        // TBD
         mapping(address => uint256) members;
         mapping(uint256 => address) mapAddressMember;
         mapping(address => uint256) memberLastUpdate;
@@ -145,7 +145,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     // @notice Necessary variables for Keeping track of Funds and Fees
     uint256 public poolFunds;
     uint256 public protocolFeePool;
-    uint256 public DELEGATED_CONTRACT_FEES;
     uint256 public CHANNEL_DEACTIVATION_FEES;
     uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
@@ -300,8 +299,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
         UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
         PUSH_TOKEN_ADDRESS = 0xf418588522d5dd018b425E472991E52EBBeEEEEE;
-
-        DELEGATED_CONTRACT_FEES = 1 * 10**17; // 0.1 DAI to perform any delegate call
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
