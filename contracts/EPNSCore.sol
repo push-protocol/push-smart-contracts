@@ -767,16 +767,22 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      onlyUnBlockedChannels(_channelAddress){
        Channel memory channelData = channels[_channelAddress];
 
-       channelsCount = channelsCount.sub(1);
-
        uint256 totalAmountDeposited = channelData.poolContribution;
-       protocolFeePool = protocolFeePool.add(totalAmountDeposited);
+       uint256 totalRefundableAmount = totalAmountDeposited.sub(
+           CHANNEL_DEACTIVATION_FEES
+       );
 
+       uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+           .mul(ADJUST_FOR_FLOAT)
+           .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+       channelsCount = channelsCount.sub(1);
+       
        channelData.channelState = 3;
-       channelData.channelWeight = 0;
-       channelData.poolContribution = 0;
+       channelData.channelWeight = _newChannelWeight;
        channelData.channelUpdateBlock = block.number;
-
+       channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+       protocolFeePool = protocolFeePool.add(totalRefundableAmount);
        (
            groupFairShareCount,
            groupNormalizedWeight,
@@ -784,7 +790,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
            groupLastUpdate
        ) = _readjustFairShareOfChannels(
            ChannelAction.ChannelRemoved,
-           0,
+           _newChannelWeight,
            groupFairShareCount,
            groupNormalizedWeight,
            groupHistoricalZ,
