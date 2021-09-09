@@ -1128,10 +1128,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
       uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
       uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
-
       uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(poolFunds);
-
-      uint256 totalClaimableRewards = userHolderWeight.mul(totalADAIInterest).div(10e18);
+      uint256 totalClaimableRewards = userHolderWeight.mul(totalADAIInterest).div(1e18);
 
       require(totalClaimableRewards > 0, "No Claimable Rewards at the Moment");
 
