@@ -129,6 +129,7 @@ describe("EPNS CORE Protocol ", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,      
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -149,7 +150,7 @@ describe("EPNS CORE Protocol ", function () {
 
   });
 
-  afterEach(function () { 
+  afterEach(function () {
     EPNS = null
     CORE_LOGIC = null
     TIMELOCK = null
@@ -159,13 +160,13 @@ describe("EPNS CORE Protocol ", function () {
 
 
  describe("EPNS CORE: Channel Data Migration Tests", function(){
-    
+
     // SUBSCRIBE RELATED TESTS
   describe("Testing migrateChannelData FUnction", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-          
+
 
            beforeEach(async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
@@ -179,13 +180,13 @@ describe("EPNS CORE Protocol ", function () {
              * Should revert if Caller is Not the ADMIN of the Contracty
              * Should revert if 'isMigrationComplete' flag is TRUE
              * Should revert if Unequal Arrays are passed as Arguments
-             * 
+             *
              * Function Execution BODY
              * -> Dai should be deposited by the ADMIN Itself
              * -> Accurate amount of DAI should be deposited from ADMIN to the EPNSCore Proxy for the Channel Owners
              * ->_depositFundsToPool' function should be executed as expected.
              * -> Channel should be created for the Channel owners with the Correct inputs
-             * 
+             *
             */
 
             it("Should revert if Admin is Not the Caller" , async ()=>{
@@ -278,7 +279,7 @@ describe("EPNS CORE Protocol ", function () {
           const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
 
           const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
-          
+
           const channelForBOB = await EPNSCoreV1Proxy.channels(BOB)
           const channelForUSER1 = await EPNSCoreV1Proxy.channels(USER1)
           const channelForCHARLIE = await EPNSCoreV1Proxy.channels(CHARLIE)
@@ -332,7 +333,7 @@ describe("EPNS CORE Protocol ", function () {
           const channelTypeArray = [2,2,2,2];
           const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
           const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
-        
+
           const isChannelOwnerSubscribed_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
           const isChannelSubscribedToEPNS_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(EPNS_ALERTER, CHANNEL_CREATOR);
           const isAdminSubscribedToChannel_before = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
@@ -366,18 +367,18 @@ describe("EPNS CORE Protocol ", function () {
           const isUSER1Subscribed_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, USER1);
           const isUSER1SubscribedToEPNS_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(EPNS_ALERTER, USER1);
           const isAdminSubscribedToUSER1_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, ADMIN);
-          
 
-          //USER1's Details 
+
+          //USER1's Details
           await expect(isUSER1Subscribed_before).to.equal(false);
           await expect(isUSER1SubscribedToEPNS_before).to.equal(false);
           await expect(isAdminSubscribedToUSER1_before).to.equal(false);
-          
+
           await expect(isUSER1Subscribed_after).to.equal(true);
           await expect(isUSER1SubscribedToEPNS_after).to.equal(true);
           await expect(isAdminSubscribedToUSER1_after).to.equal(true);
 
-          //CHARLIE's Details 
+          //CHARLIE's Details
           await expect(isCHARLIESubscribed_before).to.equal(false);
           await expect(isCHARLIESubscribedToEPNS_before).to.equal(false);
           await expect(isAdminSubscribedToCHARLIE_before).to.equal(false);
@@ -386,7 +387,7 @@ describe("EPNS CORE Protocol ", function () {
           await expect(isCHARLIESubscribedToEPNS_after).to.equal(true);
           await expect(isAdminSubscribedToCHARLIE_after).to.equal(true);
 
-          //Channel Creator's Details 
+          //Channel Creator's Details
           await expect(isChannelOwnerSubscribed_before).to.equal(false);
           await expect(isChannelSubscribedToEPNS_before).to.equal(false);
           await expect(isAdminSubscribedToChannel_before).to.equal(false);
@@ -394,7 +395,7 @@ describe("EPNS CORE Protocol ", function () {
           await expect(isChannelSubscribedToEPNS_after).to.equal(true);
           await expect(isAdminSubscribedToChannel_after).to.equal(true);
 
-            //BOB's Details 
+            //BOB's Details
           await expect(isBOBSubscribed_before).to.equal(false);
           await expect(isBOBSubscribedToEPNS_before).to.equal(false);
           await expect(isAdminSubscribedToBOB_before).to.equal(false);
@@ -411,7 +412,7 @@ describe("EPNS CORE Protocol ", function () {
           const channelTypeArray = [2,2,2,2];
           const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
           const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
-        
+
           const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
           const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
@@ -435,7 +436,7 @@ describe("EPNS CORE Protocol ", function () {
 
           console.log(_groupFairShareCountNew.toString());
           console.log(groupNewCount.toString());
-          
+
           expect(_groupFairShareCountNew).to.equal(4);
           expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
           expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
@@ -446,4 +447,3 @@ describe("EPNS CORE Protocol ", function () {
 
 });
 });
-

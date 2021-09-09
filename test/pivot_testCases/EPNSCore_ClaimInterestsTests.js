@@ -188,17 +188,17 @@ describe("EPNS Core Protocol", function () {
             * Should emit Relevant Events
            **/
 
-          it("Should revert if User Has ZERO Interest amount to CLAIMED", async function(){
-            const blockNumber = await latestBlock()
-            const advance = blockNumber.toNumber() + 9000
-            await advanceBlockTo(advance);
+        it("Should revert if User Has ZERO Interest amount to CLAIMED", async function(){
+          const blockNumber = await latestBlock()
+          const advance = blockNumber.toNumber() + 9000
+          await advanceBlockTo(advance);
 
-            const userHolderUnits = await EPNS.returnHolderUnits(CHARLIE, blockNumber.toNumber());
-            const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimInterests();
+          const userHolderUnits = await EPNS.returnHolderUnits(CHARLIE, blockNumber.toNumber());
+          const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimInterests();
 
-            await expect(userHolderUnits).to.be.equal(0)
-            await expect(tx).to.be.revertedWith("No Claimable Rewards at the Moment");
-          });
+          await expect(userHolderUnits).to.be.equal(0)
+          await expect(tx).to.be.revertedWith("No Claimable Rewards at the Moment");
+        });
 
         it("Should revert if User has not approved EPNS Core For Resetting the Holder Weights", async function(){
           const blockNumber = await latestBlock()
@@ -254,7 +254,7 @@ describe("EPNS Core Protocol", function () {
 
           await expect(totalClaimableRewards_before).to.be.equal(0);
           await expect(totalClaimableRewardsAfter).to.not.equal(0);
-          await expect(holderWeight_after).to.be.gt(holderWeight_before);
+          await expect(holderWeight_after).to.be.gt(0);
 
 
         });

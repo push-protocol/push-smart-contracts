@@ -129,6 +129,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -149,7 +150,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
   });
 
-  afterEach(function () { 
+  afterEach(function () {
     EPNS = null
     CORE_LOGIC = null
     TIMELOCK = null
@@ -159,12 +160,12 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
 
  describe("EPNS COMMUNICATOR: Subscription Data Migration Tests", function(){
-    
+
   describe("Testing migrateSubscribeData FUnction", function()
       {
           const CHANNEL_TYPE = 2;
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-          
+
 
            beforeEach(async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommunicatorV1Proxy.address)
@@ -180,7 +181,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              * Should revert if 'isMigrationComplete' flag is TRUE
              * Should revert if Unequal Arrays are passed as Arguments
              * Should revert if Same Subscribe-To-Channel Data is passed Twice
-             * 
+             *
              * Function Execution BODY
              * 'addUser' function should be executed properly
              *          -> userStartBlock should be assigned with the right Block number
@@ -192,13 +193,13 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              *         -> 'isSubscribed' for user and Channel should be updated to '1'
              *         -> subscribed mapping should be updated with User's Current subscribe count
              *         -> subscribedCount variable for user should increase by 1
-             * 
+             *
             */
 
             it("Should revert if Admin is Not the Caller" , async ()=>{
                 const startIndex = 0;
                 const endIndex = 3;
-                const userArray = [USER2, CHARLIE, USER1] 
+                const userArray = [USER2, CHARLIE, USER1]
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
                const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).migrateSubscribeData(startIndex, endIndex, channelArray, userArray);
 
@@ -208,7 +209,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
               it("Should revert Function is being called after MIGRATION is COMPLETED" , async ()=>{
                 const startIndex = 0;
                 const endIndex = 3;
-               const userArray = [USER2, CHARLIE, USER1] 
+               const userArray = [USER2, CHARLIE, USER1]
                const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
                const migrationCompleteFlag_before = await EPNSCommunicatorV1Proxy.isMigrationComplete();
 
@@ -245,7 +246,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             it("Function should Execute the 'addUser' function adequately", async() =>{
                 const startIndex = 0;
                 const endIndex = 3;
-                const userArray = [USER2, CHARLIE, USER1] 
+                const userArray = [USER2, CHARLIE, USER1]
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
 
                 const USER2Details_before = await EPNSCommunicatorV1Proxy.users(USER2);
@@ -260,15 +261,15 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                  const USER2Details_after = await EPNSCommunicatorV1Proxy.users(USER2);
                 const CHARLIEDetails_after = await EPNSCommunicatorV1Proxy.users(CHARLIE);
                 const USER1Details_after = await EPNSCommunicatorV1Proxy.users(USER1);
-                
+
                 const userCount_after  = await EPNSCommunicatorV1Proxy.usersCount();
 
                 await expect(userCount_before.toNumber()).to.equal(2);
                 await expect(userCount_after.toNumber()).to.equal(5);
-                // USER2's DETAILS 
+                // USER2's DETAILS
                 await expect(USER2Details_before.userActivated).to.equal(false);
                 await expect(USER2Details_after.userActivated).to.equal(true);
-                // Charlie's DETAILS 
+                // Charlie's DETAILS
                 await expect(CHARLIEDetails_before.userActivated).to.equal(false);
                 await expect(CHARLIEDetails_after.userActivated).to.equal(true);
                 // USER1's Details
@@ -279,7 +280,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             it("Function should Execute and Update State Variables adequately", async() =>{
                 const startIndex = 0;
                 const endIndex = 3;
-                const userArray = [USER2, CHARLIE, USER1] 
+                const userArray = [USER2, CHARLIE, USER1]
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE]
 
                 const USER2Details_before = await EPNSCommunicatorV1Proxy.users(USER2);
@@ -300,12 +301,12 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                 const isCHARLIESubscribed_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(BOB, CHARLIE);
                 const isUSER1Subscribed_after = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, USER1);
 
-                // USER2's DETAILS 
+                // USER2's DETAILS
                 await expect(isUSER2Subscribed_before).to.equal(false);
                 await expect(isUSER2Subscribed_after).to.equal(true);
                 await expect(USER2Details_before.subscribedCount.toNumber()).to.equal(0);
                 await expect(USER2Details_after.subscribedCount.toNumber()).to.equal(1);
-                // Charlie's DETAILS 
+                // Charlie's DETAILS
                 await expect(isCHARLIESubscribed_before).to.equal(false);
                 await expect(isCHARLIESubscribed_after).to.equal(true);
                 await expect(CHARLIEDetails_before.subscribedCount.toNumber()).to.equal(0);
@@ -322,4 +323,3 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
 });
 });
-

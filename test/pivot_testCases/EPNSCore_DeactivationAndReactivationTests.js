@@ -122,6 +122,7 @@ describe("EPNS Core Protocol", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -196,6 +197,7 @@ describe("EPNS Core Protocol", function () {
            const aDAIBalanceAfterReactivation = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
            const daiBalanceAfterReactivation = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
 
+
            console.log('POOL FUNDS')
            console.log(`Pool Balance Before Deactivation- ${poolFundsBefore.toString()}`)
            console.log(`Pool Balance After Deactivation- ${poolFundsAfter.toString()}`)
@@ -211,6 +213,7 @@ describe("EPNS Core Protocol", function () {
            console.log(`DAI Balance Before Deactivation- ${daiBalanceBefore.toString()}`)
            console.log(`DAI Balance After Deactivation- ${daiBalanceAfter.toString()}`)
            console.log(`DAI Balance After Reactivation- ${daiBalanceAfterReactivation.toString()}`)
+
          });
 
         it("Should Revert if Channel is Inactiave", async function () {

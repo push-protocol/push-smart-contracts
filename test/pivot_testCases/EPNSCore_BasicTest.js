@@ -121,6 +121,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -141,7 +142,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
   });
 
-  afterEach(function () { 
+  afterEach(function () {
     EPNS = null
     CORE_LOGIC = null
     TIMELOCK = null
@@ -151,7 +152,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
 
  describe("Testing Channel realted functions", function(){
-    
+
     describe("Testing the BASICS of CORE AND COMMUNICATOR", function()
     {
 
@@ -178,9 +179,8 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         })
     });
-  
+
 
 });
 
 });
-

@@ -129,6 +129,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -149,7 +150,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
   });
 
-  afterEach(function () { 
+  afterEach(function () {
     EPNS = null
     CORE_LOGIC = null
     TIMELOCK = null
@@ -159,7 +160,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
 
  describe("EPNS COMMUNICATOR: Subscribing, Unsubscribing, Send Notification Tests", function(){
-    
+
     // BASIC COMMUNICATOR TESTS
 
      describe("Conducting Basic tests", function()
@@ -203,7 +204,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
            /*
              * 'subscribe' Function CHECKPOINTS
              * Should revert if User is already subscribed to a Particular Channel
-             * 
+             *
              * Function Execution BODY
              * 'addUser' function should be executed properly
              *          -> userStartBlock should be assigned with the right Block number
@@ -215,7 +216,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              *         -> 'isSubscribed' for user and Channel should be updated to '1'
              *         -> subscribed mapping should be updated with User's Current subscribe count
              *         -> subscribedCount variable for user should increase by 1
-             * 
+             *
             */
 
             it("Should revert if Users try to Subscribe Twice" , async ()=>{
@@ -256,7 +257,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                 await expect(isSubscribed_after).to.equal(true);
                 await expect(userDetails_before.subscribedCount.toNumber()).to.equal(0);
                 await expect(userDetails_after.subscribedCount.toNumber()).to.equal(1);
-                
+
             })
 
             it("Function Should emit Relevant Events", async()=>{
@@ -284,16 +285,16 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
          });
 
 
-      
+
             it("Function should Execute and Update State Variables adequately", async() =>{
                 const channelArray = [USER2, CHARLIE, USER1]
-              
+
                 const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
 
                 const isSubscribed_before_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
                 const isSubscribed_before_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
                 const isSubscribed_before_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
-            
+
 
                 const tx = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchSubscribe(channelArray);
 
@@ -313,7 +314,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                 await expect(isSubscribed_after_USER1).to.equal(true);
 
                 await expect(userDetails_before.subscribedCount.toNumber()).to.equal(0);
-                await expect(userDetails_after.subscribedCount.toNumber()).to.equal(3);               
+                await expect(userDetails_after.subscribedCount.toNumber()).to.equal(3);
             })
 
     });
@@ -335,12 +336,12 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
            /*
              * '_unsubscribe' Function CHECKPOINTS
              * Should revert if User is not subscribed to the Channel
-             * 
+             *
              * Function Execution BODY
              *         -> 'isSubscribed' for user and Channel should be updated to '0'
              *         -> subscribed mapping should be updated with User's Current subscribe count
              *         -> subscribedCount variable for user should decrease by 1
-             * 
+             *
             */
 
             it("Should revert if Users try to Unsubscribe a Channel Before Subscribing Twice" , async ()=>{
@@ -364,7 +365,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
                 await expect(isSubscribed_after).to.equal(false);
                 await expect(userDetails_before.subscribedCount.toNumber()).to.equal(1);
                 await expect(userDetails_after.subscribedCount.toNumber()).to.equal(0);
-                
+
             })
 
             it("Function Should emit Relevant Events", async()=>{
@@ -393,10 +394,10 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
          });
 
 
-      
+
           it("Function should Execute and Update State Variables adequately", async() =>{
               const channelArray = [USER2, CHARLIE, USER1]
-            
+
               await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchSubscribe(channelArray);
 
               const userDetails_before = await EPNSCommunicatorV1Proxy.users(BOB);
@@ -404,7 +405,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
               const isSubscribed_before_USER2 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER2, BOB);
               const isSubscribed_before_CHARLIE = await EPNSCommunicatorV1Proxy.isUserSubscribed(CHARLIE, BOB);
               const isSubscribed_before_USER1 = await EPNSCommunicatorV1Proxy.isUserSubscribed(USER1, BOB);
-          
+
 
               await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).batchUnsubscribe(channelArray);
 
@@ -424,7 +425,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
               await expect(isSubscribed_after_USER1).to.equal(false);
 
               await expect(userDetails_before.subscribedCount.toNumber()).to.equal(3);
-              await expect(userDetails_after.subscribedCount.toNumber()).to.equal(0);               
+              await expect(userDetails_after.subscribedCount.toNumber()).to.equal(0);
           })
 
     });
@@ -446,14 +447,14 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
 
-          
+
         it("Should revert if User is NOT a SUBSCRIBER Of the Channel", async function () {
           const notif_Id = 3;
           const tx =  EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribeToSpecificNotification(CHANNEL_CREATOR, notif_Id, user_notifSettings);
- 
+
            await expect(tx).to.be.revertedWith("User is Not Subscribed to this Channel")
         });
-        
+
         it("Should update the userToChannelNotifs mapping with the right DATA", async function () {
           const notif_Id = 3;
           const notifSettings_final = "3+1-1+2-40+3-0+4-98";
@@ -462,7 +463,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
           const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
 
           await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).subscribeToSpecificNotification(CHANNEL_CREATOR, notif_Id, user_notifSettings);
-          const userNotifMapping = await EPNSCommunicatorV1Proxy.userToChannelNotifs(BOB,CHANNEL_CREATOR); 
+          const userNotifMapping = await EPNSCommunicatorV1Proxy.userToChannelNotifs(BOB,CHANNEL_CREATOR);
 
           expect(userNotifMapping).to.be.equal(notifSettings_final)
           expect(userDetails_before.userActivated).to.be.equal(false);
@@ -498,7 +499,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
 
-          
+
         it("Should Be able to broadcast user public key", async function(){
         const publicKey = await getPubKey(BOBSIGNER)
 
@@ -507,7 +508,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
         await EPNSCommunicatorV1Proxy.connect(BOBSIGNER).broadcastUserPublicKey(publicKey.slice(1));
 
         const userDetails_after = await EPNSCommunicatorV1Proxy.users(BOB);
-        
+
         await expect(userDetails_before.publicKeyRegistered).to.equal(false);
         await expect(userDetails_after.publicKeyRegistered).to.equal(true);
       });
@@ -544,7 +545,6 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
       });
 
 
-    }); 
+    });
 });
 });
-

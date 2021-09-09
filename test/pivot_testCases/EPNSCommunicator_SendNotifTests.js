@@ -129,6 +129,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
       ADMINSIGNER.address,
+      EPNS.address,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
