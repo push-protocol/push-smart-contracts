@@ -15,15 +15,17 @@ pragma experimental ABIEncoderV2;
 **/
 
 // Essential Imports
+import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "hardhat/console.sol";
 
 contract EPNSCommunicator is Initializable, ReentrancyGuard {
+    using BytesLib for bytes;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -69,7 +71,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     mapping(uint256 => address) public mapAddressUsers;
     mapping(address => mapping(address => bool))
         public delegatedNotificationSenders;
-    mapping(address => uint256) public nonces; 
+    mapping(address => uint256) public nonces;
     mapping(address => mapping(address => string)) public userToChannelNotifs;
 
     /** STATE VARIABLES **/
@@ -99,6 +101,11 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     event SendNotification(
         address indexed channel,
         address indexed recipient,
+        bytes identity
+    );
+    event SendNotificationSubset(
+        address indexed channel,
+        bytes indexed recipient,
         bytes identity
     );
     event UserNotifcationSettingsAdded(
@@ -132,23 +139,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         );
         _;
     }
-    // TBD - REMOVED admin state variable for now. BUT who should be msg.sender for Channel 0x00 TBD
-    modifier sendNotifRequirements(
-        address _channel,
-        address _notificationSender,
-        address _recipient
-    ) {
-        require(
-            (_channel == 0x0000000000000000000000000000000000000000 &&
-                msg.sender == admin) ||
-                (_channel == msg.sender) ||
-                (delegatedNotificationSenders[_channel][_notificationSender] &&
-                    msg.sender == _notificationSender) ||
-                (_recipient == msg.sender),
-            "SendNotif Error: Invalid Channel, Delegate or Subscriber"
-        );
-        _;
-    }
+
     // TBD - Should "recipient == signator" be a check for this modifier?
     modifier sendNotifViaSignRequirements(
         address _channel,
@@ -568,9 +559,25 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      * NOTE - This check is performed via the PUSH NODES
      * When a Delegatee wants to send Notif to Recipient-> We check "if(delegate is the Caller) and If( Is delegatee Valid)":
      * When Recipient wants to Send a Notif to themselves -> We check that the If(Caller of the function is Recipient himself)
+    **/
 
-    */
-
+    function _checkNotifRequirements
+    (
+      address _channel,
+      address _notificationSender,
+      address _recipient
+    ) private view
+    {
+      require(
+          (_channel == 0x0000000000000000000000000000000000000000 &&
+              msg.sender == admin) ||
+              (_channel == msg.sender) ||
+              (delegatedNotificationSenders[_channel][_notificationSender] &&
+                  msg.sender == _notificationSender) ||
+              (_recipient == msg.sender),
+          "SendNotif Error: Invalid Channel, Delegate or Subscriber"
+      );
+    }
     /**
      * @notice Allows a Channel Owners, Delegates as well as Users to send Notifications
      * @dev Emits out notification details once all the requirements are passed.
@@ -582,11 +589,15 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     function sendNotification(
         address _channel,
         address _delegate,
-        address _recipient,
-        bytes calldata _identity
-    ) public sendNotifRequirements(_channel, _delegate, _recipient) {
+        bytes memory _recipient,
+        bytes memory _identity
+    ) public{
+        if(_recipient.length == 20){
+           address _receiver = _recipient.toAddress(0);
+          _checkNotifRequirements(_channel, _delegate, _receiver);
+        }
         // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
+        emit SendNotificationSubset(_channel, _recipient, _identity);
     }
 
     /**
