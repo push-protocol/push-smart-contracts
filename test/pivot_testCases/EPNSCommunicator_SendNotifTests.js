@@ -195,7 +195,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
              const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, BOB, BOB, msg);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
                   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
            });
 
@@ -211,7 +211,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
              const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, CHARLIE, msg);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
                   .withArgs(EPNS_ALERTER_CHANNEL, CHARLIE, ethers.utils.hexlify(msg));
            });
 
@@ -232,21 +232,21 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              await expect(isCharlieAllowed_before).to.equal(false);
              await expect(isCharlieAllowed_after).to.equal(true);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
                   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
            });
 
-           // it("Should Emit Event is a Subset of Addresses in Bytes format", async function(){
-           //   const userSubsetArray = [0x123, 0x233, 0x444];
-           //
-           //   const userHash = '0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC';
-           //   const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
-           //   const msg = ethers.utils.toUtf8Bytes("This is notification message");
-           //   const tx_sendNotif = EPNSCoreV1Proxy.connect(ADMINSIGNER).sendNotificationAdvanced(EPNS_ALERTER_CHANNEL, BOB, userHash, msg);
-           //   await expect(tx_sendNotif)
-           //        .to.emit(EPNSCoreV1Proxy, 'sendNotificationNew')
-           //        .withArgs(EPNS_ALERTER_CHANNEL, userHash, ethers.utils.hexlify(msg));
-           // });
+           it("Should Emit Event is a Subset of Addresses in Bytes format", async function(){
+             const userSubsetArray = [0x123, 0x233, 0x444];
+
+             const userHash = '0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC';
+             const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
+             const msg = ethers.utils.toUtf8Bytes("This is notification message");
+             const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, userHash, msg);
+             await expect(tx_sendNotif)
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
+                  .withArgs(EPNS_ALERTER_CHANNEL, userHash, ethers.utils.hexlify(msg));
+           });
 
 
          });
