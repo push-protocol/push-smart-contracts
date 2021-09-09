@@ -11,6 +11,8 @@ pragma experimental ABIEncoderV2;
  * Functionalties.
  **/
 
+import "./interfaces/IPUSH.sol";
+import "./interfaces/IADai.sol";
 import "./interfaces/ILendingPool.sol";
 import "./interfaces/IUniswapV2Router.sol";
 import "./interfaces/IEPNSCommunicator.sol";
@@ -24,11 +26,6 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "hardhat/console.sol";
-pragma solidity >=0.6.0 <0.7.0;
-
-interface ADaiInterface {
-    function redeem(uint256 _amount) external;
-}
 
 contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     using SafeMath for uint256;
@@ -151,7 +148,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     /** EVENTS **/
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
-    event InterestClaimed(address indexed user, uint256 indexed amount);
+    event InterestClaimed(address indexed user, uint256 indexed interestAmount);
     event ChannelVerified(
         address indexed verifiedChannel,
         address indexed verifier
@@ -285,6 +282,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     function initialize(
         address _admin,
+        address _pushTokenAddress,
         address _lendingPoolProviderAddress,
         address _daiAddress,
         address _aDaiAddress,
@@ -296,9 +294,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         REFERRAL_CODE = _referralCode;
+        PUSH_TOKEN_ADDRESS = _pushTokenAddress;
         WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
         UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-        PUSH_TOKEN_ADDRESS = 0xf418588522d5dd018b425E472991E52EBBeEEEEE;
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
@@ -696,7 +694,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         channelData.channelWeight = _newChannelWeight;
 
         channels[msg.sender] = channelData;
-        swapAndTransferaDaiToPUSH(msg.sender, totalRefundableAmount);
+        swapAndTransferPUSH(msg.sender, totalRefundableAmount);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -777,7 +775,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
        channelsCount = channelsCount.sub(1);
-       
+
        channelData.channelState = 3;
        channelData.channelWeight = _newChannelWeight;
        channelData.channelUpdateBlock = block.number;
@@ -1077,43 +1075,12 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice  Withdraw function that allows Users to withdraw their funds from the protocol
-     *
-     * @dev     Privarte function that is called for Withdrawal of funds for a particular user
-     *          Calculates the total Claimable amount and Updates the Relevant State variables
-     *          Swaps the aDai to Push and transfers the PUSH Tokens back to the User
-     * @param   ratio -ratio of the Total Amount to be transferred to the Caller
-     **/
-    function _withdrawFundsFromPool(uint256 ratio) private nonReentrant {
-        uint256 totalBalanceWithProfit = IERC20(aDaiAddress).balanceOf(
-            address(this)
-        );
-
-        uint256 totalProfit = totalBalanceWithProfit.sub(poolFunds);
-        uint256 userAmount = totalProfit.mul(ratio);
-
-        // adjust poolFunds first
-        uint256 userAmountAdjusted = userAmount.div(ADJUST_FOR_FLOAT);
-        poolFunds = poolFunds.sub(userAmountAdjusted);
-
-        // Add to interest claimed
-        usersInterestClaimed[msg.sender] = usersInterestClaimed[msg.sender].add(
-            userAmountAdjusted
-        );
-
-        // Finally SWAP aDAI to DAI to PUSH, and TRANSFER PUSH TO USER
-        swapAndTransferaDaiToPUSH(msg.sender, userAmountAdjusted);
-        // Emit Event
-        emit InterestClaimed(msg.sender, userAmountAdjusted);
-    }
-
-    /**
      * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
      *
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
-    function swapAndTransferaDaiToPUSH(address _user, uint256 _userAmount)
+    function swapAndTransferPUSH(address _user, uint256 _userAmount)
         internal
         returns (bool)
     {
@@ -1142,7 +1109,37 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
       ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
       IERC20(aDaiAddress).approve(provider.getLendingPoolCore(), _amount);
 
-      ADaiInterface(aDaiAddress).redeem(_amount);
+      IADai(aDaiAddress).redeem(_amount);
+    }
+
+    /**
+     * @notice Function to claim Rewards generated for indivudual users
+     * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
+     *
+     * @dev - Gets the User's Holder weight from the PUSH token contract
+     *      - Gets the Total ADAI Interest accumulated for the protocol
+     *      - Calculates the amount the User should recieve.
+     *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
+     *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
+     *      - The PUSH token is then transferred to the USER as the interest.
+    **/
+    function claimInterests() external returns(bool success){
+      address _user = msg.sender;
+
+      uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
+      uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
+
+      uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(poolFunds);
+
+      uint256 totalClaimableRewards = userHolderWeight.mul(totalADAIInterest).div(10e18);
+
+      require(totalClaimableRewards > 0, "No Claimable Rewards at the Moment");
+
+      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+      usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
+
+      swapAndTransferPUSH(_user, totalClaimableRewards);
+      emit InterestClaimed(msg.sender, totalClaimableRewards);
     }
 
     /* **************
