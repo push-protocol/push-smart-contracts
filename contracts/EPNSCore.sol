@@ -349,15 +349,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         admin = _newAdmin;
     }
 
-    function getChannelState(address _channel) public returns (uint256 state) {
-        state = channels[_channel].channelState;
-    }
-
     /* ***********************************
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-
+    function getChannelState(address _channel) public returns (uint256 state) {
+        state = channels[_channel].channelState;
+    }
     /**
      * @notice Allows Channel Owner to update their Channel Description/Detail
      *
@@ -413,6 +411,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         oneTimeCheck = true;
     }
 
+    // TBD - Significance + USEAGE
     /**
      * @notice Allows the Creation of a EPNS Promoter Channel
      *
@@ -1117,26 +1116,36 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
      *
      * @dev - Gets the User's Holder weight from the PUSH token contract
+     *      - Gets the totalSupply and Start Block of PUSH Token
+     *      - Calculates the totalHolder weight w.r.t to the current block number
+     *      - Gets the ratio of token holder by dividing individual User's weight tp totalWeight (also adjusts for the FLOAT)
      *      - Gets the Total ADAI Interest accumulated for the protocol
-     *      - Calculates the amount the User should recieve.
+     *      - Calculates the amount the User should recieve considering the user's ratio calculated before
      *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
      *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
      *      - The PUSH token is then transferred to the USER as the interest.
     **/
     function claimInterests() external returns(bool success){
       address _user = msg.sender;
-
+      // Reading necessary PUSH details
+      uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
+      uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
       uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
+      // Calculating total holder weight at the current Block Number
+      uint blockGap = block.number.sub(pushStartBlock);
+      uint totalHolderWeight = pushTotalSupply.mul(blockGap);
+      //Calculating individual User's Ratio
+      uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
+      // Calculating aDai Interest Generated and CLaimable Amount
       uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
       uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(poolFunds);
-      uint256 totalClaimableRewards = userHolderWeight.mul(totalADAIInterest).div(1e18);
-
+      uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio);
       require(totalClaimableRewards > 0, "No Claimable Rewards at the Moment");
-
+      // Reset the User's Weight and Transfer the Tokens
       IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
       usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
-
       swapAndTransferPUSH(_user, totalClaimableRewards);
+
       emit InterestClaimed(msg.sender, totalClaimableRewards);
     }
 
