@@ -90,10 +90,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         // @notice The individual weight to be applied as per pool contribution
         uint256 channelWeight;
-        // TBD
-        mapping(address => uint256) members;
-        mapping(uint256 => address) mapAddressMember;
-        mapping(address => uint256) memberLastUpdate;
     }
 
     /** MAPPINGS **/
@@ -320,7 +316,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     function updateWETHAddress(address _newAddress) external onlyAdmin {
         WETH_ADDRESS = _newAddress;
     }
-    
+
     function updateUniswapRouterAddress(address _newAddress) external onlyAdmin {
         UNISWAP_V2_ROUTER = _newAddress;
     }
@@ -419,41 +415,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         );
 
         oneTimeCheck = true;
-    }
-
-    // TBD - Significance + USEAGE
-    /**
-     * @notice Allows the Creation of a EPNS Promoter Channel
-     *
-     * @dev    Can only be called once for the Core Contract Address.
-     *         Follows the usual procedure for Channel Creation
-    **/
-    /// @dev One time, Create Promoter Channel
-    function createPromoterChannel()
-        external
-        onlyInactiveChannels(address(this))
-    {
-        // EPNS PROMOTER CHANNEL
-        // Check the allowance and transfer funds
-        IERC20(daiAddress).transferFrom(
-            msg.sender,
-            address(this),
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-        );
-
-        // Then Add Promoter Channel
-        emit AddChannel(
-            address(this),
-            ChannelType.ProtocolPromotion,
-            "1+QmRcewnNpdt2DWYuud3LxHTwox2RqQ8uyZWDJ6eY6iHkfn"
-        );
-
-        // Call create channel after fees transfer
-        _createChannelAfterTransferOfFees(
-            address(this),
-            ChannelType.ProtocolPromotion,
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-        );
     }
 
     /**
