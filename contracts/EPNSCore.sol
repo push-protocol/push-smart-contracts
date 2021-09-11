@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 /**
  * EPNS Core is the main protocol that deals with the imperative
- * features and functionalities like Channel Creation, admin etc.
+ * features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
  * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
  * protocols can be deployed on Multiple Chains.
@@ -59,13 +59,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
          * 0 -> INACTIVE,
          * 1 -> ACTIVATED
          * 2 -> DeActivated By Channel Owner,
-         * 3 -> BLOCKED by ADMIN/Governance
+         * 3 -> BLOCKED by pushChannelAdmin/Governance
         **/
         uint8 channelState;
 
         /** @notice Symbolizes Channel's Verification Status:
          * 0 -> UnVerified Channels,
-         * 1 -> Verified by Admin,
+         * 1 -> Verified by pushChannelAdmin,
          * 2 -> Verified by other Channel Owners
         **/
         uint8 isChannelVerified;
@@ -105,7 +105,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     // @notice Keeps track of Verifier Channel Address => Total Number of Channels it Verified
     mapping(address => uint256) public verifiedChannelCount;
 
-    // @notice Array of All Channels verified by ADMIN
+    // @notice Array of All Channels verified by pushChannelAdmin
     mapping(address => address[]) public verifiedViaAdminRecords;
 
     // @notice Array of All Channels verified by CHANNEL OWNERS
@@ -116,7 +116,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     bool oneTimeCheck;
     bool public isMigrationComplete;
 
-    address public admin;
+    address public pushChannelAdmin;
+    address public governance;
     address public daiAddress;
     address public aDaiAddress;
     address public WETH_ADDRESS;
@@ -181,8 +182,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     => MODIFIERS <=
 
     ***************/
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
+    modifier onlyPushChannelAdmin() {
+        require(msg.sender == pushChannelAdmin, "EPNSCore::onlyPushChannelAdmin, Caller is not pushChannelAdmin");
+        _;
+    }
+
+    modifier onlyGovernance() {
+        require(msg.sender == pushChannelAdmin, "EPNSCore::onlyGovernance, Caller is is not Governance");
         _;
     }
 
@@ -221,7 +227,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyChannelOwner(address _channel) {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
-                (msg.sender == admin &&
+                (msg.sender == pushChannelAdmin &&
                     _channel == 0x0000000000000000000000000000000000000000)),
             "Channel doesn't Exists or Invalid Channel Owner"
         );
@@ -249,7 +255,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyAdminVerifiedChannels(address _channel) {
         require(
             channels[_channel].isChannelVerified == 1,
-            "Caller is NOT Verified By ADMIN or ADMIN Itself"
+            "Caller is NOT Verified By pushChannelAdmin or pushChannelAdmin Itself"
         );
         _;
     }
@@ -257,7 +263,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     modifier onlyChannelVerifiedChannels(address _channel) {
         require(
             channels[_channel].isChannelVerified == 2,
-            "Target Channel is Either Verified By ADMIN or UNVERIFIED YET"
+            "Target Channel is Either Verified By pushChannelAdmin or UNVERIFIED YET"
         );
         _;
     }
@@ -277,7 +283,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     *************** */
 
     function initialize(
-        address _admin,
+        address _pushChannelAdmin,
         address _pushTokenAddress,
         address _wethAddress,
         address _uniswapRouterAddress,
@@ -287,8 +293,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         uint256 _referralCode
     ) public initializer returns (bool success) {
         // setup addresses
-        admin = _admin; // multisig/timelock, also controls the proxy
-
+        pushChannelAdmin = _pushChannelAdmin; // multisig/timelock, also controls the proxy
+        governance = pushChannelAdmin;
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         WETH_ADDRESS = _wethAddress;
@@ -300,10 +306,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
 
+        ADJUST_FOR_FLOAT = 10**7;
         groupLastUpdate = block.number;
         groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
-
-        ADJUST_FOR_FLOAT = 10**7;
 
         // Create Channel
         success = true;
@@ -313,26 +318,30 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         SETTER FUNCTIONS
 
     *************** */
-    function updateWETHAddress(address _newAddress) external onlyAdmin {
+    function updateWETHAddress(address _newAddress) external onlyPushChannelAdmin {
         WETH_ADDRESS = _newAddress;
     }
 
-    function updateUniswapRouterAddress(address _newAddress) external onlyAdmin {
+    function updateUniswapRouterAddress(address _newAddress) external onlyPushChannelAdmin {
         UNISWAP_V2_ROUTER = _newAddress;
     }
 
     function setEpnsCommunicatorAddress(address _commAddress)
         external
-        onlyAdmin
+        onlyPushChannelAdmin
     {
         epnsCommunicator = _commAddress;
     }
 
-    function setMigrationComplete() external onlyAdmin{
+    function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin{
+      governance = _governanceAddress;
+    }
+
+    function setMigrationComplete() external onlyPushChannelAdmin{
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees) external onlyAdmin {
+    function setChannelDeactivationFees(uint256 _newFees) external onlyGovernance {
         require(
             _newFees > 0,
             "Channel Deactivation Fees must be greater than ZERO"
@@ -340,26 +349,27 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
 
-    function setMinChannelCreationFees(uint256 _newFees) external onlyAdmin {
-        require(
-            _newFees > 0,
-            "Channel MIN Creation Fees must be greater than ZERO"
-        );
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = _newFees;
-    }
+// TO BE DISCUSSED
+    // function setMinChannelCreationFees(uint256 _newFees) external onlyPushChannelAdmin {
+    //     require(
+    //         _newFees > 0,
+    //         "Channel MIN Creation Fees must be greater than ZERO"
+    //     );
+    //     ADD_CHANNEL_MIN_POOL_CONTRIBUTION = _newFees;
+    // }
 
 
-    function transferAdminControl(address _newAdmin) public onlyAdmin {
+    function transferpushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin {
         require(_newAdmin != address(0), "Invalid Address");
-        require(_newAdmin != admin, "New admin can't be current admin");
-        admin = _newAdmin;
+        require(_newAdmin != pushChannelAdmin, "New pushChannelAdmin can't be current pushChannelAdmin");
+        pushChannelAdmin = _newAdmin;
     }
 
     /* ***********************************
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-    function getChannelState(address _channel) public returns (uint256 state) {
+    function getChannelState(address _channel) external view returns(uint256 state) {
         state = channels[_channel].channelState;
     }
     /**
@@ -381,10 +391,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     function _updateChannelMeta(address _channel) internal {
-        channels[msg.sender].channelUpdateBlock = block.number;
+        channels[_channel].channelUpdateBlock = block.number;
     }
 
-    function createChannelForAdmin() external onlyAdmin() {
+    function createChannelForPushChannelAdmin() external onlyPushChannelAdmin() {
         require (!oneTimeCheck,"Function can only be called Once");
 
         // Add EPNS Channels
@@ -395,9 +405,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
         // EPNS ALL USERS
 
-        _createChannel(admin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be admin in this case?
+        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
          emit AddChannel(
-            admin,
+            pushChannelAdmin,
             ChannelType.ProtocolNonInterest,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
@@ -470,10 +480,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
       /**
-     * @notice Migration function that allows Admin to migrate the previous Channel Data to this protocol
+     * @notice Migration function that allows pushChannelAdmin to migrate the previous Channel Data to this protocol
      *
-     * @dev   can only be Called by the ADMIN
-     *        DAI required for Channel Creation will be PAID by ADMIN
+     * @dev   can only be Called by the pushChannelAdmin
+     *        DAI required for Channel Creation will be PAID by pushChannelAdmin
      *
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
@@ -486,8 +496,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         uint256 _endIndex,
         address[] memory _channelAddresses,
         ChannelType[] memory _channelTypeLst,
+        bytes[] calldata _identityList,
         uint256[] memory _amountList
-    ) external onlyAdmin returns (bool) {
+    ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
             "Migration of Channel Data is Complete Already"
@@ -503,8 +514,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
                 if(channels[_channelAddresses[i]].channelState != 0){
                     continue;
             }else{
-                IERC20(daiAddress).safeTransferFrom(admin, address(this), _amountList[i]);
+                IERC20(daiAddress).safeTransferFrom(pushChannelAdmin, address(this), _amountList[i]);
                 _depositFundsToPool(_amountList[i]);
+                emit AddChannel(_channelAddresses[i], _channelTypeLst[i], _identityList[i]);
                 _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
             }
         }
@@ -566,7 +578,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         }
 
         // Subscribe them to their own channel as well
-        if (_channel != admin) {
+        if (_channel != pushChannelAdmin) {
             IEPNSCommunicator(epnsCommunicator).subscribeViaCore(
                 _channel,
                 _channel
@@ -581,7 +593,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
             );
             IEPNSCommunicator(epnsCommunicator).subscribeViaCore(
                 _channel,
-                admin
+                pushChannelAdmin
             );
         }
     }
@@ -713,9 +725,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice ALlows the ADMIN to Block any particular channel Completely.
+     * @notice ALlows the pushChannelAdmin to Block any particular channel Completely.
      *
-     * @dev    - Can only be called by ADMIN
+     * @dev    - Can only be called by pushChannelAdmin
      *         - Can only be Called for Activated Channels
      *         - Can only Be Called for NON-BLOCKED Channels
      *
@@ -731,7 +743,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
      function blockChannel(address _channelAddress)
      external
-     onlyAdmin()
+     onlyPushChannelAdmin()
      onlyUnBlockedChannels(_channelAddress){
        Channel memory channelData = channels[_channelAddress];
 
@@ -799,7 +811,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         uint256 totalVerified = getTotalVerifiedChannels(_verifier);
         address[] memory result = new address[](totalVerified);
 
-        if (_verifier == admin) {
+        if (_verifier == pushChannelAdmin) {
             for (uint256 i; i < totalVerified; i++) {
                 result[i] = verifiedViaAdminRecords[_verifier][i];
             }
@@ -813,24 +825,24 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice    Function is designed specifically for the Admin to verify any particular Channel
-     * @dev       Can only be Called by the Admin
+     * @notice    Function is designed specifically for the pushChannelAdmin to verify any particular Channel
+     * @dev       Can only be Called by the pushChannelAdmin
      *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
      * @param    _channel  Address of the channel to be Verified
      **/
 
-    function verifyChannelViaAdmin(address _channel)
+    function verifyChannelViapushChannelAdmin(address _channel)
         external
-        onlyAdmin
+        onlyPushChannelAdmin
         returns (bool)
     {
-        _verifyChannel(_channel, admin, 1);
+        _verifyChannel(_channel, pushChannelAdmin, 1);
         return true;
     }
 
     /**
      * @notice    Function is designed specifically for the Verified CHANNEL Owners to verify any particular Channel
-     * @dev       Can only be Called by the Channel Owners who themselves have been verified by the ADMIN first
+     * @dev       Can only be Called by the Channel Owners who themselves have been verified by the pushChannelAdmin first
      *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
      * @param    _channel  Address of the channel to be Verified
      **/
@@ -845,11 +857,11 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice    Base function that allows Admin or Channel Owners to Verify other Channels
+     * @notice    Base function that allows pushChannelAdmin or Channel Owners to Verify other Channels
      *
      * @dev       Can only be Called for UnVerified Channels
-     *            Checks if the Caller of this function is an ADMIN or other Verified Channel Owners and Proceeds Accordingly
-     *            If Caller is Admin:
+     *            Checks if the Caller of this function is an pushChannelAdmin or other Verified Channel Owners and Proceeds Accordingly
+     *            If Caller is pushChannelAdmin:
      *                                a. Marks Channel Verification Status as '1'.
      *                                b. Updates the verifiedViaAdminRecords Mapping
      *                                c. Emits Relevant Events
@@ -883,14 +895,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     }
 
       /**
-     * @notice    The revokeVerificationViaAdmin allows the ADMIN of the Contract to Revoke any Specific Channel's Verified Tag
-     *            Can be called for any Target Channel that has been verified either by Admin or other Channels
+     * @notice    The revokeVerificationViaAdmin allows the pushChannelAdmin of the Contract to Revoke any Specific Channel's Verified Tag
+     *            Can be called for any Target Channel that has been verified either by pushChannelAdmin or other Channels
      *
      * @dev       Can only be Called for Verified Channels
-     *            Can only be Called by the ADMIN of the contract
+     *            Can only be Called by the pushChannelAdmin of the contract
      *            Involves 2 Main CASES:
-     *                                   a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by ADMIN directly) or,
-     *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by ADMIN)
+     *                                   a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by pushChannelAdmin directly) or,
+     *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by pushChannelAdmin)
      *            If Target Channel CHILD:
      *                                   -> Checks for its Parent Channel.
      *                                   -> Update the verifiedViaChannelRecords mapping for Parent's Channel
@@ -907,15 +919,15 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
 
     function revokeVerificationViaAdmin(address _targetChannel)
         external
-        onlyAdmin()
+        onlyPushChannelAdmin()
         onlyVerifiedChannels(_targetChannel)
         returns (bool)
     {
         Channel memory channelDetails = channels[_targetChannel];
 
         if (channelDetails.isChannelVerified == 1) {
-            uint256 _totalVerifiedByAdmin = getTotalVerifiedChannels(admin);
-            updateVerifiedChannelRecords(admin, _targetChannel, _totalVerifiedByAdmin, 1);
+            uint256 _totalVerifiedBypushChannelAdmin = getTotalVerifiedChannels(pushChannelAdmin);
+            updateVerifiedChannelRecords(pushChannelAdmin, _targetChannel, _totalVerifiedBypushChannelAdmin, 1);
 
             uint256 _totalChannelsVerified = getTotalVerifiedChannels(_targetChannel);
             if(_totalChannelsVerified > 0){
@@ -946,7 +958,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @notice    The revokeVerificationViaChannelOwners allows the CHANNEL OWNERS to Revoke the Verification of Child Channels that they themselves Verified
      *            Can only be called for those Target Child Channel whose Verification was provided for the Caller of the Function
      *
-     * @dev       Can only be called by Channels who were Verified directly by the ADMIN
+     * @dev       Can only be called by Channels who were Verified directly by the pushChannelAdmin
      *            The _targetChannel must be have been verified by the Channel calling this function.
      *            Delets the Record of _targetChannel from the verifiedViaChannelRecords mapping
      *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function
@@ -974,13 +986,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      * @notice   Private Helper function that updates the Verified Channel Records in the  verifiedViaAdminRecords & verifiedViaChannelRecords Mapping
      *           Only Called when a Channel's Verification is Revoked
      *
-     * @dev      Performs a SWAP and DELETION of the Target Channel from CHANNEL's and ADMIN's record(Array) of Verified Chanenl
+     * @dev      Performs a SWAP and DELETION of the Target Channel from CHANNEL's and pushChannelAdmin's record(Array) of Verified Chanenl
      *           Also updates the verifiedChannelCount mapping => The Count of Total verified channels by the Caller of the Function
      *
      * @param    _verifierChannel      Address of the channel who verified the Channel initially (And is now Revoking its Verification)
      * @param     _targetChannel         Address of the channel whose Verification is to be Revoked
      * @param     _totalVerifiedChannel  Total Number of Channels verified by the Verifier(Caller) of the Functions
-     * @param     _verifierFlag          A uint value(Flag) to represent if the Caller is ADMIN or a Channel
+     * @param     _verifierFlag          A uint value(Flag) to represent if the Caller is pushChannelAdmin or a Channel
      **/
 
     function updateVerifiedChannelRecords(address _verifierChannel, address _targetChannel, uint256 _totalVerifiedChannel, uint8 _verifierFlag) private{
@@ -1057,13 +1069,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         path[1] = WETH_ADDRESS;
         path[2] = PUSH_TOKEN_ADDRESS;
 
-        // IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-        //     _userAmount,
-        //     1,
-        //     path,
-        //     _user,
-        //     block.timestamp
-        // );
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _userAmount,
+            1,
+            path,
+            _user,
+            block.timestamp
+        );
         return true;
     }
 
@@ -1113,6 +1125,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
       swapAndTransferPUSH(_user, totalClaimableRewards);
 
       emit InterestClaimed(msg.sender, totalClaimableRewards);
+      success = true;
     }
 
     /* **************
