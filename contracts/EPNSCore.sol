@@ -283,6 +283,8 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     function initialize(
         address _admin,
         address _pushTokenAddress,
+        address _wethAddress,
+        address _uniswapRouterAddress,
         address _lendingPoolProviderAddress,
         address _daiAddress,
         address _aDaiAddress,
@@ -290,13 +292,14 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     ) public initializer returns (bool success) {
         // setup addresses
         admin = _admin; // multisig/timelock, also controls the proxy
-        lendingPoolProviderAddress = _lendingPoolProviderAddress;
+
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
+        WETH_ADDRESS = _wethAddress;
         REFERRAL_CODE = _referralCode;
         PUSH_TOKEN_ADDRESS = _pushTokenAddress;
-        WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-        UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        UNISWAP_V2_ROUTER = _uniswapRouterAddress;
+        lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
@@ -314,6 +317,13 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
         SETTER FUNCTIONS
 
     *************** */
+    function updateWETHAddress(address _newAddress) external onlyAdmin {
+        WETH_ADDRESS = _newAddress;
+    }
+    
+    function updateUniswapRouterAddress(address _newAddress) external onlyAdmin {
+        UNISWAP_V2_ROUTER = _newAddress;
+    }
 
     function setEpnsCommunicatorAddress(address _commAddress)
         external
@@ -1047,11 +1057,6 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     => DEPOSIT & WITHDRAWAL of FUNDS<=
 
     *************** */
-
-    function updateUniswapV2Address(address _newAddress) external onlyAdmin {
-        UNISWAP_V2_ROUTER = _newAddress;
-    }
-
     /**
      * @notice  Function is used for Handling the entire procedure of Depositing the Funds
      *

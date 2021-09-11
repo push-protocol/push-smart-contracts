@@ -11,10 +11,12 @@ contract EPNSCoreProxy is TransparentUpgradeableProxy {
         address _logic,
         address _governance,
         address _pushTokenAddress,
+        address _wethAddress,
+        address _uniswapRouterAddress,
         address _lendingPoolProviderAddress,
         address _daiAddress,
         address _aDaiAddress,
         uint _referralCode
-    ) public payable TransparentUpgradeableProxy(_logic, _governance, abi.encodeWithSignature('initialize(address,address,address,address,address,uint256)', _governance, _pushTokenAddress, _lendingPoolProviderAddress, _daiAddress, _aDaiAddress,_referralCode)) {}
+    ) public payable TransparentUpgradeableProxy(_logic, _governance, abi.encodeWithSignature('initialize(address,address,address,address,address,address,address,uint256)', _governance, _pushTokenAddress, _wethAddress, _uniswapRouterAddress, _lendingPoolProviderAddress, _daiAddress, _aDaiAddress,_referralCode)) {}
 
 }
