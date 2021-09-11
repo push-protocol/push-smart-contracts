@@ -18,14 +18,12 @@ pragma experimental ABIEncoderV2;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract EPNSCommunicator is Initializable, ReentrancyGuard {
-    using BytesLib for bytes;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -55,13 +53,13 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         uint256 subscribedCount;
 
         /**
-         * @notice Depicts if User subscribed to a Specific Channel Address
+         * Depicts if User subscribed to a Specific Channel Address
          * 1 -> User is Subscribed
          * 0 -> User is NOT SUBSCRIBED
          **/
         mapping(address => uint8) isSubscribed; // (1-> True. 0-> False )
 
-        // @notice Keeps track of all subscribed channels
+        // Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;
         mapping(uint256 => address) mapAddressSubscribed;
     }
@@ -101,11 +99,6 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     event SendNotification(
         address indexed channel,
         address indexed recipient,
-        bytes identity
-    );
-    event SendNotificationSubset(
-        address indexed channel,
-        bytes indexed recipient,
         bytes identity
     );
     event UserNotifcationSettingsAdded(
@@ -589,15 +582,12 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     function sendNotification(
         address _channel,
         address _delegate,
-        bytes memory _recipient,
+        address _recipient,
         bytes memory _identity
     ) public{
-        if(_recipient.length == 20){
-           address _receiver = _recipient.toAddress(0);
-          _checkNotifRequirements(_channel, _delegate, _receiver);
-        }
+        _checkNotifRequirements(_channel, _delegate, _recipient);
         // Emit the message out
-        emit SendNotificationSubset(_channel, _recipient, _identity);
+        emit SendNotification(_channel, _recipient, _identity);
     }
 
     /**

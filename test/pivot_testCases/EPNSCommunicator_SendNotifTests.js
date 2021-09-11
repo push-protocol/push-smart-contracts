@@ -28,9 +28,13 @@ const {
 use(solidity);
 
 describe("EPNS COMMUNICATOR Protocol ", function () {
-  const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
+
   const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
   const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
+  const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
+  const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+  const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
+
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
@@ -130,6 +134,8 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
       CORE_LOGIC.address,
       ADMINSIGNER.address,
       EPNS.address,
+      WETH,
+      UNISWAP_ROUTER,
       AAVE_LENDING_POOL,
       DAI,
       ADAI,
@@ -195,7 +201,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
              const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, BOB, BOB, msg);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
                   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
            });
 
@@ -211,7 +217,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
              const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, CHARLIE, msg);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
                   .withArgs(EPNS_ALERTER_CHANNEL, CHARLIE, ethers.utils.hexlify(msg));
            });
 
@@ -232,23 +238,9 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              await expect(isCharlieAllowed_before).to.equal(false);
              await expect(isCharlieAllowed_after).to.equal(true);
              await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
+                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotification')
                   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
            });
-
-           it("Should Emit Event is a Subset of Addresses in Bytes format", async function(){
-             const userSubsetArray = [0x123, 0x233, 0x444];
-
-             const userHash = '0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC';
-             const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
-             const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx_sendNotif = EPNSCommunicatorV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, userHash, msg);
-             await expect(tx_sendNotif)
-                  .to.emit(EPNSCommunicatorV1Proxy, 'SendNotificationSubset')
-                  .withArgs(EPNS_ALERTER_CHANNEL, userHash, ethers.utils.hexlify(msg));
-           });
-
-
          });
 
 
