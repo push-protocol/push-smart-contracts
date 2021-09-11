@@ -73,7 +73,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     mapping(address => mapping(address => string)) public userToChannelNotifs;
 
     /** STATE VARIABLES **/
-    address public admin;
+    address public governance;
+    address public pushChannelAdmin;
     uint256 public usersCount;
     bool public isMigrationComplete;
     address public EPNSCoreAddress;
@@ -110,8 +111,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
 
     /** MODIFIERS **/
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "EPNSCore::onlyAdmin, user is not admin");
+    modifier onlyPushChannelAdmin() {
+        require(msg.sender == pushChannelAdmin, "EPNSCore::onlyPushChannelAdmin, user is not pushChannelAdmin");
         _;
     }
 
@@ -150,22 +151,27 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         _;
     }
 
-    function initialize(address _admin) public initializer returns (bool) {
-        admin = _admin;
+    function initialize(address _pushChannelAdmin) public initializer returns (bool) {
+        pushChannelAdmin = _pushChannelAdmin;
+        governance = pushChannelAdmin;
         return true;
     }
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyAdmin {
+    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
     }
 
-    function transferAdminControl(address _newAdmin) public onlyAdmin {
-        require(_newAdmin != address(0), "Invalid Address");
-        require(_newAdmin != admin, "New admin can't be current admin");
-        admin = _newAdmin;
+    function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin{
+      governance = _governanceAddress;
     }
 
-    function completeMigration() external onlyAdmin{
+    function transferpushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin {
+        require(_newAdmin != address(0), "Invalid Address");
+        require(_newAdmin != pushChannelAdmin, "New pushChannelAdmin cannot be current pushChannelAdmin");
+        pushChannelAdmin = _newAdmin;
+    }
+
+    function completeMigration() external onlyPushChannelAdmin{
         isMigrationComplete = true;
     }
 
@@ -221,7 +227,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     /**
      * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
      *
-     * @dev     Can only be called by Admin
+     * @dev     Can only be called by pushChannelAdmin
      *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be false
      *          Subscribers the Users to the respective Channels as per the arguments passed to the function
      * @param _startIndex       starting Index for the LOOP
@@ -235,7 +241,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
         uint256 _endIndex,
         address[] calldata _channelList,
         address[] calldata _usersList
-    ) external onlyAdmin returns (bool) {
+    ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
             "Migration of Subscribe Data is Complete Already"
@@ -563,7 +569,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     {
       require(
           (_channel == 0x0000000000000000000000000000000000000000 &&
-              msg.sender == admin) ||
+              msg.sender == pushChannelAdmin) ||
               (_channel == msg.sender) ||
               (delegatedNotificationSenders[_channel][_notificationSender] &&
                   msg.sender == _notificationSender) ||
