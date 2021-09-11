@@ -36,14 +36,14 @@ async function setupAllContracts(versionDetails) {
   // custom deploy (to use deployed addresses dynamically for example:)
   const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
 
-  const EPNSCoreV4 = await deployContract("EPNSCoreV4", [], "EPNSCoreV4");
-  deployedContracts.push(EPNSCoreV4)
+  const EPNSCoreV2 = await deployContract("EPNSCoreV2", [], "EPNSCoreV2");
+  deployedContracts.push(EPNSCoreV2)
 
-  const EPNSProxy = await ethers.getContractFactory("EPNSProxy")
-  const epnsProxyInstance = EPNSProxy.attach(versionDetails.deploy.args.epnsProxyAddress)
+  const EPNSCoreProxy = await ethers.getContractFactory("EPNSCoreProxy")
+  const epnsProxyInstance = EPNSCoreProxy.attach(versionDetails.deploy.args.epnsProxyAddress)
 
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCoreV4.address} \n\t\t\t\n`))
-  await epnsProxyInstance.upgradeTo(EPNSCoreV4.address);
+  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCoreV2.address} \n\t\t\t\n`))
+  await epnsProxyInstance.upgradeTo(EPNSCoreV2.address);
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Contracts Upgraded  \n\t\t\t\n`))
 
   return deployedContracts

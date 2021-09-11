@@ -10,7 +10,7 @@ const deploy = {
       version: 1
     },
     ropsten: {
-      version: 4
+      version: 1
     },
     rinkeby: {
       version: 1
@@ -23,7 +23,7 @@ const deploy = {
     }
   },
   args: {
-    epnsProxyAddress: null
+    mock: null
   }
 }
 
