@@ -494,10 +494,10 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
     function migrateChannelData(
         uint256 _startIndex,
         uint256 _endIndex,
-        address[] memory _channelAddresses,
-        ChannelType[] memory _channelTypeLst,
+        address[] calldata _channelAddresses,
+        ChannelType[] calldata _channelTypeLst,
         bytes[] calldata _identityList,
-        uint256[] memory _amountList
+        uint256[] calldata _amountList
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,

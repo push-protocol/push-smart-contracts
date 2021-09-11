@@ -208,7 +208,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      *
      * @param _channelList array of addresses of the channels that the user wishes to Subscribe
      **/
-    function batchSubscribe(address[] memory _channelList)
+    function batchSubscribe(address[] calldata _channelList)
         external
         returns (bool)
     {
@@ -233,8 +233,8 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
     function migrateSubscribeData(
         uint256 _startIndex,
         uint256 _endIndex,
-        address[] memory _channelList,
-        address[] memory _usersList
+        address[] calldata _channelList,
+        address[] calldata _usersList
     ) external onlyAdmin returns (bool) {
         require(
             !isMigrationComplete,
@@ -356,7 +356,7 @@ contract EPNSCommunicator is Initializable, ReentrancyGuard {
      *
      * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
      **/
-    function batchUnsubscribe(address[] memory _channelList)
+    function batchUnsubscribe(address[] calldata _channelList)
         external
         returns (bool)
     {
