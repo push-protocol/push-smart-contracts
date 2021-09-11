@@ -599,9 +599,9 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
      *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
      *
      *  @param _notifOptions - Total Notification options provided by the Channel Owner
-    // @param _notifSettings- Deliminated String of Notification Settings
-    // @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
-**/
+     *  @param _notifSettings- Deliminated String of Notification Settings
+     *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
+    **/
     function createChannelNotificationSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
@@ -1105,7 +1105,7 @@ contract EPNSCore is Initializable, ReentrancyGuard, Ownable {
       // Calculating aDai Interest Generated and CLaimable Amount
       uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
       uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(poolFunds);
-      uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio);
+      uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
       require(totalClaimableRewards > 0, "No Claimable Rewards at the Moment");
       // Reset the User's Weight and Transfer the Tokens
       IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
