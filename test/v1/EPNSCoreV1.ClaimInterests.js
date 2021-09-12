@@ -296,61 +296,49 @@ describe("EPNS Core Protocol", function () {
        //
        //
        // });
-       //
-       // it("Initial CHECKS", async ()=>{
-       //     // const blockNumber = await latestBlock()
-       //     // const advance = blockNumber.toNumber() + 20
-       //     // await advanceBlockTo(advance);
-       //
-       //     const isCoreApproved_before  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
-       //     // await EPNS.connect(CHANNEL_CREATORSIGNER).setHolderDelegation(EPNSCoreV1Proxy.address, true);
-       //     // const isCoreApproved_after  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
-       //     console.log(isCoreApproved_before)
-       //     const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimInterest();
-       //
-       // })
 
-        // it("Should revert if User Has ZERO Interest amount to CLAIMED", async function(){
-        //   const blockNumber = await latestBlock()
-        //
-        //   const userHolderUnits = await EPNS.returnHolderUnits(CHARLIE, blockNumber.toNumber());
-        //   const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimInterest();
-        //
-        //   await expect(userHolderUnits).to.be.equal(0)
-        //   await expect(tx).to.be.revertedWith("EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
-        // });
-        //
-        // it("Should revert if User has not approved EPNS Core For Resetting the Holder Weights", async function(){
-        //   const blockNumber = await latestBlock()
-        //
-        //   const userHolderUnits = await EPNS.returnHolderUnits(CHANNEL_CREATOR, blockNumber.toNumber());
-        //   const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimInterest();
-        //
-        //   await expect(tx).to.be.revertedWith("Push::resetHolderWeight: unauthorized");
-        // });
-        //
-        // it("Function should execute if User has properly approved EPNS Core For Resetting the Holder Weights", async function(){
-        //   const blockNumber = await latestBlock()
-        //   const advance = blockNumber.toNumber() + 90
-        // //  await advanceBlockTo(advance);
-        //
-        //   const isCoreApproved_before  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
-        //   await EPNS.connect(CHANNEL_CREATORSIGNER).setHolderDelegation(EPNSCoreV1Proxy.address, true);
-        //   const isCoreApproved_after  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
-        //
-        //   const userHolderUnits = await EPNS.returnHolderUnits(CHANNEL_CREATOR, blockNumber.toNumber());
-        //   const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimInterest();
-        //   const totalClaimableRewards = await EPNSCoreV1Proxy.usersInterestClaimed(CHANNEL_CREATOR);
-        //
-        //   await expect(userHolderUnits).to.not.equal(0);
-        //   await expect(isCoreApproved_before).to.be.equal(false);
-        //   await expect(isCoreApproved_after).to.be.equal(true);
-        //
-        //   await expect(tx)
-        //   .to.emit
-        //   (EPNSCoreV1Proxy, 'InterestClaimed').
-        //   withArgs(CHANNEL_CREATOR, totalClaimableRewards);
-        // }).timeout(6000);
+
+        it("Should revert if User Has ZERO Interest amount to CLAIMED", async function(){
+          const blockNumber = await latestBlock()
+
+          const userHolderUnits = await EPNS.returnHolderUnits(CHARLIE, blockNumber.toNumber());
+          const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimInterest();
+
+          await expect(userHolderUnits).to.be.equal(0)
+          await expect(tx).to.be.revertedWith("EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
+        });
+
+        it("Should revert if User has not approved EPNS Core For Resetting the Holder Weights", async function(){
+          const blockNumber = await latestBlock()
+
+          const userHolderUnits = await EPNS.returnHolderUnits(CHANNEL_CREATOR, blockNumber.toNumber());
+          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimInterest();
+
+          await expect(tx).to.be.revertedWith("Push::resetHolderWeight: unauthorized");
+        });
+
+        it("Function should execute if User has properly approved EPNS Core For Resetting the Holder Weights", async function(){
+          const blockNumber = await latestBlock()
+          const advance = blockNumber.toNumber() + 90
+        //  await advanceBlockTo(advance);
+
+          const isCoreApproved_before  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
+          await EPNS.connect(CHANNEL_CREATORSIGNER).setHolderDelegation(EPNSCoreV1Proxy.address, true);
+          const isCoreApproved_after  = await EPNS.holderDelegation(CHANNEL_CREATOR, EPNSCoreV1Proxy.address);
+
+          const userHolderUnits = await EPNS.returnHolderUnits(CHANNEL_CREATOR, blockNumber.toNumber());
+          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimInterest();
+          const totalClaimableRewards = await EPNSCoreV1Proxy.usersInterestClaimed(CHANNEL_CREATOR);
+
+          await expect(userHolderUnits).to.not.equal(0);
+          await expect(isCoreApproved_before).to.be.equal(false);
+          await expect(isCoreApproved_after).to.be.equal(true);
+
+          await expect(tx)
+          .to.emit
+          (EPNSCoreV1Proxy, 'InterestClaimed').
+          withArgs(CHANNEL_CREATOR, totalClaimableRewards);
+        }).timeout(6000);
 
         it("Function should update State Variables Correctly After Execution", async function(){
           const blockNumber = await latestBlock()
