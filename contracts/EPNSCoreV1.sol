@@ -32,8 +32,11 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
     /* ***************
-     * DEFINE ENUMS AND CONSTANTS
+
+      DEFINE ENUMS AND CONSTANTS
+
      *************** */
+
     // For Message Type
     enum ChannelType {
         ProtocolNonInterest,
@@ -48,9 +51,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Channel Struct that involves imperative details about
-     * a specific Channel.
-     **/
+     * @notice Channel Struct that includes imperative details about a specific Channel.
+    **/
     struct Channel {
         // @notice Denotes the Channel Type
         ChannelType channelType;
@@ -64,13 +66,13 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         uint8 channelState;
 
         /** @notice Symbolizes Channel's Verification Status:
-         * 0 -> UnVerified Channels,
-         * 1 -> Verified by pushChannelAdmin,
-         * 2 -> Verified by other Channel Owners
+         *   0 -> UnVerified Channels,
+         *   1 -> Verified by pushChannelAdmin,
+         *   2 -> Verified by other Channel Owners
         **/
         uint8 isChannelVerified;
 
-        //@ notice Total Amount of Dai deposited during Channel Creation
+        // @notice Total Amount of Dai deposited during Channel Creation
         uint256 poolContribution;
 
         // @notice Represents the Historical Constant
@@ -92,26 +94,31 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         uint256 channelWeight;
     }
 
-    /** MAPPINGS **/
+    /* ***************
+        MAPPINGS
+     *************** */
+
     mapping(address => Channel) public channels;
     mapping(uint256 => address) public mapAddressChannels;
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
 
     /** CHANNEL VERIFICATION MAPPINGS **/
-    // @notice Keeps track of Channel Being Verified => The VERIFIER CHANNEL
+    // @notice Keeps track of "Channel Being Verified => The VERIFIER CHANNEL"
     mapping(address => address) public channelVerifiedBy;
 
-    // @notice Keeps track of Verifier Channel Address => Total Number of Channels it Verified
+    // @notice Keeps track of "Verifier Channel Address => Total Number of Channels it Verified"
     mapping(address => uint256) public verifiedChannelCount;
 
     // @notice Array of All Channels verified by pushChannelAdmin
     mapping(address => address[]) public verifiedViaAdminRecords;
 
-    // @notice Array of All Channels verified by CHANNEL OWNERS
+    // @notice Array of All Channels verified by other CHANNEL OWNERS
     mapping(address => address[]) public verifiedViaChannelRecords;
 
-    /** STATE VARIABLES **/
+    /* ***************
+        STATE VARIABLES
+     *************** */
     string public constant name = "EPNS CORE V1";
     bool oneTimeCheck;
     bool public isMigrationComplete;
@@ -137,14 +144,15 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     uint256 public groupFairShareCount;
 
     // @notice Necessary variables for Keeping track of Funds and Fees
-    uint256 public poolFunds;
-    uint256 public protocolFeePool;
-
+    uint256 public POOL_FUNDS;
+    uint256 public PROTOCOL_POOL_FEES;
+    uint256 public ADD_CHANNEL_MIN_FEES;
     uint256 public CHANNEL_DEACTIVATION_FEES;
     uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
-    uint256 public ADD_CHANNEL_MIN_FEES;
 
-    /** EVENTS **/
+    /* ***************
+        EVENTS
+     *************** */
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed interestAmount);
@@ -180,9 +188,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     );
 
     /* **************
-
-    => MODIFIERS <=
-
+        MODIFIERS
     ***************/
     modifier onlyPushChannelAdmin() {
         require(msg.sender == pushChannelAdmin, "EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
@@ -204,7 +210,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     modifier onlyActivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 1,
-            "EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Not Exist"
+            "EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist"
         );
         _;
     }
@@ -295,8 +301,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         uint256 _referralCode
     ) public initializer returns (bool success) {
         // setup addresses
-        pushChannelAdmin = _pushChannelAdmin; // multisig/timelock, also controls the proxy
-        governance = pushChannelAdmin;
+        pushChannelAdmin = _pushChannelAdmin;
+        governance = pushChannelAdmin; // Will be changed on-Chain governance Address later
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         WETH_ADDRESS = _wethAddress;
@@ -306,7 +312,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
 
@@ -319,63 +324,67 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     /* ***************
-        SETTER FUNCTIONS
+
+    SETTER FUNCTIONS
 
     *************** */
-    function updateWETHAddress(address _newAddress) external onlyPushChannelAdmin {
+    function updateWETHAddress(address _newAddress) external onlyPushChannelAdmin() {
         WETH_ADDRESS = _newAddress;
     }
 
-    function updateUniswapRouterAddress(address _newAddress) external onlyPushChannelAdmin {
+    function updateUniswapRouterAddress(address _newAddress) external onlyPushChannelAdmin() {
         UNISWAP_V2_ROUTER = _newAddress;
     }
 
     function setEpnsCommunicatorAddress(address _commAddress)
         external
-        onlyPushChannelAdmin
+        onlyPushChannelAdmin()
     {
         epnsCommunicator = _commAddress;
     }
 
-    function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin{
+    function setGovernanceAddress(address _governanceAddress)
+        external
+        onlyPushChannelAdmin()
+    {
       governance = _governanceAddress;
     }
 
-    function setMigrationComplete() external onlyPushChannelAdmin{
+    function setMigrationComplete() external onlyPushChannelAdmin() {
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees) external onlyGovernance {
+    function setChannelDeactivationFees(uint256 _newFees) external onlyGovernance() {
         require(
             _newFees > 0,
             "EPNSCoreV1::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
         );
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
-
     /**
       * @notice Allows to set the Minimum amount threshold for Creating Channels
       *
       * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
       *
-      * @param  __newFees new minimum fees required for Channel Creation
+      * @param _newFees new minimum fees required for Channel Creation
     **/
-    function setMinChannelCreationFees(uint256 _newFees) external onlyPushChannelAdmin {
+    function setMinChannelCreationFees(uint256 _newFees) external onlyGovernance() {
         require(
-            _newFees > 0 && _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than 0 AND ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+            _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
 
 
-    function transferPushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin {
+    function transferPushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin() {
         require(_newAdmin != address(0), "EPNSCoreV1::transferPushChannelAdminControl: Invalid Address");
         require(_newAdmin != pushChannelAdmin, "EPNSCoreV1::transferPushChannelAdminControl: Admin address is same");
         pushChannelAdmin = _newAdmin;
     }
 
     /* ***********************************
+
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
@@ -405,7 +414,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     function createChannelForPushChannelAdmin() external onlyPushChannelAdmin() {
-        require (!oneTimeCheck, "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument Function can only be called Once");
+        require (!oneTimeCheck, "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
 
         // Add EPNS Channels
         // First is for all users
@@ -438,7 +447,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of DAI.
+     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of DAI
      * @dev    Only allows users to Create One Channel for a specific address.
      *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
      *         Validates and Transfers the amount of DAI from the Channel Creator to this Contract Address
@@ -493,6 +502,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      * @notice Migration function that allows pushChannelAdmin to migrate the previous Channel Data to this protocol
      *
      * @dev   can only be Called by the pushChannelAdmin
+     *        Channel's identity is simply emitted out
+     *        Channel's on-Chain details are stored by calling the "_crateChannel" function
      *        DAI required for Channel Creation will be PAID by pushChannelAdmin
      *
      * @param _startIndex       starting Index for the LOOP
@@ -532,7 +543,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         }
         return true;
     }
-
 
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
@@ -682,7 +692,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         );
 
         channelData.channelState = 2;
-        poolFunds = poolFunds.sub(totalRefundableAmount);
+        POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
 
         channels[msg.sender] = channelData;
@@ -772,7 +782,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
        channelData.channelWeight = _newChannelWeight;
        channelData.channelUpdateBlock = block.number;
        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
-       protocolFeePool = protocolFeePool.add(totalRefundableAmount);
+       PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
        (
            groupFairShareCount,
            groupNormalizedWeight,
@@ -1041,22 +1051,20 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
 
     *************** */
     /**
-     * @notice  Function is used for Handling the entire procedure of Depositing the Funds
+     * @notice  Function is used for Handling the entire procedure of Depositing the DAI to Lending POOl
      *
      * @dev     Updates the Relevant state variable during Deposit of DAI
      *          Lends the DAI to AAVE protocol.
      * @param   amount - Amount that is to be deposited
      **/
     function _depositFundsToPool(uint256 amount) private {
-        // Got the funds, add it to the channels dai pool
-        poolFunds = poolFunds.add(amount);
+        POOL_FUNDS = POOL_FUNDS.add(amount);
 
         ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
             lendingPoolProviderAddress
         );
         ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
         IERC20(daiAddress).approve(provider.getLendingPoolCore(), amount);
-
         // Deposit to AAVE
         lendingPool.deposit(daiAddress, amount, uint16(REFERRAL_CODE)); // set to 0 in constructor presently
     }
@@ -1079,13 +1087,13 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         path[1] = WETH_ADDRESS;
         path[2] = PUSH_TOKEN_ADDRESS;
 
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-            _userAmount,
-            1,
-            path,
-            _user,
-            block.timestamp
-        );
+        // IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+        //     _userAmount,
+        //     1,
+        //     path,
+        //     _user,
+        //     block.timestamp
+        // );
         return true;
     }
 
@@ -1119,16 +1127,20 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
       uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
       uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
       uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
+
       // Calculating total holder weight at the current Block Number
       uint blockGap = block.number.sub(pushStartBlock);
       uint totalHolderWeight = pushTotalSupply.mul(blockGap);
+
       //Calculating individual User's Ratio
       uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
+
       // Calculating aDai Interest Generated and CLaimable Amount
       uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
-      uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(poolFunds);
+      uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(POOL_FUNDS);
       uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
       require(totalClaimableRewards > 0, "EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
+
       // Reset the User's Weight and Transfer the Tokens
       IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
       usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
