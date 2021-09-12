@@ -483,18 +483,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
             "EPNSCoreV1::_createChannelWithFees: Insufficient Funds"
         );
         IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
-        _createChannelAfterTransferOfFees(_channel, _channelType, _amount);
-    }
-
-    function _createChannelAfterTransferOfFees(
-        address _channel,
-        ChannelType _channelType,
-        uint256 _amount
-    ) private {
-        // Deposit funds to pool
         _depositFundsToPool(_amount);
-
-        // Call Create Channel
         _createChannel(_channel, _channelType, _amount);
     }
 
@@ -1087,13 +1076,13 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         path[1] = WETH_ADDRESS;
         path[2] = PUSH_TOKEN_ADDRESS;
 
-        // IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-        //     _userAmount,
-        //     1,
-        //     path,
-        //     _user,
-        //     block.timestamp
-        // );
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _userAmount,
+            1,
+            path,
+            _user,
+            block.timestamp
+        );
         return true;
     }
 
