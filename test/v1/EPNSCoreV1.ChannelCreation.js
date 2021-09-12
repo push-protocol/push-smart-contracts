@@ -248,15 +248,15 @@ describe("EPNS Core Protocol", function () {
           it("should deposit funds to pool and receive aDAI", async function(){
             const CHANNEL_TYPE = 2;
 
-            const poolFundsBefore = await EPNSCoreV1Proxy.poolFunds()
+            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.POOL_FUNDS()
             const aDAIBalanceBefore = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            const poolFundsAfter = await EPNSCoreV1Proxy.poolFunds();
+            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
             const aDAIBalanceAfter = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
-            expect(poolFundsAfter.sub(poolFundsBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            expect(POOL_FUNDSAfter.sub(POOL_FUNDSBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             expect(aDAIBalanceAfter.sub(aDAIBalanceBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
           });
 
@@ -405,21 +405,21 @@ describe("EPNS Core Protocol", function () {
             const CHANNEL_TYPE = 2;
             const channelWeight_AfterChannelBlock = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            const protocolFeeBefore = await EPNSCoreV1Proxy.protocolFeePool();
+            const protocolFeeBefore = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
             const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
             const channelDetailsBefore = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
 
 
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            const protocolFeeAfterChannelCreation = await EPNSCoreV1Proxy.protocolFeePool();
+            const protocolFeeAfterChannelCreation = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
             const channelDetailsAfter = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
             const channelsCountAfterChannelCreation = await EPNSCoreV1Proxy.channelsCount();
 
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
             const channelDetailsAfterBlocked = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
             const channelsCountAfterBlocked = await EPNSCoreV1Proxy.channelsCount();
-            const protocolFeeAfterChannelBlocked = await EPNSCoreV1Proxy.protocolFeePool();
+            const protocolFeeAfterChannelBlocked = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
             await expect(channelsCountBefore).to.be.equal(1);
             await expect(channelsCountAfterBlocked).to.be.equal(1);
