@@ -447,9 +447,6 @@ describe("EPNS CORE Protocol ", function () {
           const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
           const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
 
-          console.log(_groupFairShareCountNew.toString());
-          console.log(groupNewCount.toString());
-
           expect(_groupFairShareCountNew).to.equal(4);
           expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
           expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
