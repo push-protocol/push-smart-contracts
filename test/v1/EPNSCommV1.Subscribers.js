@@ -187,9 +187,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
           })
 
           it("Admin should be assigned correctly for EPNS COMMUNICATOR", async () =>{
-            const adminAddress = await EPNSCommV1Proxy.admin()
-            console.log("here" + adminAddress)
-            console.log("here" + ADMIN)
+            const adminAddress = await EPNSCommV1Proxy.pushChannelAdmin()
             expect(adminAddress).to.be.equal(ADMIN);
           })
 
