@@ -618,7 +618,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      *  @param _notifSettings- Deliminated String of Notification Settings
      *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
     **/
-    function createChannelNotificationSettings(
+    function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
         string calldata _notifDescription
@@ -835,7 +835,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      * @param    _channel  Address of the channel to be Verified
      **/
 
-    function verifyChannelViapushChannelAdmin(address _channel)
+    function verifyChannelViaPushChannelAdmin(address _channel)
         external
         onlyPushChannelAdmin
         returns (bool)
