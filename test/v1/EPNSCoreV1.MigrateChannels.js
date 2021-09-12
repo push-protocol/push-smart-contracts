@@ -200,12 +200,12 @@ describe("EPNS CORE Protocol ", function () {
                 const endIndex = 4;
                 const channelTypeArray = [2,2,2,2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-                const identityArray = ethers.utils.toUtf8Bytes(["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"]);
+                const identityArray = [testChannel, testChannel, testChannel, testChannel]
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
                const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
-               await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
+               await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin');
             })
 
             it("Should revert  if 'isMigrationComplete' flag is TRUE " , async ()=>{
@@ -213,7 +213,7 @@ describe("EPNS CORE Protocol ", function () {
                 const endIndex = 4;
                 const channelTypeArray = [2,2,2,2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-                const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+                const identityArray = [testChannel, testChannel, testChannel, testChannel]
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
                 const isMigrationComplete_before = await EPNSCoreV1Proxy.isMigrationComplete();
@@ -233,11 +233,11 @@ describe("EPNS CORE Protocol ", function () {
                 const endIndex = 4;
                 const channelTypeArray = [2, 2, 2];
                 const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1, USER2];
-                const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2", "2+0+hash2"];
+                const identityArray = [testChannel, testChannel, testChannel, testChannel]
                 const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
 
-               const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+               const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
                await expect(tx).to.be.revertedWith('EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument');
             })
@@ -247,13 +247,13 @@ describe("EPNS CORE Protocol ", function () {
              const endIndex = 4;
              const channelTypeArray = [2,2,2,2];
              const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-             const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+             const identityArray = [testChannel, testChannel, testChannel, testChannel]
              const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
              const totalDaiDepsitedByAdmin = tokensBN(200);
 
             const daiBalanceBefore = await MOCKDAI.connect(ADMINSIGNER).balanceOf(ADMIN);
 
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
             const daiBalanceAfter = await MOCKDAI.connect(ADMINSIGNER).balanceOf(ADMIN);
             expect(daiBalanceBefore.sub(daiBalanceAfter)).to.equal(totalDaiDepsitedByAdmin);
@@ -264,33 +264,33 @@ describe("EPNS CORE Protocol ", function () {
              const endIndex = 4;
              const channelTypeArray = [2,2,2,2];
              const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-             const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+             const identityArray = [testChannel, testChannel, testChannel, testChannel]
              const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
              const totalDaiDepsitedByAdmin = tokensBN(200);
 
-            const poolFundsBefore = await EPNSCoreV1Proxy.poolFunds()
+            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.POOL_FUNDS()
             const aDAIBalanceBefore = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
-            const poolFundsAfter = await EPNSCoreV1Proxy.poolFunds();
+            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
             const aDAIBalanceAfter = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
-            expect(poolFundsAfter.sub(poolFundsBefore)).to.equal(totalDaiDepsitedByAdmin);
+            expect(POOL_FUNDSAfter.sub(POOL_FUNDSBefore)).to.equal(totalDaiDepsitedByAdmin);
             expect(aDAIBalanceAfter.sub(aDAIBalanceBefore)).to.equal(totalDaiDepsitedByAdmin);
           });
 
-          it("EPNS Core Should create Channel and Update Relevant State variables accordingly", async function(){
+        it("EPNS Core Should create Channel and Update Relevant State variables accordingly", async function(){
             const startIndex = 0;
             const endIndex = 4;
             const channelTypeArray = [2,2,2,2];
             const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-            const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+            const identityArray = [testChannel, testChannel, testChannel, testChannel]
             const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
           const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
 
-          const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+          const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
           const channelForBOB = await EPNSCoreV1Proxy.channels(BOB)
           const channelForUSER1 = await EPNSCoreV1Proxy.channels(USER1)
@@ -344,7 +344,7 @@ describe("EPNS CORE Protocol ", function () {
 
           const channelTypeArray = [2,2,2,2];
           const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-          const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+          const identityArray = [testChannel, testChannel, testChannel, testChannel]
           const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
           const isChannelOwnerSubscribed_before = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
@@ -363,7 +363,7 @@ describe("EPNS CORE Protocol ", function () {
           const isUSER1SubscribedToEPNS_before = await EPNSCommV1Proxy.isUserSubscribed(EPNS_ALERTER, USER1);
           const isAdminSubscribedToUSER1_before = await EPNSCommV1Proxy.isUserSubscribed(USER1, ADMIN);
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
           const isChannelOwnerSubscribed_after = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
           const isChannelSubscribedToEPNS_after = await EPNSCommV1Proxy.isUserSubscribed(EPNS_ALERTER, CHANNEL_CREATOR);
@@ -418,13 +418,12 @@ describe("EPNS CORE Protocol ", function () {
 
         }).timeout(10000);
 
-        // FS Ration Modifications should be as expected
          it("should create a channel and update fair share values", async function(){
           const startIndex = 0;
           const endIndex = 4;
           const channelTypeArray = [2,2,2,2];
           const channelArray = [CHANNEL_CREATOR, BOB, CHARLIE, USER1];
-          const identityArray = ["0+1+hash1", "0+2+hash2", "1+0+hash1", "2+0+hash2"];
+          const identityArray = [testChannel, testChannel, testChannel, testChannel]
           const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
 
           const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -433,7 +432,7 @@ describe("EPNS CORE Protocol ", function () {
           const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
           const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
 
-          const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, amountArray);
+          const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
           const blockNumber = tx.blockNumber;
 
           const {
