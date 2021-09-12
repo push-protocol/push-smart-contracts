@@ -53,8 +53,8 @@ async function setupAllContracts() {
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
 
-  const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
-  deployedContracts.push(EPNSCoreV1)
+  const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
+  deployedContracts.push(EPNSCommV1)
 
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
@@ -79,8 +79,8 @@ async function setupAllContracts() {
   // await ethers.provider.send('evm_mine');
   // await timelock.functions.executeTransaction(timelock.address, '0', 'setPendingAdmin(address)', data, (eta + 1));
 
-  const EPNSCoreProxy = await deployContract("EPNSCoreProxy", [
-    EPNSCoreV1.address,
+  const EPNSCommProxy = await deployContract("EPNSCommProxy", [
+    EPNSCommV1.address,
     adminSigner.address,
     PUSH,
     WETH_ADDRESS,
@@ -89,9 +89,9 @@ async function setupAllContracts() {
     DAI,
     ADAI,
     referralCode,
-  ], "EPNSProxy");
+  ], "EPNSCommProxy");
 
-  deployedContracts.push(EPNSCoreProxy)
+  deployedContracts.push(EPNSCommProxy)
 
   return deployedContracts
 }

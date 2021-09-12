@@ -32,6 +32,7 @@ yarn-error.log*
 /cache
 /wallets/*.txt
 /artifacts
+/artifacts/*
 .txt
 package-lock.json
 yarn.lock
