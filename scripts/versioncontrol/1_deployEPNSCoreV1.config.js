@@ -23,7 +23,13 @@ const deploy = {
     }
   },
   args: {
-    mock: null
+    daiAddress: null,
+    aDaiAddress: null,
+    wethAddress: null,
+    pushAddress: null,
+    uniswapRouterAddress: null,
+    aaveLendingAddress: null,
+    referralCode: null
   }
 }
 

@@ -8,7 +8,7 @@ const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployCo
 async function main() {
   // Version Check
   console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["mock"])
+  const versionDetails = versionVerifier(["daiAddress", "aDaiAddress", "wethAddress", "pushAddress", "uniswapRouterAddress", "aaveLendingAddress", "referralCode"])
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
 
   // First deploy all contracts
@@ -27,7 +27,16 @@ async function main() {
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Version upgraded    \n\t\t\t\n`))
 }
 
-async function setupAllContracts() {
+// IMOORTANT: ADD THIS FROM CONFIG
+// const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
+// const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
+// const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
+// const PUSH = "0xf418588522d5dd018b425E472991E52EBBeEEEEE";
+// const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+// const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
+// const referralCode = "0";
+
+async function setupAllContracts(versionDetails) {
   let deployedContracts = []
   console.log("📡 Deploy \n");
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
@@ -38,15 +47,6 @@ async function setupAllContracts() {
 
   // const admin = '0xA1bFBd2062f298a46f3E4160C89BEDa0716a3F51'; //admin of timelock, gets handed over to the governor.
 
-  const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
-  const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
-  const WETH = "0xc778417E063141139Fce010982780140Aa0cD5Ab";
-  const PUSH = "0xf418588522d5dd018b425E472991E52EBBeEEEEE";
-  const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-  const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
-
-
-  const referralCode = 0;
   const delay = 0; // uint for the timelock delay
 
   // const epns = await deploy("EPNS");
@@ -82,13 +82,13 @@ async function setupAllContracts() {
   const EPNSCommProxy = await deployContract("EPNSCommProxy", [
     EPNSCommV1.address,
     adminSigner.address,
-    PUSH,
-    WETH_ADDRESS,
-    UNISWAP_ROUTER,
-    AAVE_LENDING_POOL,
-    DAI,
-    ADAI,
-    referralCode,
+    versionDetails.deploy.args.pushAddress,
+    versionDetails.deploy.args.wethAddress,
+    versionDetails.deploy.args.uniswapRouterAddress,
+    versionDetails.deploy.args.aaveLendingAddress,
+    versionDetails.deploy.args.daiAddress,
+    versionDetails.deploy.args.aDaiAddress,
+    parseInt(versionDetails.deploy.args.referralCode),
   ], "EPNSCommProxy");
 
   deployedContracts.push(EPNSCommProxy)
