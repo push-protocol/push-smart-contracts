@@ -220,7 +220,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
                 (msg.sender == pushChannelAdmin &&
-                    _channel == 0x0000000000000000000000000000000000000000)),
+                    _channel == address(0x0))),
             "EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
         );
         _;
@@ -383,12 +383,12 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
 
         // EPNS ALERTER CHANNEL
         _createChannel(
-            0x0000000000000000000000000000000000000000,
+            address(0x0),
             ChannelType.ProtocolNonInterest,
             0
         );
         emit AddChannel(
-        0x0000000000000000000000000000000000000000,
+        address(0x0),
         ChannelType.ProtocolNonInterest,
         "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
         );
@@ -556,9 +556,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         }
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
-        if (_channel != 0x0000000000000000000000000000000000000000) {
+        if (_channel != address(0x0)) {
             IEPNSCommV1(epnsCommunicator).subscribeViaCore(
-                0x0000000000000000000000000000000000000000,
+                address(0x0),
                 _channel
             );
             IEPNSCommV1(epnsCommunicator).subscribeViaCore(
@@ -770,7 +770,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
       bool logicComplete = false;
 
       // Check if it's primary verification
-      if (verifiedBy == pushChannelAdmin) {
+      if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
         // primary verification, mark and exit
         verificationStatus = 1;
         logicComplete = true;
