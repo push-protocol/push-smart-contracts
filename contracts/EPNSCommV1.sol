@@ -26,12 +26,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract EPNSCommV1 is Initializable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    //TBD
-    enum SubscriberAction {
-        SubscriberRemoved,
-        SubscriberAdded,
-        SubscriberUpdated
-    }
+
     /**
      * @notice User Struct that involves imperative details about
      * a specific User.
@@ -42,9 +37,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
         // @notice Will be false until public key is emitted
         bool publicKeyRegistered;
-
-        // @notice Marks if a user has opened a channel - TBD
-        bool channellized;
 
         // @notice Events should not be polled before this block as user doesn't exist
         uint256 userStartBlock;
@@ -119,13 +111,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         require(msg.sender == EPNSCoreAddress, "EPNSCommV1::onlyEPNSCore: Caller NOT EPNSCore");
         _;
     }
-    // TBD
-    modifier onlyValidUser(address _user) {
-        require(users[_user].userActivated, "EPNSCommV1::onlyValidUser: User not activated yet");
-        _;
-    }
 
-    // TBD - Should "recipient == signator" be a check for this modifier?
     modifier sendNotifViaSignReq(
         address _channel,
         address _notificationSender,
@@ -285,7 +271,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
-        // TBD - NOT SURE IF THE LINES BELOW SERVE A SPECIFIC PURPOSE YET
         user.subscribed[_channel] = user.subscribedCount;
         user.mapAddressSubscribed[user.subscribedCount] = _channel;
         user.subscribedCount = user.subscribedCount.add(1); // Finally increment the subscribed count
