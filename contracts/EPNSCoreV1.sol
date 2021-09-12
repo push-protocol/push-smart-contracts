@@ -139,8 +139,10 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     // @notice Necessary variables for Keeping track of Funds and Fees
     uint256 public poolFunds;
     uint256 public protocolFeePool;
+
     uint256 public CHANNEL_DEACTIVATION_FEES;
     uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+    uint256 public ADD_CHANNEL_MIN_FEES;
 
     /** EVENTS **/
     event UpdateChannel(address indexed channel, bytes identity);
@@ -304,7 +306,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
+
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
+        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
         groupLastUpdate = block.number;
@@ -349,14 +353,14 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
 
-// TO BE DISCUSSED
-    // function setMinChannelCreationFees(uint256 _newFees) external onlyPushChannelAdmin {
-    //     require(
-    //         _newFees > 0,
-    //         "Channel MIN Creation Fees must be greater than ZERO"
-    //     );
-    //     ADD_CHANNEL_MIN_POOL_CONTRIBUTION = _newFees;
-    // }
+    // Set new min channel fees, can never be below
+    function setMinChannelCreationFees(uint256 _newFees) external onlyPushChannelAdmin {
+        require(
+            _newFees > 0 && _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than 0 AND ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+        );
+        ADD_CHANNEL_MIN_FEES = _newFees;
+    }
 
 
     function transferPushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin {
@@ -460,7 +464,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     ) private {
         // Check if it's equal or above Channel Pool Contribution
         require(
-            _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            _amount >= ADD_CHANNEL_MIN_FEES,
             "EPNSCoreV1::_createChannelWithFees: Insufficient Funds"
         );
         IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);

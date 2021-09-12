@@ -500,8 +500,8 @@
       ]
     },
     "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCoreV1.sol": {
-      "lastModificationDate": 1631407201559,
-      "contentHash": "be05c6227a76e104271448011ce53fb9",
+      "lastModificationDate": 1631409418049,
+      "contentHash": "d7522b847a73ae5f7c38769fc1e3ddf1",
       "sourceName": "contracts/EPNSCoreV1.sol",
       "solcConfig": {
         "version": "0.6.11",
@@ -856,8 +856,8 @@
       ]
     },
     "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCommV1.sol": {
-      "lastModificationDate": 1631406910093,
-      "contentHash": "6001c8e2d8cf58ef5ccf8e3769375c41",
+      "lastModificationDate": 1631408961675,
+      "contentHash": "afa3766d9eb5c697abe4b588f4137fe7",
       "sourceName": "contracts/EPNSCommV1.sol",
       "solcConfig": {
         "version": "0.6.11",
