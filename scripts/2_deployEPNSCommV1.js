@@ -1,14 +1,9 @@
-require('dotenv').config()
-
-const moment = require('moment')
-const hre = require("hardhat")
-
-const fs = require("fs")
-const chalk = require("chalk")
-const { config, ethers } = require("hardhat")
+const fs = require("fs");
+const chalk = require("chalk");
+const { config, ethers } = require("hardhat");
+const { versionVerifier, upgradeVersion } = require('../loaders/versionVerifier')
 
 const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployContract, verifyAllContracts } = require('../helpers/utils')
-const { versionVerifier, upgradeVersion } = require('../loaders/versionVerifier')
 
 async function main() {
   // Version Check
@@ -44,7 +39,6 @@ async function main() {
 async function setupAllContracts(versionDetails) {
   let deployedContracts = []
   console.log("📡 Deploy \n");
-
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy();
   // OR
@@ -58,8 +52,9 @@ async function setupAllContracts(versionDetails) {
   // const epns = await deploy("EPNS");
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
-  const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
-  deployedContracts.push(EPNSCoreV1)
+
+  const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
+  deployedContracts.push(EPNSCommV1)
 
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
@@ -84,8 +79,8 @@ async function setupAllContracts(versionDetails) {
   // await ethers.provider.send('evm_mine');
   // await timelock.functions.executeTransaction(timelock.address, '0', 'setPendingAdmin(address)', data, (eta + 1));
 
-  const EPNSCoreProxy = await deployContract("EPNSCoreProxy", [
-    EPNSCoreV1.address,
+  const EPNSCommProxy = await deployContract("EPNSCommProxy", [
+    EPNSCommV1.address,
     adminSigner.address,
     versionDetails.deploy.args.pushAddress,
     versionDetails.deploy.args.wethAddress,
@@ -94,9 +89,9 @@ async function setupAllContracts(versionDetails) {
     versionDetails.deploy.args.daiAddress,
     versionDetails.deploy.args.aDaiAddress,
     parseInt(versionDetails.deploy.args.referralCode),
-  ], "EPNSProxy");
+  ], "EPNSCommProxy");
 
-  deployedContracts.push(EPNSCoreProxy)
+  deployedContracts.push(EPNSCommProxy)
 
   return deployedContracts
 }

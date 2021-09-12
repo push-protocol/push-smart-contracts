@@ -30,8 +30,10 @@ yarn-error.log*
 
 .idea
 /cache
+/cache/*
 /wallets/*.txt
 /artifacts
+/artifacts/*
 .txt
 package-lock.json
 yarn.lock

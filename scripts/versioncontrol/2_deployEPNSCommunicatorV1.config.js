@@ -16,7 +16,7 @@ const deploy = {
       version: 1
     },
     hardhat: {
-      version: 2
+      version: 1
     },
     localhost: {
       version: 1
@@ -29,7 +29,7 @@ const deploy = {
     pushAddress: "0xf418588522d5dd018b425E472991E52EBBeEEEEE",
     uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
     aaveLendingAddress: "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728",
-    referralCode: "0"
+    referralCode: 0,
   }
 }
 
