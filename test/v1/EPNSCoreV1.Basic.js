@@ -174,13 +174,13 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
         })
 
         it("Admin should be assigned correctly for EPNS CORE", async () =>{
-          const adminAddress = await EPNSCoreV1Proxy.admin()
+          const adminAddress = await EPNSCoreV1Proxy.pushChannelAdmin()
           expect(adminAddress).to.be.equal(ADMIN);
 
         })
 
         it("Admin should be assigned correctly for EPNS COMMUNICATOR", async () =>{
-          const adminAddress = await EPNSCommV1Proxy.admin()
+          const adminAddress = await EPNSCommV1Proxy.pushChannelAdmin()
           expect(adminAddress).to.be.equal(ADMIN);
 
         })
