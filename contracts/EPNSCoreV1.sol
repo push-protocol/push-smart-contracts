@@ -353,7 +353,13 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
 
-    // Set new min channel fees, can never be below
+    /**
+      * @notice Allows to set the Minimum amount threshold for Creating Channels
+      *
+      * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+      *
+      * @param  __newFees new minimum fees required for Channel Creation
+    **/
     function setMinChannelCreationFees(uint256 _newFees) external onlyPushChannelAdmin {
         require(
             _newFees > 0 && _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
