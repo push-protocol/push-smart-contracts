@@ -126,7 +126,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
     PROXYADMIN = await proxyAdmin.deploy();
     await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
-    const EPNSCommunicator = await ethers.getContractFactory("EPNSCommunicator");
+    const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
 
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
@@ -182,7 +182,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
 
     /**
-     * "verifyChannelViaAdmin" Function CHECKPOINTS
+     * "verifyChannelViaPushChannelAdmin" Function CHECKPOINTS
      *
      * REVERT CHECKS
      * Should revert if Caller is not ADMIN
@@ -199,21 +199,21 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
 
       it("Function should revert if Caller is Not Admin", async function(){
-        const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
-        await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
+        await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin');
       });
 
       it("Function should revert if Channel is Not ACTIVATED", async function(){
-        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(BOB);
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(BOB);
 
-        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Not Exist")
+        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist")
       });
 
       it("Function should revert if EPNSCoreV1::onlyUnverifiedChannels: Channel Already Verified", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
-        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
         await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyUnverifiedChannels: Channel Already Verified")
       });
@@ -221,7 +221,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       it("Function should Execute adequately and Update State variables accordingly", async function(){
         const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
         const channel = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
         const verifiedBy = await EPNSCoreV1Proxy.channelVerifiedBy(CHANNEL_CREATOR);
@@ -241,8 +241,8 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
        it("Function should Allow ADMIN to verifiy more than ONE CHANNELS", async function(){
         const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHARLIE);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
 
         const channelVerificationCount = await EPNSCoreV1Proxy.verifiedChannelCount(ADMIN);
@@ -272,7 +272,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       });
 
       it("Function Should emit Relevant Events", async function(){
-        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
         await expect(tx)
           .to.emit(EPNSCoreV1Proxy, 'ChannelVerified')
@@ -318,18 +318,21 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       it("Function should revert if Caller is Not Channel Owners", async function(){
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
-        await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+        await expect(tx).
+        to.be.revertedWith(
+        'EPNSCoreV1::onlyAdminVerifiedChannels: Caller NOT Verified By pushChannelAdmin or pushChannelAdmin Itself'
+        );
       });
 
       it("Function should revert if Channel is Not ACTIVATED", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
 
-        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Not Exist")
+        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist")
       });
 
       it("Function should revert if EPNSCoreV1::onlyUnverifiedChannels: Channel Already Verified", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
@@ -340,7 +343,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
       it("Function should Execute adequately and Update State variables accordingly", async function(){
         const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(CHANNEL_CREATOR);
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
@@ -362,7 +365,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
           it("Function should Allow verified CHANNEL OWNERS to verifiy more than ONE CHANNELS", async function(){
         const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
@@ -391,7 +394,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       });
 
       it("Function Should emit Relevant Events", async function(){
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
         await expect(tx)
@@ -462,7 +465,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
        it("Function Should Revert if Caller is not the ADMIN", async function(){
           const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaAdmin(CHARLIE);
 
-          await expect(tx).to.be.revertedWith('EPNSCore::onlyAdmin, user is not admin');
+          await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin');
       });
 
       it("Function Should Revert if CHANNEL IS NOT VERIFIED", async function(){
@@ -473,7 +476,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
       it("CASE-1: Function should allow ADMIN to REVOKE Verification of CHANNEL when TARGET CHANNEL HAS NOT VERIFIED ANY OTHER CHANNEL", async function(){
           const zeroAddress = "0x0000000000000000000000000000000000000000";
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
 
           // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's Channel
           const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
@@ -507,8 +510,8 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       it("CASE-1: Function should allow ADMIN to REVOKE Verification of MORE THAN ONE CHANNEL when TARGET CHANNELS HAVE NOT VERIFIED ANY OTHER CHANNEL", async function(){
           const zeroAddress = "0x0000000000000000000000000000000000000000";
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE); // Verifying CHARLIE'S CHANNEL via ADMIN
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHARLIE); // Verifying CHARLIE'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR CHANNEL via ADMIN
 
           // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
           const verifiedRecordsArray_before = await EPNSCoreV1Proxy.getAllVerifiedChannel(ADMIN);
@@ -568,7 +571,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       });
 
       it("CASE-1: Function Should emit Relevant Events", async function(){
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
           const tx =  await EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaAdmin(CHANNEL_CREATOR)
 
           await expect(tx)
@@ -579,7 +582,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       it("CASE-2: Function should allow ADMIN to REVOKE Verification of Target when TARGET CHANNELS HAS VERIFIED ONE OTHER CHANNEL", async function(){
           const zeroAddress = "0x0000000000000000000000000000000000000000";
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
 
           // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
@@ -642,7 +645,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
       it("CASE-2: Function should allow ADMIN to REVOKE Verification of Target when TARGET CHANNELS HAS VERIFIED MORE THAN ONE OTHER CHANNELS", async function(){
           const zeroAddress = "0x0000000000000000000000000000000000000000";
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB); // Verifying BOB CHANNELvia CHANNEL_CREATOR
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1); // Verifying BOB CHANNEL via CHANNEL_CREATOR
@@ -735,7 +738,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         const zeroAddress = "0x0000000000000000000000000000000000000000";
 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR); // Verifying CHANNEL_CREATOR'S CHANNEL via ADMIN
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE); // Verifying CHARLIE CHANNEL via CHANNEL_CREATOR
 
         // Checking Records BEFORE Revoking the Verification of CHANNEL_CREATOR's and CHARLIE'S CHANNEL
@@ -842,27 +845,30 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
         it("Function Should Revert if Caller is the ADMIN itself", async function(){
           const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
 
-          await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+          await expect(tx).
+          to.be.revertedWith(
+            'EPNSCoreV1::onlyAdminVerifiedChannels: Caller NOT Verified By pushChannelAdmin or pushChannelAdmin Itself'
+          );
         });
 
         it("Function Should Revert if Caller is NOT an ADMIN VERIFIED CHANNEL", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
 
-            await expect(tx).to.be.revertedWith('Caller is NOT Verified By ADMIN or ADMIN Itself');
+            await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyAdminVerifiedChannels: Caller NOT Verified By pushChannelAdmin or pushChannelAdmin Itself');
         });
 
         it("Function Should Revert if TARGET CHANNEL verified directly by ADMIN", async function(){
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHARLIE);
 
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE);
 
-            await expect(tx).to.be.revertedWith('Target Channel is Either Verified By ADMIN or UNVERIFIED YET');
+            await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyChannelVerifiedChannels: Channel is Either Verified By pushChannelAdmin or UNVERIFIED YET');
         });
 
         it("Function Should Revert if CALLER is NOT THE ACTUAL VERIFIER OF THE TARGET CHANNEL", async function(){
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHARLIE);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHARLIE);
             // TARGET CHANNEL(BOB) is VERIFIED BY CHARLIE
             await EPNSCoreV1Proxy.connect(CHARLIESIGNER).verifyChannelViaChannelOwners(BOB);
             // VERIFICATION OF BOB IS BEING REVOKED BY CHANNEL_CREATOR instead of CHARLIE
@@ -873,7 +879,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         it("Function Should Execute and UPDATE State variables as expected", async function(){
             const zeroAddress = "0x0000000000000000000000000000000000000000";
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
             // Checking of Channel Creator and CHARLIE Before REVOKATION OPERATION
@@ -909,7 +915,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         it("Function Should Execute and UPDATE State variables as expected  When VERIFIER has verified more than One Channel", async function(){
             const zeroAddress = "0x0000000000000000000000000000000000000000";
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
@@ -976,7 +982,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
         it("Function Should Execute correctly When Verifier Has More than TWO VERIFIED CHANNELS and REVOKING VERIFICATION OF ONLY ONE", async function(){
             const zeroAddress = "0x0000000000000000000000000000000000000000";
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER2);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(BOB);
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(USER1);
@@ -1047,7 +1053,7 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
 
 
       it("Function Should emit Relevant Events", async function(){
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaAdmin(CHANNEL_CREATOR);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).verifyChannelViaPushChannelAdmin(CHANNEL_CREATOR);
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).verifyChannelViaChannelOwners(CHARLIE);
 
           const tx =  await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).revokeVerificationViaChannelOwners(CHARLIE)
