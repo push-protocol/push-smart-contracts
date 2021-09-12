@@ -70,7 +70,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
          *   1 -> Verified by pushChannelAdmin,
          *   2 -> Verified by other Channel Owners
         **/
-        uint8 isChannelVerified;
+        address verifiedBy;
 
         // @notice Total Amount of Dai deposited during Channel Creation
         uint256 poolContribution;
@@ -103,18 +103,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
 
-    /** CHANNEL VERIFICATION MAPPINGS **/
-    // @notice Keeps track of "Channel Being Verified => The VERIFIER CHANNEL"
-    mapping(address => address) public channelVerifiedBy;
-
-    // @notice Keeps track of "Verifier Channel Address => Total Number of Channels it Verified"
-    mapping(address => uint256) public verifiedChannelCount;
-
-    // @notice Array of All Channels verified by pushChannelAdmin
-    mapping(address => address[]) public verifiedViaAdminRecords;
-
-    // @notice Array of All Channels verified by other CHANNEL OWNERS
-    mapping(address => address[]) public verifiedViaChannelRecords;
 
     /* ***************
         STATE VARIABLES
@@ -156,14 +144,10 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     event UpdateChannel(address indexed channel, bytes identity);
     event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed interestAmount);
-    event ChannelVerified(
-        address indexed verifiedChannel,
-        address indexed verifier
-    );
-    event ChannelVerificationRevoked(
-        address indexed trargetChannel,
-        address indexed verificationRevoker
-    );
+
+    event ChannelVerified(address indexed channel, address indexed verifier);
+    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+
     event DeactivateChannel(
         address indexed channel,
         uint256 indexed amountRefunded
@@ -236,7 +220,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
                 (msg.sender == pushChannelAdmin &&
-                    _channel == 0x0000000000000000000000000000000000000000)),
+                    _channel == address(0x0))),
             "EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
         );
         _;
@@ -252,42 +236,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         _;
     }
 
-    modifier onlyUnverifiedChannels(address _channel) {
-        require(
-            channels[_channel].isChannelVerified == 0,
-            "EPNSCoreV1::onlyUnverifiedChannels: Channel Already Verified"
-        );
-        _;
-    }
-
-    modifier onlyAdminVerifiedChannels(address _channel) {
-        require(
-            channels[_channel].isChannelVerified == 1,
-            "EPNSCoreV1::onlyAdminVerifiedChannels: Caller NOT Verified By pushChannelAdmin or pushChannelAdmin Itself"
-        );
-        _;
-    }
-
-    modifier onlyChannelVerifiedChannels(address _channel) {
-        require(
-            channels[_channel].isChannelVerified == 2,
-            "EPNSCoreV1::onlyChannelVerifiedChannels: Channel is Either Verified By pushChannelAdmin or UNVERIFIED YET"
-        );
-        _;
-    }
-
-    modifier onlyVerifiedChannels(address _channel) {
-        require(
-            channels[_channel].isChannelVerified == 1 ||
-                channels[_channel].isChannelVerified == 2,
-            "EPNSCoreV1::onlyVerifiedChannels: Channel is Not Verified Yet"
-        );
-        _;
-    }
-
     /* ***************
         INITIALIZER
-
     *************** */
 
     function initialize(
@@ -433,12 +383,12 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
 
         // EPNS ALERTER CHANNEL
         _createChannel(
-            0x0000000000000000000000000000000000000000,
+            address(0x0),
             ChannelType.ProtocolNonInterest,
             0
         );
         emit AddChannel(
-        0x0000000000000000000000000000000000000000,
+        address(0x0),
         ChannelType.ProtocolNonInterest,
         "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
         );
@@ -595,9 +545,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         }
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
-        if (_channel != 0x0000000000000000000000000000000000000000) {
+        if (_channel != address(0x0)) {
             IEPNSCommV1(epnsCommunicator).subscribeViaCore(
-                0x0000000000000000000000000000000000000000,
+                address(0x0),
                 _channel
             );
             IEPNSCommV1(epnsCommunicator).subscribeViaCore(
@@ -791,247 +741,89 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      }
 
     /* **************
-
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
-
     *************** */
 
-    function getTotalVerifiedChannels(address _verifier)
-        public
-        view
-        returns (uint256 totalVerifiedChannels)
+    /**
+     * @notice    Function is designed to tell if a channel is verified or not
+     * @dev       Get if channel is verified or not
+     * @param    _channel Address of the channel to be Verified
+     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary verification
+     **/
+    function getChannelVerfication(address _channel)
+      public
+      view
+      returns (uint8 verificationStatus)
     {
-        totalVerifiedChannels = verifiedChannelCount[_verifier];
-    }
+      address verifiedBy = channels[_channel].verifiedBy;
+      bool logicComplete = false;
 
-    function getChannelVerificationStatus(address _channel)
-        public
-        view
-        returns (uint8 _verificationStatus)
-    {
-        _verificationStatus = channels[_channel].isChannelVerified;
-    }
-
-    function getAllVerifiedChannel(address _verifier)
-        public
-        view
-        returns (address[] memory)
-    {
-        uint256 totalVerified = getTotalVerifiedChannels(_verifier);
-        address[] memory result = new address[](totalVerified);
-
-        if (_verifier == pushChannelAdmin) {
-            for (uint256 i; i < totalVerified; i++) {
-                result[i] = verifiedViaAdminRecords[_verifier][i];
-            }
-        } else {
-            for (uint256 i; i < totalVerified; i++) {
-                result[i] = verifiedViaChannelRecords[_verifier][i];
-            }
+      // Check if it's primary verification
+      if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
+        // primary verification, mark and exit
+        verificationStatus = 1;
+        logicComplete = true;
+      }
+      else {
+        // can be secondary verification or not verified, dig deeper
+        while (!logicComplete) {
+          if (verifiedBy == address(0x0)) {
+            verificationStatus = 0;
+            logicComplete = true;
+          }
+          else if (verifiedBy == pushChannelAdmin) {
+            verificationStatus = 2;
+            logicComplete = true;
+          }
+          else {
+            // Upper drill exists, go up
+            verifiedBy = channels[verifiedBy].verifiedBy;
+          }
         }
-
-        return result;
+      }
     }
 
     /**
-     * @notice    Function is designed specifically for the pushChannelAdmin to verify any particular Channel
-     * @dev       Can only be Called by the pushChannelAdmin
-     *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
-     * @param    _channel  Address of the channel to be Verified
+     * @notice    Function is designed to verify a channel
+     * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already verified
+     * @param    _channel Address of the channel to be Verified
      **/
+    function verifyChannel(address _channel) external onlyActivatedChannels(_channel) {
+      // Check if caller is verified first
+      uint8 callerVerified = getChannelVerfication(msg.sender);
+      require(callerVerified > 0, "EPNSCoreV1::verifyChannel: Caller is not verified");
 
-    function verifyChannelViaPushChannelAdmin(address _channel)
-        external
-        onlyPushChannelAdmin
-        returns (bool)
-    {
-        _verifyChannel(_channel, pushChannelAdmin, 1);
-        return true;
+      // Check if channel is verified
+      uint8 channelVerified = getChannelVerfication(_channel);
+      require(
+        (callerVerified >= 1 && channelVerified == 0) ||
+        (msg.sender == pushChannelAdmin),
+        "EPNSCoreV1::verifyChannel: Channel already verified"
+      );
+
+      // Verify channel
+      channels[_channel].verifiedBy = msg.sender;
+
+      // Emit event
+      emit ChannelVerified(_channel, msg.sender);
     }
 
     /**
-     * @notice    Function is designed specifically for the Verified CHANNEL Owners to verify any particular Channel
-     * @dev       Can only be Called by the Channel Owners who themselves have been verified by the pushChannelAdmin first
-     *            Calls the base function, i.e., verifyChannel() to execute the Main Verification Procedure
-     * @param    _channel  Address of the channel to be Verified
+     * @notice    Function is designed to unverify a channel
+     * @dev       Channel who verified this channel or Push Channel Admin can only revoke
+     * @param    _channel Address of the channel to be unverified
      **/
+    function unverifyChannel(address _channel) external {
+      require(
+        channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
+        "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
+      );
 
-    function verifyChannelViaChannelOwners(address _channel)
-        external
-        onlyAdminVerifiedChannels(msg.sender)
-        returns (bool)
-    {
-        _verifyChannel(_channel, msg.sender, 2);
-        return true;
-    }
+      // Unverify channel
+      channels[_channel].verifiedBy = address(0x0);
 
-    /**
-     * @notice    Base function that allows pushChannelAdmin or Channel Owners to Verify other Channels
-     *
-     * @dev       Can only be Called for UnVerified Channels
-     *            Checks if the Caller of this function is an pushChannelAdmin or other Verified Channel Owners and Proceeds Accordingly
-     *            If Caller is pushChannelAdmin:
-     *                                a. Marks Channel Verification Status as '1'.
-     *                                b. Updates the verifiedViaAdminRecords Mapping
-     *                                c. Emits Relevant Events
-     *            If Caller is Verified Channel Owners:
-     *                                a. Marks Channel Verification Status as '2'.
-     *                                b. Updates the verifiedViaChannelRecords Mapping
-     *                                c. Updates the channelToChannelVerificationRecords mapping
-     *                                d. Emits Relevant Events
-     * @param     _channel        Address of the channel to be Verified
-     * @param     _verifier       Address of the Caller who is verifiying the Channel
-     * @param     _verifierFlag   uint Value to indicate the Caller of this Base Verification function
-     **/
-    function _verifyChannel(
-        address _channel,
-        address _verifier,
-        uint8 _verifierFlag
-    ) private onlyActivatedChannels(_channel) onlyUnverifiedChannels(_channel) {
-        Channel memory channelDetails = channels[_channel];
-
-        if (_verifierFlag == 1) {
-            channelDetails.isChannelVerified = 1;
-            verifiedViaAdminRecords[_verifier].push(_channel);
-        } else {
-            channelDetails.isChannelVerified = 2;
-            verifiedViaChannelRecords[_verifier].push(_channel);
-        }
-        channelVerifiedBy[_channel] = _verifier;
-        verifiedChannelCount[_verifier] += 1;
-        channels[_channel] = channelDetails;
-        emit ChannelVerified(_channel, _verifier);
-    }
-
-      /**
-     * @notice    The revokeVerificationViaAdmin allows the pushChannelAdmin of the Contract to Revoke any Specific Channel's Verified Tag
-     *            Can be called for any Target Channel that has been verified either by pushChannelAdmin or other Channels
-     *
-     * @dev       Can only be Called for Verified Channels
-     *            Can only be Called by the pushChannelAdmin of the contract
-     *            Involves 2 Main CASES:
-     *                                   a. Either the Target Channel is CHILD Verified Channel (Channel that is NOT verified by pushChannelAdmin directly) or,
-     *                                   b. The Target Channel is a PARENT VERIFIED Channel (Channel that is verified by pushChannelAdmin)
-     *            If Target Channel CHILD:
-     *                                   -> Checks for its Parent Channel.
-     *                                   -> Update the verifiedViaChannelRecords mapping for Parent's Channel
-     *                                   -> Update the channelVerifiedBy mapping for Target Channel.
-     *                                   -> Revoke Verification of Target Channel
-     *            If Target Channel PARENT:
-     *                                   -> Checks total number of Channels verified by Parent Channel
-     *                                   -> Removes Verification for all Channels that were verified by the Target Parent Channel
-     *                                   -> Update the channelVerifiedBy mapping for every Target Channel Target Channel.
-     *                                   -> Deletes the verifiedViaChannelRecords for Parent's Channel
-     *                                   -> Revoke Verification and Update channelVerifiedBy mapping for of the Parent Target Channel itself.
-     * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
-     **/
-
-    function revokeVerificationViaAdmin(address _targetChannel)
-        external
-        onlyPushChannelAdmin()
-        onlyVerifiedChannels(_targetChannel)
-        returns (bool)
-    {
-        Channel memory channelDetails = channels[_targetChannel];
-
-        if (channelDetails.isChannelVerified == 1) {
-            uint256 _totalVerifiedBypushChannelAdmin = getTotalVerifiedChannels(pushChannelAdmin);
-            updateVerifiedChannelRecords(pushChannelAdmin, _targetChannel, _totalVerifiedBypushChannelAdmin, 1);
-
-            uint256 _totalChannelsVerified = getTotalVerifiedChannels(_targetChannel);
-            if(_totalChannelsVerified > 0){
-                for (uint256 i; i < _totalChannelsVerified; i++) {
-
-                address childChannel = verifiedViaChannelRecords[_targetChannel][i];
-                channels[childChannel].isChannelVerified = 0;
-                delete channelVerifiedBy[childChannel];
-                }
-                delete verifiedViaChannelRecords[_targetChannel];
-                delete verifiedChannelCount[_targetChannel];
-            }
-            delete channelVerifiedBy[_targetChannel];
-            channels[_targetChannel].isChannelVerified = 0;
-
-        } else {
-            address verifierChannel = channelVerifiedBy[_targetChannel];
-            uint256 _totalVerifiedByVerifierChannel = getTotalVerifiedChannels(verifierChannel);
-            updateVerifiedChannelRecords(verifierChannel, _targetChannel, _totalVerifiedByVerifierChannel, 2);
-            delete channelVerifiedBy[_targetChannel];
-            channels[_targetChannel].isChannelVerified = 0;
-
-        }
-        emit ChannelVerificationRevoked(_targetChannel, msg.sender);
-    }
-
-   /**
-     * @notice    The revokeVerificationViaChannelOwners allows the CHANNEL OWNERS to Revoke the Verification of Child Channels that they themselves Verified
-     *            Can only be called for those Target Child Channel whose Verification was provided for the Caller of the Function
-     *
-     * @dev       Can only be called by Channels who were Verified directly by the pushChannelAdmin
-     *            The _targetChannel must be have been verified by the Channel calling this function.
-     *            Delets the Record of _targetChannel from the verifiedViaChannelRecords mapping
-     *            Marks _targetChannel as Unverified and Updates the channelVerifiedBy & verifiedChannelCount mapping for the Caller of the function
-     * @param     _targetChannel  Address of the channel whose Verification is to be Revoked
-     **/
-    function revokeVerificationViaChannelOwners(address _targetChannel)
-        external
-        onlyAdminVerifiedChannels(msg.sender)
-        onlyChannelVerifiedChannels(_targetChannel)
-        returns (bool)
-    {
-        address verifierChannel = channelVerifiedBy[_targetChannel];
-        require (verifierChannel == msg.sender, "EPNSCoreV1::revokeVerificationViaChannelOwners: Caller not Verifier of the Channel");
-
-        uint256 _totalVerifiedByVerifierChannel = getTotalVerifiedChannels(verifierChannel);
-
-        updateVerifiedChannelRecords(verifierChannel, _targetChannel, _totalVerifiedByVerifierChannel, 2);
-        delete channelVerifiedBy[_targetChannel];
-        channels[_targetChannel].isChannelVerified = 0;
-
-        emit ChannelVerificationRevoked(_targetChannel, msg.sender);
-    }
-
-   /**
-     * @notice   Private Helper function that updates the Verified Channel Records in the  verifiedViaAdminRecords & verifiedViaChannelRecords Mapping
-     *           Only Called when a Channel's Verification is Revoked
-     *
-     * @dev      Performs a SWAP and DELETION of the Target Channel from CHANNEL's and pushChannelAdmin's record(Array) of Verified Chanenl
-     *           Also updates the verifiedChannelCount mapping => The Count of Total verified channels by the Caller of the Function
-     *
-     * @param    _verifierChannel      Address of the channel who verified the Channel initially (And is now Revoking its Verification)
-     * @param     _targetChannel         Address of the channel whose Verification is to be Revoked
-     * @param     _totalVerifiedChannel  Total Number of Channels verified by the Verifier(Caller) of the Functions
-     * @param     _verifierFlag          A uint value(Flag) to represent if the Caller is pushChannelAdmin or a Channel
-     **/
-
-    function updateVerifiedChannelRecords(address _verifierChannel, address _targetChannel, uint256 _totalVerifiedChannel, uint8 _verifierFlag) private{
-        if(_verifierFlag == 1){
-
-            for(uint256 i; i < _totalVerifiedChannel; i++){
-                if(verifiedViaAdminRecords[_verifierChannel][i] != _targetChannel){
-                    continue;
-                }else{
-                    address target = verifiedViaAdminRecords[_verifierChannel][i];
-                    verifiedViaAdminRecords[_verifierChannel][i] = verifiedViaAdminRecords[_verifierChannel][_totalVerifiedChannel - 1];
-                    verifiedViaAdminRecords[_verifierChannel][_totalVerifiedChannel - 1] = target;
-                    delete verifiedViaAdminRecords[_verifierChannel][_totalVerifiedChannel - 1];
-                    verifiedChannelCount[_verifierChannel] = verifiedChannelCount[_verifierChannel].sub(1);
-                }
-            }
-        }else{
-
-             for (uint256 i; i < _totalVerifiedChannel; i++) {
-                if ( verifiedViaChannelRecords[_verifierChannel][i] != _targetChannel) {
-                    continue;
-                } else {
-                    address target = verifiedViaChannelRecords[_verifierChannel][i];
-                    verifiedViaChannelRecords[_verifierChannel][i] = verifiedViaChannelRecords[_verifierChannel][_totalVerifiedChannel - 1];
-                    verifiedViaChannelRecords[_verifierChannel][_totalVerifiedChannel - 1] = target;
-                    delete verifiedViaChannelRecords[_verifierChannel][_totalVerifiedChannel - 1];
-                    verifiedChannelCount[_verifierChannel] = verifiedChannelCount[_verifierChannel].sub(1);
-                }
-            }
-        }
+      // Emit Event
+      emit ChannelVerificationRevoked(_channel, msg.sender);
     }
 
     /* **************

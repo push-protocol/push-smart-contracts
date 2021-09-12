@@ -1,9 +1,14 @@
-const fs = require("fs");
-const chalk = require("chalk");
-const { config, ethers } = require("hardhat");
-const { versionVerifier, upgradeVersion } = require('../loaders/versionVerifier')
+require('dotenv').config()
+
+const moment = require('moment')
+const hre = require("hardhat")
+
+const fs = require("fs")
+const chalk = require("chalk")
+const { config, ethers } = require("hardhat")
 
 const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployContract, verifyAllContracts } = require('../helpers/utils')
+const { versionVerifier, upgradeVersion } = require('../loaders/versionVerifier')
 
 async function main() {
   // Version Check
@@ -53,7 +58,6 @@ async function setupAllContracts(versionDetails) {
   // const epns = await deploy("EPNS");
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
-
   const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
   deployedContracts.push(EPNSCoreV1)
 
