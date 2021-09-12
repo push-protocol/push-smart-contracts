@@ -500,8 +500,8 @@
       ]
     },
     "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCoreV1.sol": {
-      "lastModificationDate": 1631448713902,
-      "contentHash": "e215eb4faa559136656fb37034fbdffd",
+      "lastModificationDate": 1631460256690,
+      "contentHash": "ac6155435e4800934f31cb7776db3dc5",
       "sourceName": "contracts/EPNSCoreV1.sol",
       "solcConfig": {
         "version": "0.6.11",

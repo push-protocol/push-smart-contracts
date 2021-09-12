@@ -788,7 +788,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
           }
           else {
             // Upper drill exists, go up
-            verifiedBy = channels[_channel].verifiedBy;
+            verifiedBy = channels[verifiedBy].verifiedBy;
           }
         }
       }
@@ -806,7 +806,11 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
 
       // Check if channel is verified
       uint8 channelVerified = getChannelVerfication(_channel);
-      require(callerVerified == 2 && channelVerified > 0, "EPNSCoreV1::verifyChannel: Channel already verified");
+      require(
+        (callerVerified >= 1 && channelVerified == 0) ||
+        (msg.sender == pushChannelAdmin),
+        "EPNSCoreV1::verifyChannel: Channel already verified"
+      );
 
       // Verify channel
       channels[_channel].verifiedBy = msg.sender;

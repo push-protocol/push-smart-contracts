@@ -27,7 +27,7 @@ const {
 
 use(solidity);
 
-describe("EPNS Core Protocol Tests Channel tests", function () {
+describe("EPNSCoreV1 Channel Verification Tests", function () {
 
   const DAI = "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108";
   const ADAI = "0xcB1Fe6F440c49E9290c3eb7f158534c2dC374201";
@@ -156,45 +156,183 @@ describe("EPNS Core Protocol Tests Channel tests", function () {
   });
 
 
-  describe("Testing Channel Verification Functions for Admin", function() {
+  describe("Testing Channel Verifications", function() {
     before(async function(){
       const CHANNEL_TYPE = 2;
-
-      await EPNSCoreV1Proxy.connect(protocolOwner).createChannelForPushChannelAdmin()
 
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
       await EPNSCoreV1Proxy.connect(admin).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
       await EPNSCommV1Proxy.connect(admin).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
 
-      // Create CHANNEL CREATER
-      // await MOCKDAI.connect(protocolOwner).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await MOCKDAI.connect(protocolOwner).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await EPNSCoreV1Proxy.connect(protocolOwner).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(admin).createChannelForPushChannelAdmin();
 
-      // // CREATE BOB CHANNEL
-      // await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //
-      // // CREATE CHARLIE CHANNEL
-      // await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //
-      // // CREATE DELTA CHANNEL
-      // await MOCKDAI.connect(DOLLYSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await MOCKDAI.connect(DOLLYSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await EPNSCoreV1Proxy.connect(DOLLYSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      //
-      // // CREATE ELECTRA
-      // await MOCKDAI.connect(ELECTRASIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await MOCKDAI.connect(ELECTRASIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-      // await EPNSCoreV1Proxy.connect(ELECTRASIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      // CREATE BOB CHANNEL
+      await MOCKDAI.connect(bob).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await MOCKDAI.connect(bob).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(bob).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      // CREATE CHARLIE CHANNEL
+      await MOCKDAI.connect(charlie).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await MOCKDAI.connect(charlie).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(charlie).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      // CREATE DELTA CHANNEL
+      await MOCKDAI.connect(dolly).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await MOCKDAI.connect(dolly).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(dolly).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      // CREATE ELECTRA
+      await MOCKDAI.connect(electra).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await MOCKDAI.connect(electra).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(electra).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      // Create FIZZ CHANNEL
+      await MOCKDAI.connect(fizz).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await MOCKDAI.connect(fizz).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      await EPNSCoreV1Proxy.connect(fizz).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
     });
 
-    it("should return primary verification badge for channel creator", async function(){
-      const verificationStatus = await EPNSCoreV1Proxy.getChannelVerfication(protocolOwner.address);
-      expect((await EPNSCoreV1Proxy.getChannelVerfication(protocolOwner.address))).to.equal(1);
+    afterEach(async function(){
+      await EPNSCoreV1Proxy.unverifyChannel(bob.address);
+      await EPNSCoreV1Proxy.unverifyChannel(charlie.address);
+      await EPNSCoreV1Proxy.unverifyChannel(dolly.address);
+      await EPNSCoreV1Proxy.unverifyChannel(electra.address);
+      await EPNSCoreV1Proxy.unverifyChannel(fizz.address);
+    });
+
+    it("should return primary verification for channel creator", async function(){
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(admin.address))).to.equal(1);
+    });
+
+    it("should return primary verification for 0x0", async function(){
+      expect((await EPNSCoreV1Proxy.getChannelVerfication("0x0000000000000000000000000000000000000000"))).to.equal(1);
+    });
+
+    it("should return not verified for unverified channels", async function(){
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(0);
+    });
+
+    it("should return primary verified for channels verified by admin", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(1);
+    });
+
+    it("should return secondary verified for channels for channel to channel verification", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      await EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(2);
+    });
+
+    it("should be able to upgrade secondary verified to primary", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(1);
+    });
+
+    it("should not be able to verify a channel if itself unverified", async function(){
+      await expect(EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address))
+        .to.be.revertedWith('EPNSCoreV1::verifyChannel: Caller is not verified')
+    });
+
+    it("should be able to unverify if from push channel owner", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(1);
+
+      await EPNSCoreV1Proxy.connect(admin).unverifyChannel(bob.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(0);
+    });
+
+    it("should be able to unverify if from secondary ownership by that owner", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      await EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(2);
+
+      await EPNSCoreV1Proxy.connect(bob).unverifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(0);
+    });
+
+    it("should be able to unverify if from secondary ownership by the push channel owner", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      await EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(2);
+
+      await EPNSCoreV1Proxy.connect(admin).unverifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(0);
+    });
+
+    it("should not be able to unverify if not from that owner or push channel", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      await EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address);
+      expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(2);
+
+      await expect(EPNSCoreV1Proxy.connect(dolly).unverifyChannel(charlie.address))
+        .to.be.revertedWith('EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke')
+    });
+
+    it("should not be able to downgrade primary verified to secondary", async function(){
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(charlie.address);
+
+      await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+      await expect(EPNSCoreV1Proxy.connect(bob).verifyChannel(charlie.address))
+        .to.be.revertedWith('EPNSCoreV1::verifyChannel: Channel already verified')
+    });
+
+    describe("Testing Propogation of Verification", function() {
+      beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(admin).verifyChannel(bob.address);
+        await EPNSCoreV1Proxy.connect(admin).verifyChannel(charlie.address);
+
+        await EPNSCoreV1Proxy.connect(bob).verifyChannel(dolly.address);
+        await EPNSCoreV1Proxy.connect(bob).verifyChannel(electra.address);
+
+        await EPNSCoreV1Proxy.connect(electra).verifyChannel(fizz.address);
+      });
+
+      it("should be able to propogate correctly", async function(){
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(1);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(1);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(2);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(2);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(fizz.address))).to.equal(2);
+      });
+
+      it("should be able to unverify by assignor", async function(){
+        await EPNSCoreV1Proxy.connect(electra).unverifyChannel(fizz.address);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(fizz.address))).to.equal(0);
+
+        await EPNSCoreV1Proxy.connect(bob).unverifyChannel(electra.address);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(0);
+
+        await EPNSCoreV1Proxy.connect(bob).unverifyChannel(dolly.address);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(0);
+
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(bob.address);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(0);
+      });
+
+      it("should be able to unverify from mid by push channel admin", async function(){
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(bob.address);
+
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(0);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(0);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(0);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(fizz.address))).to.equal(0);
+      });
+
+      it("should be able to unverify from mid by secondary channel", async function(){
+        await EPNSCoreV1Proxy.connect(bob).unverifyChannel(electra.address);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(2);
+
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(0);
+        expect((await EPNSCoreV1Proxy.getChannelVerfication(fizz.address))).to.equal(0);
+      });
+
+      afterEach(async function(){
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(bob.address);
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(charlie.address);
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(dolly.address);
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(electra.address);
+        await EPNSCoreV1Proxy.connect(admin).unverifyChannel(fizz.address);
+      });
     });
 
     /**
