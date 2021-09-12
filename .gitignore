@@ -30,6 +30,7 @@ yarn-error.log*
 
 .idea
 /cache
+/cache/*
 /wallets/*.txt
 /artifacts
 /artifacts/*
