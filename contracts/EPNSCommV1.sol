@@ -11,7 +11,7 @@ pragma experimental ABIEncoderV2;
 
  * Some imperative functionalities that the EPNS Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
- * Notifications to a particular recipient etc.
+ * Notifications to a particular recipient or all subscribers of a Channel etc.
 **/
 
 // Essential Imports
@@ -26,7 +26,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract EPNSCommV1 is Initializable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
+    //TBD
     enum SubscriberAction {
         SubscriberRemoved,
         SubscriberAdded,
@@ -43,7 +43,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         // @notice Will be false until public key is emitted
         bool publicKeyRegistered;
 
-        // @notice Marks if a user has opened a channel
+        // @notice Marks if a user has opened a channel - TBD
         bool channellized;
 
         // @notice Events should not be polled before this block as user doesn't exist
@@ -57,7 +57,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
          * 1 -> User is Subscribed
          * 0 -> User is NOT SUBSCRIBED
          **/
-        mapping(address => uint8) isSubscribed; // (1-> True. 0-> False )
+        mapping(address => uint8) isSubscribed;
 
         // Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;
@@ -66,11 +66,10 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     /** MAPPINGS **/
     mapping(address => User) public users;
-    mapping(uint256 => address) public mapAddressUsers;
-    mapping(address => mapping(address => bool))
-        public delegatedNotificationSenders;
     mapping(address => uint256) public nonces;
+    mapping(uint256 => address) public mapAddressUsers;
     mapping(address => mapping(address => string)) public userToChannelNotifs;
+    mapping(address => mapping(address => bool)) public delegatedNotificationSenders;
 
     /** STATE VARIABLES **/
     address public governance;
@@ -92,11 +91,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
             "SendNotification(address channel,address delegate,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
         );
     /** EVENTS **/
-    event AddDelegate(address channel, address delegate); // Addition/Removal of Delegete Events
-    event RemoveDelegate(address channel, address delegate);
-    event Subscribe(address indexed channel, address indexed user); // Subscribe / Unsubscribe | This Event is listened by on All Infra Services
-    event Unsubscribe(address indexed channel, address indexed user);
-    event PublicKeyRegistered(address indexed owner, bytes publickey);
     event SendNotification(
         address indexed channel,
         address indexed recipient,
@@ -108,6 +102,11 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         uint256 _notifID,
         string _notifSettings
     );
+    event AddDelegate(address channel, address delegate);
+    event RemoveDelegate(address channel, address delegate);
+    event Subscribe(address indexed channel, address indexed user);
+    event Unsubscribe(address indexed channel, address indexed user);
+    event PublicKeyRegistered(address indexed owner, bytes publickey);
 
     /** MODIFIERS **/
 
@@ -120,7 +119,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         require(msg.sender == EPNSCoreAddress, "EPNSCommV1::onlyEPNSCore: Caller NOT EPNSCore");
         _;
     }
-
+    // TBD
     modifier onlyValidUser(address _user) {
         require(users[_user].userActivated, "EPNSCommV1::onlyValidUser: User not activated yet");
         _;
@@ -143,10 +142,25 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         _;
     }
 
+    /* ***************
+
+        INITIALIZER
+
+    *************** */
     function initialize(address _pushChannelAdmin) public initializer returns (bool) {
         pushChannelAdmin = _pushChannelAdmin;
         governance = pushChannelAdmin;
         return true;
+    }
+
+    /****************
+
+    => SETTER FUNCTIONS <=
+
+    ****************/
+
+    function completeMigration() external onlyPushChannelAdmin{
+        isMigrationComplete = true;
     }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
@@ -163,13 +177,9 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         pushChannelAdmin = _newAdmin;
     }
 
-    function completeMigration() external onlyPushChannelAdmin{
-        isMigrationComplete = true;
-    }
-
     /****************
 
-    => SUBSCRIBE & UNSUBSCRIBE FUNCTIOANLTIES <=
+    => SUBSCRIBE FUNCTIOANLTIES <=
 
     ****************/
 
@@ -192,17 +202,17 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     /**
      * @notice External Subscribe Function that allows users to Diretly interact with the Base Subscribe function
-     * @dev Subscribers the caller of the function to a channel - Takes into Consideration the "msg.sender"
+     * @dev   Subscribes the caller of the function to a particular Channel
+     *        Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
      **/
     function subscribe(address _channel) external returns (bool) {
-        // Call actual subscribe
         _subscribe(_channel, msg.sender);
         return true;
     }
 
     /**
-     * @notice This Function allows users unsubscribe from a List of Channels at once
+     * @notice Allows users to subscribe a List of Channels at once
      *
      * @param _channelList array of addresses of the channels that the user wishes to Subscribe
      **/
@@ -221,9 +231,10 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
      *
      * @dev     Can only be called by pushChannelAdmin
      *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be false
-     *          Subscribers the Users to the respective Channels as per the arguments passed to the function
-     * @param _startIndex       starting Index for the LOOP
-     * @param _endIndex         Last Index for the LOOP
+     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
+     *
+     * @param _startIndex  starting Index for the LOOP
+     * @param _endIndex    Last Index for the LOOP
      * @param _channelList array of addresses of the channels
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      **/
@@ -254,35 +265,30 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     }
 
     /**
-     * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel and Keeps track of it
+     * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
+     *
      * @dev Initializes the User Struct with crucial details about the Channel Subscription
+     *      Addes the caller as a an Activated User of the protocol. (Only if the user hasn't been added already)
+     *
      * @param _channel address of the channel that the user is subscribing to
-     * @param _user address of the Subscriber
+     * @param _user    address of the Subscriber
      **/
     function _subscribe(address _channel, address _user) private {
         require(
             !isUserSubscribed(_channel, _user),
             "EPNSCommV1::_subscribe: User already Subscribed"
         );
-        // Add the user, will do nothing if added already, but is needed for all outpoints
+
         _addUser(_user);
 
         User storage user = users[_user];
-        // Important Details to be stored on Communicator
-        // a. Mark a User as a Subscriber for a Specific Channel
-        // b. Update Channel's Subscribed Count for User - TBD-not sure yet
-        // c. Update User Subscribed Count for Channel
-        // d. Usual Subscribe Track
 
         user.isSubscribed[_channel] = 1;
-
         // treat the count as index and update user struct
         // TBD - NOT SURE IF THE LINES BELOW SERVE A SPECIFIC PURPOSE YET
         user.subscribed[_channel] = user.subscribedCount;
         user.mapAddressSubscribed[user.subscribedCount] = _channel;
-
         user.subscribedCount = user.subscribedCount.add(1); // Finally increment the subscribed count
-
         // Emit it
         emit Subscribe(_channel, _user);
     }
@@ -321,8 +327,8 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     }
 
     /**
-     * @notice AllowsEPNSCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
-     *         This ensures that the Channel Owner is automatically subscribed to some imperative EPNS Channels as well as his/her own Channel.
+     * @notice Allows EPNSCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
+     *         This ensures that the Channel Owner is subscribed to imperative EPNS Channels as well as his/her own Channel.
      *
      * @dev    Only Callable by the EPNSCore. This is to ensure that Users should only able to Subscribe for their own addresses.
      *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the EPNSCore contract
@@ -339,18 +345,28 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         return true;
     }
 
+    /****************
+
+    => USUBSCRIBE FUNCTIOANLTIES <=
+
+    ****************/
+
     /**
-     * @notice External Unsubcribe Function that allows users to Diretly interact with the Base Unsubscribe function
-     * @dev UnSubscribers the caller of the function to a channl - Takes into Consideration the "msg.sender"
+     * @notice External Unsubcribe Function that allows users to directly unsubscribe from a particular channel
+     *
+     * @dev UnSubscribes the caller of the function from the particular Channel.
+     *      Takes into Consideration the "msg.sender"
+     *
      * @param _channel address of the channel that the user is subscribing to
      **/
-    function unsubscribe(address _channel) external {
+    function unsubscribe(address _channel) external returns (bool){
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
+        return true;
     }
 
     /**
-     * @notice This Function that allows users unsubscribe from a List of Channels at once
+     * @notice Allows users to unsubscribe from a List of Channels at once
      *
      * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
      **/
@@ -365,7 +381,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     }
 
     /**
-     * @notice Base Usubscribe Function that allows users to UNSUBSCRIBE from a Particular Channel and Keeps track of it
+     * @notice Base Usubscribe Function that allows users to UNSUBSCRIBE from a Particular Channel
      * @dev Modifies the User Struct with crucial details about the Channel Unsubscription
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber
@@ -445,8 +461,11 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     *************** */
 
     /**
-     * @notice The _addUser functions activates a particular User's Address in the Protocol and Keeps track of the Total User Count
-     * @dev It executes its main actions only if the User is not activated yet. It does nothing if an address has already been added.
+     * @notice Activates/Adds a particular User's Address in the Protocol.
+     *         Keeps track of the Total User Count
+     * @dev   Executes its main actions only if the User is not activated yet.
+     *        Does nothing if an address has already been added.
+     *
      * @param _user address of the user
      * @return userAlreadyAdded returns whether or not a user is already added.
      **/
@@ -464,7 +483,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     }
 
     /* @dev Internal system to handle broadcasting of public key,
-     * is a entry point for subscribe, or create channel but is option
+     *     A entry point for subscribe, or create channel but is optional
      */
     function _broadcastPublicKey(address _userAddr, bytes memory _publicKey)
         private
@@ -518,9 +537,11 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     *************** */
 
     /**
-     * @notice Allows a Channel Owner to ADD a Delegate who will be able to send Notification on the Channel's Behalf
-     * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
-     *      The verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES
+     * @notice Allows a Channel Owner to ADD a Delegate for sending Notifications
+     *         Delegate shall be able to send Notification on the Channel's Behalf
+     * @dev    This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
+     *
      * @param _delegate address of the delegate who is allowed to Send Notifications
      **/
     function addDelegate(address _delegate) external {
@@ -530,8 +551,8 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     /**
      * @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
-     * @dev This function will be only be callable by the Channel Owner from the EPNSCore contract.
-     *      The verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES
+     * @dev    This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
      * @param _delegate address of the delegate who is allowed to Send Notifications
      **/
     function removeDelegate(address _delegate) external {
@@ -541,15 +562,20 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     /***
       THREE main CALLERS for this function-
-        1. Channel Owner sends Notif to Recipients
+        1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
         2. Delegatee of Channel sends Notif to Recipients
-        3. Recipients sends Notifs to Themselvs via a Channel
-    <------------------------------------------------------------------------------------->
-
-     * When a CHANNEL OWNER Calls the Function and sends a Notif-> We check "if (channel owner is the caller) and if(Is Channel Valid)"
-     * NOTE - This check is performed via the PUSH NODES
-     * When a Delegatee wants to send Notif to Recipient-> We check "if(delegate is the Caller) and If( Is delegatee Valid)":
-     * When Recipient wants to Send a Notif to themselves -> We check that the If(Caller of the function is Recipient himself)
+        3. User sends Notifs to Themselvs via a Channel
+           NOTE: A user can only send notification to their own address
+    <---------------------------------------------------------------------------------------------->
+     * When a CHANNEL OWNER Calls the Function and sends a Notif:
+     *    -> We ensure -> "Channel Owner Must be Valid" && "Channel Owner is the Caller"
+     *    -> NOTE - Validation of wether or not an address is a CHANNEL, is done via PUSH NODES
+     *
+     * When a Delegatee wants to send Notif to Recipient:
+     *   -> We ensure "Delegate is the Caller" && "Delegatee is Approved by Chnnel Owner"
+     *
+     * When User wants to Send a Notif to themselves:
+     *  ->  We ensure "Caller of the Function is the Recipient of the Notification"
     **/
 
     function _checkNotifReq
