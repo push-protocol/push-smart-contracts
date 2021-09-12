@@ -207,8 +207,6 @@ describe("EPNS Core Protocol", function () {
             expect(channelDetailsForAdmin_after.channelState).to.equal(1);
             expect(channelDetailsForAdmin_after.poolContribution).to.equal(0);
             expect(channelDetailsForAdmin_after.channelType).to.equal(0);
-            // expect(channelDetailsForAdmin_after.channelStartBlock).to.equal(blockNumber);
-            // expect(channelDetailsForAdmin_after.channelUpdateBlock).to.equal(blockNumber);
             expect(channelDetailsForAdmin_after.channelWeight).to.equal(0);
           });
 
@@ -229,8 +227,6 @@ describe("EPNS Core Protocol", function () {
             expect(channelDetailsForAdmin_after.channelState).to.equal(1);
             expect(channelDetailsForAdmin_after.poolContribution).to.equal(0);
             expect(channelDetailsForAdmin_after.channelType).to.equal(0);
-            // expect(channelDetailsForAdmin_after.channelStartBlock).to.equal(blockNumber);
-            // expect(channelDetailsForAdmin_after.channelUpdateBlock).to.equal(blockNumber);
             expect(channelDetailsForAdmin_after.channelWeight).to.equal(0);
           });
 
