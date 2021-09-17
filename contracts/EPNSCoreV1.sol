@@ -20,14 +20,13 @@ import "./interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
+contract EPNSCoreV1 is Initializable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -180,7 +179,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     modifier onlyGovernance() {
-        require(msg.sender == pushChannelAdmin, "EPNSCoreV1::onlyGovernance: Caller not Governance");
+        require(msg.sender == governance, "EPNSCoreV1::onlyGovernance: Caller not Governance");
         _;
     }
 
