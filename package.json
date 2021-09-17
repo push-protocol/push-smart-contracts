@@ -39,8 +39,8 @@
     "node-watch": "^0.7.1",
     "solidity-bytes-utils": "^0.0.9"
   },
-  
   "devDependencies": {
+    "moment": "^2.29.1",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.17"
   }
