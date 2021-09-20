@@ -8,8 +8,9 @@ contract EPNSCommProxy is TransparentUpgradeableProxy {
 
 
     constructor(
-        address _logic,
-        address _admin
-    ) public payable TransparentUpgradeableProxy(_logic, _admin, abi.encodeWithSignature('initialize(address)', _admin)) {}
+      address _logic,
+      address _governance,
+      address _pushChannelAdmin
+    ) public payable TransparentUpgradeableProxy(_logic, _governance, abi.encodeWithSignature('initialize(address)', _pushChannelAdmin)) {}
 
 }
