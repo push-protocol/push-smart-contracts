@@ -23,7 +23,7 @@ const deploy = {
     }
   },
   args: {
-    mock: 'null'
+      epnsAdmin: null
   }
 }
 
