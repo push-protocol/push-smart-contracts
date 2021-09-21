@@ -116,7 +116,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
@@ -124,6 +124,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       admin.address,
       EPNS.address,
       WETH,
@@ -134,16 +135,14 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(alice.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
+      PROXYADMIN.address,
       admin.address
     );
 
-    await EPNSCommProxy.changeAdmin(alice.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address)
   });
 

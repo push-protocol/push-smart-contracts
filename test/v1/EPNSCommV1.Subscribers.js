@@ -124,7 +124,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommV1 = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommV1.deploy();
@@ -132,6 +132,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       ADMINSIGNER.address,
       EPNS.address,
       WETH,
@@ -142,16 +143,14 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(ALICESIGNER.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
+      PROXYADMIN.address,
       ADMINSIGNER.address
     );
 
-    await EPNSCommProxy.changeAdmin(ALICESIGNER.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommV1.attach(EPNSCommProxy.address)
 
   });
@@ -166,32 +165,6 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
 
  describe("EPNS COMMUNICATOR: Subscribing, Unsubscribing, Send Notification Tests", function(){
-
-    // BASIC COMMUNICATOR TESTS
-
-     describe("Conducting Basic tests", function()
-      {
-          const CHANNEL_TYPE = 2;
-          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-
-           beforeEach(async function(){
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
-            await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         });
-
-          it("Should return the NAME of the COMMUNICATOR PROTOCOL", async () =>{
-            const name = await EPNSCommV1Proxy.name()
-            expect(name).to.be.equal("EPNS COMM V1");
-          })
-
-          it("Admin should be assigned correctly for EPNS COMMUNICATOR", async () =>{
-            const adminAddress = await EPNSCommV1Proxy.pushChannelAdmin()
-            expect(adminAddress).to.be.equal(ADMIN);
-          })
-
-    });
 
     // SUBSCRIBE RELATED TESTS
   describe("Testing BASE SUbscribe FUnction", function()
