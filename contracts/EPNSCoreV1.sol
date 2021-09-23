@@ -881,7 +881,6 @@ contract EPNSCoreV1 is Initializable{
         lendingPoolProviderAddress
       );
       ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-      IERC20(aDaiAddress).approve(provider.getLendingPoolCore(), _amount);
 
       IADai(aDaiAddress).redeem(_amount);
     }
