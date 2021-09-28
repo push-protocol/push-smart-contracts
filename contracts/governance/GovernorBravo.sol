@@ -48,7 +48,6 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
       */
     function initialize(address admin_, address timelock_, address push_, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_) public {
         require(address(timelock) == address(0), "GovernorBravo::initialize: can only initialize once");
-        require(msg.sender == admin, "GovernorBravo::initialize: admin only");
         require(timelock_ != address(0), "GovernorBravo::initialize: invalid timelock address");
         require(push_ != address(0), "GovernorBravo::initialize: invalid PUSH address");
         require(votingPeriod_ >= MIN_VOTING_PERIOD && votingPeriod_ <= MAX_VOTING_PERIOD, "GovernorBravo::initialize: invalid voting period");
