@@ -237,7 +237,7 @@ contract Timelock {
         admin = msg.sender;
         pendingAdmin = address(0);
 
-        emit NewAdmin(admin);
+        emit NewAdmin(msg.sender);
     }
 
     function setPendingAdmin(address pendingAdmin_) public {
