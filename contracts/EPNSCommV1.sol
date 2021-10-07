@@ -587,7 +587,7 @@ contract EPNSCommV1 is Initializable {
         address _channel,
         address _recipient,
         bytes memory _identity
-    ) public{
+    ) public {
         _checkNotifReq(_channel, _recipient);
         // Emit the message out
         emit SendNotification(_channel, _recipient, _identity);
