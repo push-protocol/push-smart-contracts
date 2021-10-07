@@ -603,7 +603,7 @@ contract EPNSCoreV1 is Initializable{
      **/
 
     function deactivateChannel() external onlyActivatedChannels(msg.sender) {
-        Channel memory channelData = channels[msg.sender];
+        Channel storage channelData = channels[msg.sender];
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
@@ -633,7 +633,6 @@ contract EPNSCoreV1 is Initializable{
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        channels[msg.sender] = channelData;
         swapAndTransferPUSH(msg.sender, totalRefundableAmount);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
@@ -703,7 +702,7 @@ contract EPNSCoreV1 is Initializable{
      external
      onlyPushChannelAdmin()
      onlyUnblockedChannels(_channelAddress){
-       Channel memory channelData = channels[_channelAddress];
+       Channel storage channelData = channels[_channelAddress];
 
        uint256 totalAmountDeposited = channelData.poolContribution;
        uint256 totalRefundableAmount = totalAmountDeposited.sub(
@@ -735,7 +734,6 @@ contract EPNSCoreV1 is Initializable{
            groupLastUpdate
        );
 
-       channels[_channelAddress] = channelData;
        emit ChannelBlocked(_channelAddress);
      }
 
