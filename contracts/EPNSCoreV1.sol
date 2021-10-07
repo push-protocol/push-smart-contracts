@@ -63,11 +63,7 @@ contract EPNSCoreV1 is Initializable{
         **/
         uint8 channelState;
 
-        /** @notice Symbolizes Channel's Verification Status:
-         *   0 -> UnVerified Channels,
-         *   1 -> Verified by pushChannelAdmin,
-         *   2 -> Verified by other Channel Owners
-        **/
+        // @notice denotes the address of the verifier of the Channel
         address verifiedBy;
 
         // @notice Total Amount of Dai deposited during Channel Creation
@@ -97,7 +93,7 @@ contract EPNSCoreV1 is Initializable{
      *************** */
 
     mapping(address => Channel) public channels;
-    mapping(uint256 => address) public mapAddressChannels;
+    mapping(uint256 => address) public channelById;
     mapping(address => string) public channelNotifSettings;
     mapping(address => uint256) public usersInterestClaimed;
 
@@ -140,7 +136,6 @@ contract EPNSCoreV1 is Initializable{
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
-    event Withdrawal(address indexed to, address token, uint256 amount);
     event InterestClaimed(address indexed user, uint256 indexed interestAmount);
 
     event ChannelVerified(address indexed channel, address indexed verifier);
@@ -428,7 +423,7 @@ contract EPNSCoreV1 is Initializable{
         // Check if it's equal or above Channel Pool Contribution
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1::_createChannelWithFees: Insufficient Funds"
+            "EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount"
         );
         IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
         _depositFundsToPool(_amount);
@@ -446,14 +441,15 @@ contract EPNSCoreV1 is Initializable{
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
      * @param _channelAddresses array of address of the Channel
-     * @param _channelTypeLst   array of type of the Channel being created
+     * @param _channelTypeList   array of type of the Channel being created
+     * @param _identityList     array of list of identity Bytes
      * @param _amountList       array of amount of DAI to be depositeds
     **/
     function migrateChannelData(
         uint256 _startIndex,
         uint256 _endIndex,
         address[] calldata _channelAddresses,
-        ChannelType[] calldata _channelTypeLst,
+        ChannelType[] calldata _channelTypeList,
         bytes[] calldata _identityList,
         uint256[] calldata _amountList
     ) external onlyPushChannelAdmin returns (bool) {
@@ -463,8 +459,9 @@ contract EPNSCoreV1 is Initializable{
         );
 
         require(
-            (_channelAddresses.length == _channelTypeLst.length) &&
-            (_channelAddresses.length == _channelAddresses.length),
+            (_channelAddresses.length == _channelTypeList.length) &&
+            (_channelAddresses.length == _identityList.length) &&
+            (_channelAddresses.length == _amountList.length),
             "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
@@ -474,8 +471,8 @@ contract EPNSCoreV1 is Initializable{
             }else{
                 IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amountList[i]);
                 _depositFundsToPool(_amountList[i]);
-                emit AddChannel(_channelAddresses[i], _channelTypeLst[i], _identityList[i]);
-                _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
+                emit AddChannel(_channelAddresses[i], _channelTypeList[i], _identityList[i]);
+                _createChannel(_channelAddresses[i], _channelTypeList[i], _amountList[i]);
             }
         }
         return true;
@@ -510,7 +507,7 @@ contract EPNSCoreV1 is Initializable{
         channels[_channel].channelWeight = _channelWeight;
 
         // Add to map of addresses and increment channel count
-        mapAddressChannels[channelsCount] = _channel;
+        channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
 
         // Readjust fair share if interest bearing
@@ -676,6 +673,7 @@ contract EPNSCoreV1 is Initializable{
         );
 
         channels[msg.sender].channelState = 1;
+        channels[msg.sender].poolContribution = _amount;
         channels[msg.sender].channelWeight = _channelWeight;
 
         emit ReactivateChannel(msg.sender, _amount);
