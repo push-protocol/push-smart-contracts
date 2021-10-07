@@ -318,7 +318,7 @@ contract EPNSCoreV1 is Initializable{
     **/
     function setMinChannelCreationFees(uint256 _newFees) external onlyGovernance() {
         require(
-            _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
@@ -631,6 +631,7 @@ contract EPNSCoreV1 is Initializable{
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
+        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
         channels[msg.sender] = channelData;
         swapAndTransferPUSH(msg.sender, totalRefundableAmount);
