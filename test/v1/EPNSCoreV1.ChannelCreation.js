@@ -217,7 +217,7 @@ describe("EPNS Core Protocol", function () {
 
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,tokensBN(10));
 
-            await expect(tx).to.be.revertedWith("EPNSCoreV1::_createChannelWithFees: Insufficient Funds")
+            await expect(tx).to.be.revertedWith("EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount")
           });
 
             it("should revert if amount being transferred is greater than actually approved", async function(){
