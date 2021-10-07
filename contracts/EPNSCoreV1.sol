@@ -250,7 +250,7 @@ contract EPNSCoreV1 is Initializable{
     ) public initializer returns (bool success) {
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
-        governance = pushChannelAdmin; // Will be changed on-Chain governance Address later
+        governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         WETH_ADDRESS = _wethAddress;
@@ -472,7 +472,7 @@ contract EPNSCoreV1 is Initializable{
                 if(channels[_channelAddresses[i]].channelState != 0){
                     continue;
             }else{
-                IERC20(daiAddress).safeTransferFrom(pushChannelAdmin, address(this), _amountList[i]);
+                IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amountList[i]);
                 _depositFundsToPool(_amountList[i]);
                 emit AddChannel(_channelAddresses[i], _channelTypeLst[i], _identityList[i]);
                 _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
@@ -761,7 +761,6 @@ contract EPNSCoreV1 is Initializable{
       if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
         // primary verification, mark and exit
         verificationStatus = 1;
-        logicComplete = true;
       }
       else {
         // can be secondary verification or not verified, dig deeper
