@@ -524,6 +524,7 @@ contract EPNSCoreV1 is Initializable{
             ) = _readjustFairShareOfChannels(
                 ChannelAction.ChannelAdded,
                 _channelWeight,
+                0,
                 groupFairShareCount,
                 groupNormalizedWeight,
                 groupHistoricalZ,
@@ -607,6 +608,7 @@ contract EPNSCoreV1 is Initializable{
             CHANNEL_DEACTIVATION_FEES
         );
 
+        uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -619,6 +621,7 @@ contract EPNSCoreV1 is Initializable{
         ) = _readjustFairShareOfChannels(
             ChannelAction.ChannelUpdated,
             _newChannelWeight,
+            _oldChannelWeight,
             groupFairShareCount,
             groupNormalizedWeight,
             groupHistoricalZ,
@@ -655,7 +658,9 @@ contract EPNSCoreV1 is Initializable{
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
         _depositFundsToPool(_amount);
 
-        uint256 _channelWeight = _amount.mul(ADJUST_FOR_FLOAT).div(
+        uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
+        uint newChannelPoolContribution = _amount.add(CHANNEL_DEACTIVATION_FEES);
+        uint256 _channelWeight = newChannelPoolContribution.mul(ADJUST_FOR_FLOAT).div(
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
         (
@@ -666,6 +671,7 @@ contract EPNSCoreV1 is Initializable{
         ) = _readjustFairShareOfChannels(
             ChannelAction.ChannelUpdated,
             _channelWeight,
+            _oldChannelWeight,
             groupFairShareCount,
             groupNormalizedWeight,
             groupHistoricalZ,
@@ -673,7 +679,7 @@ contract EPNSCoreV1 is Initializable{
         );
 
         channels[msg.sender].channelState = 1;
-        channels[msg.sender].poolContribution = _amount;
+        channels[msg.sender].poolContribution += _amount;
         channels[msg.sender].channelWeight = _channelWeight;
 
         emit ReactivateChannel(msg.sender, _amount);
@@ -707,6 +713,7 @@ contract EPNSCoreV1 is Initializable{
            CHANNEL_DEACTIVATION_FEES
        );
 
+       uint256 _oldChannelWeight = channelData.channelWeight;
        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
            .mul(ADJUST_FOR_FLOAT)
            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -726,6 +733,7 @@ contract EPNSCoreV1 is Initializable{
        ) = _readjustFairShareOfChannels(
            ChannelAction.ChannelRemoved,
            _newChannelWeight,
+           _oldChannelWeight,
            groupFairShareCount,
            groupNormalizedWeight,
            groupHistoricalZ,
@@ -936,6 +944,7 @@ contract EPNSCoreV1 is Initializable{
      *
      * @param _action                 The type of Channel action for which the Fair Share is being adjusted
      * @param _channelWeight          Weight of the channel on which the Action is being performed.
+     * @param _oldChannelWeight       Old Weight of the channel on which the Action is being performed.
      * @param _groupFairShareCount    Fair share count
      * @param _groupNormalizedWeight  Normalized weight value
      * @param _groupHistoricalZ       The Historical Constant - Z
@@ -944,6 +953,7 @@ contract EPNSCoreV1 is Initializable{
     function _readjustFairShareOfChannels(
         ChannelAction _action,
         uint256 _channelWeight,
+        uint256 _oldChannelWeight,
         uint256 _groupFairShareCount,
         uint256 _groupNormalizedWeight,
         uint256 _groupHistoricalZ,
@@ -960,27 +970,24 @@ contract EPNSCoreV1 is Initializable{
     {
         // readjusts the group count and do deconstruction of weight
         uint256 groupModCount = _groupFairShareCount;
-        uint256 prevGroupCount = groupModCount;
+        // NormalizedWeight of all Channels at this point
+        uint256 adjustedNormalizedWeight = _groupNormalizedWeight;
+        // totalWeight of all Channels at this point
+        uint256 totalWeight = adjustedNormalizedWeight.mul(groupModCount);
 
-        uint256 totalWeight;
-        uint256 adjustedNormalizedWeight = _groupNormalizedWeight; //_groupNormalizedWeight;
-
-        // Increment or decrement count based on flag
         if (_action == ChannelAction.ChannelAdded) {
             groupModCount = groupModCount.add(1);
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
             totalWeight = totalWeight.add(_channelWeight);
 
         } else if (_action == ChannelAction.ChannelRemoved) {
             groupModCount = groupModCount.sub(1);
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
-            totalWeight = totalWeight.sub(_channelWeight);
+            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
 
         } else if (_action == ChannelAction.ChannelUpdated) {
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount.sub(1));
-            totalWeight = totalWeight.add(_channelWeight);
+            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
 
-        } else {
+        }
+        else {
             revert("EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action");
         }
         // now calculate the historical constant
