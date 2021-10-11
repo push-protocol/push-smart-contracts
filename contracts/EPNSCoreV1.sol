@@ -781,14 +781,14 @@ contract EPNSCoreV1 is Initializable{
       }
     }
 
-    function batchVerification(uint256 _startIndex, uint256 _endIndex, address[] memory _channelList) external onlyPushChannelAdmin returns(bool){
+    function batchVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
       for(uint256 i =_startIndex; i < _endIndex; i++){
         verifyChannel(_channelList[i]);
       }
       return true;
     }
 
-    function batchRevokeVerification(uint256 _startIndex, uint256 _endIndex, address[] memory _channelList) external onlyPushChannelAdmin returns(bool){
+    function batchRevokeVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
       for(uint256 i =_startIndex; i < _endIndex; i++){
         unverifyChannel(_channelList[i]);
       }
