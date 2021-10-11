@@ -23,7 +23,8 @@ const deploy = {
     }
   },
   args: {
-      epnsAdmin: null
+    epnsAdmin: null,
+    chainName: null
   }
 }
 

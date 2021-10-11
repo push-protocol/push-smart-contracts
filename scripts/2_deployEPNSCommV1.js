@@ -8,7 +8,7 @@ const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployCo
 async function main() {
   // Version Check
   console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["epnsAdmin"])
+  const versionDetails = versionVerifier(["epnsAdmin", "chainName"])
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
 
   // First deploy all contracts
@@ -83,6 +83,7 @@ async function setupAllContracts(versionDetails) {
       EPNSCommV1.address,
       versionDetails.deploy.args.epnsAdmin,
       adminSigner.address,
+      versionDetails.deploy.args.chainName,
     ], "EPNSCommProxy");
 
   deployedContracts.push(EPNSCommProxy)

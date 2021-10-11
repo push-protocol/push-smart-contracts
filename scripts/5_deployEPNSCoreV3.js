@@ -39,11 +39,11 @@ async function setupAllContracts(versionDetails) {
   const EPNSCoreV3 = await deployContract("EPNSCoreV3", [], "EPNSCoreV3");
   deployedContracts.push(EPNSCoreV3)
 
-  const EPNSCoreProxy = await ethers.getContractFactory("EPNSCoreProxy")
-  const epnsProxyInstance = EPNSCoreProxy.attach(versionDetails.deploy.args.epnsProxyAddress)
+  const EPNSAdmin = await ethers.getContractFactory("EPNSAdmin")
+  const epnsAdminInstance = EPNSAdmin.attach(versionDetails.deploy.args.epnsAdmin)
 
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCoreV2.address} \n\t\t\t\n`))
-  await epnsProxyInstance.upgradeTo(EPNSCoreV3.address);
+  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCoreV3.address} \n\t\t\t\n`))
+  await epnsAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, EPNSCoreV3.address);
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Contracts Upgraded  \n\t\t\t\n`))
 
   return deployedContracts
