@@ -232,7 +232,7 @@ describe("EPNS CORE: Channel Creation Tests", function(){
       const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
       const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
 
-      const tx = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel();
+      const tx = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel(1);
       const _oldChannelWeight = Ch_4_amount.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
       const newChannelWeight = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
       const blockNumber = tx.blockNumber;
@@ -265,7 +265,7 @@ describe("EPNS CORE: Channel Creation Tests", function(){
      await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_2_amount);
      await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_3_amount);
      await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_4_amount);
-     await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel();
+     await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel(1);
 
      const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
      const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
@@ -308,7 +308,7 @@ describe("EPNS CORE: Channel Creation Tests", function(){
     await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_2_amount);
     await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_3_amount);
     await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_4_amount);
-    await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel();
+    await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel(1);
     await EPNSCoreV1Proxy.connect(CHARLIESIGNER).reactivateChannel(Ch_4_amount);
 
     const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
@@ -355,7 +355,7 @@ describe("EPNS CORE: Channel Creation Tests", function(){
       await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_1_amount);
       await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_2_amount);
       await EPNSCoreV1Proxy.connect(CHARLIESIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,Ch_4_amount);
-      await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel();
+      await EPNSCoreV1Proxy.connect(CHARLIESIGNER).deactivateChannel(1);
 
       const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
       const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
