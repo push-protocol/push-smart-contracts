@@ -35,6 +35,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
@@ -139,7 +140,8 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
       PROXYADMIN.address,
-      admin.address
+      admin.address,
+      CHAIN_NAME
     );
 
     EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)

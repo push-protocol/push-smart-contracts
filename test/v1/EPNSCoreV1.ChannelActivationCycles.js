@@ -35,6 +35,7 @@ describe("EPNS Core Protocol", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const CHANNEL_DEACTIVATION_FEES = tokensBN(10);
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
@@ -142,7 +143,8 @@ describe("EPNS Core Protocol", function () {
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
       PROXYADMIN.address,
-      ADMINSIGNER.address
+      ADMINSIGNER.address,
+      CHAIN_NAME
     );
 
     EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
@@ -161,7 +163,7 @@ describe("EPNS Core Protocol", function () {
 
  describe("EPNS CORE: Channel Deactivation & Reactivation Tests", function(){
 
-   describe("Testing Deactivation and Reactivation of Channels", function()
+  describe("Testing Deactivation and Reactivation of Channels", function()
     {
         this.timeout(150000);
         const CHANNEL_TYPE = 2;
@@ -189,40 +191,6 @@ describe("EPNS Core Protocol", function () {
           * Channel Owner should be able to Recieve PUSH Tokens
           *
          **/
-         it("Printing Balance Differences", async function () {
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const POOL_FUNDSBefore = await EPNSCoreV1Proxy.POOL_FUNDS()
-           const aDAIBalanceBefore = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
-           const daiBalanceBefore = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-
-           const POOL_FUNDSAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
-           const aDAIBalanceAfter = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
-           const daiBalanceAfter = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const aDAIBalanceAfterReactivation = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
-           const daiBalanceAfterReactivation = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
-
-
-           console.log('POOL FUNDS')
-           console.log(`Pool Balance Before Deactivation- ${POOL_FUNDSBefore.toString()}`)
-           console.log(`Pool Balance After Deactivation- ${POOL_FUNDSAfter.toString()}`)
-
-           console.log('---------------------')
-           console.log('ADAI BALANCE')
-           console.log(`ADAI Balance Before Deactivation- ${aDAIBalanceBefore.toString()}`)
-           console.log(`ADAI Balance After Deactivation- ${aDAIBalanceAfter.toString()}`)
-           console.log(`ADAI Balance After Reactivation- ${aDAIBalanceAfterReactivation.toString()}`)
-
-           console.log('---------------------')
-           console.log('DAI BALANCE')
-           console.log(`DAI Balance Before Deactivation- ${daiBalanceBefore.toString()}`)
-           console.log(`DAI Balance After Deactivation- ${daiBalanceAfter.toString()}`)
-           console.log(`DAI Balance After Reactivation- ${daiBalanceAfterReactivation.toString()}`)
-
-         });
-
         it("Should Revert if Channel is Inactiave", async function () {
           const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
           await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
@@ -292,6 +260,8 @@ describe("EPNS Core Protocol", function () {
             const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
             await expect(channelState_before.channelWeight).to.be.equal(0);
+            await expect(channelState_afterCreation.poolContribution).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(channelState_afterDeactivation.poolContribution).to.be.equal(CHANNEL_DEACTIVATION_FEES);
             await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
             await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
         })
@@ -300,16 +270,14 @@ describe("EPNS Core Protocol", function () {
          const CHANNEL_TYPE = 2;
          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-         const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-         const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
          const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
+         const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
          const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
          const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
-         const _groupNormalizedWeightAfterChannelCreation = await EPNSCoreV1Proxy.groupNormalizedWeight();
 
          const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-
+         const _oldChannelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+         const newChannelWeight = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          const blockNumber = tx.blockNumber;
 
          const {
@@ -317,18 +285,17 @@ describe("EPNS Core Protocol", function () {
            groupNewNormalizedWeight,
            groupNewHistoricalZ,
            groupNewLastUpdate
-         } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, channelWeight_NEW, _groupFairShareCount, _groupNormalizedWeightAfterChannelCreation, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
+         } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
 
          const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
-         const _groupNormalizedWeightAfterChannelDeactivation = await EPNSCoreV1Proxy.groupNormalizedWeight();
+         const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
          const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
          const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
 
          expect(_groupFairShareCountNew).to.equal(groupNewCount);
+         expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
          expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
          expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
-         expect(_groupNormalizedWeightAfterChannelCreation).to.equal(channelWeihght_OLD);
-         expect(_groupNormalizedWeightAfterChannelDeactivation).to.equal(channelWeight_NEW);
        });
 
   });
@@ -395,41 +362,22 @@ describe("EPNS Core Protocol", function () {
            await expect(channelState_afterReactivation.channelState).to.be.equal(1);
        })
 
-       it("Function execution should update the Channel Weight Correctly", async function() {
-           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
+      it("Function execution should update the Channel Weight and Pool Contribution Correctly", async function() {
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
            const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
            const channelState_afterReactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
-           const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+           const newChannelPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.add(CHANNEL_DEACTIVATION_FEES);
+           const channelWeihght_Deact = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+           const channelWeight_React = newChannelPoolContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-           await expect(channelState_before.channelWeight).to.be.equal(0);
-           await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
-           await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
-           await expect(channelState_afterReactivation.channelWeight).to.be.equal(channelWeihght_OLD);
-       })
-       it("Function execution should update the Channel Weight Correctly State to '2' ", async function() {
-           const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-           const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
-
-           const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-           await expect(channelState_before.channelWeight).to.be.equal(0);
-           await expect(channelState_afterCreation.channelWeight).to.be.equal(channelWeihght_OLD);
-           await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeight_NEW);
+           await expect(channelState_afterDeactivation.channelWeight).to.be.equal(channelWeihght_Deact);
+           await expect(channelState_afterDeactivation.poolContribution).to.be.equal(CHANNEL_DEACTIVATION_FEES);
+           await expect(channelState_afterReactivation.channelWeight).to.be.equal(channelWeight_React);
+           await expect(channelState_afterReactivation.poolContribution).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.add(CHANNEL_DEACTIVATION_FEES));
        })
 
         it("Pool balance should UPdate Correctly on Channel Reactivation", async function() {
@@ -454,44 +402,178 @@ describe("EPNS Core Protocol", function () {
        it("Reactivation of Channel Should Readjust the FS Values Correctly", async function(){
         const CHANNEL_TYPE = 2;
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        const _groupNormalizedWeightAfterChannelCreation = await EPNSCoreV1Proxy.groupNormalizedWeight();
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
 
-        const channelWeihght_OLD = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        const channelWeight_NEW = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
+       const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
+       const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
+       const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
 
-        const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
-        const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
-        const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
-        const _groupNormalizedWeightAfterDeactivation = await EPNSCoreV1Proxy.groupNormalizedWeight();
+       const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       const _oldChannelWeight = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       const newPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.add(CHANNEL_DEACTIVATION_FEES);
+       const newChannelWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+       const blockNumber = tx.blockNumber;
 
-
-        const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-        const blockNumber = tx.blockNumber;
-
-        const {
-          groupNewCount,
-          groupNewNormalizedWeight,
-          groupNewHistoricalZ,
-          groupNewLastUpdate
-        } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, channelWeihght_OLD, _groupFairShareCount, _groupNormalizedWeightAfterDeactivation, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
-
-        const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
-        const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
-        const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
-        const _groupNormalizedWeightAfterChannelReactivation = await EPNSCoreV1Proxy.groupNormalizedWeight();
+       const {
+         groupNewCount,
+         groupNewNormalizedWeight,
+         groupNewHistoricalZ,
+         groupNewLastUpdate
+       } = readjustFairShareOfChannels(ChannelAction.ChannelUpdated, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
 
 
-        expect(_groupFairShareCountNew).to.equal(groupNewCount);
-        expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
-        expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
-        expect(_groupNormalizedWeightAfterChannelCreation).to.equal(channelWeihght_OLD);
-        expect(_groupNormalizedWeightAfterDeactivation).to.equal(channelWeight_NEW);
-        expect(_groupNormalizedWeightAfterChannelReactivation).to.equal(channelWeihght_OLD);
+       const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
+       const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
+       const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
+       const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
+
+       expect(_groupFairShareCountNew).to.equal(groupNewCount);
+       expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
+       expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
+       expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
       });
 
  });
+
+  describe("Testing the BLOCK CHANNEL Function", function()
+  {
+      const CHANNEL_TYPE = 2;
+      const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+
+       beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
+        await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+     });
+      /**
+        * "blockChannel" Function CheckPoints
+        * REVERT CHECKS
+        * Should revert IF Caller is NOT Admin
+        * Should revert if Target Channel is NOT ACTIVATED YET
+        * Should revert if Target Channel is NOT BLOCKED ALREADY
+        *
+        * FUNCTION Execution CHECKS
+        *   Updates channel's state to BLOCKED ('3')
+        *   Updates Channel's Pool Contribution to ZERO
+        *   Updates Channel's Weight to ZERO
+        *   Increases the Protocol Fee Pool
+        *   Decreases the Channel Count
+        *   Readjusts the FS Ratio
+        *   Emit 'ChannelBlocked' Event
+       **/
+
+      it("Should revert if if Caller is NOT ADMIN", async function () {
+        const CHANNEL_TYPE = 2;
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).blockChannel(CHANNEL_CREATOR);
+
+        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin")
+      });
+
+      it("Should revert if Target Channel is NOT ACTIVATED YET", async function () {
+        const CHANNEL_TYPE = 2;
+        const tx1 = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+
+        await expect(tx1).to.be.revertedWith("EPNSCoreV1::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
+      });
+
+      it("Should revert if Target Channel is NOT BLOCKED ALREADY", async function () {
+        const CHANNEL_TYPE = 2;
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+
+        const tx1 = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+
+        await expect(tx1).to.be.revertedWith("EPNSCoreV1::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
+      });
+
+
+    it("Should update Channel's Details Correctly", async function(){
+        const CHANNEL_TYPE = 2;
+        const channelWeight_AfterChannelBlock = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        const protocolFeeBefore = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
+        const channelDetailsBefore = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
+
+
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        const protocolFeeAfterChannelCreation = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        const channelDetailsAfter = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
+        const channelsCountAfterChannelCreation = await EPNSCoreV1Proxy.channelsCount();
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+        const channelDetailsAfterBlocked = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
+        const channelsCountAfterBlocked = await EPNSCoreV1Proxy.channelsCount();
+        const protocolFeeAfterChannelBlocked = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+
+        await expect(channelsCountBefore).to.be.equal(1);
+        await expect(channelsCountAfterBlocked).to.be.equal(1);
+        await expect(channelsCountAfterChannelCreation).to.be.equal(2);
+
+        await expect(protocolFeeBefore).to.be.equal(0);
+        await expect(protocolFeeAfterChannelCreation).to.be.equal(0);
+        await expect(protocolFeeAfterChannelBlocked).to.be.equal(channelDetailsAfter.poolContribution.sub(CHANNEL_DEACTIVATION_FEES));
+
+        await expect(channelDetailsAfterBlocked.channelState).to.be.equal(3);
+        await expect(channelDetailsAfterBlocked.channelWeight).to.be.equal(channelWeight_AfterChannelBlock);
+        await expect(channelDetailsAfterBlocked.poolContribution).to.be.equal(CHANNEL_DEACTIVATION_FEES);
+
+      });
+
+
+     it("Blocking a Channel should update Fair Share Ratios adequately", async function(){
+      const CHANNEL_TYPE = 2;
+
+      await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
+      const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
+      const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
+      const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
+
+      const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+      const blockNumber = tx.blockNumber;
+      const _oldChannelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      const newChannelWeight = CHANNEL_DEACTIVATION_FEES.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+      const {
+        groupNewCount,
+        groupNewNormalizedWeight,
+        groupNewHistoricalZ,
+        groupNewLastUpdate
+      } = readjustFairShareOfChannels(ChannelAction.ChannelRemoved, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
+
+
+      const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
+      const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
+      const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
+      const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
+
+      expect(_groupFairShareCountNew).to.equal(groupNewCount);
+      expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
+      expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
+      expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
+    });
+
+    it("Function Should emit Relevant Events", async function(){
+      await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+      const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
+
+      await expect(tx)
+        .to.emit(EPNSCoreV1Proxy, 'ChannelBlocked')
+        .withArgs(CHANNEL_CREATOR);
+    });
+
+});
+
 
 });
 });
