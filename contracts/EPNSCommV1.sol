@@ -613,69 +613,69 @@ contract EPNSCommV1 is Initializable {
      * @param _signatory address of the SIGNER of the Send Notif Function call transaction
      * @param _identity Info about the Notification
      **/
-     function _sendNotification(
-         address _channel,
-         address _recipient,
-         address _signatory,
-         bytes calldata _identity
-     )
-         private
-         sendNotifViaSignReq(
-             _channel,
-             _recipient,
-             _signatory
-         )
-     {
-         // Emit the message out
-         emit SendNotification(_channel, _recipient, _identity);
-     }
+    function _sendNotification(
+        address _channel,
+        address _recipient,
+        address _signatory,
+        bytes calldata _identity
+    )
+        private
+        sendNotifViaSignReq(
+            _channel,
+            _recipient,
+            _signatory
+        )
+    {
+        // Emit the message out
+        emit SendNotification(_channel, _recipient, _identity);
+    }
     /**
      * @notice Meta transaction function for Sending Notifications
      * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
      **/
 
-     function sendNotifBySig(
-         address _channel,
-         address _recipient,
-         bytes calldata _identity,
-         uint256 nonce,
-         uint256 expiry,
-         uint8 v,
-         bytes32 r,
-         bytes32 s
-     ) external {
-         bytes32 domainSeparator = keccak256(
-             abi.encode(
-                 DOMAIN_TYPEHASH,
-                 NAME_HASH,
-                 getChainId(),
-                 address(this)
-             )
-         );
-         bytes32 structHash = keccak256(
-             abi.encode(
-                 SEND_NOTIFICATION_TYPEHASH,
-                 _channel,
-                 _recipient,
-                 _identity,
-                 nonce,
-                 expiry
-             )
-         );
-         bytes32 digest = keccak256(
-             abi.encodePacked("\x19\x01", domainSeparator, structHash)
-         );
-         address signatory = ecrecover(digest, v, r, s);
-         require(signatory != address(0), "EPNSCommV1::sendNotifBySig: Invalid signature");
-         require(nonce == nonces[signatory]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
-         require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
-         _sendNotification(
-             _channel,
-             _recipient,
-             signatory,
-             _identity
-         );
-     }
+    function sendNotifBySig(
+        address _channel,
+        address _recipient,
+        bytes calldata _identity,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                NAME_HASH,
+                getChainId(),
+                address(this)
+            )
+        );
+        bytes32 structHash = keccak256(
+            abi.encode(
+                SEND_NOTIFICATION_TYPEHASH,
+                _channel,
+                _recipient,
+                _identity,
+                nonce,
+                expiry
+            )
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+        );
+        address signatory = ecrecover(digest, v, r, s);
+        require(signatory != address(0), "EPNSCommV1::sendNotifBySig: Invalid signature");
+        require(nonce == nonces[signatory]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
+        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
+        _sendNotification(
+            _channel,
+            _recipient,
+            signatory,
+            _identity
+        );
+    }
 
     /* **************
 
