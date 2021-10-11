@@ -180,14 +180,9 @@ describe("EPNS Core Protocol", function () {
          });
 
           it("Should only be Executed Once", async function () {
-            const oneTimeCheck_before = await EPNSCoreV1Proxy.oneTimeCheck();
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).createChannelForPushChannelAdmin();
-            const oneTimeCheck_after = await EPNSCoreV1Proxy.oneTimeCheck();
-
             const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).createChannelForPushChannelAdmin();
 
-            expect(oneTimeCheck_before).to.be.equal(false);
-            expect(oneTimeCheck_after).to.be.equal(true);
             expect(tx).to.be.revertedWith("EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
 
           });
