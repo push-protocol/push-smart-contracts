@@ -435,13 +435,15 @@ describe("EPNS CORE Protocol ", function () {
 
           const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
           const blockNumber = tx.blockNumber;
+          const _oldChannelWeight = 0;
+          const newChannelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
           const {
             groupNewCount,
             groupNewNormalizedWeight,
             groupNewHistoricalZ,
             groupNewLastUpdate
-          } = readjustFairShareOfChannels(ChannelAction.ChannelAdded, channelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
+          } = readjustFairShareOfChannels(ChannelAction.ChannelAdded, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
 
           const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
           const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
