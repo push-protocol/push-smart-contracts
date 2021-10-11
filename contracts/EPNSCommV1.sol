@@ -65,9 +65,11 @@ contract EPNSCommV1 is Initializable {
     /** STATE VARIABLES **/
     address public governance;
     address public pushChannelAdmin;
+    uint256 public chainID;
     uint256 public usersCount;
     bool public isMigrationComplete;
     address public EPNSCoreAddress;
+    string public chainName;
     string public constant name = "EPNS COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -99,6 +101,7 @@ contract EPNSCommV1 is Initializable {
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
     event PublicKeyRegistered(address indexed owner, bytes publickey);
+    event ChannelAlias(string _chainName, uint256 indexed _chainID, address indexed _channelAddress);
 
     /** MODIFIERS **/
 
@@ -131,9 +134,11 @@ contract EPNSCommV1 is Initializable {
         INITIALIZER
 
     *************** */
-    function initialize(address _pushChannelAdmin) public initializer returns (bool) {
+    function initialize(address _pushChannelAdmin, string memory _chainName) public initializer returns (bool) {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
+        chainName = _chainName;
+        chainID = getChainId();
         return true;
     }
 
@@ -142,6 +147,9 @@ contract EPNSCommV1 is Initializable {
     => SETTER FUNCTIONS <=
 
     ****************/
+    function verifyChannelAlias() external{
+      emit ChannelAlias(chainName, chainID, msg.sender);
+    }
 
     function completeMigration() external onlyPushChannelAdmin{
         isMigrationComplete = true;
