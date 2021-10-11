@@ -95,8 +95,6 @@ contract EPNSCoreV1 is Initializable{
     mapping(address => Channel) public channels;
     mapping(uint256 => address) public channelById;
     mapping(address => string) public channelNotifSettings;
-    mapping(address => uint256) public usersInterestClaimed;
-
 
     /* ***************
         STATE VARIABLES
@@ -136,8 +134,6 @@ contract EPNSCoreV1 is Initializable{
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
-    event InterestClaimed(address indexed user, uint256 indexed interestAmount);
-
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
 
@@ -600,7 +596,7 @@ contract EPNSCoreV1 is Initializable{
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
      **/
 
-    function deactivateChannel() external onlyActivatedChannels(msg.sender) {
+    function deactivateChannel(uint256 _amountsOutValue) external onlyActivatedChannels(msg.sender) {
         Channel storage channelData = channels[msg.sender];
 
         uint256 totalAmountDeposited = channelData.poolContribution;
@@ -633,7 +629,7 @@ contract EPNSCoreV1 is Initializable{
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        swapAndTransferPUSH(msg.sender, totalRefundableAmount);
+        swapAndTransferPUSH(msg.sender, totalRefundableAmount, _amountsOutValue);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -785,12 +781,25 @@ contract EPNSCoreV1 is Initializable{
       }
     }
 
+    function batchVerification(uint256 _startIndex, uint256 _endIndex, address[] memory _channelList) external onlyPushChannelAdmin returns(bool){
+      for(uint256 i =_startIndex; i < _endIndex; i++){
+        verifyChannel(_channelList[i]);
+      }
+      return true;
+    }
+
+    function batchRevokeVerification(uint256 _startIndex, uint256 _endIndex, address[] memory _channelList) external onlyPushChannelAdmin returns(bool){
+      for(uint256 i =_startIndex; i < _endIndex; i++){
+        unverifyChannel(_channelList[i]);
+      }
+      return true;
+    }
     /**
      * @notice    Function is designed to verify a channel
      * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already verified
      * @param    _channel Address of the channel to be Verified
      **/
-    function verifyChannel(address _channel) external onlyActivatedChannels(_channel) {
+    function verifyChannel(address _channel) public onlyActivatedChannels(_channel) {
       // Check if caller is verified first
       uint8 callerVerified = getChannelVerfication(msg.sender);
       require(callerVerified > 0, "EPNSCoreV1::verifyChannel: Caller is not verified");
@@ -815,7 +824,7 @@ contract EPNSCoreV1 is Initializable{
      * @dev       Channel who verified this channel or Push Channel Admin can only revoke
      * @param    _channel Address of the channel to be unverified
      **/
-    function unverifyChannel(address _channel) external {
+    function unverifyChannel(address _channel) public {
       require(
         channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
         "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
@@ -858,7 +867,7 @@ contract EPNSCoreV1 is Initializable{
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
-    function swapAndTransferPUSH(address _user, uint256 _userAmount)
+    function swapAndTransferPUSH(address _user, uint256 _userAmount, uint256 _amountsOutValue)
         internal
         returns (bool)
     {
@@ -872,7 +881,7 @@ contract EPNSCoreV1 is Initializable{
 
         IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
             _userAmount,
-            1,
+            _amountsOutValue,
             path,
             _user,
             block.timestamp
@@ -889,48 +898,48 @@ contract EPNSCoreV1 is Initializable{
       IADai(aDaiAddress).redeem(_amount);
     }
 
-    /**
-     * @notice Function to claim Rewards generated for indivudual users
-     * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
-     *
-     * @dev - Gets the User's Holder weight from the PUSH token contract
-     *      - Gets the totalSupply and Start Block of PUSH Token
-     *      - Calculates the totalHolder weight w.r.t to the current block number
-     *      - Gets the ratio of token holder by dividing individual User's weight tp totalWeight (also adjusts for the FLOAT)
-     *      - Gets the Total ADAI Interest accumulated for the protocol
-     *      - Calculates the amount the User should recieve considering the user's ratio calculated before
-     *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
-     *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
-     *      - The PUSH token is then transferred to the USER as the interest.
-    **/
-    function claimInterest() external returns(bool success){
-      address _user = msg.sender;
-      // Reading necessary PUSH details
-      uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
-      uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
-      uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
-
-      // Calculating total holder weight at the current Block Number
-      uint blockGap = block.number.sub(pushStartBlock);
-      uint totalHolderWeight = pushTotalSupply.mul(blockGap);
-
-      //Calculating individual User's Ratio
-      uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
-
-      // Calculating aDai Interest Generated and CLaimable Amount
-      uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
-      uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(POOL_FUNDS);
-      uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
-      require(totalClaimableRewards > 0, "EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
-
-      // Reset the User's Weight and Transfer the Tokens
-      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-      usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
-      swapAndTransferPUSH(_user, totalClaimableRewards);
-
-      emit InterestClaimed(msg.sender, totalClaimableRewards);
-      success = true;
-    }
+    // /**
+    //  * @notice Function to claim Rewards generated for indivudual users
+    //  * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
+    //  *
+    //  * @dev - Gets the User's Holder weight from the PUSH token contract
+    //  *      - Gets the totalSupply and Start Block of PUSH Token
+    //  *      - Calculates the totalHolder weight w.r.t to the current block number
+    //  *      - Gets the ratio of token holder by dividing individual User's weight tp totalWeight (also adjusts for the FLOAT)
+    //  *      - Gets the Total ADAI Interest accumulated for the protocol
+    //  *      - Calculates the amount the User should recieve considering the user's ratio calculated before
+    //  *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
+    //  *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
+    //  *      - The PUSH token is then transferred to the USER as the interest.
+    // **/
+    // function claimInterest() external returns(bool success){
+    //   address _user = msg.sender;
+    //   // Reading necessary PUSH details
+    //   uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
+    //   uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
+    //   uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
+    //
+    //   // Calculating total holder weight at the current Block Number
+    //   uint blockGap = block.number.sub(pushStartBlock);
+    //   uint totalHolderWeight = pushTotalSupply.mul(blockGap);
+    //
+    //   //Calculating individual User's Ratio
+    //   uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
+    //
+    //   // Calculating aDai Interest Generated and CLaimable Amount
+    //   uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
+    //   uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(POOL_FUNDS);
+    //   uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
+    //   require(totalClaimableRewards > 0, "EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
+    //
+    //   // Reset the User's Weight and Transfer the Tokens
+    //   IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+    //   usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
+    //   swapAndTransferPUSH(_user, totalClaimableRewards);
+    //
+    //   emit InterestClaimed(msg.sender, totalClaimableRewards);
+    //   success = true;
+    // }
 
     /* **************
 
