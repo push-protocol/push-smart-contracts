@@ -101,7 +101,7 @@ contract EPNSCommV1 is Initializable {
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
     event PublicKeyRegistered(address indexed owner, bytes publickey);
-    event ChannelAlias(string _chainName, uint256 indexed _chainID, address indexed _channelAddress);
+    event ChannelAlias(string _chainName, uint256 indexed _chainID, address indexed _channelOwnerAddress, string _ethereumChannelAddress);
 
     /** MODIFIERS **/
 
@@ -147,8 +147,8 @@ contract EPNSCommV1 is Initializable {
     => SETTER FUNCTIONS <=
 
     ****************/
-    function verifyChannelAlias() external{
-      emit ChannelAlias(chainName, chainID, msg.sender);
+    function verifyChannelAlias(string memory _channelAddress) external{
+      emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
     function completeMigration() external onlyPushChannelAdmin{
