@@ -70,7 +70,7 @@ module.exports = {
       },
     },
     polygon: {
-      url: "https://speedy-nodes-nyc.moralis.io/cd79c575304e3bb70b833b23/polygon/mumbai", // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
       accounts: {
         mnemonic: mnemonic(),
       },
@@ -88,17 +88,10 @@ module.exports = {
     },
   },
   etherscan: {
-   // Your API key for Etherscan
-   // Obtain one at https://etherscan.io/
-   // Polygonscan - 3GHK4V2HI2AGF7QNCMSTYX8MEDZA2IK9TI
-   // Etherscan - 9ZYB8NMQ5TXCFK1WCDZT2B5YE4Z3XW2X5P
-   apiKey: "MP5WH6M4JSBWQV747I16XGEGBFS1GUQ7FE",
+   // Your API key for Etherscan and Polygonscan
+   //apiKey: process.env.ETHERSCAN_API,
+   apiKey: process.env.POLYGONSCAN_API
  },
-  // etherscan: {
-  //   // Your API key for Etherscan
-  //   // Obtain one at https://etherscan.io/
-  //   apiKey: "9ZYB8NMQ5TXCFK1WCDZT2B5YE4Z3XW2X5P",
-  // },
   solidity: {
     version: "0.6.11",
     settings: {
