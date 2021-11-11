@@ -69,10 +69,16 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: getPrivateKey(),
+    polygon: {
+      url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
+      accounts: {
+        mnemonic: mnemonic(),
+      },
     },
+    // mainnet: {
+    //   url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+    //   accounts: getPrivateKey(),
+    // },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
@@ -82,10 +88,10 @@ module.exports = {
     },
   },
   etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: "9ZYB8NMQ5TXCFK1WCDZT2B5YE4Z3XW2X5P",
-  },
+   // Your API key for Etherscan and Polygonscan
+   //apiKey: process.env.ETHERSCAN_API,
+   apiKey: process.env.POLYGONSCAN_API
+ },
   solidity: {
     version: "0.6.11",
     settings: {
