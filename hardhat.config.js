@@ -69,6 +69,12 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     polygon: {
       url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
       accounts: {
@@ -89,8 +95,8 @@ module.exports = {
   },
   etherscan: {
    // Your API key for Etherscan and Polygonscan
-   //apiKey: process.env.ETHERSCAN_API,
-   apiKey: process.env.POLYGONSCAN_API
+   apiKey: process.env.ETHERSCAN_API,
+   //apiKey: process.env.POLYGONSCAN_API
  },
   solidity: {
     version: "0.6.11",
