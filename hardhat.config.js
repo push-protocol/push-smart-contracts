@@ -75,15 +75,18 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    polygon: {
-      url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
-      accounts: {
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      aaccounts: {
         mnemonic: mnemonic(),
       },
     },
-    // mainnet: {
-    //   url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-    //   accounts: getPrivateKey(),
+
+    // polygon: {
+    //   url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
+    //   accounts: {
+    //     mnemonic: mnemonic(),
+    //   },
     // },
     xdai: {
       url: "https://dai.poa.network",
