@@ -6,20 +6,16 @@ require('dotenv').config();
 const params = require('./3_migrationParams.config.js');
 const infura_url = `https://kovan.infura.io/v3/${params.INFURA_PROJECT_ID}`
 const privateKey = params.KEY
-// console.log(infura_url);
-// console.log(privateKey);
-//
 
 const provider = new ethers.providers.JsonRpcProvider(infura_url);
 const wallet = new ethers.Wallet(privateKey, provider)
 
 const newContractAddress = params.EPNS_CORE_ADDRESS
-// console.log(newContractAddress);
+
 const newContractABI = require("./newEPNSCoreABI.json")
 const newContract = new ethers.Contract(newContractAddress, newContractABI, provider)
 const signingContract = newContract.connect(wallet)
-// console.log(signingContract)
-  // const channelData = fs.readFileSync('./channelData.json');
+
 const migrateChannels = async () => {
     return new Promise(async (resolve, reject) => {
         let oldChanneldata;
@@ -37,7 +33,7 @@ const migrateChannels = async () => {
             let channelTypeArrayList = []
             let channelIdentityArrayList = []
             let daiArray = []
-            // In batches of 5 channel to avoid gas error
+            // In batches of 2 channel to avoid gas error
             for (let j = i; j < i + 2; j++) {
                 if (oldChanneldata.channelArray[j] != undefined) {
                     channelArrayList.push(oldChanneldata.channelArray[j]);
