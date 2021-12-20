@@ -69,8 +69,26 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    polygonMumbai: {
+      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    polygon: {
+      url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
@@ -82,12 +100,6 @@ module.exports = {
       },
     },
 
-    // polygon: {
-    //   url: `https://speedy-nodes-nyc.moralis.io/${process.env.MORALIS_API}/polygon/mumbai`,
-    //   accounts: {
-    //     mnemonic: mnemonic(),
-    //   },
-    // },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
@@ -106,7 +118,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 999999,
+        runs: 99999,
       },
     },
   },
