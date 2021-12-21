@@ -898,49 +898,6 @@ contract EPNSCoreV1 is Initializable{
       IADai(aDaiAddress).redeem(_amount);
     }
 
-    // /**
-    //  * @notice Function to claim Rewards generated for indivudual users
-    //  * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
-    //  *
-    //  * @dev - Gets the User's Holder weight from the PUSH token contract
-    //  *      - Gets the totalSupply and Start Block of PUSH Token
-    //  *      - Calculates the totalHolder weight w.r.t to the current block number
-    //  *      - Gets the ratio of token holder by dividing individual User's weight tp totalWeight (also adjusts for the FLOAT)
-    //  *      - Gets the Total ADAI Interest accumulated for the protocol
-    //  *      - Calculates the amount the User should recieve considering the user's ratio calculated before
-    //  *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
-    //  *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
-    //  *      - The PUSH token is then transferred to the USER as the interest.
-    // **/
-    // function claimInterest() external returns(bool success){
-    //   address _user = msg.sender;
-    //   // Reading necessary PUSH details
-    //   uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
-    //   uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
-    //   uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
-    //
-    //   // Calculating total holder weight at the current Block Number
-    //   uint blockGap = block.number.sub(pushStartBlock);
-    //   uint totalHolderWeight = pushTotalSupply.mul(blockGap);
-    //
-    //   //Calculating individual User's Ratio
-    //   uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
-    //
-    //   // Calculating aDai Interest Generated and CLaimable Amount
-    //   uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
-    //   uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(POOL_FUNDS);
-    //   uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
-    //   require(totalClaimableRewards > 0, "EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
-    //
-    //   // Reset the User's Weight and Transfer the Tokens
-    //   IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-    //   usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
-    //   swapAndTransferPUSH(_user, totalClaimableRewards);
-    //
-    //   emit InterestClaimed(msg.sender, totalClaimableRewards);
-    //   success = true;
-    // }
-
     /* **************
 
     => FAIR SHARE RATIO CALCULATIONS <=
