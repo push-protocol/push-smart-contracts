@@ -41,12 +41,12 @@ async function setupAllContracts(versionDetails) {
   const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
   deployedContracts.push(EPNSCommV1)
 
-  const EPNSAdmin = await deployContract("EPNSAdmin", [], "EPNSAdmin");
-  deployedContracts.push(EPNSAdmin)
+  const EPNSCommAdmin = await deployContract("EPNSCommAdmin", [], "EPNSCommAdmin");
+  deployedContracts.push(EPNSCommAdmin)
 
   const EPNSCommProxy = await deployContract("EPNSCommProxy", [
       EPNSCommV1.address,
-      EPNSAdmin.address,
+      EPNSCommAdmin.address,
       adminSigner.address,
       versionDetails.deploy.args.chainName,
     ], "EPNSCommProxy");

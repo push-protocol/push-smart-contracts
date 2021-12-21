@@ -8,7 +8,7 @@ const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployCo
 async function main() {
   // Version Check
   console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["epnsAdmin", "chainName"])
+  const versionDetails = versionVerifier(["chainName"])
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
 
   // First deploy all contracts
@@ -56,6 +56,8 @@ async function setupAllContracts(versionDetails) {
   const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
   deployedContracts.push(EPNSCommV1)
 
+  const EPNSCommAdmin = await deployContract("EPNSCommAdmin", [], "EPNSCommAdmin");
+  deployedContracts.push(EPNSCommAdmin)
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
 
@@ -81,7 +83,7 @@ async function setupAllContracts(versionDetails) {
 
   const EPNSCommProxy = await deployContract("EPNSCommProxy", [
       EPNSCommV1.address,
-      versionDetails.deploy.args.epnsAdmin,
+      EPNSCommAdmin.address,
       adminSigner.address,
       versionDetails.deploy.args.chainName,
     ], "EPNSCommProxy");

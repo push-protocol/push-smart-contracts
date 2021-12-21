@@ -8,7 +8,7 @@ const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployCo
 async function main() {
   // Version Check
   console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["epnsProxyAddress", "epnsAdmin"])
+  const versionDetails = versionVerifier(["epnsProxyAddress", "epnsCommAdmin"])
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
 
   // First deploy all contracts
@@ -39,8 +39,8 @@ async function setupAllContracts(versionDetails) {
   const EPNSCommV2 = await deployContract("EPNSCommV2", [], "EPNSCommV2");
   deployedContracts.push(EPNSCommV2)
 
-  const EPNSAdmin = await ethers.getContractFactory("EPNSAdmin")
-  const epnsAdminInstance = EPNSAdmin.attach(versionDetails.deploy.args.epnsAdmin)
+  const EPNSCommAdmin = await ethers.getContractFactory("EPNSCommAdmin")
+  const epnsAdminInstance = EPNSCommAdmin.attach(versionDetails.deploy.args.epnsCommAdmin)
 
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCommV2.address} \n\t\t\t\n`))
   await epnsAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, EPNSCommV2.address);
