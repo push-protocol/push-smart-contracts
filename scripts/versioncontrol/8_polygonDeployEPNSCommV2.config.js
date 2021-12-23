@@ -21,6 +21,9 @@ const deploy = {
     polygon: {
       version: 1
     },
+    polygonMumbai: {
+      version: 1
+    },
     localhost: {
       version: 1
     }
