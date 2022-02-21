@@ -20,14 +20,12 @@ import "./interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
+contract EPNSCoreV1 is Initializable{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -65,11 +63,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         **/
         uint8 channelState;
 
-        /** @notice Symbolizes Channel's Verification Status:
-         *   0 -> UnVerified Channels,
-         *   1 -> Verified by pushChannelAdmin,
-         *   2 -> Verified by other Channel Owners
-        **/
+        // @notice denotes the address of the verifier of the Channel
         address verifiedBy;
 
         // @notice Total Amount of Dai deposited during Channel Creation
@@ -99,10 +93,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      *************** */
 
     mapping(address => Channel) public channels;
-    mapping(uint256 => address) public mapAddressChannels;
+    mapping(uint256 => address) public channelById;
     mapping(address => string) public channelNotifSettings;
-    mapping(address => uint256) public usersInterestClaimed;
-
 
     /* ***************
         STATE VARIABLES
@@ -142,9 +134,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
-    event Withdrawal(address indexed to, address token, uint256 amount);
-    event InterestClaimed(address indexed user, uint256 indexed interestAmount);
-
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
 
@@ -180,7 +169,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     }
 
     modifier onlyGovernance() {
-        require(msg.sender == pushChannelAdmin, "EPNSCoreV1::onlyGovernance: Caller not Governance");
+        require(msg.sender == governance, "EPNSCoreV1::onlyGovernance: Caller not Governance");
         _;
     }
 
@@ -252,7 +241,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     ) public initializer returns (bool success) {
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
-        governance = pushChannelAdmin; // Will be changed on-Chain governance Address later
+        governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
         daiAddress = _daiAddress;
         aDaiAddress = _aDaiAddress;
         WETH_ADDRESS = _wethAddress;
@@ -320,7 +309,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     **/
     function setMinChannelCreationFees(uint256 _newFees) external onlyGovernance() {
         require(
-            _newFees > ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
@@ -430,7 +419,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         // Check if it's equal or above Channel Pool Contribution
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1::_createChannelWithFees: Insufficient Funds"
+            "EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount"
         );
         IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
         _depositFundsToPool(_amount);
@@ -448,14 +437,15 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
      * @param _channelAddresses array of address of the Channel
-     * @param _channelTypeLst   array of type of the Channel being created
+     * @param _channelTypeList   array of type of the Channel being created
+     * @param _identityList     array of list of identity Bytes
      * @param _amountList       array of amount of DAI to be depositeds
     **/
     function migrateChannelData(
         uint256 _startIndex,
         uint256 _endIndex,
         address[] calldata _channelAddresses,
-        ChannelType[] calldata _channelTypeLst,
+        ChannelType[] calldata _channelTypeList,
         bytes[] calldata _identityList,
         uint256[] calldata _amountList
     ) external onlyPushChannelAdmin returns (bool) {
@@ -465,8 +455,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         );
 
         require(
-            (_channelAddresses.length == _channelTypeLst.length) &&
-            (_channelAddresses.length == _channelAddresses.length),
+            (_channelAddresses.length == _channelTypeList.length) &&
+            (_channelAddresses.length == _identityList.length) &&
+            (_channelAddresses.length == _amountList.length),
             "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
@@ -474,10 +465,10 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
                 if(channels[_channelAddresses[i]].channelState != 0){
                     continue;
             }else{
-                IERC20(daiAddress).safeTransferFrom(pushChannelAdmin, address(this), _amountList[i]);
+                IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amountList[i]);
                 _depositFundsToPool(_amountList[i]);
-                emit AddChannel(_channelAddresses[i], _channelTypeLst[i], _identityList[i]);
-                _createChannel(_channelAddresses[i], _channelTypeLst[i], _amountList[i]);
+                emit AddChannel(_channelAddresses[i], _channelTypeList[i], _identityList[i]);
+                _createChannel(_channelAddresses[i], _channelTypeList[i], _amountList[i]);
             }
         }
         return true;
@@ -512,7 +503,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         channels[_channel].channelWeight = _channelWeight;
 
         // Add to map of addresses and increment channel count
-        mapAddressChannels[channelsCount] = _channel;
+        channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
 
         // Readjust fair share if interest bearing
@@ -529,6 +520,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
             ) = _readjustFairShareOfChannels(
                 ChannelAction.ChannelAdded,
                 _channelWeight,
+                0,
                 groupFairShareCount,
                 groupNormalizedWeight,
                 groupHistoricalZ,
@@ -604,14 +596,15 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
      **/
 
-    function deactivateChannel() external onlyActivatedChannels(msg.sender) {
-        Channel memory channelData = channels[msg.sender];
+    function deactivateChannel(uint256 _amountsOutValue) external onlyActivatedChannels(msg.sender) {
+        Channel storage channelData = channels[msg.sender];
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
             CHANNEL_DEACTIVATION_FEES
         );
 
+        uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -624,6 +617,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         ) = _readjustFairShareOfChannels(
             ChannelAction.ChannelUpdated,
             _newChannelWeight,
+            _oldChannelWeight,
             groupFairShareCount,
             groupNormalizedWeight,
             groupHistoricalZ,
@@ -633,9 +627,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
+        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        channels[msg.sender] = channelData;
-        swapAndTransferPUSH(msg.sender, totalRefundableAmount);
+        swapAndTransferPUSH(msg.sender, totalRefundableAmount, _amountsOutValue);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -660,7 +654,9 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
         _depositFundsToPool(_amount);
 
-        uint256 _channelWeight = _amount.mul(ADJUST_FOR_FLOAT).div(
+        uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
+        uint newChannelPoolContribution = _amount.add(CHANNEL_DEACTIVATION_FEES);
+        uint256 _channelWeight = newChannelPoolContribution.mul(ADJUST_FOR_FLOAT).div(
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
         (
@@ -671,6 +667,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         ) = _readjustFairShareOfChannels(
             ChannelAction.ChannelUpdated,
             _channelWeight,
+            _oldChannelWeight,
             groupFairShareCount,
             groupNormalizedWeight,
             groupHistoricalZ,
@@ -678,6 +675,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         );
 
         channels[msg.sender].channelState = 1;
+        channels[msg.sender].poolContribution += _amount;
         channels[msg.sender].channelWeight = _channelWeight;
 
         emit ReactivateChannel(msg.sender, _amount);
@@ -704,13 +702,14 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      external
      onlyPushChannelAdmin()
      onlyUnblockedChannels(_channelAddress){
-       Channel memory channelData = channels[_channelAddress];
+       Channel storage channelData = channels[_channelAddress];
 
        uint256 totalAmountDeposited = channelData.poolContribution;
        uint256 totalRefundableAmount = totalAmountDeposited.sub(
            CHANNEL_DEACTIVATION_FEES
        );
 
+       uint256 _oldChannelWeight = channelData.channelWeight;
        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
            .mul(ADJUST_FOR_FLOAT)
            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -730,13 +729,13 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
        ) = _readjustFairShareOfChannels(
            ChannelAction.ChannelRemoved,
            _newChannelWeight,
+           _oldChannelWeight,
            groupFairShareCount,
            groupNormalizedWeight,
            groupHistoricalZ,
            groupLastUpdate
        );
 
-       channels[_channelAddress] = channelData;
        emit ChannelBlocked(_channelAddress);
      }
 
@@ -762,7 +761,6 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
       if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
         // primary verification, mark and exit
         verificationStatus = 1;
-        logicComplete = true;
       }
       else {
         // can be secondary verification or not verified, dig deeper
@@ -783,12 +781,25 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
       }
     }
 
+    function batchVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
+      for(uint256 i =_startIndex; i < _endIndex; i++){
+        verifyChannel(_channelList[i]);
+      }
+      return true;
+    }
+
+    function batchRevokeVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
+      for(uint256 i =_startIndex; i < _endIndex; i++){
+        unverifyChannel(_channelList[i]);
+      }
+      return true;
+    }
     /**
      * @notice    Function is designed to verify a channel
      * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already verified
      * @param    _channel Address of the channel to be Verified
      **/
-    function verifyChannel(address _channel) external onlyActivatedChannels(_channel) {
+    function verifyChannel(address _channel) public onlyActivatedChannels(_channel) {
       // Check if caller is verified first
       uint8 callerVerified = getChannelVerfication(msg.sender);
       require(callerVerified > 0, "EPNSCoreV1::verifyChannel: Caller is not verified");
@@ -813,7 +824,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      * @dev       Channel who verified this channel or Push Channel Admin can only revoke
      * @param    _channel Address of the channel to be unverified
      **/
-    function unverifyChannel(address _channel) external {
+    function unverifyChannel(address _channel) public {
       require(
         channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
         "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
@@ -856,7 +867,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
-    function swapAndTransferPUSH(address _user, uint256 _userAmount)
+    function swapAndTransferPUSH(address _user, uint256 _userAmount, uint256 _amountsOutValue)
         internal
         returns (bool)
     {
@@ -870,7 +881,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
 
         IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
             _userAmount,
-            1,
+            _amountsOutValue,
             path,
             _user,
             block.timestamp
@@ -883,52 +894,8 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
         lendingPoolProviderAddress
       );
       ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-      IERC20(aDaiAddress).approve(provider.getLendingPoolCore(), _amount);
 
       IADai(aDaiAddress).redeem(_amount);
-    }
-
-    /**
-     * @notice Function to claim Rewards generated for indivudual users
-     * NOTE   The EPNSCore Protocol must be approved as a Delegtate for Resetting the HOLDER's WEIGHT on PUSH Token Contract.
-     *
-     * @dev - Gets the User's Holder weight from the PUSH token contract
-     *      - Gets the totalSupply and Start Block of PUSH Token
-     *      - Calculates the totalHolder weight w.r.t to the current block number
-     *      - Gets the ratio of token holder by dividing individual User's weight tp totalWeight (also adjusts for the FLOAT)
-     *      - Gets the Total ADAI Interest accumulated for the protocol
-     *      - Calculates the amount the User should recieve considering the user's ratio calculated before
-     *      - The claim function resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
-     *      - The Claimable ADAI Amount amount is SWapped for PUSH Tokens.
-     *      - The PUSH token is then transferred to the USER as the interest.
-    **/
-    function claimInterest() external returns(bool success){
-      address _user = msg.sender;
-      // Reading necessary PUSH details
-      uint pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
-      uint pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
-      uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
-
-      // Calculating total holder weight at the current Block Number
-      uint blockGap = block.number.sub(pushStartBlock);
-      uint totalHolderWeight = pushTotalSupply.mul(blockGap);
-
-      //Calculating individual User's Ratio
-      uint userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
-
-      // Calculating aDai Interest Generated and CLaimable Amount
-      uint256 aDaiBalanceWithInterest = IADai(aDaiAddress).balanceOf(address(this));
-      uint256 totalADAIInterest = aDaiBalanceWithInterest.sub(POOL_FUNDS);
-      uint256 totalClaimableRewards = totalADAIInterest.mul(userRatio).div(ADJUST_FOR_FLOAT).div(100);
-      require(totalClaimableRewards > 0, "EPNSCoreV1::claimInterest: No Claimable Rewards at the Moment");
-
-      // Reset the User's Weight and Transfer the Tokens
-      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-      usersInterestClaimed[_user] = usersInterestClaimed[_user].add(totalClaimableRewards);
-      swapAndTransferPUSH(_user, totalClaimableRewards);
-
-      emit InterestClaimed(msg.sender, totalClaimableRewards);
-      success = true;
     }
 
     /* **************
@@ -943,6 +910,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
      *
      * @param _action                 The type of Channel action for which the Fair Share is being adjusted
      * @param _channelWeight          Weight of the channel on which the Action is being performed.
+     * @param _oldChannelWeight       Old Weight of the channel on which the Action is being performed.
      * @param _groupFairShareCount    Fair share count
      * @param _groupNormalizedWeight  Normalized weight value
      * @param _groupHistoricalZ       The Historical Constant - Z
@@ -951,6 +919,7 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     function _readjustFairShareOfChannels(
         ChannelAction _action,
         uint256 _channelWeight,
+        uint256 _oldChannelWeight,
         uint256 _groupFairShareCount,
         uint256 _groupNormalizedWeight,
         uint256 _groupHistoricalZ,
@@ -967,27 +936,24 @@ contract EPNSCoreV1 is Initializable, ReentrancyGuard, Ownable {
     {
         // readjusts the group count and do deconstruction of weight
         uint256 groupModCount = _groupFairShareCount;
-        uint256 prevGroupCount = groupModCount;
+        // NormalizedWeight of all Channels at this point
+        uint256 adjustedNormalizedWeight = _groupNormalizedWeight;
+        // totalWeight of all Channels at this point
+        uint256 totalWeight = adjustedNormalizedWeight.mul(groupModCount);
 
-        uint256 totalWeight;
-        uint256 adjustedNormalizedWeight = _groupNormalizedWeight; //_groupNormalizedWeight;
-
-        // Increment or decrement count based on flag
         if (_action == ChannelAction.ChannelAdded) {
             groupModCount = groupModCount.add(1);
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
             totalWeight = totalWeight.add(_channelWeight);
 
         } else if (_action == ChannelAction.ChannelRemoved) {
             groupModCount = groupModCount.sub(1);
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
-            totalWeight = totalWeight.sub(_channelWeight);
+            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
 
         } else if (_action == ChannelAction.ChannelUpdated) {
-            totalWeight = adjustedNormalizedWeight.mul(prevGroupCount.sub(1));
-            totalWeight = totalWeight.add(_channelWeight);
+            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
 
-        } else {
+        }
+        else {
             revert("EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action");
         }
         // now calculate the historical constant

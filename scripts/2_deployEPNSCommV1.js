@@ -8,7 +8,7 @@ const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployCo
 async function main() {
   // Version Check
   console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["daiAddress", "aDaiAddress", "wethAddress", "pushAddress", "uniswapRouterAddress", "aaveLendingAddress", "referralCode"])
+  const versionDetails = versionVerifier(["chainName"])
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
 
   // First deploy all contracts
@@ -56,6 +56,8 @@ async function setupAllContracts(versionDetails) {
   const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
   deployedContracts.push(EPNSCommV1)
 
+  const EPNSCommAdmin = await deployContract("EPNSCommAdmin", [], "EPNSCommAdmin");
+  deployedContracts.push(EPNSCommAdmin)
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
 
@@ -80,16 +82,11 @@ async function setupAllContracts(versionDetails) {
   // await timelock.functions.executeTransaction(timelock.address, '0', 'setPendingAdmin(address)', data, (eta + 1));
 
   const EPNSCommProxy = await deployContract("EPNSCommProxy", [
-    EPNSCommV1.address,
-    adminSigner.address,
-    versionDetails.deploy.args.pushAddress,
-    versionDetails.deploy.args.wethAddress,
-    versionDetails.deploy.args.uniswapRouterAddress,
-    versionDetails.deploy.args.aaveLendingAddress,
-    versionDetails.deploy.args.daiAddress,
-    versionDetails.deploy.args.aDaiAddress,
-    parseInt(versionDetails.deploy.args.referralCode),
-  ], "EPNSCommProxy");
+      EPNSCommV1.address,
+      EPNSCommAdmin.address,
+      adminSigner.address,
+      versionDetails.deploy.args.chainName,
+    ], "EPNSCommProxy");
 
   deployedContracts.push(EPNSCommProxy)
 

@@ -55,7 +55,7 @@ deploy = async function deploy(name, _args, identifier) {
   const args = _args || []
 
   console.log(`📄 ${name}`)
-  const contractArtifacts = await ethers.getContractFactory(name)      
+  const contractArtifacts = await ethers.getContractFactory(name)
   const contract = await contractArtifacts.deploy(...args)
   await contract.deployed()
   console.log(
@@ -228,33 +228,27 @@ const SubscriberAction = {
 const readjustFairShareOfChannels = (
     _action,
     _channelWeight,
-    _groupFairShareCount, 
-    _groupNormalizedWeight, 
-    _groupHistoricalZ, 
+    _oldChannelWeight,
+    _groupFairShareCount,
+    _groupNormalizedWeight,
+    _groupHistoricalZ,
     _groupLastUpdate,
     blockNumber
 ) => {
     let groupModCount = _groupFairShareCount;
-    let prevGroupCount = groupModCount;
-    let totalWeight;
     let adjustedNormalizedWeight = _groupNormalizedWeight; //_groupNormalizedWeight;
-
+    let totalWeight = adjustedNormalizedWeight.mul(groupModCount);
     // Increment or decrement count based on flag
     if (_action == ChannelAction.ChannelAdded) {
         groupModCount = groupModCount.add(1);
-
-        totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
         totalWeight = totalWeight.add(_channelWeight);
     }
     else if (_action == ChannelAction.ChannelRemoved) {
         groupModCount = groupModCount.sub(1);
-
-        totalWeight = adjustedNormalizedWeight.mul(prevGroupCount);
-        totalWeight = totalWeight.sub(_channelWeight);
+        totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
     }
     else if (_action == ChannelAction.ChannelUpdated) {
-        totalWeight = adjustedNormalizedWeight.mul(prevGroupCount.sub(1));
-        totalWeight = totalWeight.add(_channelWeight);
+        totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
     }
     else {
         return
@@ -373,7 +367,7 @@ const calcChannelFairShare = (
     // eslint-disable-next-line camelcase
     return (da * ADJUST_FOR_FLOAT) / ZNXW;
 };
-  
+
 const calcSubscriberFairShare = (
     currentBlock,
     memberLastUpdate,

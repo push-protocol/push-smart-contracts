@@ -61,6 +61,9 @@ async function setupAllContracts(versionDetails) {
   const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
   deployedContracts.push(EPNSCoreV1)
 
+  const EPNSCoreAdmin = await deployContract("EPNSCoreAdmin", [], "EPNSCoreAdmin");
+  deployedContracts.push(EPNSCoreAdmin)
+
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
 
@@ -86,6 +89,7 @@ async function setupAllContracts(versionDetails) {
 
   const EPNSCoreProxy = await deployContract("EPNSCoreProxy", [
     EPNSCoreV1.address,
+    EPNSCoreAdmin.address,
     adminSigner.address,
     versionDetails.deploy.args.pushAddress,
     versionDetails.deploy.args.wethAddress,
@@ -94,7 +98,7 @@ async function setupAllContracts(versionDetails) {
     versionDetails.deploy.args.daiAddress,
     versionDetails.deploy.args.aDaiAddress,
     parseInt(versionDetails.deploy.args.referralCode),
-  ], "EPNSProxy");
+  ], "EPNSCoreProxy");
 
   deployedContracts.push(EPNSCoreProxy)
 

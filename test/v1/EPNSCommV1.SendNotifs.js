@@ -35,6 +35,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
@@ -124,7 +125,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommV1 = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommV1.deploy();
@@ -132,6 +133,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       ADMINSIGNER.address,
       EPNS.address,
       WETH,
@@ -142,16 +144,15 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(ALICESIGNER.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
-      ADMINSIGNER.address
+      PROXYADMIN.address,
+      ADMINSIGNER.address,
+      CHAIN_NAME
     );
 
-    await EPNSCommProxy.changeAdmin(ALICESIGNER.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommV1.attach(EPNSCommProxy.address)
 
   });
@@ -193,13 +194,13 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
               });
            it("Should revert if a User is sending Notif to Other Address Instead of themselves", async function(){
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, BOB, CHARLIE, msg);
+             const tx = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, CHARLIE, msg);
              await expect(tx).to.be.revertedWith("EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber");
            });
 
            it("Should Emit Event if Recipient is Sending NOTIF Only to HIMself/Herself", async function(){
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx_sendNotif = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, BOB, BOB, msg);
+             const tx_sendNotif = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(CHANNEL_CREATOR, BOB, msg);
              await expect(tx_sendNotif)
                   .to.emit(EPNSCommV1Proxy, 'SendNotification')
                   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
@@ -208,14 +209,14 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
            it("Should revert if Channel is 0x00.. But Caller is any address other than Admin/Governance", async function(){
              const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, CHARLIE, msg);
+             const tx = EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, CHARLIE, msg);
              await expect(tx).to.be.revertedWith("EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber");
            });
 
            it("Should Emit Event if Channel is 0x00.. and Caller is Admin/Governance", async function(){
              const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx_sendNotif = EPNSCommV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, BOB, CHARLIE, msg);
+             const tx_sendNotif = EPNSCommV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, CHARLIE, msg);
              await expect(tx_sendNotif)
                   .to.emit(EPNSCommV1Proxy, 'SendNotification')
                   .withArgs(EPNS_ALERTER_CHANNEL, CHARLIE, ethers.utils.hexlify(msg));
@@ -223,7 +224,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
 
            it("Should revert if Delegate without send notification without Approval", async function(){
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx = EPNSCommV1Proxy.connect(CHARLIESIGNER).sendNotification(CHANNEL_CREATOR, CHARLIE, BOB, msg);
+             const tx = EPNSCommV1Proxy.connect(CHARLIESIGNER).sendNotification(CHANNEL_CREATOR, BOB, msg);
              await expect(tx).to.be.revertedWith("EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber");
            });
 
@@ -233,7 +234,7 @@ describe("EPNS COMMUNICATOR Protocol ", function () {
              const isCharlieAllowed_after = await EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).delegatedNotificationSenders(CHANNEL_CREATOR, CHARLIE);
 
              const msg = ethers.utils.toUtf8Bytes("This is notification message");
-             const tx_sendNotif = EPNSCommV1Proxy.connect(CHARLIESIGNER).sendNotification(CHANNEL_CREATOR, CHARLIE, BOB, msg);
+             const tx_sendNotif = EPNSCommV1Proxy.connect(CHARLIESIGNER).sendNotification(CHANNEL_CREATOR, BOB, msg);
 
              await expect(isCharlieAllowed_before).to.equal(false);
              await expect(isCharlieAllowed_after).to.equal(true);

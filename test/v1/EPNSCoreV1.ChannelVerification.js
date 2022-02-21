@@ -35,6 +35,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
@@ -116,7 +117,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
@@ -124,6 +125,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       admin.address,
       EPNS.address,
       WETH,
@@ -134,16 +136,15 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(alice.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
-      admin.address
+      PROXYADMIN.address,
+      admin.address,
+      CHAIN_NAME
     );
 
-    await EPNSCommProxy.changeAdmin(alice.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address)
   });
 
@@ -334,5 +335,61 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
         await EPNSCoreV1Proxy.connect(admin).unverifyChannel(fizz.address);
       });
     });
+
+    describe("Testing Batch Channel Verification & Unverification", function() {
+
+    it("Only Admin should be able to execute Batch Verification", async function(){
+        const _startIndex = 0;
+        const _endIndex = 4;
+        const channelArray = [bob.address, charlie.address, dolly.address, electra.address];
+        const tx = EPNSCoreV1Proxy.connect(bob).batchVerification(_startIndex, _endIndex, channelArray);
+        await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
+     });
+
+    it("Only Admin should be able to execute Batch Revoke Verification", async function(){
+         const _startIndex = 0;
+         const _endIndex = 4;
+         const channelArray = [bob.address, charlie.address, dolly.address, electra.address];
+         const tx = EPNSCoreV1Proxy.connect(bob).batchRevokeVerification(_startIndex, _endIndex, channelArray);
+         await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
+    });
+
+    it("Admin should be able to verify a Batch of Channels", async function(){
+        const _startIndex = 0;
+        const _endIndex = 4;
+         const channelArray = [bob.address, charlie.address, dolly.address, electra.address];
+
+         await EPNSCoreV1Proxy.connect(admin).batchVerification(_startIndex, _endIndex, channelArray);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(1);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(1);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(1);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(1);
+    });
+
+    it("Admin should be able to Revoke Verification of a Batch of Channels", async function(){
+          const _startIndex = 0;
+          const _endIndex = 4;
+         const channelArray = [bob.address, charlie.address, dolly.address, electra.address];
+         await EPNSCoreV1Proxy.connect(admin).batchVerification(_startIndex, _endIndex, channelArray);
+
+         const bob_Verification_before = await EPNSCoreV1Proxy.getChannelVerfication(bob.address);
+         const charlie_Verification_before = await EPNSCoreV1Proxy.getChannelVerfication(charlie.address);
+         const dolly_Verification_before = await EPNSCoreV1Proxy.getChannelVerfication(dolly.address);
+         const electra_Verification_before = await EPNSCoreV1Proxy.getChannelVerfication(electra.address);
+
+         await EPNSCoreV1Proxy.connect(admin).batchRevokeVerification(_startIndex, _endIndex, channelArray);
+
+         await expect(bob_Verification_before).to.be.equal(1);
+         await expect(charlie_Verification_before).to.be.equal(1);
+         await expect(dolly_Verification_before).to.be.equal(1);
+         await expect(electra_Verification_before).to.be.equal(1);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(bob.address))).to.equal(0);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(charlie.address))).to.equal(0);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(dolly.address))).to.equal(0);
+         expect((await EPNSCoreV1Proxy.getChannelVerfication(electra.address))).to.equal(0);
+  });
+   });
+
+
   });
 });

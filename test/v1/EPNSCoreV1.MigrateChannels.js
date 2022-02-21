@@ -35,6 +35,7 @@ describe("EPNS CORE Protocol ", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(2500)
@@ -124,7 +125,7 @@ describe("EPNS CORE Protocol ", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
@@ -132,6 +133,7 @@ describe("EPNS CORE Protocol ", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       ADMINSIGNER.address,
       EPNS.address,
       WETH,
@@ -142,16 +144,15 @@ describe("EPNS CORE Protocol ", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(ALICESIGNER.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
-      ADMINSIGNER.address
+      PROXYADMIN.address,
+      ADMINSIGNER.address,
+      CHAIN_NAME
     );
 
-    await EPNSCommProxy.changeAdmin(ALICESIGNER.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address)
 
   });
@@ -434,13 +435,15 @@ describe("EPNS CORE Protocol ", function () {
 
           const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
           const blockNumber = tx.blockNumber;
+          const _oldChannelWeight = 0;
+          const newChannelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
           const {
             groupNewCount,
             groupNewNormalizedWeight,
             groupNewHistoricalZ,
             groupNewLastUpdate
-          } = readjustFairShareOfChannels(ChannelAction.ChannelAdded, channelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
+          } = readjustFairShareOfChannels(ChannelAction.ChannelAdded, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
 
           const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
           const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();

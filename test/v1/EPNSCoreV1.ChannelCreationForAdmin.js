@@ -35,6 +35,7 @@ describe("EPNS Core Protocol", function () {
   const UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
   const AAVE_LENDING_POOL = "0x1c8756FD2B28e9426CDBDcC7E3c4d64fa9A54728";
 
+  const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
   const referralCode = 0;
   const CHANNEL_DEACTIVATION_FEES = tokensBN(10);
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
@@ -117,7 +118,7 @@ describe("EPNS Core Protocol", function () {
 
     const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
-    await PROXYADMIN.transferOwnership(TIMELOCK.address);
+    //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
     const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
@@ -125,6 +126,7 @@ describe("EPNS Core Protocol", function () {
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");
     EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
       CORE_LOGIC.address,
+      PROXYADMIN.address,
       ADMINSIGNER.address,
       EPNS.address,
       WETH,
@@ -135,16 +137,15 @@ describe("EPNS Core Protocol", function () {
       referralCode,
     );
 
-    await EPNSCoreProxy.changeAdmin(ALICESIGNER.address);
-    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
-
     const EPNSCommProxyContract = await ethers.getContractFactory("EPNSCommProxy");
     EPNSCommProxy = await EPNSCommProxyContract.deploy(
       COMMUNICATOR_LOGIC.address,
-      ADMINSIGNER.address
+      PROXYADMIN.address,
+      ADMINSIGNER.address,
+      CHAIN_NAME
     );
 
-    await EPNSCommProxy.changeAdmin(ALICESIGNER.address);
+    EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address)
 
   });
@@ -179,14 +180,9 @@ describe("EPNS Core Protocol", function () {
          });
 
           it("Should only be Executed Once", async function () {
-            const oneTimeCheck_before = await EPNSCoreV1Proxy.oneTimeCheck();
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).createChannelForPushChannelAdmin();
-            const oneTimeCheck_after = await EPNSCoreV1Proxy.oneTimeCheck();
-
             const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).createChannelForPushChannelAdmin();
 
-            expect(oneTimeCheck_before).to.be.equal(false);
-            expect(oneTimeCheck_after).to.be.equal(true);
             expect(tx).to.be.revertedWith("EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
 
           });

@@ -16,20 +16,21 @@ const deploy = {
       version: 1
     },
     hardhat: {
-      version: 2
+      version: 1
+    },
+    polygon: {
+      version: 1
+    },
+    polygonMumbai: {
+      version: 1
     },
     localhost: {
       version: 1
     }
   },
   args: {
-    daiAddress: null,
-    aDaiAddress: null,
-    wethAddress: null,
-    pushAddress: null,
-    uniswapRouterAddress: null,
-    aaveLendingAddress: null,
-    referralCode: null
+    epnsProxyAddress: null,
+    epnsCommAdmin: null
   }
 }
 

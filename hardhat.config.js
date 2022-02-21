@@ -69,10 +69,37 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    polygonMumbai: {
+      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    polygon: {
+      url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: getPrivateKey(),
+      aaccounts: {
+        mnemonic: mnemonic(),
+      },
     },
+
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
@@ -82,16 +109,16 @@ module.exports = {
     },
   },
   etherscan: {
-    // Your API key for Etherscan
-    // Obtain one at https://etherscan.io/
-    apiKey: "9ZYB8NMQ5TXCFK1WCDZT2B5YE4Z3XW2X5P",
-  },
+   // Your API key for Etherscan and Polygonscan
+   apiKey: process.env.ETHERSCAN_API,
+   //apiKey: process.env.POLYGONSCAN_API
+ },
   solidity: {
     version: "0.6.11",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 99999,
       },
     },
   },

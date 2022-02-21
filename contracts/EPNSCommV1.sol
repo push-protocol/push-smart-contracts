@@ -21,9 +21,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract EPNSCommV1 is Initializable, ReentrancyGuard {
+contract EPNSCommV1 is Initializable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -66,10 +65,13 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     /** STATE VARIABLES **/
     address public governance;
     address public pushChannelAdmin;
+    uint256 public chainID;
     uint256 public usersCount;
     bool public isMigrationComplete;
     address public EPNSCoreAddress;
+    string public chainName;
     string public constant name = "EPNS COMM V1";
+    bytes32 public constant NAME_HASH = keccak256(bytes(name));
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
             "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
@@ -99,6 +101,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
     event PublicKeyRegistered(address indexed owner, bytes publickey);
+    event ChannelAlias(string _chainName, uint256 indexed _chainID, address indexed _channelOwnerAddress, string _ethereumChannelAddress);
 
     /** MODIFIERS **/
 
@@ -114,14 +117,12 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     modifier sendNotifViaSignReq(
         address _channel,
-        address _notificationSender,
         address _recipient,
         address signatory
     ) {
         require(
             (_channel == signatory) ||
-                (delegatedNotificationSenders[_channel][_notificationSender] &&
-                    _notificationSender == signatory) ||
+                (delegatedNotificationSenders[_channel][signatory]) ||
                 (_recipient == signatory),
             "EPNSCommV1::sendNotifViaSignReq: Invalid Channel, Delegate Or Subscriber"
         );
@@ -133,9 +134,11 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         INITIALIZER
 
     *************** */
-    function initialize(address _pushChannelAdmin) public initializer returns (bool) {
+    function initialize(address _pushChannelAdmin, string memory _chainName) public initializer returns (bool) {
         pushChannelAdmin = _pushChannelAdmin;
-        governance = pushChannelAdmin;
+        governance = _pushChannelAdmin;
+        chainName = _chainName;
+        chainID = getChainId();
         return true;
     }
 
@@ -144,6 +147,9 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     => SETTER FUNCTIONS <=
 
     ****************/
+    function verifyChannelAlias(string memory _channelAddress) external{
+      emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
+    }
 
     function completeMigration() external onlyPushChannelAdmin{
         isMigrationComplete = true;
@@ -293,7 +299,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
+                NAME_HASH,
                 getChainId(),
                 address(this)
             )
@@ -421,7 +427,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
+                NAME_HASH,
                 getChainId(),
                 address(this)
             )
@@ -566,7 +572,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
     function _checkNotifReq
     (
       address _channel,
-      address _notificationSender,
       address _recipient
     ) private view
     {
@@ -574,8 +579,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
           (_channel == 0x0000000000000000000000000000000000000000 &&
               msg.sender == pushChannelAdmin) ||
               (_channel == msg.sender) ||
-              (delegatedNotificationSenders[_channel][_notificationSender] &&
-                  msg.sender == _notificationSender) ||
+              (delegatedNotificationSenders[_channel][msg.sender]) ||
               (_recipient == msg.sender),
           "EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber"
       );
@@ -584,20 +588,19 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
      * @notice Allows a Channel Owners, Delegates as well as Users to send Notifications
      * @dev Emits out notification details once all the requirements are passed.
      * @param _channel address of the Channel
-     * @param _delegate address of the delegate who is allowed to Send Notifications
      * @param _recipient address of the reciever of the Notification
      * @param _identity Info about the Notification
      **/
     function sendNotification(
         address _channel,
-        address _delegate,
         address _recipient,
         bytes memory _identity
-    ) public{
-        _checkNotifReq(_channel, _delegate, _recipient);
+    ) public {
+        _checkNotifReq(_channel, _recipient);
         // Emit the message out
         emit SendNotification(_channel, _recipient, _identity);
     }
+
 
     /**
      * @notice Base Notification Function that Allows a Channel Owners, Delegates as well as Users to send Notifications
@@ -606,14 +609,12 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
      *        Takes into consideration the Signatory address to perform all the imperative checks
      *
      * @param _channel address of the Channel
-     * @param _delegate address of the delegate who is allowed to Send Notifications
      * @param _recipient address of the reciever of the Notification
      * @param _signatory address of the SIGNER of the Send Notif Function call transaction
      * @param _identity Info about the Notification
      **/
     function _sendNotification(
         address _channel,
-        address _delegate,
         address _recipient,
         address _signatory,
         bytes calldata _identity
@@ -621,7 +622,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         private
         sendNotifViaSignReq(
             _channel,
-            _delegate,
             _recipient,
             _signatory
         )
@@ -629,7 +629,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         // Emit the message out
         emit SendNotification(_channel, _recipient, _identity);
     }
-
     /**
      * @notice Meta transaction function for Sending Notifications
      * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
@@ -637,7 +636,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
 
     function sendNotifBySig(
         address _channel,
-        address _delegate,
         address _recipient,
         bytes calldata _identity,
         uint256 nonce,
@@ -649,7 +647,7 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
+                NAME_HASH,
                 getChainId(),
                 address(this)
             )
@@ -658,7 +656,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
             abi.encode(
                 SEND_NOTIFICATION_TYPEHASH,
                 _channel,
-                _delegate,
                 _recipient,
                 _identity,
                 nonce,
@@ -674,7 +671,6 @@ contract EPNSCommV1 is Initializable, ReentrancyGuard {
         require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
         _sendNotification(
             _channel,
-            _delegate,
             _recipient,
             signatory,
             _identity
