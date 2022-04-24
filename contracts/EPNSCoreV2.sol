@@ -637,7 +637,6 @@ contract EPNSCoreV2 is Initializable, Pausable{
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        swapAndTransferPUSH(msg.sender, totalRefundableAmount, _amountsOutValue);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -844,48 +843,6 @@ contract EPNSCoreV2 is Initializable, Pausable{
 
       // Emit Event
       emit ChannelVerificationRevoked(_channel, msg.sender);
-    }
-
-    /* **************
-
-    => DEPOSIT & WITHDRAWAL of FUNDS<=
-
-    *************** */
-    /**
-     * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
-     *
-     * @param _user address of the user that will recieve the PUSH Tokens
-     * @param _userAmount the amount of aDai to be swapped and transferred
-     **/
-    function swapAndTransferPUSH(address _user, uint256 _userAmount, uint256 _amountsOutValue)
-        internal
-        returns (bool)
-    {
-        swapADaiForDai(_userAmount);
-        IERC20(daiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
-
-        address[] memory path = new address[](3);
-        path[0] = daiAddress;
-        path[1] = WETH_ADDRESS;
-        path[2] = PUSH_TOKEN_ADDRESS;
-
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-            _userAmount,
-            _amountsOutValue,
-            path,
-            _user,
-            block.timestamp
-        );
-        return true;
-    }
-
-    function swapADaiForDai(uint256 _amount) private{
-      ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
-        lendingPoolProviderAddress
-      );
-      ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-
-      IADai(aDaiAddress).redeem(_amount);
     }
 
     /* **************
