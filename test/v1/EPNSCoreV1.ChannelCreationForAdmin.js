@@ -116,7 +116,7 @@ describe("EPNS Core Protocol", function () {
     const TimeLock = await ethers.getContractFactory("Timelock");
     TIMELOCK = await TimeLock.deploy(ADMIN, delay);
 
-    const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
+    const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
     //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 

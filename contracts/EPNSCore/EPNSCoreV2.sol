@@ -12,12 +12,12 @@ pragma experimental ABIEncoderV2;
  **/
 
 import "./EPNSCoreStorageV2.sol";
-import "./interfaces/IPUSH.sol";
-import "./interfaces/IADai.sol";
-import "./interfaces/ILendingPool.sol";
-import "./interfaces/IUniswapV2Router.sol";
-import "./interfaces/IEPNSCommV1.sol";
-import "./interfaces/ILendingPoolAddressesProvider.sol";
+import "../interfaces/IPUSH.sol";
+import "../interfaces/IADai.sol";
+import "../interfaces/ILendingPool.sol";
+import "../interfaces/IUniswapV2Router.sol";
+import "../interfaces/IEPNSCommV1.sol";
+import "../interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";

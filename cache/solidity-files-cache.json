@@ -1,16 +1,16 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSAdmin.sol": {
-      "lastModificationDate": 1625774012393,
-      "contentHash": "b25382a7b43387c6b7507751312f0051",
-      "sourceName": "contracts/EPNSAdmin.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSComm/EPNSCommAdmin.sol": {
+      "lastModificationDate": 1650871295147,
+      "contentHash": "e795988b648309e30c262e523c19b574",
+      "sourceName": "contracts/EPNSComm/EPNSCommAdmin.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -18,7 +18,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -34,11 +35,11 @@
         "^0.6.0"
       ],
       "artifacts": [
-        "EPNSAdmin"
+        "EPNSCommAdmin"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/ProxyAdmin.sol": {
-      "lastModificationDate": 1628713026976,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/ProxyAdmin.sol": {
+      "lastModificationDate": 1650871696734,
       "contentHash": "61e1e11a965a3a8df0f2252ea2828584",
       "sourceName": "@openzeppelin/contracts/proxy/ProxyAdmin.sol",
       "solcConfig": {
@@ -46,7 +47,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -54,7 +55,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -74,8 +76,8 @@
         "ProxyAdmin"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1628713026957,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1650871696734,
       "contentHash": "6748815a5b45c4aeeda56819f41190e0",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -83,7 +85,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -91,7 +93,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -110,8 +113,8 @@
         "Ownable"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
-      "lastModificationDate": 1628713027040,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol": {
+      "lastModificationDate": 1650871696735,
       "contentHash": "572da86d0eb185b41f85df7d2d75378b",
       "sourceName": "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol",
       "solcConfig": {
@@ -119,7 +122,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -127,7 +130,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -146,8 +150,8 @@
         "TransparentUpgradeableProxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1628713026588,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1650871696742,
       "contentHash": "2adbd82f6d055a4751566d4671512b03",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -155,7 +159,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -163,7 +167,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -180,8 +185,8 @@
         "Context"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
-      "lastModificationDate": 1628713027066,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/UpgradeableProxy.sol": {
+      "lastModificationDate": 1650871696735,
       "contentHash": "c163cbd51d0173b71c8137b0ddf1e0ba",
       "sourceName": "@openzeppelin/contracts/proxy/UpgradeableProxy.sol",
       "solcConfig": {
@@ -189,7 +194,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -197,7 +202,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -217,8 +223,8 @@
         "UpgradeableProxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
-      "lastModificationDate": 1628713026970,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
+      "lastModificationDate": 1650871696734,
       "contentHash": "52841a5095656ecbf7bc86cd6c114699",
       "sourceName": "@openzeppelin/contracts/proxy/Proxy.sol",
       "solcConfig": {
@@ -226,7 +232,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -234,7 +240,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -251,8 +258,8 @@
         "Proxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1628713026548,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Address.sol": {
+      "lastModificationDate": 1650871696736,
       "contentHash": "7aa46886ff5abe7515496208a5e2ce5a",
       "sourceName": "@openzeppelin/contracts/utils/Address.sol",
       "solcConfig": {
@@ -260,7 +267,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -268,7 +275,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -285,16 +293,16 @@
         "Address"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/governance/EPNSBravoProxy.sol": {
-      "lastModificationDate": 1631004021730,
-      "contentHash": "bd2edc842108ff4f104ff10e88cd03aa",
-      "sourceName": "contracts/governance/EPNSBravoProxy.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreAdmin.sol": {
+      "lastModificationDate": 1650871295149,
+      "contentHash": "372f675e091db0efd5a8a6b047b46d71",
+      "sourceName": "contracts/EPNSCore/EPNSCoreAdmin.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -302,7 +310,45 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/proxy/ProxyAdmin.sol"
+      ],
+      "versionPragmas": [
+        "^0.6.0"
+      ],
+      "artifacts": [
+        "EPNSCoreAdmin"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/governance/EPNSBravoProxy.sol": {
+      "lastModificationDate": 1650871237466,
+      "contentHash": "bd2edc842108ff4f104ff10e88cd03aa",
+      "sourceName": "contracts/governance/EPNSBravoProxy.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -321,16 +367,16 @@
         "EPNSBravoProxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCoreProxy.sol": {
-      "lastModificationDate": 1631392467424,
-      "contentHash": "55359e28237ed371870ec4be6c2467ed",
-      "sourceName": "contracts/EPNSCoreProxy.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreProxy.sol": {
+      "lastModificationDate": 1650871295149,
+      "contentHash": "a7365f1f3a96fa835d9afbdc905065d2",
+      "sourceName": "contracts/EPNSCore/EPNSCoreProxy.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -338,7 +384,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -357,16 +404,16 @@
         "EPNSCoreProxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCommProxy.sol": {
-      "lastModificationDate": 1631393941215,
-      "contentHash": "e8af3d6835dc9eda7f133fbd5c74f452",
-      "sourceName": "contracts/EPNSCommProxy.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSComm/EPNSCommProxy.sol": {
+      "lastModificationDate": 1650871295147,
+      "contentHash": "16b45ae440ccbcf905aa738e4cdf0264",
+      "sourceName": "contracts/EPNSComm/EPNSCommProxy.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -374,7 +421,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -393,8 +441,8 @@
         "EPNSCommProxy"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
-      "lastModificationDate": 1628713026998,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/SafeERC20.sol": {
+      "lastModificationDate": 1650871697877,
       "contentHash": "33e22842646d746e5c4124c2fdc051aa",
       "sourceName": "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
       "solcConfig": {
@@ -402,7 +450,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -410,7 +458,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -431,8 +480,8 @@
         "SafeERC20"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-      "lastModificationDate": 1628713026892,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+      "lastModificationDate": 1650871697877,
       "contentHash": "e0a41531d159d3a32f84b7a3ecf9fabb",
       "sourceName": "@openzeppelin/contracts/token/ERC20/IERC20.sol",
       "solcConfig": {
@@ -440,7 +489,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -448,7 +497,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -465,8 +515,8 @@
         "IERC20"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
-      "lastModificationDate": 1628713027004,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/math/SafeMath.sol": {
+      "lastModificationDate": 1650871696733,
       "contentHash": "e03e12206057e809eb76c5f681170c32",
       "sourceName": "@openzeppelin/contracts/math/SafeMath.sol",
       "solcConfig": {
@@ -474,7 +524,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -482,7 +532,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -499,16 +550,16 @@
         "SafeMath"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCoreV1.sol": {
-      "lastModificationDate": 1631460256690,
-      "contentHash": "ac6155435e4800934f31cb7776db3dc5",
-      "sourceName": "contracts/EPNSCoreV1.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreV2.sol": {
+      "lastModificationDate": 1650871755917,
+      "contentHash": "d828b9df551642e0570c4e6245ad63d2",
+      "sourceName": "contracts/EPNSCore/EPNSCoreV2.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -516,7 +567,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -526,37 +578,37 @@
         }
       },
       "imports": [
-        "./interfaces/IPUSH.sol",
-        "./interfaces/IADai.sol",
-        "./interfaces/ILendingPool.sol",
-        "./interfaces/IUniswapV2Router.sol",
-        "./interfaces/IEPNSCommV1.sol",
-        "./interfaces/ILendingPoolAddressesProvider.sol",
+        "./EPNSCoreStorageV2.sol",
+        "../interfaces/IPUSH.sol",
+        "../interfaces/IADai.sol",
+        "../interfaces/ILendingPool.sol",
+        "../interfaces/IUniswapV2Router.sol",
+        "../interfaces/IEPNSCommV1.sol",
+        "../interfaces/ILendingPoolAddressesProvider.sol",
         "@openzeppelin/contracts/utils/Strings.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
-        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/Pausable.sol",
         "@openzeppelin/contracts/token/ERC20/IERC20.sol",
         "@openzeppelin/contracts/proxy/Initializable.sol",
-        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
-        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol"
       ],
       "versionPragmas": [
         ">=0.6.0 <0.7.0"
       ],
       "artifacts": [
-        "EPNSCoreV1"
+        "EPNSCoreV2"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/IPUSH.sol": {
-      "lastModificationDate": 1631392467424,
-      "contentHash": "712167688745f49144b2f368ef86561c",
-      "sourceName": "contracts/interfaces/IPUSH.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreStorageV2.sol": {
+      "lastModificationDate": 1650871295149,
+      "contentHash": "a44b6e6b44b6433cd4a5c31445acdcc7",
+      "sourceName": "contracts/EPNSCore/EPNSCoreStorageV2.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -564,7 +616,43 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSCoreStorageV2"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/IPUSH.sol": {
+      "lastModificationDate": 1649499827203,
+      "contentHash": "712167688745f49144b2f368ef86561c",
+      "sourceName": "contracts/interfaces/IPUSH.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -581,8 +669,8 @@
         "IPUSH"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/IADai.sol": {
-      "lastModificationDate": 1631392467424,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/IADai.sol": {
+      "lastModificationDate": 1650615185972,
       "contentHash": "f369ea69a5ff546f0320f17f130ae285",
       "sourceName": "contracts/interfaces/IADai.sol",
       "solcConfig": {
@@ -590,7 +678,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -598,7 +686,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -615,8 +704,8 @@
         "IADai"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/ILendingPool.sol": {
-      "lastModificationDate": 1628711348803,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/ILendingPool.sol": {
+      "lastModificationDate": 1649499827203,
       "contentHash": "455c8cbc34054ca45b28b6aeb735d83a",
       "sourceName": "contracts/interfaces/ILendingPool.sol",
       "solcConfig": {
@@ -624,7 +713,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -632,7 +721,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -649,8 +739,8 @@
         "ILendingPool"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/IUniswapV2Router.sol": {
-      "lastModificationDate": 1628711348805,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/IUniswapV2Router.sol": {
+      "lastModificationDate": 1650805909183,
       "contentHash": "519795fb728e5e6ab083335fc0488ac1",
       "sourceName": "contracts/interfaces/IUniswapV2Router.sol",
       "solcConfig": {
@@ -658,7 +748,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -666,7 +756,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -683,8 +774,8 @@
         "IUniswapV2Router"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/IEPNSCommV1.sol": {
-      "lastModificationDate": 1631393284970,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/IEPNSCommV1.sol": {
+      "lastModificationDate": 1649499827202,
       "contentHash": "6a19808adaf5915c1d87012e9ca96854",
       "sourceName": "contracts/interfaces/IEPNSCommV1.sol",
       "solcConfig": {
@@ -692,7 +783,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -700,7 +791,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -717,8 +809,8 @@
         "IEPNSCommV1"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/ILendingPoolAddressesProvider.sol": {
-      "lastModificationDate": 1628711348804,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/ILendingPoolAddressesProvider.sol": {
+      "lastModificationDate": 1649499827203,
       "contentHash": "cf451ad79b1c30c9f22475f6bfe62e12",
       "sourceName": "contracts/interfaces/ILendingPoolAddressesProvider.sol",
       "solcConfig": {
@@ -726,7 +818,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -734,7 +826,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -751,8 +844,8 @@
         "ILendingPoolAddressesProvider"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1628713027018,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
+      "lastModificationDate": 1650871696745,
       "contentHash": "c86a31bacf868d392eda08a0eccc4735",
       "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
       "solcConfig": {
@@ -760,7 +853,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -768,7 +861,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -785,16 +879,16 @@
         "Strings"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Initializable.sol": {
-      "lastModificationDate": 1628713026927,
-      "contentHash": "1efacd801320f8f9413700ddbcf00647",
-      "sourceName": "@openzeppelin/contracts/proxy/Initializable.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/Pausable.sol": {
+      "lastModificationDate": 1650871696745,
+      "contentHash": "6960b40911542e6004ab95031ef9c3b9",
+      "sourceName": "@openzeppelin/contracts/utils/Pausable.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -802,7 +896,45 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Context.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.8.0"
+      ],
+      "artifacts": [
+        "Pausable"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/proxy/Initializable.sol": {
+      "lastModificationDate": 1650871696736,
+      "contentHash": "1efacd801320f8f9413700ddbcf00647",
+      "sourceName": "@openzeppelin/contracts/proxy/Initializable.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -821,16 +953,16 @@
         "Initializable"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": {
-      "lastModificationDate": 1628713026985,
-      "contentHash": "1c60f58cee45c61469e1aea31e4dd879",
-      "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreV1.sol": {
+      "lastModificationDate": 1650871689817,
+      "contentHash": "b1501c08a5f9b9dd5eea839dbe9d5366",
+      "sourceName": "contracts/EPNSCore/EPNSCoreV1.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -838,7 +970,56 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./EPNSCoreStorageV1.sol",
+        "../interfaces/IPUSH.sol",
+        "../interfaces/IADai.sol",
+        "../interfaces/ILendingPool.sol",
+        "../interfaces/IUniswapV2Router.sol",
+        "../interfaces/IEPNSCommV1.sol",
+        "../interfaces/ILendingPoolAddressesProvider.sol",
+        "@openzeppelin/contracts/utils/Strings.sol",
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/proxy/Initializable.sol",
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSCoreV1"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCore/EPNSCoreStorageV1.sol": {
+      "lastModificationDate": 1650871295149,
+      "contentHash": "56961f8ec76b6ce4238cfc5f2397afd3",
+      "sourceName": "contracts/EPNSCore/EPNSCoreStorageV1.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -849,55 +1030,14 @@
       },
       "imports": [],
       "versionPragmas": [
-        ">=0.6.0 <0.8.0"
-      ],
-      "artifacts": [
-        "ReentrancyGuard"
-      ]
-    },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/EPNSCommV1.sol": {
-      "lastModificationDate": 1631437295568,
-      "contentHash": "4f4317532a0b3d36f568f6424f4f50ac",
-      "sourceName": "contracts/EPNSCommV1.sol",
-      "solcConfig": {
-        "version": "0.6.11",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/utils/Strings.sol",
-        "@openzeppelin/contracts/math/SafeMath.sol",
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/proxy/Initializable.sol",
-        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol",
-        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
-      ],
-      "versionPragmas": [
         ">=0.6.0 <0.7.0"
       ],
       "artifacts": [
-        "EPNSCommV1"
+        "EPNSCoreStorageV1"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
-      "lastModificationDate": 1628713026728,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+      "lastModificationDate": 1650871697877,
       "contentHash": "8065b340476f61365c076897199425f1",
       "sourceName": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
       "solcConfig": {
@@ -905,7 +1045,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -913,7 +1053,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -934,16 +1075,16 @@
         "ERC20"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/mocks/MockDai.sol": {
-      "lastModificationDate": 1625774058222,
-      "contentHash": "ee92f38bb2ffc4440abb131bf28b5005",
-      "sourceName": "contracts/mocks/MockDai.sol",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSComm/EPNSCommV1.sol": {
+      "lastModificationDate": 1650871295148,
+      "contentHash": "fc2009ed859cddebf677ea24845d23fd",
+      "sourceName": "contracts/EPNSComm/EPNSCommV1.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -951,7 +1092,85 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./EPNSCommStorageV1.sol",
+        "@openzeppelin/contracts/utils/Strings.sol",
+        "@openzeppelin/contracts/math/SafeMath.sol",
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/proxy/Initializable.sol",
+        "@openzeppelin/contracts/token/ERC20/SafeERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSCommV1"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSComm/EPNSCommStorageV1.sol": {
+      "lastModificationDate": 1650871295148,
+      "contentHash": "d0b4671efebd7641825e73a1f4f694bd",
+      "sourceName": "contracts/EPNSComm/EPNSCommStorageV1.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.6.0 <0.7.0"
+      ],
+      "artifacts": [
+        "EPNSCommStorageV1"
+      ]
+    },
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/mocks/MockDai.sol": {
+      "lastModificationDate": 1649499827203,
+      "contentHash": "ee92f38bb2ffc4440abb131bf28b5005",
+      "sourceName": "contracts/mocks/MockDai.sol",
+      "solcConfig": {
+        "version": "0.6.11",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 99999
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -972,16 +1191,16 @@
         "MockDAI"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/governance/GovernorBravo.sol": {
-      "lastModificationDate": 1631004021731,
-      "contentHash": "06cfaf76971332ba68497258e19eeaa0",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/governance/GovernorBravo.sol": {
+      "lastModificationDate": 1649499827202,
+      "contentHash": "cd544119ee292b568d44a0f6ada9a7b5",
       "sourceName": "contracts/governance/GovernorBravo.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -989,7 +1208,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -1008,16 +1228,16 @@
         "GovernorBravoDelegate"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/governance/GovernorBravoInterfaces.sol": {
-      "lastModificationDate": 1631004021731,
-      "contentHash": "3c1b2a4f4009cea50ebc0598008b65b4",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/governance/GovernorBravoInterfaces.sol": {
+      "lastModificationDate": 1649499827202,
+      "contentHash": "742e4b32b47f87d4d666983bb60062da",
       "sourceName": "contracts/governance/GovernorBravoInterfaces.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -1025,7 +1245,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -1046,16 +1267,16 @@
         "TimelockInterface"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/governance/Timelock.sol": {
-      "lastModificationDate": 1628711348798,
-      "contentHash": "8ed9ed69d8e3963be69376ea1adb8f08",
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/governance/Timelock.sol": {
+      "lastModificationDate": 1649499827202,
+      "contentHash": "d174d1e0de6f2622f31c0172875f6778",
       "sourceName": "contracts/governance/Timelock.sol",
       "solcConfig": {
         "version": "0.6.11",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -1063,7 +1284,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -1081,8 +1303,8 @@
         "Timelock"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/governance/VerzionedInitializable.sol": {
-      "lastModificationDate": 1628711348798,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/governance/VerzionedInitializable.sol": {
+      "lastModificationDate": 1649499827202,
       "contentHash": "8d88d014b6c3607d9718f1eda5a395d4",
       "sourceName": "contracts/governance/VerzionedInitializable.sol",
       "solcConfig": {
@@ -1090,7 +1312,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -1098,7 +1320,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -1115,8 +1338,8 @@
         "VersionedInitializable"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/interfaces/IEPNSCore.sol": {
-      "lastModificationDate": 1628711348803,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/interfaces/IEPNSCore.sol": {
+      "lastModificationDate": 1649499827202,
       "contentHash": "9397bbd9925a5978e9e87a71cf94819a",
       "sourceName": "contracts/interfaces/IEPNSCore.sol",
       "solcConfig": {
@@ -1124,7 +1347,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -1132,7 +1355,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
@@ -1149,8 +1373,8 @@
         "IEPNSCore"
       ]
     },
-    "/Users/Prodigy/Desktop/Inhouse/EPNS/epns-protocol-staging/contracts/token/EPNS.sol": {
-      "lastModificationDate": 1625774058223,
+    "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/token/EPNS.sol": {
+      "lastModificationDate": 1650805909184,
       "contentHash": "a317bac9c0aed77179bc6977d5c575d4",
       "sourceName": "contracts/token/EPNS.sol",
       "solcConfig": {
@@ -1158,7 +1382,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 99999
           },
           "outputSelection": {
             "*": {
@@ -1166,7 +1390,8 @@
                 "abi",
                 "evm.bytecode",
                 "evm.deployedBytecode",
-                "evm.methodIdentifiers"
+                "evm.methodIdentifiers",
+                "metadata"
               ],
               "": [
                 "ast"
