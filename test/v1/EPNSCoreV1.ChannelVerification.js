@@ -115,7 +115,7 @@ describe("EPNSCoreV1 Channel Verification Tests", function () {
     const TimeLock = await ethers.getContractFactory("Timelock");
     TIMELOCK = await TimeLock.deploy(admin.address, delay);
 
-    const proxyAdmin = await ethers.getContractFactory("EPNSAdmin");
+    const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
     //await PROXYADMIN.transferOwnership(TIMELOCK.address);
 
