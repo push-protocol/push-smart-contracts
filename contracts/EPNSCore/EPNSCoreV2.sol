@@ -332,7 +332,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
             "EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount"
         );
         IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
-        _depositFundsToPool(_amount);
         _createChannel(_channel, _channelType, _amount);
     }
 
@@ -376,7 +375,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
                     continue;
             }else{
                 IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amountList[i]);
-                _depositFundsToPool(_amountList[i]);
                 emit AddChannel(_channelAddresses[i], _channelTypeList[i], _identityList[i]);
                 _createChannel(_channelAddresses[i], _channelTypeList[i], _amountList[i]);
             }
@@ -539,7 +537,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        swapAndTransferPUSH(msg.sender, totalRefundableAmount, _amountsOutValue);
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -563,7 +560,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
-        _depositFundsToPool(_amount);
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint newChannelPoolContribution = _amount.add(CHANNEL_DEACTIVATION_FEES);
@@ -747,67 +743,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
 
       // Emit Event
       emit ChannelVerificationRevoked(_channel, msg.sender);
-    }
-
-    /* **************
-
-    => DEPOSIT & WITHDRAWAL of FUNDS<=
-
-    *************** */
-    /**
-     * @notice  Function is used for Handling the entire procedure of Depositing the DAI to Lending POOl
-     *
-     * @dev     Updates the Relevant state variable during Deposit of DAI
-     *          Lends the DAI to AAVE protocol.
-     * @param   amount - Amount that is to be deposited
-     **/
-    function _depositFundsToPool(uint256 amount) private {
-        POOL_FUNDS = POOL_FUNDS.add(amount);
-
-        ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
-            lendingPoolProviderAddress
-        );
-        ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-        IERC20(daiAddress).approve(provider.getLendingPoolCore(), amount);
-        // Deposit to AAVE
-        lendingPool.deposit(daiAddress, amount, uint16(REFERRAL_CODE)); // set to 0 in constructor presently
-    }
-
-    /**
-     * @notice Swaps aDai to PUSH Tokens and Transfers to the USER Address
-     *
-     * @param _user address of the user that will recieve the PUSH Tokens
-     * @param _userAmount the amount of aDai to be swapped and transferred
-     **/
-    function swapAndTransferPUSH(address _user, uint256 _userAmount, uint256 _amountsOutValue)
-        internal
-        returns (bool)
-    {
-        swapADaiForDai(_userAmount);
-        IERC20(daiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
-
-        address[] memory path = new address[](3);
-        path[0] = daiAddress;
-        path[1] = WETH_ADDRESS;
-        path[2] = PUSH_TOKEN_ADDRESS;
-
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
-            _userAmount,
-            _amountsOutValue,
-            path,
-            _user,
-            block.timestamp
-        );
-        return true;
-    }
-
-    function swapADaiForDai(uint256 _amount) private{
-      ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
-        lendingPoolProviderAddress
-      );
-      ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
-
-      IADai(aDaiAddress).redeem(_amount);
     }
 
     /* **************
