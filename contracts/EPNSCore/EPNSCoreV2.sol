@@ -151,8 +151,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         UNISWAP_V2_ROUTER = _uniswapRouterAddress;
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
-        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
+        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 PUSH  out of total deposited PUSH s is charged for Deactivating a Channel
+        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 PUSH  or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
@@ -295,16 +295,17 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
     }
 
     /**
-     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of DAI
+     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
      * @dev    Only allows users to Create One Channel for a specific address.
      *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
-     *         Validates and Transfers the amount of DAI from the Channel Creator to this Contract Address
-     *         Deposits the Funds the Lending Pool and creates the Channel for the msg.sender.
+     *         Validates and Transfers the amount of PUSH  from the Channel Creator to the EPNS Core Contract
+     *         Updates the POOL_FUNDS state and Creates a Channel for the caller
+     *
      * @param  _channelType the type of the Channel Being created
      * @param  _identity the bytes value of the identity of the Channel
-     * @param  _amount Amount of DAI to be deposited before Creating the Channel
+     * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
      **/
-    function createChannelWithFees(
+    function createChannelWithPUSH(
         ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount
@@ -314,25 +315,15 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         onlyInactiveChannels(msg.sender)
         onlyUserAllowedChannelType(_channelType)
     {
-        // Save gas, Emit the event out
+      require(
+          _amount >= ADD_CHANNEL_MIN_FEES,
+          "EPNSCoreV1::_createChannelWithPUSH: Insufficient Deposit Amount"
+      );
         emit AddChannel(msg.sender, _channelType, _identity);
 
-        // Bubble down to create channel
-        _createChannelWithFees(msg.sender, _channelType, _amount);
-    }
-
-    function _createChannelWithFees(
-        address _channel,
-        ChannelType _channelType,
-        uint256 _amount
-    ) private {
-        // Check if it's equal or above Channel Pool Contribution
-        require(
-            _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount"
-        );
-        IERC20(daiAddress).safeTransferFrom(_channel, address(this), _amount);
-        _createChannel(_channel, _channelType, _amount);
+        POOL_FUNDS = POOL_FUNDS.add(_amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        _createChannel(msg.sender, _channelType, _amount);
     }
 
       /**
@@ -341,14 +332,14 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
      * @dev   can only be Called by the pushChannelAdmin
      *        Channel's identity is simply emitted out
      *        Channel's on-Chain details are stored by calling the "_crateChannel" function
-     *        DAI required for Channel Creation will be PAID by pushChannelAdmin
+     *        PUSH  required for Channel Creation will be PAID by pushChannelAdmin
      *
      * @param _startIndex       starting Index for the LOOP
      * @param _endIndex         Last Index for the LOOP
      * @param _channelAddresses array of address of the Channel
      * @param _channelTypeList   array of type of the Channel being created
      * @param _identityList     array of list of identity Bytes
-     * @param _amountList       array of amount of DAI to be depositeds
+     * @param _amountList       array of amount of PUSH  to be depositeds
     **/
     function migrateChannelData(
         uint256 _startIndex,
@@ -497,11 +488,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
-     *         - Calculates the Total DAI Deposited by Channel Owner while Channel Creation.
-     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
+     *         - Calculates the Total PUSH  Deposited by Channel Owner while Channel Creation.
+     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited PUSH  and Transfers back the remaining amount of PUSH  in the form of PUSH tokens.
      *         - Calculates the New Channel Weight and Readjusts the FS Ratio accordingly.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
-     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
+     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
 
     function deactivateChannel(uint256 _amountsOutValue) external whenNotPaused() onlyActivatedChannels(msg.sender) {
@@ -543,7 +534,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
     /**
      * @notice Allows Channel Owner to Reactivate his/her Channel again.
      * @dev    - Function can only be called by previously Deactivated Channels
-     *         - Channel Owner must Depost at least minimum amount of DAI to reactivate his/her channel.
+     *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
      *         - Deposited Dai goes thorugh similar procedure and is deposited to AAVE .
      *         - Calculation of the new Channel Weight is performed and the FairShare is Readjusted once again with relevant details
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
