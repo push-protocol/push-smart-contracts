@@ -305,7 +305,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
      * @param  _identity the bytes value of the identity of the Channel
      * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
      **/
-    function createChannelWithFees(
+    function createChannelWithPUSH(
         ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount
@@ -317,7 +317,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
     {
       require(
           _amount >= ADD_CHANNEL_MIN_FEES,
-          "EPNSCoreV1::_createChannelWithFees: Insufficient Deposit Amount"
+          "EPNSCoreV1::_createChannelWithPUSH: Insufficient Deposit Amount"
       );
         emit AddChannel(msg.sender, _channelType, _identity);
 
