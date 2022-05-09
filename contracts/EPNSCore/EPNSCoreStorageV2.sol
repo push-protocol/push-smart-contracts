@@ -103,4 +103,8 @@ uint256 public ADD_CHANNEL_MIN_FEES;
 uint256 public CHANNEL_DEACTIVATION_FEES;
 uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
+/* *** V2 State variables *** */
+
+mapping(address => uint256) public channelUpdateCounter;
+
 }
