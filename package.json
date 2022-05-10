@@ -42,6 +42,7 @@
   "devDependencies": {
     "moment": "^2.29.1",
     "prettier": "^2.3.2",
-    "prettier-plugin-solidity": "^1.0.0-beta.17"
+    "prettier-plugin-solidity": "^1.0.0-beta.17",
+    "solidity-coverage": "^0.7.21"
   }
 }

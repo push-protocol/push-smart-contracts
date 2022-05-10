@@ -71,6 +71,7 @@ describe("EPNS Core Protocol", function () {
   let BOBSIGNER;
   let CHARLIESIGNER;
   let CHANNEL_CREATORSIGNER;
+  let PushToken;
   const ADMIN_OVERRIDE = "";
 
   const coder = new ethers.utils.AbiCoder();
@@ -151,6 +152,9 @@ describe("EPNS Core Protocol", function () {
     EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address)
     EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address)
 
+
+    PushToken = EPNSTOKEN.attach(EPNS.address)
+
   });
 
   afterEach(function () {
@@ -173,6 +177,9 @@ describe("EPNS Core Protocol", function () {
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
             await MOCKDAI.connect(CHANNEL_CREATORSIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+            await PushToken.transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await PushToken.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
           /**
             * "createChannelWithFees" Function CheckPoints
@@ -193,11 +200,10 @@ describe("EPNS Core Protocol", function () {
 
           it("Should revert if IF EPNSCoreV1::onlyInactiveChannels: Channel already Activated ", async function () {
             const CHANNEL_TYPE = 2;
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-            await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyInactiveChannels: Channel already Activated")
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+            await expect(
+              EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+            ).to.be.revertedWith("EPNSCoreV1::onlyInactiveChannels: Channel already Activated")
           });
 
           // Pauseable Tests
@@ -217,7 +223,7 @@ describe("EPNS Core Protocol", function () {
             const CHANNEL_TYPE = 2;
 
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
 
             await expect(tx).to.be.revertedWith("Pausable: paused")
           });
@@ -226,11 +232,11 @@ describe("EPNS Core Protocol", function () {
             const CHANNEL_TYPE = 2;
 
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
 
             await expect(tx).to.be.revertedWith("Pausable: paused");
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).unPauseContract();
-            const tx_2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx_2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
 
             await expect(tx_2)
               .to.emit(EPNSCoreV1Proxy, 'AddChannel')
