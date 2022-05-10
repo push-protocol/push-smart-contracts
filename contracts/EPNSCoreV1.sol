@@ -159,6 +159,11 @@ contract EPNSCoreV1 is Initializable{
         string _notifSettings,
         string _notifDescription
     );
+    event AddSubGraph(
+        address indexed channel,
+        string subGraphId,
+        uint256 pollTime
+    );
 
     /* **************
         MODIFIERS
@@ -984,6 +989,11 @@ contract EPNSCoreV1 is Initializable{
         groupNewHistoricalZ = z;
         groupNewLastUpdate = block.number;
     }
+
+    function addSubGraph(string memory _subGraphId,uint256 _pollTime) external onlyActivatedChannels(msg.sender) {
+        emit AddSubGraph(msg.sender, _subGraphId, _pollTime);
+    }
+
 
     function getChainId() internal pure returns (uint256) {
         uint256 chainId;
