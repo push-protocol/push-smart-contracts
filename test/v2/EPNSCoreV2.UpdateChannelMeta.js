@@ -201,90 +201,109 @@ describe("EPNS CoreV2 Protocol", function () {
            **/
 
            // Pauseable Tests
-           it("Should revert IF Contract is Paused", async function(){
-             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+          it("Should revert IF Contract is Paused", async function(){
+            await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(tx).to.be.revertedWith("Pausable: paused")
+          });
 
-             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-             await expect(tx).to.be.revertedWith("Pausable: paused")
-           });
+          it('Should revert If channel address is 0x0', async function(){
+            const zeroAddress = "0x0000000000000000000000000000000000000000";
+            const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(
+              zeroAddress,
+              channelNewIdentity, 
+              ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+            );
+            await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner") 
+          });
 
-           it("Should revert IF Caller is not the Channel Owner", async function(){
+          it("Should revert IF Caller is not the Channel Owner", async function(){
+            const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
+          });
 
-             const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-             await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
-           });
+          it("Should revert IF Amount is 0 Push tokens", async function(){
+            const LESS_AMOUNT = tokensBN(0)
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, LESS_AMOUNT);
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+          });
 
-           it("Should revert IF Amount is less than Required Push tokens", async function(){
-              const LESS_AMOUNT = tokensBN(20)
-              const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, LESS_AMOUNT);
+          it("Should revert IF Amount is less than Required Push tokens", async function(){
+            const LESS_AMOUNT = tokensBN(20)
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, LESS_AMOUNT);
 
-              await expect(tx).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+          });
 
-           });
+          it("Should update Channel Meta Details correctly for right Amount -> 50 PUSH Tokens", async function(){
+            const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const block_num = tx.blockNumber;
+            const channel = await EPNSCoreV1Proxy.channels(BOB)
+            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+            const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
 
-           it("Should update Channel Meta Details correctly for right Amount -> 50 PUSH Tokens", async function(){
+            await expect(channel.channelUpdateBlock).to.equal(block_num);
+            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(counter).to.equal(1);
 
-              const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          });
 
-              const block_num = tx.blockNumber;
-              const channel = await EPNSCoreV1Proxy.channels(BOB)
-              const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-              const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
+          it("Contract should recieve 50 Push tokens for 1st Channel Update", async function(){
+            const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
+            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          });
 
-              await expect(channel.channelUpdateBlock).to.equal(block_num);
-              await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-              await expect(counter).to.equal(1);
+          it("2nd Channel Update should NOT execute if Fees deposited is NOT 50 * 2 Push Tokens", async function(){
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const counter_1 = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
+            const tx_2nd = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-           });
+            await expect(counter_1).to.equal(1);
+            await expect(tx_2nd).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+          });
 
-           it("Contract should recieve 50 Push tokens for 1st Channel Update", async function(){
-             const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
+          it("Contract should recieve 500 Push tokens for 4th Channel Update", async function(){
+            const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
 
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(2));
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(3));
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(4));
 
-             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
+            const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
+            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
 
-             expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
+            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
 
-           });
+          }); 
 
-           it("2nd Channel Update should NOT execute if Fees deposited is NOT 50 * 2 Push Tokens", async function(){
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-             const counter_1 = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
+          it("Grows the update fees linearly", async function(){
+            const numUpdates = 5;
 
-             const tx_2nd = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            for (let i = 1; i <= numUpdates; i++) {              
+              // should revert on paying same fees on lastupdate
+              const feePaidOnLastUpdate = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(i-1);
+              await expect(
+                EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, feePaidOnLastUpdate)
+              ).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+              
+              // should pass on incresing fees linearly
+              const feeToPay = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(i);
+              await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, feeToPay)
+            }
+            
+          });
 
-             await expect(counter_1).to.equal(1);
-             await expect(tx_2nd).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+          it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(tx)
+              .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
+              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
 
-           });
-
-           it("Contract should recieve 500 Push tokens for 4th Channel Update", async function(){
-             const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(2));
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(3));
-             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(4));
-
-             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-             const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
-
-             await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
-             expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
-
-           });
-
-
-           it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
-
-              const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-              await expect(tx)
-            .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
-            .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
-
-           });
+          });
 
 
     });
