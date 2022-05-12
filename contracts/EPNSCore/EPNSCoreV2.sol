@@ -239,38 +239,47 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
     function getChannelState(address _channel) external view returns(uint256 state) {
         state = channels[_channel].channelState;
     }
+
     /**
-     * @notice Allows Channel Owner to update their Channel Description/Detail
+     * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a new identity bytes hash
      *
-     * @dev    Emits an event with the new identity for the respective Channel Address
-     *         Records the Block Number of the Block at which the Channel is being updated with a New Identity
+     * @dev  Only accessible when contract is NOT Paused
+     *       Only accessible when Caller is the Channel Owner itself
+     *       If Channel Owner is updating the Channel Meta for the first time:
+     *       Required Fees => 50 PUSH tokens
+     *
+     *       If Channel Owner is updating the Channel Meta for the N time:
+     *       Required Fees => (50 * N) PUSH Tokens
+     *
+     *       Updates the channelUpdateCounter
+     *       Updates the channelUpdateBlock
+     *       Records the Block Number of the Block at which the Channel is being updated
+     *       Emits an event with the new identity for the respective Channel Address
      *
      * @param _channel     address of the Channel
      * @param _newIdentity bytes Value for the New Identity of the Channel
+     * @param _amount amount of PUSH Token required for updating channel details.
      **/
-    function updateChannelMeta(address _channel, bytes calldata _newIdentity)
+    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount)
         external
+        whenNotPaused()
         onlyChannelOwner(_channel)
     {
-        emit UpdateChannel(_channel, _newIdentity);
+      uint256 updateCounter = channelUpdateCounter[_channel].add(1);
+      uint256 requiredFees = ADD_CHANNEL_MIN_FEES.mul(updateCounter);
 
-        _updateChannelMeta(_channel);
-    }
+      require(_amount >= requiredFees, "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount");
 
-    function _updateChannelMeta(address _channel) internal {
-        channels[_channel].channelUpdateBlock = block.number;
+      PROTOCOL_POOL_FEES += _amount;
+      channelUpdateCounter[_channel] += 1;
+      channels[_channel].channelUpdateBlock = block.number;
+
+      IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
+      emit UpdateChannel(_channel, _newIdentity);
     }
 
     function createChannelForPushChannelAdmin() external onlyPushChannelAdmin() {
         require (!oneTimeCheck, "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
-
-        // Add EPNS Channels
-        // First is for all users
-        // Second is all channel alerter, amount deposited for both is 0
-        // to save gas, emit both the events out
-        // identity = payloadtype + payloadhash
-
-        // EPNS ALL USERS
 
         _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
          emit AddChannel(
