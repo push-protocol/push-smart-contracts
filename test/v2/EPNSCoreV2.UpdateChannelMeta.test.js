@@ -7,7 +7,6 @@ const {
   tokensBN,
 } = require("../../helpers/utils");
 
-
 describe("EPNS CoreV2 Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   let EPNSCoreV1Proxy;
