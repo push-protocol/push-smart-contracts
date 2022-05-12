@@ -265,35 +265,21 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         whenNotPaused()
         onlyChannelOwner(_channel)
     {
-      if(channelUpdateCounter[_channel] == 0){
-        require(
-            _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
-        );
-      }else{
-        require(
-            _amount >= ADD_CHANNEL_MIN_FEES.mul(channelUpdateCounter[_channel].add(1)),
-            "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
-        );
-      }
-        PROTOCOL_POOL_FEES += _amount;
-        channelUpdateCounter[_channel] += 1;
-        channels[_channel].channelUpdateBlock = block.number;
+      uint256 updateCounter = channelUpdateCounter[_channel].add(1);
+      uint256 requiredFees = ADD_CHANNEL_MIN_FEES.mul(updateCounter);
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
-        emit UpdateChannel(_channel, _newIdentity);
+      require(_amount >= requiredFees, "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount");
+
+      PROTOCOL_POOL_FEES += _amount;
+      channelUpdateCounter[_channel] += 1;
+      channels[_channel].channelUpdateBlock = block.number;
+
+      IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
+      emit UpdateChannel(_channel, _newIdentity);
     }
 
     function createChannelForPushChannelAdmin() external onlyPushChannelAdmin() {
         require (!oneTimeCheck, "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
-
-        // Add EPNS Channels
-        // First is for all users
-        // Second is all channel alerter, amount deposited for both is 0
-        // to save gas, emit both the events out
-        // identity = payloadtype + payloadhash
-
-        // EPNS ALL USERS
 
         _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
          emit AddChannel(
