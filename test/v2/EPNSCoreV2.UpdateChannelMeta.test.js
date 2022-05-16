@@ -200,10 +200,30 @@ describe("EPNS CoreV2 Protocol", function () {
             await expect(tx)
               .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
               .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
-
           });
 
+          it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(tx)
+              .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
+              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
+          });
 
+          it("Only allows activate channel to be updated", async function(){
+            // on channel deactivation cannnot create channel
+            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel(1);             
+            await expect(
+              EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+            ).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");
+
+            // on reactivation channel can be again created
+            await  EPNSCoreV1Proxy.connect(BOBSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);             
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(tx)
+              .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
+              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity)
+            );
+          });
     });
 
 });
