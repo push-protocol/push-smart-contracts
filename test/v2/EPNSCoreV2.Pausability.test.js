@@ -152,7 +152,7 @@ describe("EPNS Core Protocol", function () {
             const CHANNEL_TYPE = 2;
 
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(CHANNEL_TYPE);
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
             await expect(tx).to.be.revertedWith("Pausable: paused")
           });
