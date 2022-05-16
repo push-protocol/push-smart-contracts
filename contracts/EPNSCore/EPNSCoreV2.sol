@@ -562,7 +562,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
         
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
