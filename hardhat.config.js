@@ -44,6 +44,7 @@ module.exports = {
 
   networks: {
     hardhat: {
+      allowUnlimitedContractSize:true,
       forking: {
         url:
           `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
@@ -116,10 +117,10 @@ module.exports = {
   solidity: {
     version: "0.6.11",
     settings: {
-      optimizer: {
-        enabled: true,
-        runs: 99999,
-      },
+      // optimizer: {
+      //   enabled: true,
+      //   runs: 99999,
+      // },
     },
   },
 };
