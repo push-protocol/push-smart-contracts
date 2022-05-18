@@ -15,13 +15,16 @@ pragma experimental ABIEncoderV2;
 **/
 
 // Essential Imports
-// import "hardhat/console.sol";
 import "./EPNSCommStorageV1.sol";
+import "../interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import '@openzeppelin/contracts/utils/Address.sol';
+
+import "hardhat/console.sol";
 
 contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
     using SafeMath for uint256;
@@ -233,12 +236,15 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
      **/
     function subscribeBySig(
         address channel,
+        address subscriber, 
         uint256 nonce,
         uint256 expiry,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public {
+        console.log("\nLogs from the contract; hh console:"); 
+        // EIP-712
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
@@ -248,16 +254,38 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
             )
         );
         bytes32 structHash = keccak256(
-            abi.encode(SUBSCRIBE_TYPEHASH, channel, nonce, expiry)
+            abi.encode(SUBSCRIBE_TYPEHASH,channel,subscriber,nonce,expiry)
         );
         bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+            abi.encodePacked(
+                "\x19\x01", 
+                domainSeparator, 
+                structHash
+            )
         );
-        address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "EPNSCommV1::subscribeBySig: Invalid signature");
-        require(nonce == nonces[signatory]++, "EPNSCommV1::subscribeBySig: Invalid nonce");
-        require(now <= expiry, "EPNSCommV1::subscribeBySig: Signature expired");
-        _subscribe(channel, signatory);
+
+        if (Address.isContract(subscriber)) {
+            // use EIP-1271
+            bytes4 result = IERC1271(subscriber).isValidSignature(
+                digest,
+                abi.encodePacked(r, s, v)
+            );
+            require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
+
+        }else{
+            // validate with in contract
+            address signatory = ecrecover(digest, v, r, s);
+
+            console.log(
+                "recovered sing address:",signatory,
+                "original signer need to be",msg.sender
+            );
+
+            require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
+        }
+       
+        _subscribe(channel, subscriber);
+        
     }
 
     /**
@@ -668,7 +696,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         );
     }
 
-    function getChainId() internal pure returns (uint256) {
+    function getChainId() public pure returns (uint256) {
         uint256 chainId;
         assembly {
             chainId := chainid()
