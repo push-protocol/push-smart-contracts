@@ -82,6 +82,10 @@ describe("EPNS CoreV2 Protocol", function () {
           const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
            beforeEach(async function(){
+            
+            // 
+            // ({EPNSCommV1Proxy} = await loadFixture(epnsContractFixture)); 
+            
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
             await PushToken.transfer(BOB, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -104,7 +108,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("Allow 721 sig support",async function(){
           const addrs = EPNSCommV1Proxy.address;
-          const chainId = await EPNSCommV1Proxy.getChainId().then(e => e.toNumber())
+          const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
 
           const EPNS_DOMAIN = {
             name: "EPNS COMM V1",
@@ -122,7 +126,10 @@ describe("EPNS CoreV2 Protocol", function () {
           };
           
           const [channel, subscriber, nonce, expiry] = [
-            CHANNEL_CREATORSIGNER.address,ADMINSIGNER.address, 1, Date.now()
+            CHANNEL_CREATORSIGNER.address,
+            BOBSIGNER.address, 
+            1, 
+            Date.now()+3600
           ]
            
           const message = {
@@ -132,29 +139,26 @@ describe("EPNS CoreV2 Protocol", function () {
             expiry:expiry,
           };
           
-          console.log("original singer",ADMINSIGNER.address);
-          console.log("domain",EPNS_DOMAIN);
-          console.log("message",message);
-
-          const signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
-          console.log("sig",signature);
+          const signature = await BOBSIGNER._signTypedData(EPNS_DOMAIN, type, message);
           const {v,r,s} = ethers.utils.splitSignature(signature);
 
-          const tx = await EPNSCommV1Proxy.subscribeBySig(
+          const tx = EPNSCommV1Proxy.subscribeBySig(
             channel, subscriber,nonce, expiry,
             v,r,s
           )
 
+          await expect(tx).to.emit(EPNSCommV1Proxy,"Subscribe")
+
         });
          
-        it.skip("Should allow to contract subscribe to the notification using 1271 support", async function(){
+        it("Should allow to contract subscribe to the notification using 1271 support", async function(){
           // mock verifier contract
           const VerifierContract = await ethers.getContractFactory(
             "SignatureVerifier"
           ).then((c) => c.deploy());
 
           const addrs = EPNSCommV1Proxy.address;
-          const chainId = await EPNSCommV1Proxy.getChainId().then(e => e.toNumber())
+          const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
 
           const EPNS_DOMAIN = {
             name: "EPNS COMM V1",
@@ -173,8 +177,12 @@ describe("EPNS CoreV2 Protocol", function () {
           
           // use verifier contract as subscriber
           const [channel, subscriber, nonce, expiry] = [
-            CHANNEL_CREATORSIGNER.address,VerifierContract.address, 1, Date.now()
+            CHANNEL_CREATORSIGNER.address,
+            VerifierContract.address, 
+            1, 
+            Date.now()+3600
           ] 
+
           const message = {
             channel: channel,
             subscriber: subscriber,
@@ -182,18 +190,15 @@ describe("EPNS CoreV2 Protocol", function () {
             expiry:expiry,
           };
           
-          console.log("original singer",ADMINSIGNER.address);
-          console.log("domain",EPNS_DOMAIN);
-          console.log("message",message);
-
           const signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
-          console.log("signature:",signature);
           const {v,r,s} = ethers.utils.splitSignature(signature);
-
-          const tx = await EPNSCommV1Proxy.subscribeBySig(
+          const tx = EPNSCommV1Proxy.subscribeBySig(
             channel, subscriber,nonce, expiry,
             v,r,s
           ) 
+
+          await expect(tx).to.emit(EPNSCommV1Proxy, 'Subscribe')
+
         });
 
         

@@ -23,12 +23,12 @@ contract SignatureVerifier{
     }
     
     function isValidSignature(bytes32 hash, bytes memory signature) public view returns (bytes4) {
-        bytes32 signedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
-        address recovered_address = signedHash.recover(signature);
+        // bytes32 signedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        address recovered_address = hash.recover(signature);
 
         require(
             recovered_address == owner,
-            "Invalid signer"
+            "Contract verifier: Invalid signer"
         );
         return ERC1271_IS_VALID_SIGNATURE;
     }

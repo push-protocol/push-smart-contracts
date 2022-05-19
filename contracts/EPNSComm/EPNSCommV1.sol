@@ -212,6 +212,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
      * @param _user    address of the Subscriber
      **/
     function _subscribe(address _channel, address _user) private {
+        bool res = !isUserSubscribed(_channel, _user);
         require(
             !isUserSubscribed(_channel, _user),
             "EPNSCommV1::_subscribe: User already Subscribed"
@@ -275,12 +276,6 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         }else{
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
-
-            console.log(
-                "recovered sing address:",signatory,
-                "original signer need to be",msg.sender
-            );
-
             require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
         }
        
@@ -696,7 +691,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         );
     }
 
-    function getChainId() public pure returns (uint256) {
+    function getChainId() internal pure returns (uint256) {
         uint256 chainId;
         assembly {
             chainId := chainid()
