@@ -277,9 +277,9 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
             require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
         }
        
-        require(subscriber != address(0), "EPNSCommV1::unsubscribeBySig: Invalid signature");
-        require(nonce == nonces[subscriber]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
-        require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired"); 
+        require(subscriber != address(0), "EPNSCommV1::subscribeBySig: Invalid signature");
+        require(nonce == nonces[subscriber]++, "EPNSCommV1::subscribeBySig: Invalid nonce");
+        require(now <= expiry, "EPNSCommV1::subscribeBySig: Signature expired"); 
 
         _subscribe(channel, subscriber);
         
@@ -386,12 +386,15 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
      **/
     function unsubscribeBySig(
         address channel,
+        address subscriber,
         uint256 nonce,
         uint256 expiry,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public {
+        
+        // EIP-712
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
@@ -401,16 +404,35 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
             )
         );
         bytes32 structHash = keccak256(
-            abi.encode(UNSUBSCRIBE_TYPEHASH, channel, nonce, expiry)
+            abi.encode(SUBSCRIBE_TYPEHASH,channel,subscriber,nonce,expiry)
         );
         bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+            abi.encodePacked(
+                "\x19\x01", 
+                domainSeparator, 
+                structHash
+            )
         );
-        address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "EPNSCommV1::unsubscribeBySig: Invalid signature");
-        require(nonce == nonces[signatory]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
+
+        if (Address.isContract(subscriber)) {
+            // use EIP-1271
+            bytes4 result = IERC1271(subscriber).isValidSignature(
+                digest,
+                abi.encodePacked(r, s, v)
+            );
+            require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
+
+        }else{
+            // validate with in contract
+            address signatory = ecrecover(digest, v, r, s);
+            require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
+        } 
+
+
+        require(subscriber != address(0), "EPNSCommV1::unsubscribeBySig: Invalid signature");
+        require(nonce == nonces[subscriber]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
         require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired");
-        _unsubscribe(channel, signatory);
+        _unsubscribe(channel, subscriber);
     }
 
     /* **************
