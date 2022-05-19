@@ -59,6 +59,6 @@ contract EPNSCommStorageV1 {
         keccak256("Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
     bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
         keccak256(
-            "SendNotification(address channel,address delegate,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
+            "SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
         );
 }

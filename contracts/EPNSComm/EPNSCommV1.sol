@@ -404,7 +404,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
             )
         );
         bytes32 structHash = keccak256(
-            abi.encode(SUBSCRIBE_TYPEHASH,channel,subscriber,nonce,expiry)
+            abi.encode(UNSUBSCRIBE_TYPEHASH,channel,subscriber,nonce,expiry)
         );
         bytes32 digest = keccak256(
             abi.encodePacked(
@@ -647,7 +647,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
                 SEND_NOTIFICATION_TYPEHASH,
                 _channel,
                 _recipient,
-                _identity,
+                keccak256(_identity),
                 nonce,
                 expiry
             )
@@ -657,6 +657,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         );
         address signatory = ecrecover(digest, v, r, s);
         require(signatory != address(0), "EPNSCommV1::sendNotifBySig: Invalid signature");
+        require(signatory == _channel, "Invalid signer");
         require(nonce == nonces[signatory]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
         require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
         _sendNotification(

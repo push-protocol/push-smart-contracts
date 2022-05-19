@@ -74,30 +74,30 @@ describe("EPNS CoreV2 Protocol", function () {
 
   });
 
-  const getDomainParameters = (chainId, verifyingContract)=>{
-    const EPNS_DOMAIN = {
-      name: "EPNS COMM V1",
-      chainId: chainId,
-      verifyingContract: verifyingContract,
-    };
-
-    const type = {
-      Subscribe: [
-        { name: "channel", type: "address" },
-        { name: "subscriber", type: "address" },
-        { name: "nonce", type: "uint256" },
-        { name: "expiry", type: "uint256" },
-      ]
-    };
-
-    return [EPNS_DOMAIN, type]
-  }
-
-  describe("EPNS COMM: EIP 1271 Support", function(){
+  describe("EPNS COMM: EIP 1271 & 712 Support", function(){
     const CHANNEL_TYPE = 2;
     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
-    
+  
+    const getDomainParameters = (chainId, verifyingContract)=>{
+      const EPNS_DOMAIN = {
+        name: "EPNS COMM V1",
+        chainId: chainId,
+        verifyingContract: verifyingContract,
+      };
+      return [EPNS_DOMAIN]
+    }
+
     describe("Channel Subscription Tests", function(){
+      
+      const type = {
+        "Subscribe": [
+         { name: "channel", type: "address" },
+         { name: "subscriber", type: "address" },
+         { name: "nonce", type: "uint256" },
+         { name: "expiry", type: "uint256" },
+       ]
+      };
+      
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
         await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
@@ -118,7 +118,7 @@ describe("EPNS CoreV2 Protocol", function () {
         
       it("Allows to optin with 721 sig",async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         const [channel, subscriber, expiry] = [
           CHANNEL_CREATORSIGNER.address,
@@ -151,7 +151,7 @@ describe("EPNS CoreV2 Protocol", function () {
         ).then((c) => c.deploy());
 
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -181,7 +181,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Reverts on signature replay", async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -217,7 +217,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Reverts on signature expiry", async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -247,6 +247,16 @@ describe("EPNS CoreV2 Protocol", function () {
     });
 
     describe("Channel UnSubscription Tests", function(){
+      
+      const type = {
+        "Unsubscribe": [
+          { name: "channel", type: "address" },
+          { name: "subscriber", type: "address" },
+          { name: "nonce", type: "uint256" },
+          { name: "expiry", type: "uint256" },
+        ]
+      };
+
       beforeEach(async function(){
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
         await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
@@ -267,7 +277,15 @@ describe("EPNS CoreV2 Protocol", function () {
         // initally subscribe to the channel before unsubscribe test
         await (async ()=>{
           const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-          const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+          const type = {
+            "Subscribe": [
+              { name: "channel", type: "address" },
+              { name: "subscriber", type: "address" },
+              { name: "nonce", type: "uint256" },
+              { name: "expiry", type: "uint256" },
+            ] 
+          }
+          const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
           const [channel, subscriber, expiry] = [
             CHANNEL_CREATORSIGNER.address,
             BOBSIGNER.address, 
@@ -292,7 +310,7 @@ describe("EPNS CoreV2 Protocol", function () {
         
       it("Allows to optout with 721 sig",async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         const [channel, subscriber, expiry] = [
           CHANNEL_CREATORSIGNER.address,
@@ -318,7 +336,25 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx).to.emit(EPNSCommV1Proxy,"Unsubscribe")
       });
         
-      it("Allow to contract to optout using 1271 support", async function(){
+      it("Allow contract to optout using 1271 support", async function(){
+
+        const subscribeType = {
+          "Subscribe": [
+            { name: "channel", type: "address" },
+            { name: "subscriber", type: "address" },
+            { name: "nonce", type: "uint256" },
+            { name: "expiry", type: "uint256" },
+          ]
+        };
+
+        const unSubscribeType = {
+          "Unsubscribe": [
+            { name: "channel", type: "address" },
+            { name: "subscriber", type: "address" },
+            { name: "nonce", type: "uint256" },
+            { name: "expiry", type: "uint256" },
+          ]
+        };
 
         // mock verifier contract
         const VerifierContract = await ethers.getContractFactory(
@@ -326,7 +362,7 @@ describe("EPNS CoreV2 Protocol", function () {
         ).then((c) => c.deploy());
 
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -343,7 +379,7 @@ describe("EPNS CoreV2 Protocol", function () {
           nonce:nonce,
           expiry:expiry,
         };
-        let signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        let signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, subscribeType, message);
         let {v,r,s} = ethers.utils.splitSignature(signature);
         await EPNSCommV1Proxy.subscribeBySig(
           channel, subscriber,nonce, expiry,
@@ -358,7 +394,7 @@ describe("EPNS CoreV2 Protocol", function () {
           nonce:nonce,
           expiry:expiry,
         };
-        signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, unSubscribeType, message);
         ({v,r,s} = ethers.utils.splitSignature(signature));
         const tx = EPNSCommV1Proxy.unsubscribeBySig(
           channel, subscriber,nonce, expiry,
@@ -371,7 +407,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Reverts on signature replay", async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -407,7 +443,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Reverts on signature expiry", async function(){
         const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        const [EPNS_DOMAIN ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
         
         // use verifier contract as subscriber
         const [channel, subscriber, expiry] = [
@@ -434,6 +470,158 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx).to.be.revertedWith("EPNSCommV1::unsubscribeBySig: Signature expired")
 
       }); 
+    });
+
+    describe("Send Notification Tests", function(){
+
+      
+      beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
+        await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+        await PushToken.transfer(BOB, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        // create a channel
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(
+          CHANNEL_TYPE,
+          testChannel,
+          ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+
+      });
+
+      const type = {
+        SendNotification: [
+          { name: "channel", type: "address" },
+          { name: "recipient", type: "address" },
+          { name: "identity",type:"bytes"},
+          { name: "nonce", type: "uint256" },
+          { name: "expiry", type: "uint256" },
+        ]
+      };
+        
+      it("Allows to send channel notification with 712 sig",async function(){
+        const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
+        const [EPNS_DOMAIN, _ ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+      
+        const [channel, subscriber, expiry] = [
+          CHANNEL_CREATORSIGNER.address,
+          BOBSIGNER.address, 
+          Date.now()+3600
+        ]
+
+        const nonce = await EPNSCommV1Proxy.nonces(subscriber)  
+        const message = {
+          channel: channel,
+          recipient: subscriber,
+          identity:testChannel,
+          nonce:nonce,
+          expiry:expiry,
+        };
+
+        
+        const signature = await CHANNEL_CREATORSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        const {v,r,s} = ethers.utils.splitSignature(signature);
+        const tx = EPNSCommV1Proxy.sendNotifBySig(
+          channel, 
+          subscriber,
+          testChannel,
+          nonce, 
+          expiry,
+          v,r,s
+        )
+
+        await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification")
+
+      });
+
+      it("Reverts on signature replay",async function(){
+        const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
+        const [EPNS_DOMAIN, _ ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+      
+        const [channel, subscriber, expiry] = [
+          CHANNEL_CREATORSIGNER.address,
+          BOBSIGNER.address, 
+          Date.now()+3600
+        ]
+
+        const nonce = await EPNSCommV1Proxy.nonces(subscriber)  
+        const message = {
+          channel: channel,
+          recipient: subscriber,
+          identity:testChannel,
+          nonce:nonce,
+          expiry:expiry,
+        };
+
+        const signature = await CHANNEL_CREATORSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        const {v,r,s} = ethers.utils.splitSignature(signature);
+        const tx = EPNSCommV1Proxy.sendNotifBySig(
+          channel, 
+          subscriber,
+          testChannel,
+          nonce, 
+          expiry,
+          v,r,s
+        )
+
+        await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification")
+
+        const tx2 = EPNSCommV1Proxy.sendNotifBySig(
+          channel, 
+          subscriber,
+          testChannel,
+          nonce, 
+          expiry,
+          v,r,s
+        )
+
+        await expect(tx2).to.be.revertedWith("EPNSCommV1::sendNotifBySig: Invalid nonce");
+
+      });
+
+
+      it("Reverts on signature replay",async function(){
+        const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
+        const [EPNS_DOMAIN, _ ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+      
+        const [channel, subscriber, expiry] = [
+          CHANNEL_CREATORSIGNER.address,
+          BOBSIGNER.address, 
+          3600
+        ]
+
+        const nonce = await EPNSCommV1Proxy.nonces(subscriber)  
+        const message = {
+          channel: channel,
+          recipient: subscriber,
+          identity:testChannel,
+          nonce:nonce,
+          expiry:expiry,
+        };
+
+        const signature = await CHANNEL_CREATORSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        const {v,r,s} = ethers.utils.splitSignature(signature);
+       
+        const tx = EPNSCommV1Proxy.sendNotifBySig(
+          channel, 
+          subscriber,
+          testChannel,
+          nonce, 
+          expiry,
+          v,r,s
+        )
+
+        await expect(tx).to.be.revertedWith("EPNSCommV1::sendNotifBySig: Signature expired");
+
+      });
+
+        
+      
     });
   });
 });
