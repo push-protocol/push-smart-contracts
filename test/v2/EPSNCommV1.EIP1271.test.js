@@ -74,135 +74,118 @@ describe("EPNS CoreV2 Protocol", function () {
 
   });
 
+  const getDomainParameters = (chainId, verifyingContract)=>{
+    const EPNS_DOMAIN = {
+      name: "EPNS COMM V1",
+      chainId: chainId,
+      verifyingContract: verifyingContract,
+    };
 
- describe("EPNS COMM: EIP 1271 Support", function(){
-   describe("Testing the EIP 1271 Support", function()
-      {
-          const CHANNEL_TYPE = 2;
-          const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
+    const type = {
+      Subscribe: [
+        { name: "channel", type: "address" },
+        { name: "subscriber", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "expiry", type: "uint256" },
+      ]
+    };
 
-           beforeEach(async function(){
-            
-            // 
-            // ({EPNSCommV1Proxy} = await loadFixture(epnsContractFixture)); 
-            
-            await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
-            await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-            await PushToken.transfer(BOB, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await PushToken.transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await PushToken.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+    return [EPNS_DOMAIN, type]
+  }
 
+  describe("EPNS COMM: EIP 1271 Support", function(){
+    describe("Testing the EIP 1271 Support", function(){
+      const CHANNEL_TYPE = 2;
+      const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
-            // create a channel
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(
-              CHANNEL_TYPE,
-              testChannel,
-              ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-            );
-
-         });
+        beforeEach(async function(){
         
-
-        it("Allow 721 sig support",async function(){
-          const addrs = EPNSCommV1Proxy.address;
-          const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-
-          const EPNS_DOMAIN = {
-            name: "EPNS COMM V1",
-            chainId: chainId,
-            verifyingContract: addrs,
-          };
-
-          const type = {
-            Subscribe: [
-              { name: "channel", type: "address" },
-              { name: "subscriber", type: "address" },
-              { name: "nonce", type: "uint256" },
-              { name: "expiry", type: "uint256" },
-            ]
-          };
-          
-          const [channel, subscriber, nonce, expiry] = [
-            CHANNEL_CREATORSIGNER.address,
-            BOBSIGNER.address, 
-            1, 
-            Date.now()+3600
-          ]
-           
-          const message = {
-            channel: channel,
-            subscriber: subscriber,
-            nonce:nonce,
-            expiry:expiry,
-          };
-          
-          const signature = await BOBSIGNER._signTypedData(EPNS_DOMAIN, type, message);
-          const {v,r,s} = ethers.utils.splitSignature(signature);
-
-          const tx = EPNSCommV1Proxy.subscribeBySig(
-            channel, subscriber,nonce, expiry,
-            v,r,s
-          )
-
-          await expect(tx).to.emit(EPNSCommV1Proxy,"Subscribe")
-
-        });
-         
-        it("Should allow to contract subscribe to the notification using 1271 support", async function(){
-          // mock verifier contract
-          const VerifierContract = await ethers.getContractFactory(
-            "SignatureVerifier"
-          ).then((c) => c.deploy());
-
-          const addrs = EPNSCommV1Proxy.address;
-          const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
-
-          const EPNS_DOMAIN = {
-            name: "EPNS COMM V1",
-            chainId: chainId,
-            verifyingContract: addrs,
-          };
-
-          const type = {
-            Subscribe: [
-              { name: "channel", type: "address" },
-              { name: "subscriber", type: "address" },
-              { name: "nonce", type: "uint256" },
-              { name: "expiry", type: "uint256" },
-            ]
-          };
-          
-          // use verifier contract as subscriber
-          const [channel, subscriber, nonce, expiry] = [
-            CHANNEL_CREATORSIGNER.address,
-            VerifierContract.address, 
-            1, 
-            Date.now()+3600
-          ] 
-
-          const message = {
-            channel: channel,
-            subscriber: subscriber,
-            nonce:nonce,
-            expiry:expiry,
-          };
-          
-          const signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
-          const {v,r,s} = ethers.utils.splitSignature(signature);
-          const tx = EPNSCommV1Proxy.subscribeBySig(
-            channel, subscriber,nonce, expiry,
-            v,r,s
-          ) 
-
-          await expect(tx).to.emit(EPNSCommV1Proxy, 'Subscribe')
-
-        });
-
+        // 
+        // ({EPNSCommV1Proxy} = await loadFixture(epnsContractFixture)); 
         
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
+        await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+        await PushToken.transfer(BOB, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await PushToken.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+
+        // create a channel
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(
+          CHANNEL_TYPE,
+          testChannel,
+          ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+
+      });
+        
+      it("Allow 721 sig support",async function(){
+        const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
+        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        
+        const [channel, subscriber, nonce, expiry] = [
+          CHANNEL_CREATORSIGNER.address,
+          BOBSIGNER.address, 
+          1, 
+          Date.now()+3600
+        ]
+          
+        const message = {
+          channel: channel,
+          subscriber: subscriber,
+          nonce:nonce,
+          expiry:expiry,
+        };
+        
+        const signature = await BOBSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        const {v,r,s} = ethers.utils.splitSignature(signature);
+
+        const tx = EPNSCommV1Proxy.subscribeBySig(
+          channel, subscriber,nonce, expiry,
+          v,r,s
+        )
+
+        await expect(tx).to.emit(EPNSCommV1Proxy,"Subscribe")
+
+      });
+        
+      it("Should allow to contract subscribe to the notification using 1271 support", async function(){
+        // mock verifier contract
+        const VerifierContract = await ethers.getContractFactory(
+          "SignatureVerifier"
+        ).then((c) => c.deploy());
+
+        const chainId = await EPNSCommV1Proxy.chainID().then(e => e.toNumber())
+        const [EPNS_DOMAIN, type ] = getDomainParameters(chainId, EPNSCommV1Proxy.address)
+        
+        // use verifier contract as subscriber
+        const [channel, subscriber, nonce, expiry] = [
+          CHANNEL_CREATORSIGNER.address,
+          VerifierContract.address, 
+          1, 
+          Date.now()+3600
+        ] 
+
+        const message = {
+          channel: channel,
+          subscriber: subscriber,
+          nonce:nonce,
+          expiry:expiry,
+        };
+        
+        const signature = await ADMINSIGNER._signTypedData(EPNS_DOMAIN, type, message);
+        const {v,r,s} = ethers.utils.splitSignature(signature);
+        const tx = EPNSCommV1Proxy.subscribeBySig(
+          channel, subscriber,nonce, expiry,
+          v,r,s
+        ) 
+
+        await expect(tx).to.emit(EPNSCommV1Proxy, 'Subscribe')
+
+      });    
     });
-
-});
+  });
 });
