@@ -212,7 +212,6 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
      * @param _user    address of the Subscriber
      **/
     function _subscribe(address _channel, address _user) private {
-        bool res = !isUserSubscribed(_channel, _user);
         require(
             !isUserSubscribed(_channel, _user),
             "EPNSCommV1::_subscribe: User already Subscribed"
@@ -244,7 +243,6 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         bytes32 r,
         bytes32 s
     ) public {
-        console.log("\nLogs from the contract; hh console:"); 
         // EIP-712
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -279,6 +277,10 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
             require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
         }
        
+        require(subscriber != address(0), "EPNSCommV1::unsubscribeBySig: Invalid signature");
+        require(nonce == nonces[subscriber]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
+        require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired"); 
+
         _subscribe(channel, subscriber);
         
     }
