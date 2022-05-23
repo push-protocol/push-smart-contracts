@@ -161,8 +161,7 @@ contract EPNSCoreV1 is Initializable{
     );
     event AddSubGraph(
         address indexed channel,
-        string subGraphId,
-        uint256 pollTime
+        bytes identity
     );
 
     /* **************
@@ -990,8 +989,8 @@ contract EPNSCoreV1 is Initializable{
         groupNewLastUpdate = block.number;
     }
 
-    function addSubGraph(string memory _subGraphId,uint256 _pollTime) external onlyActivatedChannels(msg.sender) {
-        emit AddSubGraph(msg.sender, _subGraphId, _pollTime);
+    function addSubGraph(bytes _identity) external onlyActivatedChannels(msg.sender) {
+        emit AddSubGraph(msg.sender, _identity);
     }
 
 
