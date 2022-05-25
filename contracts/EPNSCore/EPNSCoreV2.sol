@@ -508,10 +508,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         Channel storage channelData = channels[msg.sender];
 
         uint256 totalAmountDeposited = channelData.poolContribution;
+
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
             CHANNEL_DEACTIVATION_FEES
         );
-
+        
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
@@ -555,11 +556,14 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         whenNotPaused()
         onlyDeactivatedChannels(msg.sender)
     {
+        
         require(
             _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
+        
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
+
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint newChannelPoolContribution = _amount.add(CHANNEL_DEACTIVATION_FEES);
