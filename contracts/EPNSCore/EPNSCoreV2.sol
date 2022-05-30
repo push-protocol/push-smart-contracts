@@ -35,6 +35,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
+    event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
 
@@ -512,7 +513,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
             CHANNEL_DEACTIVATION_FEES
         );
-        
+
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
@@ -556,12 +557,12 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
         whenNotPaused()
         onlyDeactivatedChannels(msg.sender)
     {
-        
+
         require(
             _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
-        
+
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
 
 
@@ -751,9 +752,46 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2{
 
     /* **************
 
-    => FAIR SHARE RATIO CALCULATIONS <=
+    => CLAIM REWARDS & FAIR SHARE RATIO CALCULATIONS <=
 
     *************** */
+    /**
+     * @notice  Allows the user to claim their rewards in Push Tokens
+     * @dev     Gets the User's Holder weight, totalSupply & start Block from the PUSH token contract
+     *          Calculates the totalHolder weight w.r.t to the current block number
+     *          Gets the ratio of token holder -> ( Individual User's weight / totalWeight)
+     *          Resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
+     *          The PUSH token is then transferred to the USER as the interest.
+     *
+     * @return  success Returns true if rewards are claimed successfully.
+     **/
+     function claimRewards() external returns(bool success){
+      address _user = msg.sender;
+      // Reading necessary PUSH details
+      uint256 pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
+      uint256 pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
+      uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(_user, block.number);
+
+      // Calculating total holder weight at the current Block Number
+      uint256 blockGap = block.number.sub(pushStartBlock);
+      uint256 totalHolderWeight = pushTotalSupply.mul(blockGap);
+
+      //Calculating individual User's Ratio
+      uint256 userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(totalHolderWeight);
+
+      //Calculating Claimable rewards for individual user(msg.sender)
+      uint256 totalClaimableRewards = POOL_FUNDS.mul(userRatio).div(ADJUST_FOR_FLOAT);
+      require(totalClaimableRewards > 0, "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment");
+
+      // Reset the User's Weight and Transfer the Tokens
+      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+      usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(totalClaimableRewards);
+
+      emit RewardsClaimed(msg.sender, totalClaimableRewards);
+      success = true;
+
+     }
+
     /**
      * @notice  Helps keeping trakc of the FAIR Share Details whenever a specific Channel Action occur
      * @dev     Updates some of the imperative Fair Share Data based whenever a paricular channel action is performed.

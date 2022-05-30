@@ -106,5 +106,6 @@ uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 /* *** V2 State variables *** */
 
 mapping(address => uint256) public channelUpdateCounter;
+mapping(address => uint256) public usersRewardsClaimed;
 
 }
