@@ -3,7 +3,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 //import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract EPNS {
