@@ -3,7 +3,7 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 //import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract EPNS {
@@ -201,7 +201,14 @@ contract EPNS {
      * @notice Return holder units
      */
     function returnHolderUnits(address account, uint atBlock) external view returns (uint) {
-        return mul256(balances[account], sub256(atBlock, holderWeight[account], "Push::returnHolderUnits: atBlock should be greater than holderWeight"), "Push::returnHolderUnits: ratio exceeds max range");
+        return mul256(
+            balances[account], 
+            sub256(
+                atBlock, 
+                holderWeight[account], 
+                "Push::returnHolderUnits: atBlock should be greater than holderWeight"
+            ), 
+            "Push::returnHolderUnits: ratio exceeds max range");
     }
 
     /**

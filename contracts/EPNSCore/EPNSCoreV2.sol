@@ -26,7 +26,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
@@ -870,7 +870,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
-        );
+        ); 
 
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
         success = true;
