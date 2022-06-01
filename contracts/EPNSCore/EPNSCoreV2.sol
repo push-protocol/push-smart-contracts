@@ -469,28 +469,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
 
-        // Readjust fair share if interest bearing
-        if (
-            _channelType == ChannelType.ProtocolPromotion ||
-            _channelType == ChannelType.InterestBearingOpen ||
-            _channelType == ChannelType.InterestBearingMutual
-        ) {
-            (
-                groupFairShareCount,
-                groupNormalizedWeight,
-                groupHistoricalZ,
-                groupLastUpdate
-            ) = _readjustFairShareOfChannels(
-                ChannelAction.ChannelAdded,
-                _channelWeight,
-                0,
-                groupFairShareCount,
-                groupNormalizedWeight,
-                groupHistoricalZ,
-                groupLastUpdate
-            );
-        }
-
         // Subscribe them to their own channel as well
         if (_channel != pushChannelAdmin) {
             IEPNSCommV1(epnsCommunicator).subscribeViaCore(_channel, _channel);
@@ -574,20 +552,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelUpdated,
-            _newChannelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
 
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
@@ -626,20 +590,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelUpdated,
-            _channelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
 
         channels[msg.sender].channelState = 1;
         channels[msg.sender].poolContribution += _amount;
@@ -690,20 +640,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelRemoved,
-            _newChannelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
 
         emit ChannelBlocked(_channelAddress);
     }
@@ -877,90 +813,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
 
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
         success = true;
-    }
-
-    /**
-     * @notice  Helps keeping trakc of the FAIR Share Details whenever a specific Channel Action occur
-     * @dev     Updates some of the imperative Fair Share Data based whenever a paricular channel action is performed.
-     *          Takes into consideration 3 major Channel Actions, i.e., Channel Creation, Channel Removal or Channel Deactivation/Reactivation.
-     *
-     * @param _action                 The type of Channel action for which the Fair Share is being adjusted
-     * @param _channelWeight          Weight of the channel on which the Action is being performed.
-     * @param _oldChannelWeight       Old Weight of the channel on which the Action is being performed.
-     * @param _groupFairShareCount    Fair share count
-     * @param _groupNormalizedWeight  Normalized weight value
-     * @param _groupHistoricalZ       The Historical Constant - Z
-     * @param _groupLastUpdate        Holds the block number of the last update.
-     **/
-    function _readjustFairShareOfChannels(
-        ChannelAction _action,
-        uint256 _channelWeight,
-        uint256 _oldChannelWeight,
-        uint256 _groupFairShareCount,
-        uint256 _groupNormalizedWeight,
-        uint256 _groupHistoricalZ,
-        uint256 _groupLastUpdate
-    )
-        private
-        view
-        returns (
-            uint256 groupNewCount,
-            uint256 groupNewNormalizedWeight,
-            uint256 groupNewHistoricalZ,
-            uint256 groupNewLastUpdate
-        )
-    {
-        // readjusts the group count and do deconstruction of weight
-        uint256 groupModCount = _groupFairShareCount;
-        // NormalizedWeight of all Channels at this point
-        uint256 adjustedNormalizedWeight = _groupNormalizedWeight;
-        // totalWeight of all Channels at this point
-        uint256 totalWeight = adjustedNormalizedWeight.mul(groupModCount);
-
-        if (_action == ChannelAction.ChannelAdded) {
-            groupModCount = groupModCount.add(1);
-            totalWeight = totalWeight.add(_channelWeight);
-        } else if (_action == ChannelAction.ChannelRemoved) {
-            groupModCount = groupModCount.sub(1);
-            totalWeight = totalWeight.add(_channelWeight).sub(
-                _oldChannelWeight
-            );
-        } else if (_action == ChannelAction.ChannelUpdated) {
-            totalWeight = totalWeight.add(_channelWeight).sub(
-                _oldChannelWeight
-            );
-        } else {
-            revert(
-                "EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action"
-            );
-        }
-        // now calculate the historical constant
-        // z = z + nxw
-        // z is the historical constant
-        // n is the previous count of group fair share
-        // x is the differential between the latest block and the last update block of the group
-        // w is the normalized average of the group (ie, groupA weight is 1 and groupB is 2 then w is (1+2)/2 = 1.5)
-        uint256 n = groupModCount;
-        uint256 x = block.number.sub(_groupLastUpdate);
-        uint256 w = totalWeight.div(groupModCount);
-        uint256 z = _groupHistoricalZ;
-
-        uint256 nx = n.mul(x);
-        uint256 nxw = nx.mul(w);
-
-        // Save Historical Constant and Update Last Change Block
-        z = z.add(nxw);
-
-        if (n == 1) {
-            // z should start from here as this is first channel
-            z = 0;
-        }
-
-        // Update return variables
-        groupNewCount = groupModCount;
-        groupNewNormalizedWeight = w;
-        groupNewHistoricalZ = z;
-        groupNewLastUpdate = block.number;
     }
 
     function getChainId() internal pure returns (uint256) {
