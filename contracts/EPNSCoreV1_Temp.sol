@@ -484,6 +484,30 @@ contract EPNSCoreV1_Temp is Initializable, Pausable{
         return true;
     }
 
+    function swapADaiForPush() external onlyPushChannelAdmin {
+        // get dai from all aDai
+        uint _contractBalance = IERC20(aDaiAddress).balanceOf(address(this));
+        require(_contractBalance > 0, "EPNSCoreV1::swapADaiForPush: Contract ADai balance is zero");
+        swapADaiForDai(_contractBalance);
+        
+        address _daiAddress = daiAddress;
+        IERC20(_daiAddress).approve(UNISWAP_V2_ROUTER,_contractBalance);
+
+        address[] memory path = new address[](3);
+        path[0] = _daiAddress;
+        path[1] = WETH_ADDRESS;
+        path[2] = PUSH_TOKEN_ADDRESS;
+
+        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+            _contractBalance,
+            0,
+            path,
+            address(this),
+            block.timestamp
+        );
+    }
+
+
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
