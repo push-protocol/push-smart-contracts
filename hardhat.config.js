@@ -5,7 +5,7 @@ const fs = require("fs");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
-// require("hardhat-gas-reporter");
+require("hardhat-gas-reporter");
 
 const { ethers } = require("ethers");
 const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
@@ -44,7 +44,6 @@ module.exports = {
 
   networks: {
     hardhat: {
-      allowUnlimitedContractSize:true,
       forking: {
         url:
           `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
@@ -118,7 +117,7 @@ module.exports = {
     version: "0.6.11",
     settings: {
       optimizer: {
-        enabled: false,
+        enabled: true,
         runs: 99999,
       },
     },
