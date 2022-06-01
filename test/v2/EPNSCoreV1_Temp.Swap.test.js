@@ -15,6 +15,7 @@ describe("Swap aDai with PUSH", function () {
     let ALICESIGNER;
     let MOCKDAI
     let ADAI;
+    let ROUTER;
 
     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
     let loadFixture;
@@ -51,7 +52,6 @@ describe("Swap aDai with PUSH", function () {
         await MOCKDAI.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
   
     });
-    
 
     it("allows admin to swap with aDai wit PUSH",async()=>{
         // contract PUSH prev bal
@@ -64,11 +64,24 @@ describe("Swap aDai with PUSH", function () {
             testChannel,
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
+        
+        // get expected Token ammount after the swap
+        const initialAdaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address);
+        const ammtToReceive = await ROUTER.getAmountsOut(
+            initialAdaiBal,
+            [
+                "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108",
+                "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+                "0xf418588522d5dd018b425E472991E52EBBeEEEEE"
+            ],
+        );
+        const minAmmountToReceive = ammtToReceive[0];
 
-        // Allow admin to swap aDai with Eth
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+        // Admin to swaps aDai for PUSH
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush();
         const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
-        expect(new_push_bal > inital_push_bal).to.equal(true);
+        expect(new_push_bal).to.be.at.least(minAmmountToReceive);
+        expect(new_push_bal).to.be.above(inital_push_bal);
 
         // After swap aDai and Dai balance should be zero
         const adaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address)
@@ -90,4 +103,8 @@ describe("Swap aDai with PUSH", function () {
             EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
         ).to.be.revertedWith("EPNSCoreV1::swapADaiForPush: Contract ADai balance is zero");
     })
+
+
+
+
 })
