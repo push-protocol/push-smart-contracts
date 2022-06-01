@@ -64,6 +64,7 @@ const epnsContractFixture = async ([adminSigner, others])=>{
         ROUTER,
         EPNS,
         EPNS_TOKEN_ADDRS,
+        WETH_ADDRS
     }
 }
 

@@ -15,7 +15,9 @@ describe("Swap aDai with PUSH", function () {
     let ALICESIGNER;
     let MOCKDAI
     let ADAI;
+    let WETH_ADDRS;
     let ROUTER;
+    let EPNS_TOKEN_ADDRS;
 
     const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
     let loadFixture;
@@ -43,6 +45,7 @@ describe("Swap aDai with PUSH", function () {
           ROUTER,
           EPNS,
           EPNS_TOKEN_ADDRS,
+          WETH_ADDRS
         } = await loadFixture(epnsContractFixture)); 
 
         ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
@@ -70,10 +73,14 @@ describe("Swap aDai with PUSH", function () {
         const ammtToReceive = await ROUTER.getAmountsOut(
             initialAdaiBal,
             [
-                "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108",
-                "0xc778417E063141139Fce010982780140Aa0cD5Ab",
-                "0xf418588522d5dd018b425E472991E52EBBeEEEEE"
-            ],
+              MOCKDAI.address,
+              WETH_ADDRS,
+              EPNS_TOKEN_ADDRS
+            ]
+                // "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108",
+                // "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+                // "0xf418588522d5dd018b425E472991E52EBBeEEEEE"
+            
         );
         const minAmmountToReceive = ammtToReceive[0];
 
