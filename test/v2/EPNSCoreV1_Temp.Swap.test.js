@@ -75,12 +75,8 @@ describe("Swap aDai with PUSH", function () {
             [
               MOCKDAI.address,
               WETH_ADDRS,
-              EPNS_TOKEN_ADDRS
+              EPNS_TOKEN_ADDRS,
             ]
-                // "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108",
-                // "0xc778417E063141139Fce010982780140Aa0cD5Ab",
-                // "0xf418588522d5dd018b425E472991E52EBBeEEEEE"
-            
         );
         const minAmmountToReceive = ammtToReceive[0];
 
