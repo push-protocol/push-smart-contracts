@@ -5,4 +5,5 @@ interface IPUSH {
   function totalSupply() external view returns(uint);
   function resetHolderWeight(address holder) external;
   function returnHolderUnits(address account, uint atBlock) external view returns (uint);
+  function transfer(address dst, uint rawAmount) external returns (bool);
 }

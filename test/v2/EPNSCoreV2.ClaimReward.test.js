@@ -128,7 +128,8 @@ describe("EPNS CoreV2 Protocol", function () {
 			// record alice userHolderWeight for next block
 			var currentBlock = await ethers.provider.getBlock("latest");
 			const userHolderWeight = await PushToken.returnHolderUnits(ALICE,currentBlock.number+1)
-			
+			const userInitalBalance = await PushToken.balanceOf(ALICE);
+
 			// alice claims the reward
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
 			const userClaimedRewards = await EPNSCoreV1Proxy.connect(ALICESIGNER).usersRewardsClaimed(ALICE);
@@ -146,9 +147,13 @@ describe("EPNS CoreV2 Protocol", function () {
 			const totalHolderWeight = blockGap * pushTotalSupply;
 			const userRatio = Math.floor(userHolderWeight * ADJUST_FOR_FLOAT/totalHolderWeight);
 			const userReward = userRatio * poolFunds/ADJUST_FOR_FLOAT
-
-			// userClaimed value shoulld match the formulation value			
+			// userClaimed value shoulld match the formulation value	
 			expect(userReward).to.equal(userClaimedRewards);
+			
+			// user PUSH balance should be increased by `userReward`
+			const expectedFinalBalance = userInitalBalance.add(userReward);
+			const userFinalBalance = await PushToken.balanceOf(ALICE);
+			expect(expectedFinalBalance).to.equal(userFinalBalance);		
 		});
 
 		it("Maintains resetHolderWeight to avoid double reward", async function(){

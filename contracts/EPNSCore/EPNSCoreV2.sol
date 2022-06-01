@@ -872,6 +872,12 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             totalClaimableRewards
         ); 
 
+        // Transfer PUSH to the user
+        require(
+            IPUSH(PUSH_TOKEN_ADDRESS).transfer(_user,totalClaimableRewards),
+            "EPNSCoreV2::claimRewards: Transfer of PUSH token failed"
+        );
+
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
         success = true;
     }
