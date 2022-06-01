@@ -67,6 +67,9 @@ describe("Swap aDai with PUSH", function () {
             testChannel,
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
+
+        // pause the contract
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         
         // get expected Token ammount after the swap
         const initialAdaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address);
@@ -82,6 +85,8 @@ describe("Swap aDai with PUSH", function () {
 
         // Admin to swaps aDai for PUSH
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush();
+        
+        // Check balance after swap
         const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
         expect(new_push_bal).to.be.at.least(minAmmountToReceive);
         expect(new_push_bal).to.be.above(inital_push_bal);
@@ -94,20 +99,51 @@ describe("Swap aDai with PUSH", function () {
         expect(daiBal).to.equal(0)
     })
 
+
+    it("only allows swap only on pause state",async()=>{
+        // contract PUSH prev bal
+        const inital_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
+        
+        // Creating a channel so that contract has some aDAI
+        const CHANNEL_TYPE = 2;
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(
+            CHANNEL_TYPE,
+            testChannel,
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+        
+        await expect(
+            EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+        ).to.be.revertedWith("Pausable: not paused");
+        
+        // after pausing the contract swap is allowed
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+
+        // Check balance after swap
+        const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
+        expect(new_push_bal).to.be.above(inital_push_bal);
+
+        // After swap aDai and Dai balance should be zero
+        const adaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address)
+        expect(adaiBal).to.equal(0)
+        
+        const daiBal = await MOCKDAI.balanceOf(EPNSCoreV1Proxy.address)
+        expect(daiBal).to.equal(0)
+    })
+
     it("allows only push admin to swap",async()=>{
         // Allow admin to swap aDai with Eth
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         await expect(
             EPNSCoreV1Proxy.connect(ALICESIGNER).swapADaiForPush()
         ).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
     })
 
     it("reverts if aDai balace is zero",async()=>{
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         await expect(
             EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
         ).to.be.revertedWith("EPNSCoreV1::swapADaiForPush: Contract ADai balance is zero");
     })
-
-
-
-
 })

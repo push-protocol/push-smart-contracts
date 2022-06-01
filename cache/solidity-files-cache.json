@@ -880,8 +880,8 @@
       ]
     },
     "/Users/mdteach/Codes/read/epns-protocol-staging/contracts/EPNSCoreV1_Temp.sol": {
-      "lastModificationDate": 1654084332600,
-      "contentHash": "9eee859834eb5368b1a14e74724d31e0",
+      "lastModificationDate": 1654089116631,
+      "contentHash": "8c5700aee09c50a32c51fe16208c978e",
       "sourceName": "contracts/EPNSCoreV1_Temp.sol",
       "solcConfig": {
         "version": "0.6.11",
