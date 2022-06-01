@@ -417,7 +417,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             if (channels[_channelAddresses[i]].channelState != 0) {
                 continue;
             } else {
-                IERC20(daiAddress).safeTransferFrom(
+                IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
                     msg.sender,
                     address(this),
                     _amountList[i]
@@ -871,6 +871,9 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
         );
+
+        // Transfer PUSH to the user
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(_user, totalClaimableRewards);
 
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
         success = true;
