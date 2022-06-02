@@ -484,7 +484,7 @@ contract EPNSCoreV1_Temp is Initializable, Pausable{
         return true;
     }
 
-    function swapADaiForPush() external onlyPushChannelAdmin whenPaused{
+    function swapADaiForPush(uint minReceivableAmmount) external onlyPushChannelAdmin whenPaused{
         // get dai from all aDai
         uint _contractBalance = IERC20(aDaiAddress).balanceOf(address(this));
         require(_contractBalance > 0, "EPNSCoreV1::swapADaiForPush: Contract ADai balance is zero");
@@ -500,7 +500,7 @@ contract EPNSCoreV1_Temp is Initializable, Pausable{
 
         IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
             _contractBalance,
-            0,
+            minReceivableAmmount,
             path,
             address(this),
             block.timestamp

@@ -56,6 +56,19 @@ describe("Swap aDai with PUSH", function () {
   
     });
 
+    const getMinReceivableAmmount = async() => {
+        const initialAdaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address);
+        const ammtToReceive = await ROUTER.getAmountsOut(
+            initialAdaiBal,
+            [
+              MOCKDAI.address,
+              WETH_ADDRS,
+              EPNS_TOKEN_ADDRS,
+            ]
+        );
+        return ammtToReceive[0];
+    }
+
     it("allows admin to swap with aDai wit PUSH",async()=>{
         // contract PUSH prev bal
         const inital_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
@@ -72,19 +85,10 @@ describe("Swap aDai with PUSH", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         
         // get expected Token ammount after the swap
-        const initialAdaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address);
-        const ammtToReceive = await ROUTER.getAmountsOut(
-            initialAdaiBal,
-            [
-              MOCKDAI.address,
-              WETH_ADDRS,
-              EPNS_TOKEN_ADDRS,
-            ]
-        );
-        const minAmmountToReceive = ammtToReceive[0];
+        const minAmmountToReceive = await getMinReceivableAmmount();
 
         // Admin to swaps aDai for PUSH
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive);
         
         // Check balance after swap
         const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
@@ -101,9 +105,6 @@ describe("Swap aDai with PUSH", function () {
 
 
     it("only allows swap only on pause state",async()=>{
-        // contract PUSH prev bal
-        const inital_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
-        
         // Creating a channel so that contract has some aDAI
         const CHANNEL_TYPE = 2;
         await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(
@@ -111,18 +112,21 @@ describe("Swap aDai with PUSH", function () {
             testChannel,
             ADD_CHANNEL_MIN_POOL_CONTRIBUTION
         );
+
+        // get expected Token ammount after the swap
+        const minAmmountToReceive = await getMinReceivableAmmount();
         
         await expect(
-            EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+            EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive)
         ).to.be.revertedWith("Pausable: not paused");
         
         // after pausing the contract swap is allowed
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
-        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive)
 
         // Check balance after swap
         const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
-        expect(new_push_bal).to.be.above(inital_push_bal);
+        expect(new_push_bal).to.be.above(minAmmountToReceive);
 
         // After swap aDai and Dai balance should be zero
         const adaiBal = await ADAI.balanceOf(EPNSCoreV1Proxy.address)
@@ -136,14 +140,14 @@ describe("Swap aDai with PUSH", function () {
         // Allow admin to swap aDai with Eth
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         await expect(
-            EPNSCoreV1Proxy.connect(ALICESIGNER).swapADaiForPush()
+            EPNSCoreV1Proxy.connect(ALICESIGNER).swapADaiForPush(100)
         ).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
     })
 
     it("reverts if aDai balace is zero",async()=>{
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
         await expect(
-            EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush()
+            EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(100)
         ).to.be.revertedWith("EPNSCoreV1::swapADaiForPush: Contract ADai balance is zero");
     })
 })
