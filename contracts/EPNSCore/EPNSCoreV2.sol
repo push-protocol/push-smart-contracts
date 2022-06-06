@@ -794,9 +794,9 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         //Calculating Claimable rewards for individual user(msg.sender)
-        uint256 totalClaimableRewards = POOL_FUNDS.mul(userRatio).div(
-            ADJUST_FOR_FLOAT
-        );
+        uint256 totalClaimableRewards = IERC20(PUSH_TOKEN_ADDRESS).balanceOf(address(this))
+            .mul(userRatio).div(ADJUST_FOR_FLOAT);
+
         require(
             totalClaimableRewards > 0,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
