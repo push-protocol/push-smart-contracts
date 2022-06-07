@@ -62,40 +62,39 @@ contract EPNSCoreStorageV2 {
     /* ***************
     STATE VARIABLES
  *************** */
-string public constant name = "EPNS CORE V1";
-bool oneTimeCheck;
-bool public isMigrationComplete;
+    string public constant name = "EPNS CORE V1";
+    bool oneTimeCheck;
+    bool public isMigrationComplete;
 
-address public pushChannelAdmin;
-address public governance;
-address public daiAddress;
-address public aDaiAddress;
-address public WETH_ADDRESS;
-address public epnsCommunicator;
-address public UNISWAP_V2_ROUTER;
-address public PUSH_TOKEN_ADDRESS;
-address public lendingPoolProviderAddress;
+    address public pushChannelAdmin;
+    address public governance;
+    address public daiAddress;
+    address public aDaiAddress;
+    address public WETH_ADDRESS;
+    address public epnsCommunicator;
+    address public UNISWAP_V2_ROUTER;
+    address public PUSH_TOKEN_ADDRESS;
+    address public lendingPoolProviderAddress;
 
-uint256 public REFERRAL_CODE;
-uint256 ADJUST_FOR_FLOAT;
-uint256 public channelsCount;
+    uint256 public REFERRAL_CODE;
+    uint256 ADJUST_FOR_FLOAT;
+    uint256 public channelsCount;
 
-//  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
-uint256 public groupNormalizedWeight;
-uint256 public groupHistoricalZ;
-uint256 public groupLastUpdate;
-uint256 public groupFairShareCount;
+    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
+    uint256 public groupNormalizedWeight;
+    uint256 public groupHistoricalZ;
+    uint256 public groupLastUpdate;
+    uint256 public groupFairShareCount;
 
-// @notice Necessary variables for Keeping track of Funds and Fees
-uint256 public POOL_FUNDS;
-uint256 public PROTOCOL_POOL_FEES;
-uint256 public ADD_CHANNEL_MIN_FEES;
-uint256 public CHANNEL_DEACTIVATION_FEES;
-uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+    // @notice Necessary variables for Keeping track of Funds and Fees
+    uint256 public POOL_FUNDS;
+    uint256 public PROTOCOL_POOL_FEES;
+    uint256 public ADD_CHANNEL_MIN_FEES;
+    uint256 public CHANNEL_DEACTIVATION_FEES;
+    uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
 
-/* *** V2 State variables *** */
+    /* *** V2 State variables *** */
 
-mapping(address => uint256) public channelUpdateCounter;
-mapping(address => uint256) public usersRewardsClaimed;
-
+    mapping(address => uint256) public channelUpdateCounter;
+    mapping(address => uint256) public usersRewardsClaimed;
 }
