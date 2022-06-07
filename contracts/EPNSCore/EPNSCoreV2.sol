@@ -36,6 +36,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
+    event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(
         address indexed channel,
@@ -416,7 +417,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             if (channels[_channelAddresses[i]].channelState != 0) {
                 continue;
             } else {
-                IERC20(daiAddress).safeTransferFrom(
+                IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
                     msg.sender,
                     address(this),
                     _amountList[i]
@@ -467,28 +468,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         // Add to map of addresses and increment channel count
         channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
-
-        // Readjust fair share if interest bearing
-        if (
-            _channelType == ChannelType.ProtocolPromotion ||
-            _channelType == ChannelType.InterestBearingOpen ||
-            _channelType == ChannelType.InterestBearingMutual
-        ) {
-            (
-                groupFairShareCount,
-                groupNormalizedWeight,
-                groupHistoricalZ,
-                groupLastUpdate
-            ) = _readjustFairShareOfChannels(
-                ChannelAction.ChannelAdded,
-                _channelWeight,
-                0,
-                groupFairShareCount,
-                groupNormalizedWeight,
-                groupHistoricalZ,
-                groupLastUpdate
-            );
-        }
 
         // Subscribe them to their own channel as well
         if (_channel != pushChannelAdmin) {
@@ -573,25 +552,15 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelUpdated,
-            _newChannelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
-
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+            msg.sender,
+            totalRefundableAmount
+        );
 
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
@@ -616,7 +585,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
 
-        IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint256 newChannelPoolContribution = _amount.add(
@@ -625,21 +598,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelUpdated,
-            _channelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
 
+        POOL_FUNDS = POOL_FUNDS.add(_amount);
         channels[msg.sender].channelState = 1;
         channels[msg.sender].poolContribution += _amount;
         channels[msg.sender].channelWeight = _channelWeight;
@@ -689,20 +649,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
-        (
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        ) = _readjustFairShareOfChannels(
-            ChannelAction.ChannelRemoved,
-            _newChannelWeight,
-            _oldChannelWeight,
-            groupFairShareCount,
-            groupNormalizedWeight,
-            groupHistoricalZ,
-            groupLastUpdate
-        );
 
         emit ChannelBlocked(_channelAddress);
     }
@@ -824,91 +770,60 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
 
     /* **************
 
-    => FAIR SHARE RATIO CALCULATIONS <=
+    => CLAIM REWARDS & FAIR SHARE RATIO CALCULATIONS <=
 
     *************** */
     /**
-     * @notice  Helps keeping trakc of the FAIR Share Details whenever a specific Channel Action occur
-     * @dev     Updates some of the imperative Fair Share Data based whenever a paricular channel action is performed.
-     *          Takes into consideration 3 major Channel Actions, i.e., Channel Creation, Channel Removal or Channel Deactivation/Reactivation.
+     * @notice  Allows the user to claim their rewards in Push Tokens
+     * @dev     Gets the User's Holder weight, totalSupply & start Block from the PUSH token contract
+     *          Calculates the totalHolder weight w.r.t to the current block number
+     *          Gets the ratio of token holder -> ( Individual User's weight / totalWeight)
+     *          Resets the Holder's Weight on the PUSH Contract by setting it to the current block.number
+     *          The PUSH token is then transferred to the USER as the interest.
      *
-     * @param _action                 The type of Channel action for which the Fair Share is being adjusted
-     * @param _channelWeight          Weight of the channel on which the Action is being performed.
-     * @param _oldChannelWeight       Old Weight of the channel on which the Action is being performed.
-     * @param _groupFairShareCount    Fair share count
-     * @param _groupNormalizedWeight  Normalized weight value
-     * @param _groupHistoricalZ       The Historical Constant - Z
-     * @param _groupLastUpdate        Holds the block number of the last update.
+     * @return  success Returns true if rewards are claimed successfully.
      **/
-    function _readjustFairShareOfChannels(
-        ChannelAction _action,
-        uint256 _channelWeight,
-        uint256 _oldChannelWeight,
-        uint256 _groupFairShareCount,
-        uint256 _groupNormalizedWeight,
-        uint256 _groupHistoricalZ,
-        uint256 _groupLastUpdate
-    )
-        private
-        view
-        returns (
-            uint256 groupNewCount,
-            uint256 groupNewNormalizedWeight,
-            uint256 groupNewHistoricalZ,
-            uint256 groupNewLastUpdate
-        )
-    {
-        // readjusts the group count and do deconstruction of weight
-        uint256 groupModCount = _groupFairShareCount;
-        // NormalizedWeight of all Channels at this point
-        uint256 adjustedNormalizedWeight = _groupNormalizedWeight;
-        // totalWeight of all Channels at this point
-        uint256 totalWeight = adjustedNormalizedWeight.mul(groupModCount);
+    function claimRewards() external returns (bool success) {
+        address _user = msg.sender;
+        // Reading necessary PUSH details
+        uint256 pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
+        uint256 pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
+        uint256 userHolderWeight = IPUSH(PUSH_TOKEN_ADDRESS).returnHolderUnits(
+            _user,
+            block.number
+        );
 
-        if (_action == ChannelAction.ChannelAdded) {
-            groupModCount = groupModCount.add(1);
-            totalWeight = totalWeight.add(_channelWeight);
-        } else if (_action == ChannelAction.ChannelRemoved) {
-            groupModCount = groupModCount.sub(1);
-            totalWeight = totalWeight.add(_channelWeight).sub(
-                _oldChannelWeight
-            );
-        } else if (_action == ChannelAction.ChannelUpdated) {
-            totalWeight = totalWeight.add(_channelWeight).sub(
-                _oldChannelWeight
-            );
-        } else {
-            revert(
-                "EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action"
-            );
-        }
-        // now calculate the historical constant
-        // z = z + nxw
-        // z is the historical constant
-        // n is the previous count of group fair share
-        // x is the differential between the latest block and the last update block of the group
-        // w is the normalized average of the group (ie, groupA weight is 1 and groupB is 2 then w is (1+2)/2 = 1.5)
-        uint256 n = groupModCount;
-        uint256 x = block.number.sub(_groupLastUpdate);
-        uint256 w = totalWeight.div(groupModCount);
-        uint256 z = _groupHistoricalZ;
+        // Calculating total holder weight at the current Block Number
+        uint256 blockGap = block.number.sub(pushStartBlock);
+        uint256 totalHolderWeight = pushTotalSupply.mul(blockGap);
 
-        uint256 nx = n.mul(x);
-        uint256 nxw = nx.mul(w);
+        //Calculating individual User's Ratio
+        uint256 userRatio = userHolderWeight.mul(ADJUST_FOR_FLOAT).div(
+            totalHolderWeight
+        );
 
-        // Save Historical Constant and Update Last Change Block
-        z = z.add(nxw);
+        //Calculating Claimable rewards for individual user(msg.sender)
+        uint256 totalClaimableRewards = IERC20(PUSH_TOKEN_ADDRESS)
+            .balanceOf(address(this))
+            .mul(userRatio)
+            .div(ADJUST_FOR_FLOAT);
 
-        if (n == 1) {
-            // z should start from here as this is first channel
-            z = 0;
-        }
+        require(
+            totalClaimableRewards > 0,
+            "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
+        );
 
-        // Update return variables
-        groupNewCount = groupModCount;
-        groupNewNormalizedWeight = w;
-        groupNewHistoricalZ = z;
-        groupNewLastUpdate = block.number;
+        // Reset the User's Weight and Transfer the Tokens
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
+            totalClaimableRewards
+        );
+
+        // Transfer PUSH to the user
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(_user, totalClaimableRewards);
+
+        emit RewardsClaimed(msg.sender, totalClaimableRewards);
+        success = true;
     }
 
     function getChainId() internal pure returns (uint256) {
