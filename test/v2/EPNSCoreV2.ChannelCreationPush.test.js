@@ -215,38 +215,6 @@ describe("EPNS CoreV2 Protocol", function () {
 
         }).timeout(10000);
 
-         it("should create a channel and update fair share values", async function(){
-          const CHANNEL_TYPE = 2;
-
-          const channelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          const _groupFairShareCount = await EPNSCoreV1Proxy.groupFairShareCount();
-          const _groupNormalizedWeight = await EPNSCoreV1Proxy.groupNormalizedWeight();
-          const _groupHistoricalZ = await EPNSCoreV1Proxy.groupHistoricalZ();
-          const _groupLastUpdate = await EPNSCoreV1Proxy.groupLastUpdate();
-
-          const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-          const blockNumber = tx.blockNumber;
-          const _oldChannelWeight = 0;
-          const newChannelWeight = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
-          const {
-            groupNewCount,
-            groupNewNormalizedWeight,
-            groupNewHistoricalZ,
-            groupNewLastUpdate
-          } = readjustFairShareOfChannels(ChannelAction.ChannelAdded, newChannelWeight, _oldChannelWeight, _groupFairShareCount, _groupNormalizedWeight, _groupHistoricalZ, _groupLastUpdate, bn(blockNumber));
-
-          const _groupFairShareCountNew = await EPNSCoreV1Proxy.groupFairShareCount();
-          const _groupNormalizedWeightNew = await EPNSCoreV1Proxy.groupNormalizedWeight();
-          const _groupHistoricalZNew = await EPNSCoreV1Proxy.groupHistoricalZ();
-          const _groupLastUpdateNew = await EPNSCoreV1Proxy.groupLastUpdate();
-
-          expect(_groupFairShareCountNew).to.equal(groupNewCount);
-          expect(_groupNormalizedWeightNew).to.equal(groupNewNormalizedWeight);
-          expect(_groupHistoricalZNew).to.equal(groupNewHistoricalZ);
-          expect(_groupLastUpdateNew).to.equal(groupNewLastUpdate);
-        });
-
         it("Function Should emit Relevant Events", async function(){
           const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
