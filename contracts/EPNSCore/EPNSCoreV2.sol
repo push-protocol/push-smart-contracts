@@ -417,6 +417,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             if (channels[_channelAddresses[i]].channelState != 0) {
                 continue;
             } else {
+
                 IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
                     msg.sender,
                     address(this),
@@ -595,7 +596,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint256 newChannelPoolContribution = _amount.add(
             CHANNEL_DEACTIVATION_FEES
-        );
+          );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -811,7 +812,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             totalClaimableRewards > 0,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
-
+        
         // Reset the User's Weight and Transfer the Tokens
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
