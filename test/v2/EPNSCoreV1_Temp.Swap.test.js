@@ -136,6 +136,34 @@ describe("Swap aDai with PUSH", function () {
         expect(daiBal).to.equal(0)
     })
 
+    it('should updated POOL_FUNDS after swap', async() => {
+        // Creating a channel so that contract has some aDAI
+        const CHANNEL_TYPE = 2;
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(
+            CHANNEL_TYPE,
+            testChannel,
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        );
+
+        // get expected Token ammount after the swap
+        const minAmmountToReceive = await getMinReceivableAmmount();
+
+        // expect poolBalance before to be ADD_CHANNEL_MIN_POOL_CONTRIBUTION 
+        const pooFundsBefore = await EPNSCoreV1Proxy.POOL_FUNDS();
+        expect(pooFundsBefore).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+        // pausing the contract and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive)
+        
+
+        // Check balance after swap
+        const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
+        const pooFundsAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
+        expect(pooFundsAfter).to.equal(new_push_bal);
+        expect(pooFundsAfter).to.be.above(minAmmountToReceive);
+    });
+
     it("allows only push admin to swap",async()=>{
         // Allow admin to swap aDai with Eth
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract(); 

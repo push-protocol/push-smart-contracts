@@ -505,6 +505,9 @@ contract EPNSCoreV1_Temp is Initializable, Pausable{
             address(this),
             block.timestamp
         );
+        
+        // Update pool funds
+        POOL_FUNDS = IERC20(PUSH_TOKEN_ADDRESS).balanceOf(address(this));
     }
 
 
