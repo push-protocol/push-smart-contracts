@@ -63,6 +63,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         string _notifSettings,
         string _notifDescription
     );
+    event AddSubGraph(address indexed channel, bytes _subGraphData);
 
     /* **************
         MODIFIERS
@@ -176,6 +177,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     SETTER FUNCTIONS
 
     *************** */
+    function addSubGraph(bytes calldata _subGraphData)
+        external
+        onlyActivatedChannels(msg.sender)
+    {
+        emit AddSubGraph(msg.sender, _subGraphData);
+    }
+
     function updateWETHAddress(address _newAddress)
         external
         onlyPushChannelAdmin
