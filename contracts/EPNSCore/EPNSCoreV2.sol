@@ -127,8 +127,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
 
     modifier onlyUserAllowedChannelType(ChannelType _channelType) {
         require(
-            (_channelType == ChannelType.InterestBearingOpen ||
-                _channelType == ChannelType.InterestBearingMutual),
+            (_channelType == ChannelType.Open ||
+                _channelType == ChannelType.Permissioned),
             "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
@@ -332,18 +332,18 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
         );
 
-        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
+        _createChannel(pushChannelAdmin, ChannelType.ProtocolSpecifc, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
         emit AddChannel(
             pushChannelAdmin,
-            ChannelType.ProtocolNonInterest,
+            ChannelType.ProtocolSpecifc,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
 
         // EPNS ALERTER CHANNEL
-        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0);
+        _createChannel(address(0x0), ChannelType.ProtocolSpecifc, 0);
         emit AddChannel(
             address(0x0),
-            ChannelType.ProtocolNonInterest,
+            ChannelType.ProtocolSpecifc,
             "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
         );
 
