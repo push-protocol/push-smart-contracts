@@ -64,6 +64,10 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         string _notifDescription
     );
     event AddSubGraph(address indexed channel, bytes _subGraphData);
+    event TimeBoundChannelDestroyed(
+        address indexed channel,
+        uint256 indexed amountRefunded
+    );
 
     /* **************
         MODIFIERS
@@ -129,8 +133,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         require(
             (_channelType == ChannelType.Open ||
                 _channelType == ChannelType.Permissioned ||
-                  _channelType == ChannelType.TimeBound ||
-                    _channelType == ChannelType.TokenGaited),
+                _channelType == ChannelType.TimeBound ||
+                _channelType == ChannelType.TokenGaited),
             "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
@@ -404,6 +408,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param _channelTypeList   array of type of the Channel being created
      * @param _identityList     array of list of identity Bytes
      * @param _amountList       array of amount of PUSH  to be depositeds
+     * @param  _channelExpiryTime the expiry time for time bound channels
      **/
     function migrateChannelData(
         uint256 _startIndex,
@@ -459,6 +464,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
+     * @param _channelExpiryTime the expiry time for time bound channels
      **/
     function _createChannel(
         address _channel,
@@ -483,8 +489,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
 
-        if(_channelType == ChannelType.TimeBound){
-          channels[_channel].expiryTime = _channelExpiryTime;
+        if (_channelType == ChannelType.TimeBound) {
+            channels[_channel].expiryTime = _channelExpiryTime;
         }
 
         // Subscribe them to their own channel as well
@@ -503,6 +509,39 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                 pushChannelAdmin
             );
         }
+    }
+
+    /**
+     * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
+     * @dev    - Can only be called the owner of the Channel.
+     *         - Can only be called if the Channel is of type - TimeBound
+     *         - Can only be called after the Channel Expiry time is up.
+     *         - Deletes the Channel completely
+     *         - It transfers back 40 PUSH Tokens back to the USER.
+     **/
+    function destroyTimeBoundChannel() external onlyChannelOwner(msg.sender) {
+        Channel storage channelData = channels[msg.sender];
+
+        require(
+            channelData.channelType == ChannelType.TimeBound &&
+                channelData.expiryTime <= block.timestamp,
+            "EPNSCoreV1::destroyTimeBoundChannel: Channel not TimeBound Type or channelTime Not expired"
+        );
+
+        uint256 totalRefundableAmount = channelData.poolContribution.sub(
+            CHANNEL_DEACTIVATION_FEES
+        );
+        // Remove the Channel, decrease Channel Count and POOL_FUNDS.
+        POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+        channelsCount = channelsCount.sub(1);
+        delete channels[msg.sender];
+
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+            msg.sender,
+            totalRefundableAmount
+        );
+
+        emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
     /** @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
