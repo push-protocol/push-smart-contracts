@@ -128,7 +128,9 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     modifier onlyUserAllowedChannelType(ChannelType _channelType) {
         require(
             (_channelType == ChannelType.Open ||
-                _channelType == ChannelType.Permissioned),
+                _channelType == ChannelType.Permissioned ||
+                  _channelType == ChannelType.TimeBound ||
+                    _channelType == ChannelType.TokenGaited),
             "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
@@ -332,7 +334,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
         );
 
-        _createChannel(pushChannelAdmin, ChannelType.ProtocolSpecifc, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
+        _createChannel(pushChannelAdmin, ChannelType.ProtocolSpecifc, 0, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
         emit AddChannel(
             pushChannelAdmin,
             ChannelType.ProtocolSpecifc,
@@ -340,7 +342,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         // EPNS ALERTER CHANNEL
-        _createChannel(address(0x0), ChannelType.ProtocolSpecifc, 0);
+        _createChannel(address(0x0), ChannelType.ProtocolSpecifc, 0, 0);
         emit AddChannel(
             address(0x0),
             ChannelType.ProtocolSpecifc,
@@ -360,11 +362,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param  _channelType the type of the Channel Being created
      * @param  _identity the bytes value of the identity of the Channel
      * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
+     * @param  _channelExpiryTime the expiry time for time bound channels
      **/
     function createChannelWithPUSH(
         ChannelType _channelType,
         bytes calldata _identity,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _channelExpiryTime
     )
         external
         whenNotPaused
@@ -383,7 +387,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             address(this),
             _amount
         );
-        _createChannel(msg.sender, _channelType, _amount);
+        _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -407,7 +411,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         address[] calldata _channelAddresses,
         ChannelType[] calldata _channelTypeList,
         bytes[] calldata _identityList,
-        uint256[] calldata _amountList
+        uint256[] calldata _amountList,
+        uint256[] calldata _channelExpiryTime
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
@@ -417,7 +422,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         require(
             (_channelAddresses.length == _channelTypeList.length) &&
                 (_channelAddresses.length == _identityList.length) &&
-                (_channelAddresses.length == _amountList.length),
+                (_channelAddresses.length == _amountList.length) &&
+                (_channelAddresses.length == _channelExpiryTime.length),
             "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
@@ -438,7 +444,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                 _createChannel(
                     _channelAddresses[i],
                     _channelTypeList[i],
-                    _amountList[i]
+                    _amountList[i],
+                    _channelExpiryTime[i]
                 );
             }
         }
@@ -456,7 +463,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     function _createChannel(
         address _channel,
         ChannelType _channelType,
-        uint256 _amountDeposited
+        uint256 _amountDeposited,
+        uint256 _channelExpiryTime
     ) private {
         // Calculate channel weight
         uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
@@ -471,10 +479,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channels[_channel].channelStartBlock = block.number;
         channels[_channel].channelUpdateBlock = block.number;
         channels[_channel].channelWeight = _channelWeight;
-
         // Add to map of addresses and increment channel count
         channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
+
+        if(_channelType == ChannelType.TimeBound){
+          channels[_channel].expiryTime = _channelExpiryTime;
+        }
 
         // Subscribe them to their own channel as well
         if (_channel != pushChannelAdmin) {
