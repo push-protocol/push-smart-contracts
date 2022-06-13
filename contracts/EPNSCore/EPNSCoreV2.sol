@@ -449,7 +449,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
-     *         -Increases Channel Counts and Readjusts the FS of Channels
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
@@ -537,12 +536,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the Total PUSH  Deposited by Channel Owner while Channel Creation.
      *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited PUSH  and Transfers back the remaining amount of PUSH  in the form of PUSH tokens.
-     *         - Calculates the New Channel Weight and Readjusts the FS Ratio accordingly.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
 
-    function deactivateChannel(uint256 _amountsOutValue)
+    function deactivateChannel()
         external
         whenNotPaused
         onlyActivatedChannels(msg.sender)
@@ -627,7 +625,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      *         - Updates Channel's Weight to ZERO
      *         - Increases the Protocol Fee Pool
      *         - Decreases the Channel Count
-     *         - Readjusts the FS Ratio
      *         - Emit 'ChannelBlocked' Event
      * @param _channelAddress Address of the Channel to be blocked
      **/
