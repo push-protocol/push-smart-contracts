@@ -74,8 +74,8 @@ describe("EPNS CoreV2 Protocol", function () {
             await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
             await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
 
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
+            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
          });
           /**
             * "updateChannelMeta" Function CheckPoints
@@ -211,7 +211,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
           it("Only allows activate channel to be updated", async function(){
             // on channel deactivation cannnot create channel
-            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel(1);             
+            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();             
             await expect(
               EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
             ).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");

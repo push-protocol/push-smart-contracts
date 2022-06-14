@@ -90,7 +90,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
 		const createChannel = async(signer)=>{
 			await EPNSCoreV1Proxy.connect(signer)
-				.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+				.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 		}
 
 
