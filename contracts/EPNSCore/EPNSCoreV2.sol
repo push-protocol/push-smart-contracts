@@ -26,7 +26,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
@@ -490,6 +490,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelsCount = channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
+            require(_channelExpiryTime > block.timestamp,"EPNSCoreV1::createChannel: Invalid channelExpiryTime");
             channels[_channel].expiryTime = _channelExpiryTime;
         }
 
