@@ -134,14 +134,15 @@ describe("EPNS CoreV2 Protocol", function () {
           });
 
           it("Should update Channel Meta Details correctly for right Amount -> 50 PUSH Tokens", async function(){
+            const pool_fees_before = await EPNSCoreV1Proxy.POOL_FUNDS();
             const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             const block_num = tx.blockNumber;
             const channel = await EPNSCoreV1Proxy.channels(BOB)
-            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+            const pool_fees_after = await EPNSCoreV1Proxy.POOL_FUNDS();
             const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
 
             await expect(channel.channelUpdateBlock).to.equal(block_num);
-            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(pool_fees_after).to.equal(pool_fees_before.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION));
             await expect(counter).to.equal(1);
 
           });
@@ -171,9 +172,9 @@ describe("EPNS CoreV2 Protocol", function () {
             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(4));
 
             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
+            const pool_fees = await EPNSCoreV1Proxy.POOL_FUNDS()
 
-            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
+            await expect(pool_fees).to.equal(pushBalanceBefore_coreContract.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10)));
             expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
 
           }); 
