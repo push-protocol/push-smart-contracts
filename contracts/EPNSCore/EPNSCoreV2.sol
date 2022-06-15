@@ -513,34 +513,48 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
 
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
-     * @dev    - Can only be called the owner of the Channel.
+     * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
+     *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back.
+     *         - If Channel is destroyed by EPNS Governance/Admin, push tokens remain within  the contract. No refunds for channel owner.
      *         - Deletes the Channel completely
      *         - It transfers back 40 PUSH Tokens back to the USER.
      **/
-    function destroyTimeBoundChannel() external onlyChannelOwner(msg.sender) {
+
+    function destroyTimeBoundChannel(address _channelAddress)
+        external
+        whenNotPaused
+        onlyActivatedChannels(_channelAddress)
+    {
         Channel storage channelData = channels[msg.sender];
 
         require(
-            channelData.channelType == ChannelType.TimeBound &&
-                channelData.expiryTime <= block.timestamp,
-            "EPNSCoreV1::destroyTimeBoundChannel: Channel not TimeBound Type or channelTime Not expired"
+            channelData.channelType == ChannelType.TimeBound,
+            "EPNSCoreV1::destroyTimeBoundChannel: Channel is not TIME BOUND"
+        );
+        require(
+            (msg.sender == _channelAddress &&
+                channelData.expiryTime < block.timestamp) ||
+                (msg.sender == pushChannelAdmin &&
+                    channelData.expiryTime.add(14 days) < block.timestamp),
+            "EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
         );
 
-        uint256 totalRefundableAmount = channelData.poolContribution.sub(
-            CHANNEL_DEACTIVATION_FEES
-        );
-        // Remove the Channel, decrease Channel Count and POOL_FUNDS.
-        POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+        if (msg.sender != pushChannelAdmin) {
+            uint256 totalRefundableAmount = channelData.poolContribution.sub(
+                CHANNEL_DEACTIVATION_FEES
+            );
+            POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+                msg.sender,
+                totalRefundableAmount
+            );
+        }
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];
-
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
-            msg.sender,
-            totalRefundableAmount
-        );
-
+        
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
