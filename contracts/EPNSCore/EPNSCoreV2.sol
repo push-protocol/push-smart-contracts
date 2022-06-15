@@ -241,6 +241,10 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         _unpause();
     }
 
+    function getTotalHolderShare() external view returns(uint256){
+      return POOL_FUNDS;
+    }
+
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
@@ -866,10 +870,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         //Calculating Claimable rewards for individual user(msg.sender)
-        uint256 totalClaimableRewards = IERC20(PUSH_TOKEN_ADDRESS)
-            .balanceOf(address(this))
-            .mul(userRatio)
-            .div(ADJUST_FOR_FLOAT);
+        uint256 totalShare = getTotalHolderShare();
+        uint256 totalClaimableRewards = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
 
         require(
             totalClaimableRewards > 0,
@@ -877,6 +879,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         // Reset the User's Weight and Transfer the Tokens
+        POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
