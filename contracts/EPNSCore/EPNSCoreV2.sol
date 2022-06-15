@@ -26,8 +26,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "hardhat/console.sol";
-
 contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -533,7 +531,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         whenNotPaused
         onlyActivatedChannels(_channelAddress)
     {
-        Channel storage channelData = channels[msg.sender];
+        Channel storage channelData = channels[_channelAddress];
 
         require(
             channelData.channelType == ChannelType.TimeBound,
@@ -555,7 +553,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
                 msg.sender,
                 totalRefundableAmount
-            );
+            );        
         }
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];

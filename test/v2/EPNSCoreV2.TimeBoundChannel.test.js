@@ -124,7 +124,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx).to.emit(EPNSCoreV1Proxy, 'AddChannel')
       });
 
-      it("Should set corrent _channelExpiryTime value", async function(){
+      it("Should set correct _channelExpiryTime value", async function(){
         const expiryTime = await getFutureTIme(ONE_DAY);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
         const channelInfo = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
@@ -200,14 +200,14 @@ describe("EPNS CoreV2 Protocol", function () {
         expect(userBalAfter).to.equal(expectedUserBalance);
       });
       
-      it("Reverts on destroying unexisted channel", async function(){
+      it("Reverts on destroying others channel", async function(){
         const expiryTime = await getFutureTIme(ONE_DAY);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
         
         await passTime(ONE_DAY);
         const txn =  EPNSCoreV1Proxy.connect(BOBSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
         
-        await expect(txn).to.be.revertedWith("EPNSCoreV1::destroyTimeBoundChannel: Channel is not TIME BOUND");
+        await expect(txn).to.be.revertedWith("EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet");
       });
 
       it("Reverts if user destroys channel twice", async function(){
@@ -216,7 +216,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await passTime(ONE_DAY);
         
         await  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
-        const txn =   EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
         
         await expect(txn).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
       });
