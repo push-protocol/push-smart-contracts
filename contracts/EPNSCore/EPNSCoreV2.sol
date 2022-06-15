@@ -131,8 +131,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
 
     modifier onlyUserAllowedChannelType(ChannelType _channelType) {
         require(
-            (_channelType == ChannelType.Open ||
-                _channelType == ChannelType.Permissioned ||
+            (_channelType == ChannelType.InterestBearingOpen ||
+                _channelType == ChannelType.InterestBearingMutual ||
                 _channelType == ChannelType.TimeBound ||
                 _channelType == ChannelType.TokenGaited),
             "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
@@ -241,7 +241,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         _unpause();
     }
 
-    function getTotalHolderShare() external view returns(uint256){
+    function getTotalHolderShare() public view returns(uint256){
       return POOL_FUNDS;
     }
 
@@ -342,18 +342,18 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
         );
 
-        _createChannel(pushChannelAdmin, ChannelType.ProtocolSpecifc, 0, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
+        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
         emit AddChannel(
             pushChannelAdmin,
-            ChannelType.ProtocolSpecifc,
+            ChannelType.ProtocolNonInterest,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
 
         // EPNS ALERTER CHANNEL
-        _createChannel(address(0x0), ChannelType.ProtocolSpecifc, 0, 0);
+        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0, 0);
         emit AddChannel(
             address(0x0),
-            ChannelType.ProtocolSpecifc,
+            ChannelType.ProtocolNonInterest,
             "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
         );
 
