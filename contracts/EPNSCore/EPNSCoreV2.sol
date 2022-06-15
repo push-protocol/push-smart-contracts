@@ -872,11 +872,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         uint256 totalShare = getTotalHolderShare();
         uint256 totalClaimableRewards = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
 
-        require(
+        require( 
             totalClaimableRewards > 0,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
-
+ 
         // Reset the User's Weight and Transfer the Tokens
         POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
