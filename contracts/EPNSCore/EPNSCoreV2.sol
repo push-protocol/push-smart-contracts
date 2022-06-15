@@ -541,9 +541,9 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                     channelData.expiryTime.add(14 days) < block.timestamp),
             "EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
         );
-
+        uint256 totalRefundableAmount;
         if (msg.sender != pushChannelAdmin) {
-            uint256 totalRefundableAmount = channelData.poolContribution.sub(
+            totalRefundableAmount = channelData.poolContribution.sub(
                 CHANNEL_DEACTIVATION_FEES
             );
             POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
@@ -701,11 +701,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     {
         Channel storage channelData = channels[_channelAddress];
 
-        uint256 totalAmountDeposited = channelData.poolContribution;
-        uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
-        );
-
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
@@ -717,7 +712,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
 
         emit ChannelBlocked(_channelAddress);
     }
