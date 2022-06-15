@@ -160,6 +160,21 @@ describe("EPNS CoreV2 Protocol", function () {
           .to.emit(EPNSCoreV1Proxy,"TimeBoundChannelDestroyed");
       });
 
+      it("Should allow allow admin channel destruction after time is reached + 14days", async function(){
+        const expiryTime = await getFutureTIme(15*ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
+        const txn = EPNSCoreV1Proxy.connect(ADMINSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        await expect(txn)
+          .to.be.revertedWith("EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet");
+
+        // after time pass channel should be able to destoryed
+        await passTime(15*ONE_DAY + 14*ONE_DAY)
+
+        const txn2 = EPNSCoreV1Proxy.connect(ADMINSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        await expect(txn2)
+          .to.emit(EPNSCoreV1Proxy,"TimeBoundChannelDestroyed");
+      });
+
       it("Should decrement channel count on channel Destroty", async function(){
         const expiryTime = await getFutureTIme(ONE_DAY);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
