@@ -9,10 +9,10 @@ contract EPNSCoreStorageV2 {
 
     // For Message Type
     enum ChannelType {
-        ProtocolSpecifc,
+        ProtocolNonInterest,
         ProtocolPromotion,
-        Open,
-        Permissioned,
+        InterestBearingOpen,
+        InterestBearingMutual,
         TimeBound,
         TokenGaited
     }
