@@ -71,7 +71,7 @@ describe("EPNS CoreV2 Protocol", function () {
 	});
 
 	// TODO: need to update the cliam rewards 
-	describe.skip('EPNS CORE: CLAIM REWARD TEST', () => {
+	describe('EPNS CORE: CLAIM REWARD TEST', () => {
 		const CHANNEL_TYPE = 2;
 		const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
@@ -90,7 +90,7 @@ describe("EPNS CoreV2 Protocol", function () {
 		});
 
 		const createChannelWithCustomFee = async(fee)=>{
-			await EPNSCoreV1Proxy.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
+			await EPNSCoreV1Proxy.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, fee,0);
 		}
 
 		const gotoBlockNumber = async(blockNumber) =>{
@@ -101,7 +101,6 @@ describe("EPNS CoreV2 Protocol", function () {
 			await ethers.provider.send("hardhat_mine", [blockIncreaseHex]);
 		}
 
-
 		it("Tests for multiple users claming reward at same transaction", async function(){	
 			const PUSH_BORN = await PushToken.born();
 			const BLOCK_GAP = 2000;
@@ -109,6 +108,9 @@ describe("EPNS CoreV2 Protocol", function () {
 
 			// Add 4000 PUSH to pool by creating the channel
 			await createChannelWithCustomFee(tokensBN(4_000))
+			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+			expect(poolFunds).to.equal(tokensBN(4_000))
+
 			
 			// Alice gets: 5K PUSH
 			// Bob gets: 4K PUSH
@@ -128,6 +130,7 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(bobWt).to.equal(tokensBN(8_000_000_000))
 			expect(charlieWt).to.equal(tokensBN(6_000_000_000))
 
+
 			// move to one block before `WITHDRWAL_BLOCK_NUM` 
 			await gotoBlockNumber(WITHDRWAL_BLOCK_NUM.sub(1))
 
@@ -143,7 +146,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
 			// after claim rewards currentBlock should equal `WITHDRWAL_BLOCK_NUM`
 			const currentBlock = await ethers.provider.getBlock("latest");
-			expect(currentBlock).to.equal(currentBlock);
+			expect(currentBlock.number).to.equal(WITHDRWAL_BLOCK_NUM);
 			
 			// finally assert reward yields
 			const [aliceRw, bobRw, charlieRw] = await Promise.all([
