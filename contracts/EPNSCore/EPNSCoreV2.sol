@@ -320,7 +320,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
 
-        PROTOCOL_POOL_FEES += _amount;
+        POOL_FUNDS += _amount;
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
 
@@ -554,7 +554,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         }
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];
-        
+
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
