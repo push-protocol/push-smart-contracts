@@ -342,13 +342,11 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
         const protocolFeeAfterChannelCreation = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-        const channelDetailsAfter = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
         const channelsCountAfterChannelCreation = await EPNSCoreV1Proxy.channelsCount();
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
         const channelDetailsAfterBlocked = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
         const channelsCountAfterBlocked = await EPNSCoreV1Proxy.channelsCount();
-        const protocolFeeAfterChannelBlocked = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
         await expect(channelsCountBefore).to.be.equal(0);
         await expect(channelsCountAfterChannelCreation).to.be.equal(1);
@@ -356,26 +354,12 @@ describe("EPNS CoreV2 Protocol", function () {
 
         await expect(protocolFeeBefore).to.be.equal(0);
         await expect(protocolFeeAfterChannelCreation).to.be.equal(0);
-        await expect(protocolFeeAfterChannelBlocked).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.sub(CHANNEL_DEACTIVATION_FEES));
 
         await expect(channelDetailsAfterBlocked.channelState).to.be.equal(3);
         await expect(channelDetailsAfterBlocked.channelWeight).to.be.equal(channelWeight_AfterChannelBlock);
         await expect(channelDetailsAfterBlocked.poolContribution).to.be.equal(CHANNEL_DEACTIVATION_FEES);
 
       });
-
-      it("Should update PROTOCOL_POOL_FEES on Channel Block", async function() {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
-        const POOL_FUNDS_BFORE_BLOCK = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
-
-        await EPNSCoreV1Proxy.blockChannel(CHANNEL_CREATOR);
-        const POOL_FUNDSAfterChannelBlock = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
-        const expectedPoolBalance = POOL_FUNDS_BFORE_BLOCK.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.sub(CHANNEL_DEACTIVATION_FEES))
-
-        await expect(expectedPoolBalance).to.be.equal(POOL_FUNDSAfterChannelBlock);
-      });
-
     });
-
   });
 });
