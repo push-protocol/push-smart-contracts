@@ -217,8 +217,6 @@ describe("EPNS CoreV2 Protocol", function () {
 			await createChannelWithCustomFee(tokensBN(4_000))
 			
 			// Alice gets: 40M PUSH
-			// Bob gets: 20M PUSH
-			// Charlie gets: 10M PUSH 
 			await PushToken.transfer(ALICE, tokensBN(40_000_000));
 
 			const [BG_CLAIM_1, BG_CLAIM_2, BG_CLAIM_3] = [
@@ -226,32 +224,38 @@ describe("EPNS CoreV2 Protocol", function () {
 				PUSH_BORN.add(5_000), 
 				PUSH_BORN.add(10_000)
 			]				
-			const ALICE_WT_1 = PushToken.returnHolderUnits(ALICE,BG_CLAIM_1);
-			expect(aliceWt).to.equal(tokensBN(80_000_000_000))
-			
-			// expect(bobWt).to.equal(tokensBN(60_000_000_000))
-			// expect(charlieWt).to.equal(tokensBN(40_000_000_000))
 
-			// // move to one block before `WITHDRWAL_BLOCK_NUM` and claim rewards 
-			// await gotoBlockNumber(ALICE_BLOCK.sub(1));
-			// await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+			// On first claim
+			await gotoBlockNumber(BG_CLAIM_1.sub(1));
+			const ALICE_WT_1 = await PushToken.returnHolderUnits(ALICE,BG_CLAIM_1);
+			expect(ALICE_WT_1).to.equal(tokensBN(40_000_000_000))
+			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+			const firstRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+			expect(firstRewardClaimed).to.equal(ethers.utils.parseEther("1600"));
+			const aliceBlanceAfterFirstClaim = await PushToken.balanceOf(ALICE);
+			const expectedBalAferFirstClaim = tokensBN(40000000).add(tokensBN(1600));
+			expect(aliceBlanceAfterFirstClaim).to.equal(expectedBalAferFirstClaim);
 
-			// await gotoBlockNumber(BOB_BLOCK.sub(1));
-			// await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+			// On second claim
+			await gotoBlockNumber(BG_CLAIM_2.sub(1));
+			const ALICE_WT_2 = await PushToken.returnHolderUnits(ALICE,BG_CLAIM_2);
+			expect(ALICE_WT_2).to.equal(tokensBN(1.600064e11))
+			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+			const secondRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+			// new reward = 1600 + 768.03072
+			expect(secondRewardClaimed).to.equal(ethers.utils.parseEther("2368.03072")) 
+			const aliceBlanceAfterSecondClaim = await PushToken.balanceOf(ALICE);
+			const expectedBalAferSecondClaim = tokensBN(40_000_000).add(ethers.utils.parseEther("2368.03072"))
+			expect(aliceBlanceAfterSecondClaim).to.equal(expectedBalAferSecondClaim);
 
-			// await gotoBlockNumber(CHARLIE_BLOCK.sub(1));
-			// await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-			
-			
-			// // finally assert reward yields
-			// const [aliceRw, bobRw, charlieRw] = await Promise.all([
-			// 	EPNSCoreV1Proxy.usersRewardsClaimed(ALICE),
-			// 	EPNSCoreV1Proxy.usersRewardsClaimed(BOB),
-			// 	EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
-			// ]); 
-			// expect(aliceRw).to.equal(ethers.utils.parseEther("1600"))
-			// expect(bobRw).to.equal(ethers.utils.parseEther("480"))
-			// expect(charlieRw).to.equal(ethers.utils.parseEther("192"))
+			// On third cliam
+			await gotoBlockNumber(BG_CLAIM_3.sub(1));
+			const ALICE_WT_3 = await PushToken.returnHolderUnits(ALICE,BG_CLAIM_3);
+			expect(ALICE_WT_3).to.equal(ethers.utils.parseEther("200011840153.6"))
+			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+			const thirdRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+			// new reward = 1600 + 768.03072 + 326.413178766946..
+			expect(thirdRewardClaimed).to.be.closeTo(ethers.utils.parseEther("2694.443898766946"),ethers.utils.parseEther("0.0001"));	
 		})
 
 
