@@ -242,6 +242,19 @@ describe("EPNS CoreV2 Protocol", function () {
         const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel()
         await expect(txn).to.be.revertedWith("EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
       });
+
+      it("Should allow user to create channel again after destroying", async function(){
+        var expiryTime = await getFutureTIme(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
+        
+        await passTime(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        
+        var expiryTime = await getFutureTIme(ONE_DAY);
+        const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
+        await expect(txn).to.emit(EPNSCoreV1Proxy,"AddChannel");
+      });
+
     });
   });
 });
