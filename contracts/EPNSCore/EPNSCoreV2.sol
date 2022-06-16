@@ -553,8 +553,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
                 msg.sender,
                 totalRefundableAmount
-            );        
+            );
         }
+        // Unsubscribing from imperative Channels
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];
 
@@ -872,11 +877,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         uint256 totalShare = getTotalHolderShare();
         uint256 totalClaimableRewards = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
 
-        require( 
+        require(
             totalClaimableRewards > 0,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
- 
+
         // Reset the User's Weight and Transfer the Tokens
         POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);

@@ -394,8 +394,8 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
      *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their Channel again using the same Wallet Address.
      *
      * @dev    Only Callable by the EPNSCore.
-     * @param _channel address of the channel that the user is subscribing to
-     * @param _user address of the Subscriber of a Channel
+     * @param _channel address of the channel being unsubscribed
+     * @param _user address of the UnSubscriber of a Channel
      **/
     function unSubscribeViaCore(address _channel, address _user)
         external
