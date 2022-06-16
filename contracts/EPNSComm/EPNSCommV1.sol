@@ -217,7 +217,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         _addUser(_user);
 
         User storage user = users[_user];
-
+ 
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
         user.subscribed[_channel] = user.subscribedCount;

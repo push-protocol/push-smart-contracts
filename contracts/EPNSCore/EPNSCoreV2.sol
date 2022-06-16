@@ -26,7 +26,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
+contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
