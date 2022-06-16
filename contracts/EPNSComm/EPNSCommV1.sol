@@ -217,7 +217,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         _addUser(_user);
 
         User storage user = users[_user];
-
+ 
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
         user.subscribed[_channel] = user.subscribedCount;
@@ -386,6 +386,24 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         require(nonce == nonces[signatory]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
         require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired");
         _unsubscribe(channel, signatory);
+    }
+
+    /**
+     * @notice Allows EPNSCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
+     *         This ensures that the Channel Owner is unSubscribed from the imperative EPNS Channels as well as his/her own Channel.
+     *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their Channel again using the same Wallet Address.
+     *
+     * @dev    Only Callable by the EPNSCore.
+     * @param _channel address of the channel being unsubscribed
+     * @param _user address of the UnSubscriber of a Channel
+     **/
+    function unSubscribeViaCore(address _channel, address _user)
+        external
+        onlyEPNSCore
+        returns (bool)
+    {
+        _unsubscribe(_channel, _user);
+        return true;
     }
 
     /* **************

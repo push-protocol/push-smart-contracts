@@ -26,9 +26,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "hardhat/console.sol";
-
-contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
+contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -494,6 +492,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelsCount = channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
+            require(_channelExpiryTime > block.timestamp,"EPNSCoreV1::createChannel: Invalid channelExpiryTime");
             channels[_channel].expiryTime = _channelExpiryTime;
         }
 
@@ -532,7 +531,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         whenNotPaused
         onlyActivatedChannels(_channelAddress)
     {
-        Channel storage channelData = channels[msg.sender];
+        Channel storage channelData = channels[_channelAddress];
 
         require(
             channelData.channelType == ChannelType.TimeBound,
@@ -556,6 +555,11 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                 totalRefundableAmount
             );
         }
+        // Unsubscribing from imperative Channels
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];
 

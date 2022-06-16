@@ -90,9 +90,8 @@ describe("EPNS CoreV2 Protocol", function () {
 
 		const createChannel = async(signer)=>{
 			await EPNSCoreV1Proxy.connect(signer)
-				.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+				.createChannelWithPUSH(CHANNEL_TYPE, TEST_CHANNEL_CTX, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 		}
-
 
 		it("Allows token holders to claim the rewards", async function(){
 			await createChannel(ALICESIGNER);
@@ -131,6 +130,7 @@ describe("EPNS CoreV2 Protocol", function () {
 			const userInitalBalance = await PushToken.balanceOf(ALICE);
 
 			// alice claims the reward
+			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();			
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
 			const userClaimedRewards = await EPNSCoreV1Proxy.connect(ALICESIGNER).usersRewardsClaimed(ALICE);
 
@@ -142,11 +142,10 @@ describe("EPNS CoreV2 Protocol", function () {
 			var currentBlock = await ethers.provider.getBlock("latest");
 			const pushOriginBlockNumber = await PushToken.born();
 			const pushTotalSupply = await PushToken.totalSupply();
-			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();			
 			const blockGap = currentBlock.number - pushOriginBlockNumber;
 			const totalHolderWeight = blockGap * pushTotalSupply;
 			const userRatio = Math.floor(userHolderWeight * ADJUST_FOR_FLOAT/totalHolderWeight);
-			const userReward = userRatio * poolFunds/ADJUST_FOR_FLOAT
+			const userReward = (userRatio * poolFunds)/ADJUST_FOR_FLOAT
 			// userClaimed value shoulld match the formulation value	
 			expect(userReward).to.equal(userClaimedRewards);
 			
@@ -169,11 +168,6 @@ describe("EPNS CoreV2 Protocol", function () {
 			var currentBlock = await ethers.provider.getBlock("latest");
 			const userHolderWeight = await PushToken.returnHolderUnits(CHANNEL_CREATOR,currentBlock.number);
 			expect(userHolderWeight).to.equal(0);	
-			
-			// fails on immediately claiming the reward on next block
-			await expect(
-				EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards()
-			).to.be.revertedWith("EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment")
 			
 			// allows claming after some block passes
 			await ethers.provider.send("hardhat_mine", ["0x100"]);
