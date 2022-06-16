@@ -98,7 +98,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
 
       it("Should Revert if Channel is already Deactivated", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -108,7 +108,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should set the created Channel State to '1' and decativated to '2' ", async function() {
         const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -122,7 +122,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should decrease Pool balance on Channel Deactivation", async function() {
         const POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -140,7 +140,8 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(
           CHANNEL_TYPE, 
           testChannel,
-          ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+          ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+          0
         );
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         
@@ -154,7 +155,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should update the Channel Weight Correctly on channel activation and deletion", async function() {
         const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -189,7 +190,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
 
       it("Should allow reactivation of deactivated channel", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await expect(tx)
@@ -198,7 +199,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
       
       it("Should revert on reactivation of active or blocked channel", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         
         // try to reactivate activated channel
         const tx1 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
@@ -213,7 +214,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
 
       it("Should Revert if Minimum Required Amount is not passed while Reactivating Channel", async function () {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(CHANNEL_DEACTIVATION_FEES);
         await expect(tx).to.be.revertedWith("EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation");
@@ -222,7 +223,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should set the reactivated Channel State to '1' ", async function() {
         const channelState_before = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const channelState_afterCreation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -238,7 +239,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
 
       it("Should update the Channel Weight and Pool Contribution Correctl on Reactivation", async function() {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const channelState_afterDeactivation = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
 
@@ -258,7 +259,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should update pool balance correctly on Channel Reactivation", async function() {
         const POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
 
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
@@ -291,7 +292,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Should revert if Caller is NOT ADMIN", async function () {
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).blockChannel(CHANNEL_CREATOR);
 
@@ -299,7 +300,7 @@ describe("EPNS CoreV2 Protocol", function () {
       });
 
       it("Allows admin to block any channel is active state", async function(){
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
 
         await expect(tx)
@@ -308,7 +309,7 @@ describe("EPNS CoreV2 Protocol", function () {
       }); 
 
       it("Allows admin to block any channel is deactive state", async function(){
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
 
@@ -325,7 +326,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Should revert if Target Channel is NOT BLOCKED ALREADY", async function () {
         const CHANNEL_TYPE = 2;
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
 
         const tx1 = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
@@ -338,16 +339,14 @@ describe("EPNS CoreV2 Protocol", function () {
         const protocolFeeBefore = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
         const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
 
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
         const protocolFeeAfterChannelCreation = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-        const channelDetailsAfter = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
         const channelsCountAfterChannelCreation = await EPNSCoreV1Proxy.channelsCount();
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
         const channelDetailsAfterBlocked = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR)
         const channelsCountAfterBlocked = await EPNSCoreV1Proxy.channelsCount();
-        const protocolFeeAfterChannelBlocked = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
         await expect(channelsCountBefore).to.be.equal(0);
         await expect(channelsCountAfterChannelCreation).to.be.equal(1);
@@ -355,26 +354,12 @@ describe("EPNS CoreV2 Protocol", function () {
 
         await expect(protocolFeeBefore).to.be.equal(0);
         await expect(protocolFeeAfterChannelCreation).to.be.equal(0);
-        await expect(protocolFeeAfterChannelBlocked).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.sub(CHANNEL_DEACTIVATION_FEES));
 
         await expect(channelDetailsAfterBlocked.channelState).to.be.equal(3);
         await expect(channelDetailsAfterBlocked.channelWeight).to.be.equal(channelWeight_AfterChannelBlock);
         await expect(channelDetailsAfterBlocked.poolContribution).to.be.equal(CHANNEL_DEACTIVATION_FEES);
 
       });
-
-      it("Should update PROTOCOL_POOL_FEES on Channel Block", async function() {
-        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-        const POOL_FUNDS_BFORE_BLOCK = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
-
-        await EPNSCoreV1Proxy.blockChannel(CHANNEL_CREATOR);
-        const POOL_FUNDSAfterChannelBlock = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
-        const expectedPoolBalance = POOL_FUNDS_BFORE_BLOCK.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.sub(CHANNEL_DEACTIVATION_FEES))
-
-        await expect(expectedPoolBalance).to.be.equal(POOL_FUNDSAfterChannelBlock);
-      });
-
     });
-
   });
 });

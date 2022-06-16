@@ -12,7 +12,9 @@ contract EPNSCoreStorageV2 {
         ProtocolNonInterest,
         ProtocolPromotion,
         InterestBearingOpen,
-        InterestBearingMutual
+        InterestBearingMutual,
+        TimeBound,
+        TokenGaited
     }
     enum ChannelAction {
         ChannelRemoved,
@@ -49,6 +51,8 @@ contract EPNSCoreStorageV2 {
         uint256 channelUpdateBlock;
         // @notice The individual weight to be applied as per pool contribution
         uint256 channelWeight;
+        // @notice The Expiry TimeStamp in case of TimeBound Channel Types
+        uint256 expiryTime;
     }
 
     /* ***************

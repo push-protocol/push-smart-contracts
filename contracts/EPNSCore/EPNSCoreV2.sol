@@ -26,9 +26,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-// import "hardhat/console.sol";
-
-contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
+contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -64,6 +62,10 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         string _notifDescription
     );
     event AddSubGraph(address indexed channel, bytes _subGraphData);
+    event TimeBoundChannelDestroyed(
+        address indexed channel,
+        uint256 indexed amountRefunded
+    );
 
     /* **************
         MODIFIERS
@@ -128,7 +130,9 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     modifier onlyUserAllowedChannelType(ChannelType _channelType) {
         require(
             (_channelType == ChannelType.InterestBearingOpen ||
-                _channelType == ChannelType.InterestBearingMutual),
+                _channelType == ChannelType.InterestBearingMutual ||
+                _channelType == ChannelType.TimeBound ||
+                _channelType == ChannelType.TokenGaited),
             "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
@@ -235,6 +239,10 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         _unpause();
     }
 
+    function getTotalHolderShare() public view returns(uint256){
+      return POOL_FUNDS;
+    }
+
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
@@ -314,7 +322,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
 
-        PROTOCOL_POOL_FEES += _amount;
+        POOL_FUNDS += _amount;
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
 
@@ -332,7 +340,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
         );
 
-        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
+        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
         emit AddChannel(
             pushChannelAdmin,
             ChannelType.ProtocolNonInterest,
@@ -340,7 +348,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         // EPNS ALERTER CHANNEL
-        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0);
+        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0, 0);
         emit AddChannel(
             address(0x0),
             ChannelType.ProtocolNonInterest,
@@ -360,11 +368,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param  _channelType the type of the Channel Being created
      * @param  _identity the bytes value of the identity of the Channel
      * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
+     * @param  _channelExpiryTime the expiry time for time bound channels
      **/
     function createChannelWithPUSH(
         ChannelType _channelType,
         bytes calldata _identity,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _channelExpiryTime
     )
         external
         whenNotPaused
@@ -383,7 +393,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
             address(this),
             _amount
         );
-        _createChannel(msg.sender, _channelType, _amount);
+        _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -400,6 +410,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param _channelTypeList   array of type of the Channel being created
      * @param _identityList     array of list of identity Bytes
      * @param _amountList       array of amount of PUSH  to be depositeds
+     * @param  _channelExpiryTime the expiry time for time bound channels
      **/
     function migrateChannelData(
         uint256 _startIndex,
@@ -407,7 +418,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         address[] calldata _channelAddresses,
         ChannelType[] calldata _channelTypeList,
         bytes[] calldata _identityList,
-        uint256[] calldata _amountList
+        uint256[] calldata _amountList,
+        uint256[] calldata _channelExpiryTime
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
@@ -417,7 +429,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         require(
             (_channelAddresses.length == _channelTypeList.length) &&
                 (_channelAddresses.length == _identityList.length) &&
-                (_channelAddresses.length == _amountList.length),
+                (_channelAddresses.length == _amountList.length) &&
+                (_channelAddresses.length == _channelExpiryTime.length),
             "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
@@ -438,7 +451,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                 _createChannel(
                     _channelAddresses[i],
                     _channelTypeList[i],
-                    _amountList[i]
+                    _amountList[i],
+                    _channelExpiryTime[i]
                 );
             }
         }
@@ -452,11 +466,13 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
+     * @param _channelExpiryTime the expiry time for time bound channels
      **/
     function _createChannel(
         address _channel,
         ChannelType _channelType,
-        uint256 _amountDeposited
+        uint256 _amountDeposited,
+        uint256 _channelExpiryTime
     ) private {
         // Calculate channel weight
         uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
@@ -471,10 +487,14 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channels[_channel].channelStartBlock = block.number;
         channels[_channel].channelUpdateBlock = block.number;
         channels[_channel].channelWeight = _channelWeight;
-
         // Add to map of addresses and increment channel count
         channelById[channelsCount] = _channel;
         channelsCount = channelsCount.add(1);
+
+        if (_channelType == ChannelType.TimeBound) {
+            require(_channelExpiryTime > block.timestamp,"EPNSCoreV1::createChannel: Invalid channelExpiryTime");
+            channels[_channel].expiryTime = _channelExpiryTime;
+        }
 
         // Subscribe them to their own channel as well
         if (_channel != pushChannelAdmin) {
@@ -492,6 +512,58 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
                 pushChannelAdmin
             );
         }
+    }
+
+    /**
+     * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
+     * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
+     *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
+     *         - Can only be called if the Channel is of type - TimeBound
+     *         - Can only be called after the Channel Expiry time is up.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back.
+     *         - If Channel is destroyed by EPNS Governance/Admin, push tokens remain within  the contract. No refunds for channel owner.
+     *         - Deletes the Channel completely
+     *         - It transfers back 40 PUSH Tokens back to the USER.
+     **/
+
+    function destroyTimeBoundChannel(address _channelAddress)
+        external
+        whenNotPaused
+        onlyActivatedChannels(_channelAddress)
+    {
+        Channel storage channelData = channels[_channelAddress];
+
+        require(
+            channelData.channelType == ChannelType.TimeBound,
+            "EPNSCoreV1::destroyTimeBoundChannel: Channel is not TIME BOUND"
+        );
+        require(
+            (msg.sender == _channelAddress &&
+                channelData.expiryTime < block.timestamp) ||
+                (msg.sender == pushChannelAdmin &&
+                    channelData.expiryTime.add(14 days) < block.timestamp),
+            "EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
+        );
+        uint256 totalRefundableAmount;
+        if (msg.sender != pushChannelAdmin) {
+            totalRefundableAmount = channelData.poolContribution.sub(
+                CHANNEL_DEACTIVATION_FEES
+            );
+            POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+                msg.sender,
+                totalRefundableAmount
+            );
+        }
+        // Unsubscribing from imperative Channels
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        // Decrement Channel Count and Delete Channel Completely
+        channelsCount = channelsCount.sub(1);
+        delete channels[msg.sender];
+
+        emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
     /** @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
@@ -637,11 +709,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
     {
         Channel storage channelData = channels[_channelAddress];
 
-        uint256 totalAmountDeposited = channelData.poolContribution;
-        uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
-        );
-
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
             .mul(ADJUST_FOR_FLOAT)
@@ -653,7 +720,6 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
 
         emit ChannelBlocked(_channelAddress);
     }
@@ -808,10 +874,8 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         //Calculating Claimable rewards for individual user(msg.sender)
-        uint256 totalClaimableRewards = IERC20(PUSH_TOKEN_ADDRESS)
-            .balanceOf(address(this))
-            .mul(userRatio)
-            .div(ADJUST_FOR_FLOAT);
+        uint256 totalShare = getTotalHolderShare();
+        uint256 totalClaimableRewards = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
 
         require(
             totalClaimableRewards > 0,
@@ -819,6 +883,7 @@ contract EPNSCoreV2 is Initializable, Pausable, EPNSCoreStorageV2 {
         );
 
         // Reset the User's Weight and Transfer the Tokens
+        POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards

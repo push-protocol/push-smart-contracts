@@ -74,8 +74,8 @@ describe("EPNS CoreV2 Protocol", function () {
             await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
             await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
 
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
+            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
          });
           /**
             * "updateChannelMeta" Function CheckPoints
@@ -134,14 +134,15 @@ describe("EPNS CoreV2 Protocol", function () {
           });
 
           it("Should update Channel Meta Details correctly for right Amount -> 50 PUSH Tokens", async function(){
+            const pool_fees_before = await EPNSCoreV1Proxy.POOL_FUNDS();
             const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             const block_num = tx.blockNumber;
             const channel = await EPNSCoreV1Proxy.channels(BOB)
-            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+            const pool_fees_after = await EPNSCoreV1Proxy.POOL_FUNDS();
             const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
 
             await expect(channel.channelUpdateBlock).to.equal(block_num);
-            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await expect(pool_fees_after).to.equal(pool_fees_before.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION));
             await expect(counter).to.equal(1);
 
           });
@@ -171,9 +172,9 @@ describe("EPNS CoreV2 Protocol", function () {
             await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(4));
 
             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-            const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES()
+            const pool_fees = await EPNSCoreV1Proxy.POOL_FUNDS()
 
-            await expect(pool_fees).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
+            await expect(pool_fees).to.equal(pushBalanceBefore_coreContract.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10)));
             expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
 
           }); 
@@ -211,7 +212,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
           it("Only allows activate channel to be updated", async function(){
             // on channel deactivation cannnot create channel
-            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel(1);             
+            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();             
             await expect(
               EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
             ).to.be.revertedWith("EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");

@@ -111,23 +111,23 @@ describe("EPNS CoreV2 Protocol", function () {
 
           it("Should revert if IF EPNSCoreV1::onlyInactiveChannels: Channel already Activated ", async function () {
             const CHANNEL_TYPE = 2;
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
             await expect(tx).to.be.revertedWith("EPNSCoreV1::onlyInactiveChannels: Channel already Activated")
           });
 
           it("Should revert Channel Type is not the ALLOWED TYPES", async function () {
             const CHANNEL_TYPE = 0;
-            const tx1 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx1 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
             await expect(tx1).to.be.revertedWith("EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid")
 
             const CHANNEL_TYPE_SECOND = 1;
             const testChannelSecond = ethers.utils.toUtf8Bytes("test-channel-hello-world-two");
 
-            const tx2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE_SECOND, testChannelSecond,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE_SECOND, testChannelSecond,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
             await expect(tx2).to.be.revertedWith("EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid")
           });
@@ -138,7 +138,7 @@ describe("EPNS CoreV2 Protocol", function () {
             await PushToken.transfer(CHARLIE, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             await PushToken.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, tokensBN(10));
 
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,tokensBN(10));
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,tokensBN(10),0);
 
             await expect(tx).to.be.revertedWith("EPNSCoreV1::_createChannelWithPUSH: Insufficient Deposit Amount")
           });
@@ -149,7 +149,7 @@ describe("EPNS CoreV2 Protocol", function () {
             await PushToken.transfer(CHARLIE, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
             await PushToken.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MAX_POOL_CONTRIBUTION,0);
 
             await expect(tx).to.be.revertedWith("Push::transferFrom: transfer amount exceeds spender allowance")
           });
@@ -161,7 +161,7 @@ describe("EPNS CoreV2 Protocol", function () {
             const pushBalanceBefore_user = await PushToken.balanceOf(CHANNEL_CREATOR);
             const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
 
-            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
             const pushBalanceAfter_user = await PushToken.balanceOf(CHANNEL_CREATOR);
             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
@@ -172,7 +172,7 @@ describe("EPNS CoreV2 Protocol", function () {
           it("EPNS Core Should create Channel and Update Relevant State variables accordingly", async function(){
           const channelsCountBefore = await EPNSCoreV1Proxy.channelsCount();
 
-          const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          const tx = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
           const channel = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).channels(CHANNEL_CREATOR)
 
           const blockNumber = tx.blockNumber;
@@ -199,7 +199,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const isChannelSubscribedToEPNS_before = await EPNSCommV1Proxy.isUserSubscribed(EPNS_ALERTER, CHANNEL_CREATOR);
           const isAdminSubscribedToChannel_before = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
 
-          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
           const channel = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).channels(CHANNEL_CREATOR)
 
           const isChannelOwnerSubscribed_after = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
@@ -216,7 +216,7 @@ describe("EPNS CoreV2 Protocol", function () {
         }).timeout(10000);
 
         it("Function Should emit Relevant Events", async function(){
-          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
 
           await expect(tx)
             .to.emit(EPNSCoreV1Proxy, 'AddChannel')
