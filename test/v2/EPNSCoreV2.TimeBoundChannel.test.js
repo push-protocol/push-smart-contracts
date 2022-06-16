@@ -255,6 +255,43 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(txn).to.emit(EPNSCoreV1Proxy,"AddChannel");
       });
 
+      it("Channel destruction unsubscribes to all", async function(){
+        var expiryTime = await getFutureTIme(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
+        
+        // before destruction should subscribe to these
+        var isSubscribedToOwnChannel = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR,CHANNEL_CREATOR);
+        var isSubscribedTOChannelAlerter = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero,CHANNEL_CREATOR);
+        var isEPNSAdminSubscribed = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR,ADMIN);
+        expect(isSubscribedToOwnChannel).to.be.true;
+        expect(isSubscribedTOChannelAlerter).to.be.true;
+        expect(isEPNSAdminSubscribed).to.be.true;
+
+        await passTime(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        
+        // after destruction should unsubscribe to these
+        var isSubscribedToOwnChannel = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR,CHANNEL_CREATOR);
+        var isSubscribedTOChannelAlerter = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero,CHANNEL_CREATOR);
+        var isEPNSAdminSubscribed = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR,ADMIN);
+        expect(isSubscribedToOwnChannel).to.be.false;
+        expect(isSubscribedTOChannelAlerter).to.be.false;
+        expect(isEPNSAdminSubscribed).to.be.false;
+      });
+
+      it("Should delete channel info after channel destroy", async function(){
+        var expiryTime = await getFutureTIme(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,expiryTime);
+        
+        // destroy channel
+        await passTime(ONE_DAY);
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+
+        const channelInfo = await EPNSCoreV1Proxy.channels(CHANNEL_CREATOR);
+        const emptyChannelInfo = await EPNSCoreV1Proxy.channels(CHARLIE);
+        expect(channelInfo.toString()).to.equal(emptyChannelInfo.toString());
+        
+      });
     });
   });
 });
