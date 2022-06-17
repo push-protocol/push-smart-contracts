@@ -23,7 +23,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
+contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -217,7 +217,7 @@ contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
         _addUser(_user);
 
         User storage user = users[_user];
- 
+
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
         user.subscribed[_channel] = user.subscribedCount;
