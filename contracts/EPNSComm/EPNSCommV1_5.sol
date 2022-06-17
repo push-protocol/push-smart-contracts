@@ -23,7 +23,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
+contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -44,17 +44,28 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
     event PublicKeyRegistered(address indexed owner, bytes publickey);
-    event ChannelAlias(string _chainName, uint256 indexed _chainID, address indexed _channelOwnerAddress, string _ethereumChannelAddress);
+    event ChannelAlias(
+        string _chainName,
+        uint256 indexed _chainID,
+        address indexed _channelOwnerAddress,
+        string _ethereumChannelAddress
+    );
 
     /** MODIFIERS **/
 
     modifier onlyPushChannelAdmin() {
-        require(msg.sender == pushChannelAdmin, "EPNSCommV1::onlyPushChannelAdmin: user not pushChannelAdmin");
+        require(
+            msg.sender == pushChannelAdmin,
+            "EPNSCommV1::onlyPushChannelAdmin: user not pushChannelAdmin"
+        );
         _;
     }
 
     modifier onlyEPNSCore() {
-        require(msg.sender == EPNSCoreAddress, "EPNSCommV1::onlyEPNSCore: Caller NOT EPNSCore");
+        require(
+            msg.sender == EPNSCoreAddress,
+            "EPNSCommV1::onlyEPNSCore: Caller NOT EPNSCore"
+        );
         _;
     }
 
@@ -77,7 +88,11 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         INITIALIZER
 
     *************** */
-    function initialize(address _pushChannelAdmin, string memory _chainName) public initializer returns (bool) {
+    function initialize(address _pushChannelAdmin, string memory _chainName)
+        public
+        initializer
+        returns (bool)
+    {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
@@ -90,25 +105,40 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
     => SETTER FUNCTIONS <=
 
     ****************/
-    function verifyChannelAlias(string memory _channelAddress) external{
-      emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
+    function verifyChannelAlias(string memory _channelAddress) external {
+        emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin{
+    function completeMigration() external onlyPushChannelAdmin {
         isMigrationComplete = true;
     }
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+    function setEPNSCoreAddress(address _coreAddress)
+        external
+        onlyPushChannelAdmin
+    {
         EPNSCoreAddress = _coreAddress;
     }
 
-    function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin{
-      governance = _governanceAddress;
+    function setGovernanceAddress(address _governanceAddress)
+        external
+        onlyPushChannelAdmin
+    {
+        governance = _governanceAddress;
     }
 
-    function transferPushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin {
-        require(_newAdmin != address(0), "EPNSCommV1::transferPushChannelAdminControl: Invalid Address");
-        require(_newAdmin != pushChannelAdmin, "EPNSCommV1::transferPushChannelAdminControl: Admin address is same");
+    function transferPushChannelAdminControl(address _newAdmin)
+        public
+        onlyPushChannelAdmin
+    {
+        require(
+            _newAdmin != address(0),
+            "EPNSCommV1::transferPushChannelAdminControl: Invalid Address"
+        );
+        require(
+            _newAdmin != pushChannelAdmin,
+            "EPNSCommV1::transferPushChannelAdminControl: Admin address is same"
+        );
         pushChannelAdmin = _newAdmin;
     }
 
@@ -190,9 +220,9 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
-            if(isUserSubscribed(_channelList[i], _usersList[i])){
+            if (isUserSubscribed(_channelList[i], _usersList[i])) {
                 continue;
-            }else{
+            } else {
                 _subscribe(_channelList[i], _usersList[i]);
             }
         }
@@ -240,12 +270,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         bytes32 s
     ) public {
         bytes32 domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH,
-                NAME_HASH,
-                getChainId(),
-                address(this)
-            )
+            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
         );
         bytes32 structHash = keccak256(
             abi.encode(SUBSCRIBE_TYPEHASH, channel, nonce, expiry)
@@ -254,8 +279,14 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "EPNSCommV1::subscribeBySig: Invalid signature");
-        require(nonce == nonces[signatory]++, "EPNSCommV1::subscribeBySig: Invalid nonce");
+        require(
+            signatory != address(0),
+            "EPNSCommV1::subscribeBySig: Invalid signature"
+        );
+        require(
+            nonce == nonces[signatory]++,
+            "EPNSCommV1::subscribeBySig: Invalid nonce"
+        );
         require(now <= expiry, "EPNSCommV1::subscribeBySig: Signature expired");
         _subscribe(channel, signatory);
     }
@@ -293,7 +324,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
      *
      * @param _channel address of the channel that the user is subscribing to
      **/
-    function unsubscribe(address _channel) external returns (bool){
+    function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
         return true;
@@ -368,12 +399,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         bytes32 s
     ) public {
         bytes32 domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH,
-                NAME_HASH,
-                getChainId(),
-                address(this)
-            )
+            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
         );
         bytes32 structHash = keccak256(
             abi.encode(UNSUBSCRIBE_TYPEHASH, channel, nonce, expiry)
@@ -382,9 +408,18 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "EPNSCommV1::unsubscribeBySig: Invalid signature");
-        require(nonce == nonces[signatory]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
-        require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired");
+        require(
+            signatory != address(0),
+            "EPNSCommV1::unsubscribeBySig: Invalid signature"
+        );
+        require(
+            nonce == nonces[signatory]++,
+            "EPNSCommV1::unsubscribeBySig: Invalid nonce"
+        );
+        require(
+            now <= expiry,
+            "EPNSCommV1::unsubscribeBySig: Signature expired"
+        );
         _unsubscribe(channel, signatory);
     }
 
@@ -530,21 +565,17 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
      *  ->  We ensure "Caller of the Function is the Recipient of the Notification"
     **/
 
-    function _checkNotifReq
-    (
-      address _channel,
-      address _recipient
-    ) private view
-    {
-      require(
-          (_channel == 0x0000000000000000000000000000000000000000 &&
-              msg.sender == pushChannelAdmin) ||
-              (_channel == msg.sender) ||
-              (delegatedNotificationSenders[_channel][msg.sender]) ||
-              (_recipient == msg.sender),
-          "EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber"
-      );
+    function _checkNotifReq(address _channel, address _recipient) private view {
+        require(
+            (_channel == 0x0000000000000000000000000000000000000000 &&
+                msg.sender == pushChannelAdmin) ||
+                (_channel == msg.sender) ||
+                (delegatedNotificationSenders[_channel][msg.sender]) ||
+                (_recipient == msg.sender),
+            "EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber"
+        );
     }
+
     /**
      * @notice Allows a Channel Owners, Delegates as well as Users to send Notifications
      * @dev Emits out notification details once all the requirements are passed.
@@ -562,7 +593,6 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         emit SendNotification(_channel, _recipient, _identity);
     }
 
-
     /**
      * @notice Base Notification Function that Allows a Channel Owners, Delegates as well as Users to send Notifications
      *
@@ -579,17 +609,11 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         address _recipient,
         address _signatory,
         bytes calldata _identity
-    )
-        private
-        sendNotifViaSignReq(
-            _channel,
-            _recipient,
-            _signatory
-        )
-    {
+    ) private sendNotifViaSignReq(_channel, _recipient, _signatory) {
         // Emit the message out
         emit SendNotification(_channel, _recipient, _identity);
     }
+
     /**
      * @notice Meta transaction function for Sending Notifications
      * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
@@ -606,12 +630,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
         bytes32 s
     ) external {
         bytes32 domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH,
-                NAME_HASH,
-                getChainId(),
-                address(this)
-            )
+            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
         );
         bytes32 structHash = keccak256(
             abi.encode(
@@ -627,15 +646,16 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5{
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "EPNSCommV1::sendNotifBySig: Invalid signature");
-        require(nonce == nonces[signatory]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
-        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
-        _sendNotification(
-            _channel,
-            _recipient,
-            signatory,
-            _identity
+        require(
+            signatory != address(0),
+            "EPNSCommV1::sendNotifBySig: Invalid signature"
         );
+        require(
+            nonce == nonces[signatory]++,
+            "EPNSCommV1::sendNotifBySig: Invalid nonce"
+        );
+        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
+        _sendNotification(_channel, _recipient, signatory, _identity);
     }
 
     /* **************
