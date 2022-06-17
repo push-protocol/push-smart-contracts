@@ -239,8 +239,8 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
         _unpause();
     }
 
-    function getTotalHolderShare() public view returns(uint256){
-      return POOL_FUNDS;
+    function getTotalHolderShare() public view returns (uint256) {
+        return POOL_FUNDS;
     }
 
     /**
@@ -492,7 +492,10 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
         channelsCount = channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
-            require(_channelExpiryTime > block.timestamp,"EPNSCoreV1::createChannel: Invalid channelExpiryTime");
+            require(
+                _channelExpiryTime > block.timestamp,
+                "EPNSCoreV1::createChannel: Invalid channelExpiryTime"
+            );
             channels[_channel].expiryTime = _channelExpiryTime;
         }
 
@@ -556,9 +559,18 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
             );
         }
         // Unsubscribing from imperative Channels
-        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
-        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
-        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(
+            address(0x0),
+            _channelAddress
+        );
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(
+            _channelAddress,
+            _channelAddress
+        );
+        IEPNSCommV1(epnsCommunicator).unSubscribeViaCore(
+            _channelAddress,
+            pushChannelAdmin
+        );
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount.sub(1);
         delete channels[msg.sender];
@@ -875,7 +887,9 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
 
         //Calculating Claimable rewards for individual user(msg.sender)
         uint256 totalShare = getTotalHolderShare();
-        uint256 totalClaimableRewards = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
+        uint256 totalClaimableRewards = totalShare.mul(userRatio).div(
+            ADJUST_FOR_FLOAT
+        );
 
         require(
             totalClaimableRewards > 0,
