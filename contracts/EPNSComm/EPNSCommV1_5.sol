@@ -16,74 +16,17 @@ pragma experimental ABIEncoderV2;
 
 // Essential Imports
 // import "hardhat/console.sol";
+import "./EPNSCommStorageV1.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCommV1 is Initializable {
+contract EPNSCommV1 is Initializable, EPNSCommStorageV1{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /**
-     * @notice User Struct that involves imperative details about
-     * a specific User.
-     **/
-    struct User {
-        // @notice Depicts whether or not a user is ACTIVE
-        bool userActivated;
-
-        // @notice Will be false until public key is emitted
-        bool publicKeyRegistered;
-
-        // @notice Events should not be polled before this block as user doesn't exist
-        uint256 userStartBlock;
-
-        // @notice Keep track of subscribers
-        uint256 subscribedCount;
-
-        /**
-         * Depicts if User subscribed to a Specific Channel Address
-         * 1 -> User is Subscribed
-         * 0 -> User is NOT SUBSCRIBED
-         **/
-        mapping(address => uint8) isSubscribed;
-
-        // Keeps track of all subscribed channels
-        mapping(address => uint256) subscribed;
-        mapping(uint256 => address) mapAddressSubscribed;
-    }
-
-    /** MAPPINGS **/
-    mapping(address => User) public users;
-    mapping(address => uint256) public nonces;
-    mapping(uint256 => address) public mapAddressUsers;
-    mapping(address => mapping(address => string)) public userToChannelNotifs;
-    mapping(address => mapping(address => bool)) public delegatedNotificationSenders;
-
-    /** STATE VARIABLES **/
-    address public governance;
-    address public pushChannelAdmin;
-    uint256 public chainID;
-    uint256 public usersCount;
-    bool public isMigrationComplete;
-    address public EPNSCoreAddress;
-    string public chainName;
-    string public constant name = "EPNS COMM V1";
-    bytes32 public constant NAME_HASH = keccak256(bytes(name));
-    bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256(
-            "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
-        );
-    bytes32 public constant SUBSCRIBE_TYPEHASH =
-        keccak256("Subscribe(address channel,uint256 nonce,uint256 expiry)");
-    bytes32 public constant UNSUBSCRIBE_TYPEHASH =
-        keccak256("Unsubscribe(address channel,uint256 nonce,uint256 expiry)");
-    bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
-        keccak256(
-            "SendNotification(address channel,address delegate,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
-        );
     /** EVENTS **/
     event SendNotification(
         address indexed channel,
@@ -274,7 +217,7 @@ contract EPNSCommV1 is Initializable {
         _addUser(_user);
 
         User storage user = users[_user];
-
+ 
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
         user.subscribed[_channel] = user.subscribedCount;
@@ -443,6 +386,24 @@ contract EPNSCommV1 is Initializable {
         require(nonce == nonces[signatory]++, "EPNSCommV1::unsubscribeBySig: Invalid nonce");
         require(now <= expiry, "EPNSCommV1::unsubscribeBySig: Signature expired");
         _unsubscribe(channel, signatory);
+    }
+
+    /**
+     * @notice Allows EPNSCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
+     *         This ensures that the Channel Owner is unSubscribed from the imperative EPNS Channels as well as his/her own Channel.
+     *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their Channel again using the same Wallet Address.
+     *
+     * @dev    Only Callable by the EPNSCore.
+     * @param _channel address of the channel being unsubscribed
+     * @param _user address of the UnSubscriber of a Channel
+     **/
+    function unSubscribeViaCore(address _channel, address _user)
+        external
+        onlyEPNSCore
+        returns (bool)
+    {
+        _unsubscribe(_channel, _user);
+        return true;
     }
 
     /* **************
