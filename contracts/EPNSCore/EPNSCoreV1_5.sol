@@ -868,6 +868,32 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
      **/
     function claimRewards() external returns (bool success) {
         address _user = msg.sender;
+        uint256 totalClaimableRewards = getRewardValue(_user);
+
+        require(
+            totalClaimableRewards > 0,
+            "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
+        );
+
+        // Reset the User's Weight and Transfer the Tokens
+        POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
+            totalClaimableRewards
+        );
+
+        // Transfer PUSH to the user
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(_user, totalClaimableRewards);
+
+        emit RewardsClaimed(msg.sender, totalClaimableRewards);
+        success = true;
+    }
+
+    function getRewardValue(address _user)
+        public
+        view
+        returns (uint256 rewardValue)
+    {
         // Reading necessary PUSH details
         uint256 pushStartBlock = IPUSH(PUSH_TOKEN_ADDRESS).born();
         uint256 pushTotalSupply = IPUSH(PUSH_TOKEN_ADDRESS).totalSupply();
@@ -887,27 +913,7 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
 
         //Calculating Claimable rewards for individual user(msg.sender)
         uint256 totalShare = getTotalHolderShare();
-        uint256 totalClaimableRewards = totalShare.mul(userRatio).div(
-            ADJUST_FOR_FLOAT
-        );
-
-        require(
-            totalClaimableRewards > 0,
-            "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
-        );
-
-        // Reset the User's Weight and Transfer the Tokens
-        POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
-            totalClaimableRewards
-        );
-
-        // Transfer PUSH to the user
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(_user, totalClaimableRewards);
-
-        emit RewardsClaimed(msg.sender, totalClaimableRewards);
-        success = true;
+        rewardValue = totalShare.mul(userRatio).div(ADJUST_FOR_FLOAT);
     }
 
     function getChainId() internal pure returns (uint256) {
