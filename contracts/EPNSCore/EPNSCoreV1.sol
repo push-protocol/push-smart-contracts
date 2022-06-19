@@ -24,9 +24,10 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
+contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -35,7 +36,10 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
     event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+    event ChannelVerificationRevoked(
+        address indexed channel,
+        address indexed revoker
+    );
 
     event DeactivateChannel(
         address indexed channel,
@@ -45,9 +49,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         address indexed channel,
         uint256 indexed amountDeposited
     );
-    event ChannelBlocked(
-        address indexed channel
-    );
+    event ChannelBlocked(address indexed channel);
     event AddChannel(
         address indexed channel,
         ChannelType indexed channelType,
@@ -64,12 +66,18 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         MODIFIERS
     ***************/
     modifier onlyPushChannelAdmin() {
-        require(msg.sender == pushChannelAdmin, "EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin");
+        require(
+            msg.sender == pushChannelAdmin,
+            "EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin"
+        );
         _;
     }
 
     modifier onlyGovernance() {
-        require(msg.sender == governance, "EPNSCoreV1::onlyGovernance: Caller not Governance");
+        require(
+            msg.sender == governance,
+            "EPNSCoreV1::onlyGovernance: Caller not Governance"
+        );
         _;
     }
 
@@ -99,7 +107,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
     modifier onlyUnblockedChannels(address _channel) {
         require(
             ((channels[_channel].channelState != 3) &&
-              (channels[_channel].channelState != 0)),
+                (channels[_channel].channelState != 0)),
             "EPNSCoreV1::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet"
         );
         _;
@@ -108,8 +116,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
     modifier onlyChannelOwner(address _channel) {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
-                (msg.sender == pushChannelAdmin &&
-                    _channel == address(0x0))),
+                (msg.sender == pushChannelAdmin && _channel == address(0x0))),
             "EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
         );
         _;
@@ -167,47 +174,60 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
     SETTER FUNCTIONS
 
     *************** */
-    function updateWETHAddress(address _newAddress) external onlyPushChannelAdmin() {
+    function updateWETHAddress(address _newAddress)
+        external
+        onlyPushChannelAdmin
+    {
         WETH_ADDRESS = _newAddress;
     }
 
-    function updateUniswapRouterAddress(address _newAddress) external onlyPushChannelAdmin() {
+    function updateUniswapRouterAddress(address _newAddress)
+        external
+        onlyPushChannelAdmin
+    {
         UNISWAP_V2_ROUTER = _newAddress;
     }
 
     function setEpnsCommunicatorAddress(address _commAddress)
         external
-        onlyPushChannelAdmin()
+        onlyPushChannelAdmin
     {
         epnsCommunicator = _commAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress)
         external
-        onlyPushChannelAdmin()
+        onlyPushChannelAdmin
     {
-      governance = _governanceAddress;
+        governance = _governanceAddress;
     }
 
-    function setMigrationComplete() external onlyPushChannelAdmin() {
+    function setMigrationComplete() external onlyPushChannelAdmin {
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees) external onlyGovernance() {
+    function setChannelDeactivationFees(uint256 _newFees)
+        external
+        onlyGovernance
+    {
         require(
             _newFees > 0,
             "EPNSCoreV1::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
         );
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
+
     /**
-      * @notice Allows to set the Minimum amount threshold for Creating Channels
-      *
-      * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-      *
-      * @param _newFees new minimum fees required for Channel Creation
-    **/
-    function setMinChannelCreationFees(uint256 _newFees) external onlyGovernance() {
+     * @notice Allows to set the Minimum amount threshold for Creating Channels
+     *
+     * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+     *
+     * @param _newFees new minimum fees required for Channel Creation
+     **/
+    function setMinChannelCreationFees(uint256 _newFees)
+        external
+        onlyGovernance
+    {
         require(
             _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
             "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
@@ -215,10 +235,18 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
 
-
-    function transferPushChannelAdminControl(address _newAdmin) public onlyPushChannelAdmin() {
-        require(_newAdmin != address(0), "EPNSCoreV1::transferPushChannelAdminControl: Invalid Address");
-        require(_newAdmin != pushChannelAdmin, "EPNSCoreV1::transferPushChannelAdminControl: Admin address is same");
+    function transferPushChannelAdminControl(address _newAdmin)
+        public
+        onlyPushChannelAdmin
+    {
+        require(
+            _newAdmin != address(0),
+            "EPNSCoreV1::transferPushChannelAdminControl: Invalid Address"
+        );
+        require(
+            _newAdmin != pushChannelAdmin,
+            "EPNSCoreV1::transferPushChannelAdminControl: Admin address is same"
+        );
         pushChannelAdmin = _newAdmin;
     }
 
@@ -227,9 +255,14 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-    function getChannelState(address _channel) external view returns(uint256 state) {
+    function getChannelState(address _channel)
+        external
+        view
+        returns (uint256 state)
+    {
         state = channels[_channel].channelState;
     }
+
     /**
      * @notice Allows Channel Owner to update their Channel Description/Detail
      *
@@ -252,8 +285,11 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         channels[_channel].channelUpdateBlock = block.number;
     }
 
-    function createChannelForPushChannelAdmin() external onlyPushChannelAdmin() {
-        require (!oneTimeCheck, "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created");
+    function createChannelForPushChannelAdmin() external onlyPushChannelAdmin {
+        require(
+            !oneTimeCheck,
+            "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
+        );
 
         // Add EPNS Channels
         // First is for all users
@@ -264,22 +300,18 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         // EPNS ALL USERS
 
         _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
-         emit AddChannel(
+        emit AddChannel(
             pushChannelAdmin,
             ChannelType.ProtocolNonInterest,
             "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
         );
 
         // EPNS ALERTER CHANNEL
-        _createChannel(
+        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0);
+        emit AddChannel(
             address(0x0),
             ChannelType.ProtocolNonInterest,
-            0
-        );
-        emit AddChannel(
-        address(0x0),
-        ChannelType.ProtocolNonInterest,
-        "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
+            "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
         );
 
         oneTimeCheck = true;
@@ -326,7 +358,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         _createChannel(_channel, _channelType, _amount);
     }
 
-      /**
+    /**
      * @notice Migration function that allows pushChannelAdmin to migrate the previous Channel Data to this protocol
      *
      * @dev   can only be Called by the pushChannelAdmin
@@ -340,7 +372,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      * @param _channelTypeList   array of type of the Channel being created
      * @param _identityList     array of list of identity Bytes
      * @param _amountList       array of amount of DAI to be depositeds
-    **/
+     **/
     function migrateChannelData(
         uint256 _startIndex,
         uint256 _endIndex,
@@ -356,19 +388,31 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
 
         require(
             (_channelAddresses.length == _channelTypeList.length) &&
-            (_channelAddresses.length == _identityList.length) &&
-            (_channelAddresses.length == _amountList.length),
+                (_channelAddresses.length == _identityList.length) &&
+                (_channelAddresses.length == _amountList.length),
             "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
-                if(channels[_channelAddresses[i]].channelState != 0){
-                    continue;
-            }else{
-                IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amountList[i]);
+            if (channels[_channelAddresses[i]].channelState != 0) {
+                continue;
+            } else {
+                IERC20(daiAddress).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    _amountList[i]
+                );
                 _depositFundsToPool(_amountList[i]);
-                emit AddChannel(_channelAddresses[i], _channelTypeList[i], _identityList[i]);
-                _createChannel(_channelAddresses[i], _channelTypeList[i], _amountList[i]);
+                emit AddChannel(
+                    _channelAddresses[i],
+                    _channelTypeList[i],
+                    _identityList[i]
+                );
+                _createChannel(
+                    _channelAddresses[i],
+                    _channelTypeList[i],
+                    _amountList[i]
+                );
             }
         }
         return true;
@@ -430,10 +474,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
 
         // Subscribe them to their own channel as well
         if (_channel != pushChannelAdmin) {
-            IEPNSCommV1(epnsCommunicator).subscribeViaCore(
-                _channel,
-                _channel
-            );
+            IEPNSCommV1(epnsCommunicator).subscribeViaCore(_channel, _channel);
         }
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
@@ -464,7 +505,7 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      *  @param _notifOptions - Total Notification options provided by the Channel Owner
      *  @param _notifSettings- Deliminated String of Notification Settings
      *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
-    **/
+     **/
     function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
@@ -496,7 +537,10 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
      **/
 
-    function deactivateChannel(uint256 _amountsOutValue) external onlyActivatedChannels(msg.sender) {
+    function deactivateChannel(uint256 _amountsOutValue)
+        external
+        onlyActivatedChannels(msg.sender)
+    {
         Channel storage channelData = channels[msg.sender];
 
         uint256 totalAmountDeposited = channelData.poolContribution;
@@ -529,7 +573,11 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
 
-        swapAndTransferPUSH(msg.sender, totalRefundableAmount, _amountsOutValue);
+        swapAndTransferPUSH(
+            msg.sender,
+            totalRefundableAmount,
+            _amountsOutValue
+        );
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
@@ -555,10 +603,12 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         _depositFundsToPool(_amount);
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
-        uint newChannelPoolContribution = _amount.add(CHANNEL_DEACTIVATION_FEES);
-        uint256 _channelWeight = newChannelPoolContribution.mul(ADJUST_FOR_FLOAT).div(
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        uint256 newChannelPoolContribution = _amount.add(
+            CHANNEL_DEACTIVATION_FEES
         );
+        uint256 _channelWeight = newChannelPoolContribution
+            .mul(ADJUST_FOR_FLOAT)
+            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         (
             groupFairShareCount,
             groupNormalizedWeight,
@@ -598,46 +648,47 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      * @param _channelAddress Address of the Channel to be blocked
      **/
 
-     function blockChannel(address _channelAddress)
-     external
-     onlyPushChannelAdmin()
-     onlyUnblockedChannels(_channelAddress){
-       Channel storage channelData = channels[_channelAddress];
+    function blockChannel(address _channelAddress)
+        external
+        onlyPushChannelAdmin
+        onlyUnblockedChannels(_channelAddress)
+    {
+        Channel storage channelData = channels[_channelAddress];
 
-       uint256 totalAmountDeposited = channelData.poolContribution;
-       uint256 totalRefundableAmount = totalAmountDeposited.sub(
-           CHANNEL_DEACTIVATION_FEES
-       );
+        uint256 totalAmountDeposited = channelData.poolContribution;
+        uint256 totalRefundableAmount = totalAmountDeposited.sub(
+            CHANNEL_DEACTIVATION_FEES
+        );
 
-       uint256 _oldChannelWeight = channelData.channelWeight;
-       uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
-           .mul(ADJUST_FOR_FLOAT)
-           .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        uint256 _oldChannelWeight = channelData.channelWeight;
+        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+            .mul(ADJUST_FOR_FLOAT)
+            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-       channelsCount = channelsCount.sub(1);
+        channelsCount = channelsCount.sub(1);
 
-       channelData.channelState = 3;
-       channelData.channelWeight = _newChannelWeight;
-       channelData.channelUpdateBlock = block.number;
-       channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
-       PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
-       (
-           groupFairShareCount,
-           groupNormalizedWeight,
-           groupHistoricalZ,
-           groupLastUpdate
-       ) = _readjustFairShareOfChannels(
-           ChannelAction.ChannelRemoved,
-           _newChannelWeight,
-           _oldChannelWeight,
-           groupFairShareCount,
-           groupNormalizedWeight,
-           groupHistoricalZ,
-           groupLastUpdate
-       );
+        channelData.channelState = 3;
+        channelData.channelWeight = _newChannelWeight;
+        channelData.channelUpdateBlock = block.number;
+        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
+        (
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        ) = _readjustFairShareOfChannels(
+            ChannelAction.ChannelRemoved,
+            _newChannelWeight,
+            _oldChannelWeight,
+            groupFairShareCount,
+            groupNormalizedWeight,
+            groupHistoricalZ,
+            groupLastUpdate
+        );
 
-       emit ChannelBlocked(_channelAddress);
-     }
+        emit ChannelBlocked(_channelAddress);
+    }
 
     /* **************
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
@@ -650,73 +701,89 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary verification
      **/
     function getChannelVerfication(address _channel)
-      public
-      view
-      returns (uint8 verificationStatus)
+        public
+        view
+        returns (uint8 verificationStatus)
     {
-      address verifiedBy = channels[_channel].verifiedBy;
-      bool logicComplete = false;
+        address verifiedBy = channels[_channel].verifiedBy;
+        bool logicComplete = false;
 
-      // Check if it's primary verification
-      if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
-        // primary verification, mark and exit
-        verificationStatus = 1;
-      }
-      else {
-        // can be secondary verification or not verified, dig deeper
-        while (!logicComplete) {
-          if (verifiedBy == address(0x0)) {
-            verificationStatus = 0;
-            logicComplete = true;
-          }
-          else if (verifiedBy == pushChannelAdmin) {
-            verificationStatus = 2;
-            logicComplete = true;
-          }
-          else {
-            // Upper drill exists, go up
-            verifiedBy = channels[verifiedBy].verifiedBy;
-          }
+        // Check if it's primary verification
+        if (
+            verifiedBy == pushChannelAdmin ||
+            _channel == address(0x0) ||
+            _channel == pushChannelAdmin
+        ) {
+            // primary verification, mark and exit
+            verificationStatus = 1;
+        } else {
+            // can be secondary verification or not verified, dig deeper
+            while (!logicComplete) {
+                if (verifiedBy == address(0x0)) {
+                    verificationStatus = 0;
+                    logicComplete = true;
+                } else if (verifiedBy == pushChannelAdmin) {
+                    verificationStatus = 2;
+                    logicComplete = true;
+                } else {
+                    // Upper drill exists, go up
+                    verifiedBy = channels[verifiedBy].verifiedBy;
+                }
+            }
         }
-      }
     }
 
-    function batchVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
-      for(uint256 i =_startIndex; i < _endIndex; i++){
-        verifyChannel(_channelList[i]);
-      }
-      return true;
+    function batchVerification(
+        uint256 _startIndex,
+        uint256 _endIndex,
+        address[] calldata _channelList
+    ) external onlyPushChannelAdmin returns (bool) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+            verifyChannel(_channelList[i]);
+        }
+        return true;
     }
 
-    function batchRevokeVerification(uint256 _startIndex, uint256 _endIndex, address[] calldata _channelList) external onlyPushChannelAdmin returns(bool){
-      for(uint256 i =_startIndex; i < _endIndex; i++){
-        unverifyChannel(_channelList[i]);
-      }
-      return true;
+    function batchRevokeVerification(
+        uint256 _startIndex,
+        uint256 _endIndex,
+        address[] calldata _channelList
+    ) external onlyPushChannelAdmin returns (bool) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+            unverifyChannel(_channelList[i]);
+        }
+        return true;
     }
+
     /**
      * @notice    Function is designed to verify a channel
      * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already verified
      * @param    _channel Address of the channel to be Verified
      **/
-    function verifyChannel(address _channel) public onlyActivatedChannels(_channel) {
-      // Check if caller is verified first
-      uint8 callerVerified = getChannelVerfication(msg.sender);
-      require(callerVerified > 0, "EPNSCoreV1::verifyChannel: Caller is not verified");
+    function verifyChannel(address _channel)
+        public
+        onlyActivatedChannels(_channel)
+    {
+        // Check if caller is verified first
+        uint8 callerVerified = getChannelVerfication(msg.sender);
+        require(
+            callerVerified > 0,
+            "EPNSCoreV1::verifyChannel: Caller is not verified"
+        );
 
-      // Check if channel is verified
-      uint8 channelVerified = getChannelVerfication(_channel);
-      require(
-        (callerVerified >= 1 && channelVerified == 0) ||
-        (msg.sender == pushChannelAdmin),
-        "EPNSCoreV1::verifyChannel: Channel already verified"
-      );
+        // Check if channel is verified
+        uint8 channelVerified = getChannelVerfication(_channel);
+        require(
+            (callerVerified >= 1 && channelVerified == 0) ||
+                (msg.sender == pushChannelAdmin),
+            "EPNSCoreV1::verifyChannel: Channel already verified"
+        );
 
-      // Verify channel
-      channels[_channel].verifiedBy = msg.sender;
+        // Verify channel
+        channels[_channel].verifiedBy = msg.sender;
 
-      // Emit event
-      emit ChannelVerified(_channel, msg.sender);
+        // Emit event
+        emit ChannelVerified(_channel, msg.sender);
     }
 
     /**
@@ -725,16 +792,17 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      * @param    _channel Address of the channel to be unverified
      **/
     function unverifyChannel(address _channel) public {
-      require(
-        channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
-        "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
-      );
+        require(
+            channels[_channel].verifiedBy == msg.sender ||
+                msg.sender == pushChannelAdmin,
+            "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
+        );
 
-      // Unverify channel
-      channels[_channel].verifiedBy = address(0x0);
+        // Unverify channel
+        channels[_channel].verifiedBy = address(0x0);
 
-      // Emit Event
-      emit ChannelVerificationRevoked(_channel, msg.sender);
+        // Emit Event
+        emit ChannelVerificationRevoked(_channel, msg.sender);
     }
 
     /* **************
@@ -767,10 +835,11 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
      * @param _user address of the user that will recieve the PUSH Tokens
      * @param _userAmount the amount of aDai to be swapped and transferred
      **/
-    function swapAndTransferPUSH(address _user, uint256 _userAmount, uint256 _amountsOutValue)
-        internal
-        returns (bool)
-    {
+    function swapAndTransferPUSH(
+        address _user,
+        uint256 _userAmount,
+        uint256 _amountsOutValue
+    ) internal returns (bool) {
         swapADaiForDai(_userAmount);
         IERC20(daiAddress).approve(UNISWAP_V2_ROUTER, _userAmount);
 
@@ -789,13 +858,13 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         return true;
     }
 
-    function swapADaiForDai(uint256 _amount) private{
-      ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
-        lendingPoolProviderAddress
-      );
-      ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
+    function swapADaiForDai(uint256 _amount) private {
+        ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
+            lendingPoolProviderAddress
+        );
+        ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
 
-      IADai(aDaiAddress).redeem(_amount);
+        IADai(aDaiAddress).redeem(_amount);
     }
 
     /* **************
@@ -844,17 +913,19 @@ contract EPNSCoreV1 is Initializable, EPNSCoreStorageV1{
         if (_action == ChannelAction.ChannelAdded) {
             groupModCount = groupModCount.add(1);
             totalWeight = totalWeight.add(_channelWeight);
-
         } else if (_action == ChannelAction.ChannelRemoved) {
             groupModCount = groupModCount.sub(1);
-            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
-
+            totalWeight = totalWeight.add(_channelWeight).sub(
+                _oldChannelWeight
+            );
         } else if (_action == ChannelAction.ChannelUpdated) {
-            totalWeight = totalWeight.add(_channelWeight).sub(_oldChannelWeight);
-
-        }
-        else {
-            revert("EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action");
+            totalWeight = totalWeight.add(_channelWeight).sub(
+                _oldChannelWeight
+            );
+        } else {
+            revert(
+                "EPNSCoreV1::_readjustFairShareOfChannels: Invalid Channel Action"
+            );
         }
         // now calculate the historical constant
         // z = z + nxw
