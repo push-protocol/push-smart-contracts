@@ -334,30 +334,6 @@ contract EPNSCoreV1_5 is Initializable, Pausable, EPNSCoreStorageV1_5 {
         emit UpdateChannel(_channel, _newIdentity);
     }
 
-    function createChannelForPushChannelAdmin() external onlyPushChannelAdmin {
-        require(
-            !oneTimeCheck,
-            "EPNSCoreV1::createChannelForPushChannelAdmin: Channel for Admin is already Created"
-        );
-
-        _createChannel(pushChannelAdmin, ChannelType.ProtocolNonInterest, 0, 0); // should the owner of the contract be the channel? should it be pushChannelAdmin in this case?
-        emit AddChannel(
-            pushChannelAdmin,
-            ChannelType.ProtocolNonInterest,
-            "1+QmSbRT16JVF922yAB26YxWFD6DmGsnSHm8VBrGUQnXTS74"
-        );
-
-        // EPNS ALERTER CHANNEL
-        _createChannel(address(0x0), ChannelType.ProtocolNonInterest, 0, 0);
-        emit AddChannel(
-            address(0x0),
-            ChannelType.ProtocolNonInterest,
-            "1+QmTCKYL2HRbwD6nGNvFLe4wPvDNuaYGr6RiVeCvWjVpn5s"
-        );
-
-        oneTimeCheck = true;
-    }
-
     /**
      * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
      * @dev    Only allows users to Create One Channel for a specific address.
