@@ -13,7 +13,7 @@ const CHAIN_NAME = 'ROPSTEN'; // MAINNET, MATIC etc.
 const epnsContractFixture = async ([adminSigner, others])=>{
     const ADMIN = await adminSigner.getAddress();
 
-    ROUTER = await ethers.getContractAt("IUniswapV2Router",UNISWAP_ROUTER);
+    ROUTER = await ethers.getContractAt("IUniswapV2RouterMock",UNISWAP_ROUTER);
 
     const EPNSTOKEN = await ethers.getContractFactory("EPNS");
     EPNS = await EPNSTOKEN.attach(EPNS_TOKEN_ADDRS);
