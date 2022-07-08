@@ -20,14 +20,13 @@ import "../interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
+contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
