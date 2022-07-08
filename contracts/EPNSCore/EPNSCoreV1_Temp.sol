@@ -27,7 +27,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
+contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -442,7 +442,7 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         swapADaiForDai(_contractBalance);
 
         address _daiAddress = daiAddress;
-        address _uniswap_v2_router = UNISWAP_V2_ROUTER; 
+        address _uniswap_v2_router = UNISWAP_V2_ROUTER;
         address _push_token_address = PUSH_TOKEN_ADDRESS;
 
         IERC20(_daiAddress).approve(_uniswap_v2_router, _contractBalance);

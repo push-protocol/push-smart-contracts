@@ -12,7 +12,7 @@ pragma experimental ABIEncoderV2;
  **/
 
 import "./EPNSCoreStorageV1_5.sol";
-import "./EPNSCoreStorageV1_updated.sol";
+import "./EPNSCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IADai.sol";
 import "../interfaces/ILendingPool.sol";
@@ -27,7 +27,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCoreV1_5 is Initializable,EPNSCoreStorageV1_updated,Pausable,EPNSCoreStorageV1_5{
+contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreStorageV2{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
