@@ -637,9 +637,9 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
      * @notice Allows Channel Owner to Reactivate his/her Channel again.
      * @dev    - Function can only be called by previously Deactivated Channels
      *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
-     *         - Calculation of the new Channel Weight is performed and the FairShare is Readjusted once again with relevant details
+     *         - Calculation of the new Channel Weight is performed and stored as the channel's new weight.
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
-     * @param _amount Amount of Dai to be deposited
+     * @param _amount Amount of PUSH to be deposited
      **/
 
     function reactivateChannel(uint256 _amount)
@@ -647,9 +647,9 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
-        uint _add_channel_min_pool_contribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
         require(
-            _amount >= _add_channel_min_pool_contribution,
+            _amount >= _minPoolContribution,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
 
@@ -664,7 +664,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(_add_channel_min_pool_contribution);
+            .div(_minPoolContribution);
 
         POOL_FUNDS = POOL_FUNDS.add(_amount);
         channels[msg.sender].channelState = 1;
@@ -697,9 +697,9 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
-        uint _channel_deactivation_fees = CHANNEL_DEACTIVATION_FEES;
+        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
 
-        uint256 _newChannelWeight = _channel_deactivation_fees
+        uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
@@ -708,7 +708,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         channelData.channelState = 3;
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
-        channelData.poolContribution = _channel_deactivation_fees;
+        channelData.poolContribution = _channelDeactivationFees;
 
         emit ChannelBlocked(_channelAddress);
     }
@@ -844,7 +844,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
      **/
     function claimRewards() external returns (bool success) {
         address _user = msg.sender;
-        address _push_token_address = PUSH_TOKEN_ADDRESS;
+        address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
         uint256 totalClaimableRewards = getRewardValue(_user);
 
         require(
@@ -854,13 +854,13 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
 
         // Reset the User's Weight and Transfer the Tokens
         POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
-        IPUSH(_push_token_address).resetHolderWeight(_user);
+        IPUSH(_pushTokenAddress).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
         );
 
         // Transfer PUSH to the user
-        IERC20(_push_token_address).safeTransfer(_user, totalClaimableRewards);
+        IERC20(_pushTokenAddress).safeTransfer(_user, totalClaimableRewards);
 
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
         success = true;
@@ -872,12 +872,12 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         returns (uint256 rewardValue)
     {
         // Reading necessary PUSH details
-        address _push_token_address = PUSH_TOKEN_ADDRESS;
-        uint _adjust_for_float = ADJUST_FOR_FLOAT;
+        address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
+        uint _adjustForFloat = ADJUST_FOR_FLOAT;
 
-        uint256 pushStartBlock = IPUSH(_push_token_address).born();
-        uint256 pushTotalSupply = IPUSH(_push_token_address).totalSupply();
-        uint256 userHolderWeight = IPUSH(_push_token_address).returnHolderUnits(
+        uint256 pushStartBlock = IPUSH(_pushTokenAddress).born();
+        uint256 pushTotalSupply = IPUSH(_pushTokenAddress).totalSupply();
+        uint256 userHolderWeight = IPUSH(_pushTokenAddress).returnHolderUnits(
             _user,
             block.number
         );
@@ -887,13 +887,13 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, Pausable, EPNSCoreS
         uint256 totalHolderWeight = pushTotalSupply.mul(blockGap);
 
         //Calculating individual User's Ratio
-        uint256 userRatio = userHolderWeight.mul(_adjust_for_float).div(
+        uint256 userRatio = userHolderWeight.mul(_adjustForFloat).div(
             totalHolderWeight
         );
 
         //Calculating Claimable rewards for individual user(msg.sender)
         uint256 totalShare = getTotalHolderShare();
-        rewardValue = totalShare.mul(userRatio).div(_adjust_for_float);
+        rewardValue = totalShare.mul(userRatio).div(_adjustForFloat);
     }
 
     function getChainId() internal pure returns (uint256) {
