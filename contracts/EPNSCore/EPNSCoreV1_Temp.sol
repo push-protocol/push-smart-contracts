@@ -643,9 +643,9 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
-        uint _add_channel_min_pool_contribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
         require(
-            _amount >= _add_channel_min_pool_contribution,
+            _amount >= _minPoolContribution,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
@@ -657,7 +657,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(_add_channel_min_pool_contribution);
+            .div(_minPoolContribution);
         (
             groupFairShareCount,
             groupNormalizedWeight,
@@ -704,15 +704,15 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
-        uint _channel_deactivation_fees = CHANNEL_DEACTIVATION_FEES;
+        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            _channel_deactivation_fees
+            _channelDeactivationFees
         );
 
         uint256 _oldChannelWeight = channelData.channelWeight;
-        uint256 _newChannelWeight = _channel_deactivation_fees
+        uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
@@ -721,7 +721,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
         channelData.channelState = 3;
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
-        channelData.poolContribution = _channel_deactivation_fees;
+        channelData.poolContribution = _channelDeactivationFees;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         (
             groupFairShareCount,
@@ -825,7 +825,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, Pausable {
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         require(
-            (channelVerified == 0) ||
+              (channelVerified == 0) ||
                 (msg.sender == pushChannelAdmin),
             "EPNSCoreV1::verifyChannel: Channel already verified"
         );
