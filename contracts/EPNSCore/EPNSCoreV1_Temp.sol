@@ -20,14 +20,13 @@ import "../interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
+contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -442,14 +441,17 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         swapADaiForDai(_contractBalance);
 
         address _daiAddress = daiAddress;
-        IERC20(_daiAddress).approve(UNISWAP_V2_ROUTER, _contractBalance);
+        address _uniswap_v2_router = UNISWAP_V2_ROUTER;
+        address _push_token_address = PUSH_TOKEN_ADDRESS;
+
+        IERC20(_daiAddress).approve(_uniswap_v2_router, _contractBalance);
 
         address[] memory path = new address[](3);
         path[0] = _daiAddress;
         path[1] = WETH_ADDRESS;
-        path[2] = PUSH_TOKEN_ADDRESS;
+        path[2] = _push_token_address;
 
-        IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactTokensForTokens(
+        IUniswapV2Router(_uniswap_v2_router).swapExactTokensForTokens(
             _contractBalance,
             _amountOutMin,
             path,
@@ -458,7 +460,7 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         );
 
         // Update pool funds
-        POOL_FUNDS = IERC20(PUSH_TOKEN_ADDRESS).balanceOf(address(this));
+        POOL_FUNDS = IERC20(_push_token_address).balanceOf(address(this));
     }
 
     /**
@@ -640,8 +642,9 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
+        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
         require(
-            _amount >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
+            _amount >= _minPoolContribution,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
         IERC20(daiAddress).safeTransferFrom(msg.sender, address(this), _amount);
@@ -653,7 +656,7 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(_minPoolContribution);
         (
             groupFairShareCount,
             groupNormalizedWeight,
@@ -700,14 +703,15 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
+        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
+            _channelDeactivationFees
         );
 
         uint256 _oldChannelWeight = channelData.channelWeight;
-        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+        uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
@@ -716,7 +720,7 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         channelData.channelState = 3;
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
-        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+        channelData.poolContribution = _channelDeactivationFees;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         (
             groupFairShareCount,
@@ -820,7 +824,7 @@ contract EPNSCoreV1_Temp is Initializable,EPNSCoreStorageV1,Pausable {
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         require(
-            (callerVerified >= 1 && channelVerified == 0) ||
+              (channelVerified == 0) ||
                 (msg.sender == pushChannelAdmin),
             "EPNSCoreV1::verifyChannel: Channel already verified"
         );
