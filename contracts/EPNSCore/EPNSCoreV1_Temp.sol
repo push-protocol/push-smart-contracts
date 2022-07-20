@@ -10,7 +10,7 @@ pragma experimental ABIEncoderV2;
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
  **/
-import "./EPNSCoreStorageV1.sol";
+import "./EPNSCoreStorageV1_5.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IADai.sol";
 import "../interfaces/ILendingPool.sol";
@@ -26,7 +26,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeable {
+contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -463,6 +463,43 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         POOL_FUNDS = IERC20(_push_token_address).balanceOf(address(this));
     }
 
+    /**
+     * @notice Function to adjust the poolContribution and weight of channels after swap of DAI to PUSH in core contract.
+     * @dev - Should be called only by the pushChannelAdmin
+     *      - Can only be called for channels that are not in Inactive State.
+     *      - Can only be called for channels whose version is not 2, i.e., old Channels (created using DAI)
+     *      - This function updates/adjusts the pool contribution, new weight and the version of the Channel.
+     *
+     * @param _startIndex starting Index for the LOOP
+     * @param _endIndex   Last Index for the LOOP
+     * @param _oldPoolFunds total amount of DAI in the older contract version.
+     * @param _channelAddresses array of address of the Channel
+     */
+     function adjustChannelPoolContributions(
+       uint256 _startIndex,
+       uint256 _endIndex,
+       uint256 _oldPoolFunds,
+       address[] calldata _channelAddresses
+     ) external onlyPushChannelAdmin() returns(bool){
+        uint256 newPoolFunds = POOL_FUNDS;
+
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+          if(channels[_channelAddresses[i]].channelState == 0 ||
+              channels[_channelAddresses[i]].channelVersion == 2){
+                continue;
+              } else{
+
+                uint256 poolFundRatio = newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
+                uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
+                uint256 adjustedNewWeight = adjustedPoolContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+
+                channels[_channelAddresses[i]].channelVersion = 2;
+                channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
+                channels[_channelAddresses[i]].poolContribution = adjustedPoolContribution;
+              }
+        }
+        return true;
+     }
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
