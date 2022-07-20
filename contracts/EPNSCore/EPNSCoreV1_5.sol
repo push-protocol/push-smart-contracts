@@ -841,23 +841,24 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      *
      * @return  success Returns true if rewards are claimed successfully.
      **/
-    function claimRewards() external returns (bool success) {
+    function claimRewards() external whenNotPaused returns (bool success) {
         address _user = msg.sender;
         address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
         uint256 totalClaimableRewards = getRewardValue(_user);
 
         require(
-            totalClaimableRewards > 0,
+            totalClaimableRewards > 0 && totalClaimableRewards <= POOL_FUNDS,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
 
         // Reset the User's Weight and Transfer the Tokens
+        totalRewardsClaimed += totalClaimableRewards;
         POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
-        IPUSH(_pushTokenAddress).resetHolderWeight(_user);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
         );
-
+        // Reset the user's Holder Weight
+        IPUSH(_pushTokenAddress).resetHolderWeight(_user);
         // Transfer PUSH to the user
         IERC20(_pushTokenAddress).safeTransfer(_user, totalClaimableRewards);
 
@@ -891,7 +892,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
 
         //Calculating Claimable rewards for individual user(msg.sender)
-        uint256 totalShare = getTotalHolderShare();
+        uint256 totalShare = getTotalHolderShare().add(totalRewardsClaimed);
         rewardValue = totalShare.mul(userRatio).div(_adjustForFloat);
     }
 
