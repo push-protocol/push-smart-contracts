@@ -100,6 +100,63 @@ describe("EPNS CoreV2 Protocol", function () {
 			const blockIncreaseHex = `0x${numBlockToIncrease.toString(16)}`;
 			await ethers.provider.send("hardhat_mine", [blockIncreaseHex]);
 		}
+		
+		it("Allows multiple users with same amt gets same amt of reward", async function(){	
+			const PUSH_BORN = await PushToken.born();
+			const BLOCK_GAP = 2000;
+			const WITHDRWAL_BLOCK_NUM = PUSH_BORN.add(BLOCK_GAP);
+
+			// Add 4000 PUSH to pool by creating the channel
+			await createChannelWithCustomFee(tokensBN(4_000))
+			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+			expect(poolFunds).to.equal(tokensBN(4_000))
+
+			
+			// Alice gets: 5K PUSH
+			// Bob gets: 4K PUSH
+			// Charlie gets: 3K PUSH 
+			await PushToken.transfer(ALICE, tokensBN(5_000_000));
+			await PushToken.transfer(BOB, tokensBN(5_000_000));
+			await PushToken.transfer(CHARLIE, tokensBN(5_000_000));
+						
+			const [aliceWt, bobWt, charlieWt] = await Promise.all([
+				PushToken.returnHolderUnits(ALICE,WITHDRWAL_BLOCK_NUM),
+				PushToken.returnHolderUnits(BOB,WITHDRWAL_BLOCK_NUM),
+				PushToken.returnHolderUnits(CHARLIE,WITHDRWAL_BLOCK_NUM),
+			]); 
+
+			// assert userholder wt
+			expect(aliceWt).to.equal(tokensBN(10_000_000_000))
+			expect(bobWt).to.equal(tokensBN(10_000_000_000))
+			expect(charlieWt).to.equal(tokensBN(10_000_000_000))
+
+			// move to one block before `WITHDRWAL_BLOCK_NUM` 
+			await gotoBlockNumber(WITHDRWAL_BLOCK_NUM.sub(1))
+
+			// add multiple transaction in single block
+			await ethers.provider.send("evm_setAutomine", [false]);
+			await Promise.all([
+				EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards(),
+				EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards(),
+				EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards(),
+			]);
+			await network.provider.send("evm_mine"); 
+			await ethers.provider.send("evm_setAutomine", [true]);
+
+			// after claim rewards currentBlock should equal `WITHDRWAL_BLOCK_NUM`
+			const currentBlock = await ethers.provider.getBlock("latest");
+			expect(currentBlock.number).to.equal(WITHDRWAL_BLOCK_NUM);
+			
+			// finally assert reward yields
+			const [aliceRw, bobRw, charlieRw] = await Promise.all([
+				EPNSCoreV1Proxy.usersRewardsClaimed(ALICE),
+				EPNSCoreV1Proxy.usersRewardsClaimed(BOB),
+				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
+			]); 
+			expect(aliceRw).to.equal(ethers.utils.parseEther("200"))
+			expect(bobRw).to.equal(ethers.utils.parseEther("200"))
+			expect(charlieRw).to.equal(ethers.utils.parseEther("200"))
+		})
 
 		it("Tests for multiple users claming reward at same transaction", async function(){	
 			const PUSH_BORN = await PushToken.born();
@@ -130,7 +187,6 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(bobWt).to.equal(tokensBN(8_000_000_000))
 			expect(charlieWt).to.equal(tokensBN(6_000_000_000))
 
-
 			// move to one block before `WITHDRWAL_BLOCK_NUM` 
 			await gotoBlockNumber(WITHDRWAL_BLOCK_NUM.sub(1))
 
@@ -155,8 +211,8 @@ describe("EPNS CoreV2 Protocol", function () {
 				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
 			]); 
 			expect(aliceRw).to.equal(ethers.utils.parseEther("200"))
-			expect(bobRw).to.equal(ethers.utils.parseEther("152"))
-			expect(charlieRw).to.equal(ethers.utils.parseEther("109.44"))
+			expect(bobRw).to.equal(ethers.utils.parseEther("160"))
+			expect(charlieRw).to.equal(ethers.utils.parseEther("120"))
 		})
 
 		it("Tests for multiple users claming reward at diffrent block times", async function(){	
@@ -206,11 +262,62 @@ describe("EPNS CoreV2 Protocol", function () {
 				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
 			]); 
 			expect(aliceRw).to.equal(ethers.utils.parseEther("1600"))
-			expect(bobRw).to.equal(ethers.utils.parseEther("480"))
-			expect(charlieRw).to.equal(ethers.utils.parseEther("192"))
+			expect(bobRw).to.equal(ethers.utils.parseEther("800"))
+			expect(charlieRw).to.equal(ethers.utils.parseEther("400"))
 		})
 
-		it("Reduces the rewards in every withdrwal", async function(){	
+		it("Allows multiple users with same amt claiming different at time gets same amt of reward for first claim", async function(){	
+			const PUSH_BORN = await PushToken.born();
+
+			// Add 4000 PUSH to pool by creating the channel
+			await createChannelWithCustomFee(tokensBN(4_000))
+			
+			// Alice gets: 40M PUSH
+			// Bob gets: 20M PUSH
+			// Charlie gets: 10M PUSH 
+			await PushToken.transfer(ALICE, tokensBN(20_000_000));
+			await PushToken.transfer(BOB, tokensBN(20_000_000));
+			await PushToken.transfer(CHARLIE, tokensBN(20_000_000));
+
+			const [ALICE_BLOCK, BOB_BLOCK, CHARLIE_BLOCK] = [
+				PUSH_BORN.add(2_000), 
+				PUSH_BORN.add(3_000), 
+				PUSH_BORN.add(4_000)
+			]				
+			const [aliceWt, bobWt, charlieWt] = await Promise.all([
+				PushToken.returnHolderUnits(ALICE,ALICE_BLOCK),
+				PushToken.returnHolderUnits(BOB,BOB_BLOCK),
+				PushToken.returnHolderUnits(CHARLIE,CHARLIE_BLOCK),
+			]); 
+
+			// assert userholder wt
+			expect(aliceWt).to.equal(tokensBN(40_000_000_000))
+			expect(bobWt).to.equal(tokensBN(60_000_000_000))
+			expect(charlieWt).to.equal(tokensBN(80_000_000_000))
+
+			// move to one block before `WITHDRWAL_BLOCK_NUM` and claim rewards 
+			await gotoBlockNumber(ALICE_BLOCK.sub(1));
+			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+
+			await gotoBlockNumber(BOB_BLOCK.sub(1));
+			await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+
+			await gotoBlockNumber(CHARLIE_BLOCK.sub(1));
+			await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+			
+			
+			// finally assert reward yields
+			const [aliceRw, bobRw, charlieRw] = await Promise.all([
+				EPNSCoreV1Proxy.usersRewardsClaimed(ALICE),
+				EPNSCoreV1Proxy.usersRewardsClaimed(BOB),
+				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
+			]); 
+			expect(aliceRw).to.equal(ethers.utils.parseEther("800"))
+			expect(bobRw).to.equal(ethers.utils.parseEther("800"))
+			expect(charlieRw).to.equal(ethers.utils.parseEther("800"))	
+		})
+
+		it("Reduces the rewards for token holder in every withdrwal", async function(){	
 			const PUSH_BORN = await PushToken.born();
 
 			// Add 4000 PUSH to pool by creating the channel
@@ -242,24 +349,23 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(ALICE_WT_2).to.equal(tokensBN(1.600064e11))
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
 			const secondRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-			// new reward = 1600 + 768.03072
-			expect(secondRewardClaimed).to.equal(ethers.utils.parseEther("2368.03072")) 
+			
+			// new reward = 1600 + 1280.0512 = 2880.0512
+			expect(secondRewardClaimed).to.equal(ethers.utils.parseEther("2880.0512")) 
 			const aliceBlanceAfterSecondClaim = await PushToken.balanceOf(ALICE);
-			const expectedBalAferSecondClaim = tokensBN(40_000_000).add(ethers.utils.parseEther("2368.03072"))
+			const expectedBalAferSecondClaim = tokensBN(40_000_000).add(ethers.utils.parseEther("2880.0512"))
 			expect(aliceBlanceAfterSecondClaim).to.equal(expectedBalAferSecondClaim);
-
+			
 			// On third cliam
 			await gotoBlockNumber(BG_CLAIM_3.sub(1));
 			const ALICE_WT_3 = await PushToken.returnHolderUnits(ALICE,BG_CLAIM_3);
-			expect(ALICE_WT_3).to.equal(ethers.utils.parseEther("200011840153.6"))
+			console.log(ALICE_WT_3);
+			expect(ALICE_WT_3).to.equal(ethers.utils.parseEther("200014400256"))
+			
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
 			const thirdRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-			// new reward = 1600 + 768.03072 + 326.413178766946..
-			expect(thirdRewardClaimed).to.be.closeTo(ethers.utils.parseEther("2694.443898766946"),ethers.utils.parseEther("0.0001"));	
+			// new reward = 1600 +  1280.0512  + 500.03600064 = 2868.06672064
+			expect(thirdRewardClaimed).to.be.closeTo(ethers.utils.parseEther("3380.08720064"),ethers.utils.parseEther("0.0001"));	
 		})
-
-
-
-
 	});
 });
