@@ -6,7 +6,8 @@ const {
 
 
 const {epnsContractFixture,tokenFixture} = require("../common/fixtures")
-const {expect} = require("../common/expect")
+const {expect} = require("../common/expect");
+const { utils } = require("ethers");
 const createFixtureLoader = waffle.createFixtureLoader;
 
 
@@ -169,9 +170,9 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(poolFunds).to.equal(tokensBN(4_000))
 
 			
-			// Alice gets: 5K PUSH
-			// Bob gets: 4K PUSH
-			// Charlie gets: 3K PUSH 
+			// Alice gets: 5M PUSH
+			// Bob gets: 4M PUSH
+			// Charlie gets: 3M PUSH 
 			await PushToken.transfer(ALICE, tokensBN(5_000_000));
 			await PushToken.transfer(BOB, tokensBN(4_000_000));
 			await PushToken.transfer(CHARLIE, tokensBN(3_000_000));
@@ -317,8 +318,27 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(charlieRw).to.equal(ethers.utils.parseEther("800"))	
 		})
 
-		// TODO: test explicitly reset holder wth
-		it("Reduces the rewards for token holder in every withdrwal", async function(){	
+		it("Resets the userHolderWeights on every withdrwal", async function(){
+			const PUSH_BORN = await PushToken.born();
+			
+			// Add 4000 PUSH to pool by creating the channel
+			await createChannelWithCustomFee(tokensBN(4_000))
+			
+			// Alice gets: 40M PUSH
+			await PushToken.transfer(ALICE, tokensBN(40_000_000));	
+
+			// Pass 1000 blocks
+			await gotoBlockNumber(PUSH_BORN.add(999));
+
+			// claim reward
+			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+
+			const currentBlock = PUSH_BORN.add(1000)
+			const holderWeight = await PushToken.holderWeight(ALICE);
+			expect(holderWeight.sub(currentBlock)).to.equal(0);
+		})
+
+		it("Decays the rewards for token holder in every withdrwal", async function(){	
 			const PUSH_BORN = await PushToken.born();
 
 			// Add 4000 PUSH to pool by creating the channel
@@ -360,13 +380,89 @@ describe("EPNS CoreV2 Protocol", function () {
 			// On third cliam
 			await gotoBlockNumber(BG_CLAIM_3.sub(1));
 			const ALICE_WT_3 = await PushToken.returnHolderUnits(ALICE,BG_CLAIM_3);
-			console.log(ALICE_WT_3);
 			expect(ALICE_WT_3).to.equal(ethers.utils.parseEther("200014400256"))
 			
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
 			const thirdRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-			// new reward = 1600 +  1280.0512  + 500.03600064 = 2868.06672064
-			expect(thirdRewardClaimed).to.be.closeTo(ethers.utils.parseEther("3380.08720064"),ethers.utils.parseEther("0.0001"));	
+			// new reward = 1600 +  1280.0512  + 800.0576010240001 = 3680.108801024
+			expect(thirdRewardClaimed).to.be.closeTo(ethers.utils.parseEther("3680.108801024"),ethers.utils.parseEther("0.0001"));	
 		})
+
+		it("Tests two users claming reward at diffrent claim fequencies", async function(){
+			
+			// Initally Alice and Bob withdraw after 2000 block
+			// Then Alice claims for each 1000 block, five times 
+			// Bob claims finally after 5001 block
+			
+			const PUSH_BORN = await PushToken.born();
+			const BLOCK_GAP = 2000;
+			const WITHDRWAL_BLOCK_NUM = PUSH_BORN.add(BLOCK_GAP);
+
+			// Add 4000 PUSH to pool by creating the channel
+			await createChannelWithCustomFee(tokensBN(4_000))
+			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+			expect(poolFunds).to.equal(tokensBN(4_000))
+
+			
+			// Alice gets: 5M PUSH
+			// Bob gets: 5M PUSH
+			await PushToken.transfer(ALICE, tokensBN(5_000_000));
+			await PushToken.transfer(BOB, tokensBN(5_000_000));
+						
+			const [aliceWt, bobWt] = await Promise.all([
+				PushToken.returnHolderUnits(ALICE,WITHDRWAL_BLOCK_NUM),
+				PushToken.returnHolderUnits(BOB,WITHDRWAL_BLOCK_NUM),
+			]); 
+
+			// assert userholder wt
+			expect(aliceWt).to.equal(tokensBN(10_000_000_000))
+			expect(bobWt).to.equal(tokensBN(10_000_000_000))
+
+			// move to one block before `WITHDRWAL_BLOCK_NUM` 
+			await gotoBlockNumber(WITHDRWAL_BLOCK_NUM.sub(1))
+
+			// add multiple transaction in single block
+			await ethers.provider.send("evm_setAutomine", [false]);
+			await Promise.all([
+				EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards(),
+				EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards(),
+			]);
+			await network.provider.send("evm_mine"); 
+			await ethers.provider.send("evm_setAutomine", [true]);
+
+			// after claim rewards currentBlock should equal `WITHDRWAL_BLOCK_NUM`
+			const currentBlock = await ethers.provider.getBlock("latest");
+			expect(currentBlock.number).to.equal(WITHDRWAL_BLOCK_NUM);
+			
+			// finally assert reward yields
+			const [aliceRw, bobRw] = await Promise.all([
+				EPNSCoreV1Proxy.usersRewardsClaimed(ALICE),
+				EPNSCoreV1Proxy.usersRewardsClaimed(BOB),
+			]); 
+
+			// initally both gets 200 $PUSH
+			expect(aliceRw).to.equal(ethers.utils.parseEther("200"))
+			expect(bobRw).to.equal(ethers.utils.parseEther("200"))
+
+
+			// alice tires to claim every 1000 blocks five times
+			for (let i = 0; i < 5; i++) {
+				await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
+				const currentBlock = await ethers.provider.getBlock("latest").then(b=>b.number)
+				await gotoBlockNumber( ethers.BigNumber.from(currentBlock + 1000))	
+			}
+
+			// bob claims after 5001 block
+			await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards()
+
+			const bobFinalRewards = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB)
+			const aliceFinalRewards = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
+			
+			// alice overall rewards should be more or equal to bob
+			expect(aliceFinalRewards).to.equal(utils.parseEther("390.1572"))
+			expect(bobFinalRewards).to.equal(utils.parseEther("342.9116"))
+			expect(aliceFinalRewards).to.be.at.least(bobFinalRewards)
+		})
+
 	});
 });
