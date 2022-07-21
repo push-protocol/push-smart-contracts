@@ -113,8 +113,8 @@ describe("EPNS CoreV2 Protocol", function () {
 
 			
 			// Alice gets: 5K PUSH
-			// Bob gets: 4K PUSH
-			// Charlie gets: 3K PUSH 
+			// Bob gets: 5K PUSH
+			// Charlie gets: 5K PUSH 
 			await PushToken.transfer(ALICE, tokensBN(5_000_000));
 			await PushToken.transfer(BOB, tokensBN(5_000_000));
 			await PushToken.transfer(CHARLIE, tokensBN(5_000_000));
@@ -317,6 +317,7 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(charlieRw).to.equal(ethers.utils.parseEther("800"))	
 		})
 
+		// TODO: test explicitly reset holder wth
 		it("Reduces the rewards for token holder in every withdrwal", async function(){	
 			const PUSH_BORN = await PushToken.born();
 
