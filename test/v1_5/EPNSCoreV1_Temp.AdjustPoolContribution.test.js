@@ -10,14 +10,9 @@ const CHANNEL_TYPE = 2;
 const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
 describe("AdjustChannelPoolContributions Test", function () {
-    let EPNS;
     let EPNSCoreV1Proxy;
     let ALICESIGNER;
     let MOCKDAI
-    let ADAI;
-    let WETH_ADDRS;
-    let ROUTER;
-    let EPNS_TOKEN_ADDRS;
 
     let loadFixture;
     before(async() => {
@@ -120,6 +115,39 @@ describe("AdjustChannelPoolContributions Test", function () {
         const bobChannelVersion = await EPNSCoreV1Proxy.channels(BOB).then(d => d.channelVersion);
         const expectedChannelVersion = 2;
         
+        expect(expectedChannelVersion).to.equal(aliceChannelVersion)
+        expect(expectedChannelVersion).to.equal(bobChannelVersion)
+    })
+
+    it("Shall fall if not paused",async()=>{
+        // two channels were created .... 50x2
+        const oldPoolFunds = utils.parseEther("100"); 
+        
+        // without pause txn will fail
+        const txn1 = EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            [ALICE, BOB] // chaneels addresses 
+        )
+        await expect(txn1).to.be.revertedWith("Pausable: not paused")
+        
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+        
+        // admin updates channel pool contribution
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            [ALICE, BOB] // chaneels addresses 
+        )
+        
+        // do version check 
+        const aliceChannelVersion = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelVersion);
+        const bobChannelVersion = await EPNSCoreV1Proxy.channels(BOB).then(d => d.channelVersion);
+        const expectedChannelVersion = 2;        
         expect(expectedChannelVersion).to.equal(aliceChannelVersion)
         expect(expectedChannelVersion).to.equal(bobChannelVersion)
     })

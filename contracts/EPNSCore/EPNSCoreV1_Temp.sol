@@ -480,7 +480,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
        uint256 _endIndex,
        uint256 _oldPoolFunds,
        address[] calldata _channelAddresses
-     ) external onlyPushChannelAdmin() returns(bool){
+     ) external onlyPushChannelAdmin() whenPaused returns(bool){
         uint256 newPoolFunds = POOL_FUNDS;
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
