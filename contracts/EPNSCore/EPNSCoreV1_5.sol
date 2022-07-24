@@ -847,7 +847,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint256 totalClaimableRewards = getRewardValue(_user);
 
         require(
-            totalClaimableRewards > 0 && totalClaimableRewards <= POOL_FUNDS,
+            totalClaimableRewards > 0 && totalClaimableRewards < POOL_FUNDS,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
 
