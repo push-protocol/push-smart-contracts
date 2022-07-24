@@ -149,7 +149,7 @@ describe("AdjustChannelPoolContributions Test", function () {
             oldPoolFunds,
             [ALICE, BOB, CHARLIE, ABY] // chaneels addresses
         )
-        
+
         const aliceExpectedContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(newPoolFunds).div(oldPoolFunds)
         const bobExpectedContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(newPoolFunds).div(oldPoolFunds)
         const charlieExpectedContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10).mul(newPoolFunds).div(oldPoolFunds)
@@ -159,7 +159,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const bobExpectedWeight = bobExpectedContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
         const charlieExpectedWeight = charlieExpectedContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
         const abyExpectedWeight = abyExpectedContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
-        
+
         const aliceChannelNewWeight = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelWeight);
         const bobChannelNewWeight = await EPNSCoreV1Proxy.channels(BOB).then(d => d.channelWeight);
         const charlieChannelWeight = await EPNSCoreV1Proxy.channels(CHARLIE).then(d => d.channelWeight);
@@ -198,7 +198,35 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(expectedChannelVersion).to.equal(abyChannelVersion)
     })
 
-    it("Shall fall if not paused",async()=>{
+    it("Updates channel version",async()=>{
+        const oldPoolFunds = utils.parseEther("900");
+
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+
+        // admin updates channel pool contribution
+        const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            0, // start index
+            4, // end index
+            oldPoolFunds,
+            [ALICE, BOB, CHARLIE, ABY] // chaneels addresses
+        )
+
+        const aliceChannelUpdateBlock = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelUpdateBlock);
+        const bobChannelUpdateBlock = await EPNSCoreV1Proxy.channels(BOB).then(d => d.channelUpdateBlock);
+        const charlieChannelUpdateBlock = await EPNSCoreV1Proxy.channels(CHARLIE).then(d => d.channelUpdateBlock);
+        const abyChannelUpdateBlock = await EPNSCoreV1Proxy.channels(ABY).then(d => d.channelUpdateBlock);
+        const expectedChannelUpdateBlock = tx.blockNumber;
+
+        expect(expectedChannelUpdateBlock).to.equal(aliceChannelUpdateBlock)
+        expect(expectedChannelUpdateBlock).to.equal(bobChannelUpdateBlock)
+        expect(expectedChannelUpdateBlock).to.equal(charlieChannelUpdateBlock)
+        expect(expectedChannelUpdateBlock).to.equal(abyChannelUpdateBlock)
+    })
+
+
+    it("Shall fail if not paused",async()=>{
         // 4 channels were created .... 50x2
         const oldPoolFunds = utils.parseEther("900");
 
@@ -231,7 +259,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(expectedChannelVersion).to.equal(bobChannelVersion)
     })
 
-    it("Shall update the channel weights & pool contributio once",async()=>{
+    it("Shall update the channel weights & pool contribution only once",async()=>{
         // 4 channels were created .... 4 .. with contribution 50, 50, 500, 300
         const oldPoolFunds = utils.parseEther("900");
 
@@ -275,7 +303,7 @@ describe("AdjustChannelPoolContributions Test", function () {
     it("Should not update non exsting channel",async()=>{
         // 4 channels were created .... 4 .. with contribution 50, 50, 500, 300
         const oldPoolFunds = utils.parseEther("900");
-        
+
         // pause and swap
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
@@ -299,4 +327,38 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(falseChannelContribFinal).to.equal(0)
         expect(falseChannelVersionFinal).to.equal(0)
     })
+
+    it("Shall not execute if Caller is not the PUSH Channel Admin",async()=>{
+        // 4 channels were created .... 50x2
+        const oldPoolFunds = utils.parseEther("900");
+
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+
+        // without pause txn will fail
+        const txn1 = EPNSCoreV1Proxy.connect(BOBSIGNER).adjustChannelPoolContributions(
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            [ALICE, BOB] // chaneels addresses
+        )
+        await expect(txn1).to.be.revertedWith("EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin")
+
+        // admin updates channel pool contribution
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).adjustChannelPoolContributions(
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            [ALICE, BOB] // chaneels addresses
+        )
+
+        // do version check
+        const aliceChannelVersion = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelVersion);
+        const bobChannelVersion = await EPNSCoreV1Proxy.channels(BOB).then(d => d.channelVersion);
+        const expectedChannelVersion = 2;
+        expect(expectedChannelVersion).to.equal(aliceChannelVersion)
+        expect(expectedChannelVersion).to.equal(bobChannelVersion)
+    })
+
 })
