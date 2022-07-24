@@ -73,7 +73,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     modifier onlyPushChannelAdmin() {
         require(
             msg.sender == pushChannelAdmin,
-            "EPNSCoreV1::onlyPushChannelAdmin: Caller not pushChannelAdmin"
+            "EPNSCoreV1.5::onlyPushChannelAdmin: Caller not pushChannelAdmin"
         );
         _;
     }
@@ -81,7 +81,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     modifier onlyGovernance() {
         require(
             msg.sender == governance,
-            "EPNSCoreV1::onlyGovernance: Caller not Governance"
+            "EPNSCoreV1.5::onlyGovernance: Caller not Governance"
         );
         _;
     }
@@ -89,14 +89,14 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     modifier onlyInactiveChannels(address _channel) {
         require(
             channels[_channel].channelState == 0,
-            "EPNSCoreV1::onlyInactiveChannels: Channel already Activated"
+            "EPNSCoreV1.5::onlyInactiveChannels: Channel already Activated"
         );
         _;
     }
     modifier onlyActivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 1,
-            "EPNSCoreV1::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist"
+            "EPNSCoreV1.5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist"
         );
         _;
     }
@@ -104,7 +104,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     modifier onlyDeactivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 2,
-            "EPNSCoreV1::onlyDeactivatedChannels: Channel is not Deactivated Yet"
+            "EPNSCoreV1.5::onlyDeactivatedChannels: Channel is not Deactivated Yet"
         );
         _;
     }
@@ -113,7 +113,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         require(
             ((channels[_channel].channelState != 3) &&
                 (channels[_channel].channelState != 0)),
-            "EPNSCoreV1::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet"
+            "EPNSCoreV1.5::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet"
         );
         _;
     }
@@ -122,7 +122,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
                 (msg.sender == pushChannelAdmin && _channel == address(0x0))),
-            "EPNSCoreV1::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
+            "EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
         );
         _;
     }
@@ -133,7 +133,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
                 _channelType == ChannelType.InterestBearingMutual ||
                 _channelType == ChannelType.TimeBound ||
                 _channelType == ChannelType.TokenGaited),
-            "EPNSCoreV1::onlyUserAllowedChannelType: Channel Type Invalid"
+            "EPNSCoreV1.5::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
         _;
@@ -226,7 +226,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         require(
             _newFees > 0,
-            "EPNSCoreV1::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
+            "EPNSCoreV1.5::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
         );
         CHANNEL_DEACTIVATION_FEES = _newFees;
     }
@@ -256,7 +256,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         require(
             _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+            "EPNSCoreV1.5::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -267,11 +267,11 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         require(
             _newAdmin != address(0),
-            "EPNSCoreV1::transferPushChannelAdminControl: Invalid Address"
+            "EPNSCoreV1.5::transferPushChannelAdminControl: Invalid Address"
         );
         require(
             _newAdmin != pushChannelAdmin,
-            "EPNSCoreV1::transferPushChannelAdminControl: Admin address is same"
+            "EPNSCoreV1.5::transferPushChannelAdminControl: Admin address is same"
         );
         pushChannelAdmin = _newAdmin;
     }
@@ -359,7 +359,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1::_createChannelWithPUSH: Insufficient Deposit Amount"
+            "EPNSCoreV1.5::_createChannelWithPUSH: Insufficient Deposit Amount"
         );
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -399,7 +399,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
-            "EPNSCoreV1::migrateChannelData: Migration is already done"
+            "EPNSCoreV1.5::migrateChannelData: Migration is already done"
         );
 
         require(
@@ -407,7 +407,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
                 (_channelAddresses.length == _identityList.length) &&
                 (_channelAddresses.length == _amountList.length) &&
                 (_channelAddresses.length == _channelExpiryTime.length),
-            "EPNSCoreV1::migrateChannelData: Unequal Arrays passed as Argument"
+            "EPNSCoreV1.5::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
@@ -470,7 +470,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         if (_channelType == ChannelType.TimeBound) {
             require(
                 _channelExpiryTime > block.timestamp,
-                "EPNSCoreV1::createChannel: Invalid channelExpiryTime"
+                "EPNSCoreV1.5::createChannel: Invalid channelExpiryTime"
             );
             channels[_channel].expiryTime = _channelExpiryTime;
         }
@@ -515,14 +515,14 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
 
         require(
             channelData.channelType == ChannelType.TimeBound,
-            "EPNSCoreV1::destroyTimeBoundChannel: Channel is not TIME BOUND"
+            "EPNSCoreV1.5::destroyTimeBoundChannel: Channel is not TIME BOUND"
         );
         require(
             (msg.sender == _channelAddress &&
                 channelData.expiryTime < block.timestamp) ||
                 (msg.sender == pushChannelAdmin &&
                     channelData.expiryTime.add(14 days) < block.timestamp),
-            "EPNSCoreV1::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
+            "EPNSCoreV1.5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
         );
         uint256 totalRefundableAmount;
         if (msg.sender != pushChannelAdmin) {
@@ -649,7 +649,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
         require(
             _amount >= _minPoolContribution,
-            "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
+            "EPNSCoreV1.5::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
@@ -790,14 +790,14 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint8 callerVerified = getChannelVerfication(msg.sender);
         require(
             callerVerified > 0,
-            "EPNSCoreV1::verifyChannel: Caller is not verified"
+            "EPNSCoreV1.5::verifyChannel: Caller is not verified"
         );
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         require(
             channelVerified == 0  || msg.sender == pushChannelAdmin,
-            "EPNSCoreV1::verifyChannel: Channel already verified"
+            "EPNSCoreV1.5::verifyChannel: Channel already verified"
         );
 
         // Verify channel
@@ -816,7 +816,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         require(
             channels[_channel].verifiedBy == msg.sender ||
                 msg.sender == pushChannelAdmin,
-            "EPNSCoreV1::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
+            "EPNSCoreV1.5::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
         );
 
         // Unverify channel
