@@ -17,7 +17,7 @@ describe("EPNS Core Protocol", function () {
   let ADMINSIGNER;
   let CHANNEL_CREATORSIGNER;
   let PushToken;
-
+ 
 
   let loadFixture;
   before(async() => {
@@ -98,20 +98,20 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
             await expect(
               EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
-            ).to.be.revertedWith("EPNSCoreV1::onlyInactiveChannels: Channel already Activated")
+            ).to.be.revertedWith("EPNSCoreV1.5::onlyInactiveChannels: Channel already Activated")
           });
 
           // Pauseable Tests
           it("Contract should only be Paused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).pauseContract();
 
-            await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyGovernance: Caller not Governance')
+            await expect(tx).to.be.revertedWith('EPNSCoreV1.5::onlyGovernance: Caller not Governance')
           });
 
           it("Contract should only be UnPaused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).unPauseContract();
 
-            await expect(tx).to.be.revertedWith('EPNSCoreV1::onlyGovernance: Caller not Governance')
+            await expect(tx).to.be.revertedWith('EPNSCoreV1.5::onlyGovernance: Caller not Governance')
           });
 
           it("Channel Creation Should not be executed if Contract is Paused", async function(){
