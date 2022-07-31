@@ -300,6 +300,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      *       If Channel Owner is updating the Channel Meta for the N time:
      *       Required Fees => (50 * N) PUSH Tokens
      *
+     *       Total fees goes to PROTOCOL_POOL_FEES.
      *       Updates the channelUpdateCounter
      *       Updates the channelUpdateBlock
      *       Records the Block Number of the Block at which the Channel is being updated
@@ -322,7 +323,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
 
-        POOL_FUNDS += _amount;
+        PROTOCOL_POOL_FEES += _amount;
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
 
@@ -500,8 +501,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
-     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back.
-     *         - If Channel is destroyed by EPNS Governance/Admin, push tokens remain within  the contract. No refunds for channel owner.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back & POOL_FUNDS decreases.
+     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES & POOL_FUNDS decreases.
      *         - Deletes the Channel completely
      *         - It transfers back 40 PUSH Tokens back to the USER.
      **/
@@ -524,16 +525,17 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
                     channelData.expiryTime.add(14 days) < block.timestamp),
             "EPNSCoreV1.5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
         );
-        uint256 totalRefundableAmount;
+        uint256 totalRefundableAmount = channelData.poolContribution;
+
         if (msg.sender != pushChannelAdmin) {
-            totalRefundableAmount = channelData.poolContribution.sub(
-                CHANNEL_DEACTIVATION_FEES
-            );
             POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
                 msg.sender,
                 totalRefundableAmount
             );
+        }else{
+          POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+          PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
