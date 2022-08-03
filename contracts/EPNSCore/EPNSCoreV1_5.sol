@@ -164,7 +164,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         UNISWAP_V2_ROUTER = _uniswapRouterAddress;
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
-        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 PUSH  out of total deposited PUSH s is charged for Deactivating a Channel
+        FEE_AMOUNT = 10 ether; // 10 PUSH  out of total deposited PUSH s is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 PUSH  or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
 
@@ -220,15 +220,15 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees)
+    function setFeeAmount(uint256 _newFees)
         external
         onlyGovernance
     {
         require(
             _newFees > 0,
-            "EPNSCoreV1.5::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
+            "EPNSCoreV1.5::setFeeAmount: Fee amount must be greater than ZERO"
         );
-        CHANNEL_DEACTIVATION_FEES = _newFees;
+        FEE_AMOUNT = _newFees;
     }
 
     function pauseContract() external onlyGovernance {
@@ -300,7 +300,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      *       If Channel Owner is updating the Channel Meta for the N time:
      *       Required Fees => (50 * N) PUSH Tokens
      *
-     *       Total fees goes to PROTOCOL_POOL_FEES.
+     *       Total fees goes to PROTOCOL_POOL_FEES
      *       Updates the channelUpdateCounter
      *       Updates the channelUpdateBlock
      *       Records the Block Number of the Block at which the Channel is being updated
@@ -599,7 +599,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the Total PUSH  Deposited by Channel Owner while Channel Creation.
-     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited PUSH  and Transfers back the remaining amount of PUSH  in the form of PUSH tokens.
+     *         - Deducts FEE_AMOUNT from the total Deposited PUSH  and Transfers back the remaining amount of PUSH  in the form of PUSH tokens.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
@@ -614,17 +614,17 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint256 totalAmountDeposited = channelData.poolContribution;
 
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
 
-        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+        uint256 _newChannelWeight = FEE_AMOUNT
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
-        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+        channelData.poolContribution = FEE_AMOUNT;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
             msg.sender,
@@ -661,7 +661,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
 
         uint256 newChannelPoolContribution = _amount.add(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
@@ -698,7 +698,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
-        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
+        uint _channelDeactivationFees = FEE_AMOUNT;
 
         uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
