@@ -240,7 +240,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     }
 
     function getTotalHolderShare() public view returns (uint256) {
-        return POOL_FUNDS;
+        return PROTOCOL_POOL_FEES;
     }
 
     /**
@@ -845,17 +845,19 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      **/
     function claimRewards() external whenNotPaused returns (bool success) {
         address _user = msg.sender;
+        uint256 userHolderUnits;
+        uint256 totalClaimableRewards;
         address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
-        uint256 totalClaimableRewards = getRewardValue(_user);
+        (totalClaimableRewards, userHolderUnits) = getUserRewards(_user);
 
         require(
-            totalClaimableRewards > 0 && totalClaimableRewards < POOL_FUNDS,
+            totalClaimableRewards > 0 && totalClaimableRewards < PROTOCOL_POOL_FEES,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
 
         // Reset the User's Weight and Transfer the Tokens
-        totalRewardsClaimed += totalClaimableRewards;
-        POOL_FUNDS = POOL_FUNDS.sub(totalClaimableRewards);
+        totalClaimedHolderUnits += userHolderUnits;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.sub(totalClaimableRewards);
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(
             totalClaimableRewards
         );
@@ -868,33 +870,35 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         success = true;
     }
 
-    function getRewardValue(address _user)
+    function getUserRewards(address _user)
         public
         view
-        returns (uint256 rewardValue)
+        returns (uint256 rewardValue, uint256 holderUnits)
     {
         // Reading necessary PUSH details
         address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
         uint _adjustForFloat = ADJUST_FOR_FLOAT;
-
         uint256 pushStartBlock = IPUSH(_pushTokenAddress).born();
         uint256 pushTotalSupply = IPUSH(_pushTokenAddress).totalSupply();
-        uint256 userHolderWeight = IPUSH(_pushTokenAddress).returnHolderUnits(
+
+        // Calculating total & user holder units at the current Block Number
+        uint256 userHolderUnits = IPUSH(_pushTokenAddress).returnHolderUnits(
             _user,
             block.number
         );
-
-        // Calculating total holder weight at the current Block Number
         uint256 blockGap = block.number.sub(pushStartBlock);
-        uint256 totalHolderWeight = pushTotalSupply.mul(blockGap);
+        uint256 totalHolderUnits = pushTotalSupply.mul(blockGap);
 
-        //Calculating individual User's Ratio
-        uint256 userRatio = userHolderWeight.mul(_adjustForFloat).div(
-            totalHolderWeight
+        // Calculating the remaining holder units for the user
+        uint256 remainingHolderUnits = totalHolderUnits.sub(totalClaimedHolderUnits);
+        //Calculating individual User's Ratio based on Total Holder Units & Remaining Holder Units
+        uint256 userRatio = userHolderUnits.mul(_adjustForFloat).div(
+            remainingHolderUnits
         );
 
+        holderUnits = userHolderUnits;
         //Calculating Claimable rewards for individual user(msg.sender)
-        uint256 totalShare = getTotalHolderShare().add(totalRewardsClaimed);
+        uint256 totalShare = getTotalHolderShare();
         rewardValue = totalShare.mul(userRatio).div(_adjustForFloat);
     }
 
