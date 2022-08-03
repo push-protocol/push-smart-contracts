@@ -157,7 +157,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         UNISWAP_V2_ROUTER = _uniswapRouterAddress;
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
-        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
+        FEE_AMOUNT = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
 
@@ -206,15 +206,15 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees)
+    function setFeeAmount(uint256 _newFees)
         external
         onlyGovernance
     {
         require(
             _newFees > 0,
-            "EPNSCoreV1::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
+            "EPNSCoreV1.5::setFeeAmount: Fee amount must be greater than ZERO"
         );
-        CHANNEL_DEACTIVATION_FEES = _newFees;
+        FEE_AMOUNT = _newFees;
     }
 
     function pauseContract() external onlyGovernance {
@@ -614,7 +614,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the Total DAI Deposited by Channel Owner while Channel Creation.
-     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
+     *         - Deducts FEE_AMOUNT from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
      *         - Calculates the New Channel Weight and Readjusts the FS Ratio accordingly.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
@@ -629,11 +629,11 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
 
         uint256 _oldChannelWeight = channelData.channelWeight;
-        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+        uint256 _newChannelWeight = FEE_AMOUNT
             .mul(ADJUST_FOR_FLOAT)
             .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
@@ -655,7 +655,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
-        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+        channelData.poolContribution = FEE_AMOUNT;
 
         swapAndTransferPUSH(
             msg.sender,
@@ -690,7 +690,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint256 newChannelPoolContribution = _amount.add(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
@@ -741,7 +741,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
-        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
+        uint _channelDeactivationFees = FEE_AMOUNT;
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
