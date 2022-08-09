@@ -97,5 +97,5 @@ contract EPNSCoreStorageV1_5 {
     uint256 public PROTOCOL_POOL_FEES;
     uint256 public ADD_CHANNEL_MIN_FEES;
     uint256 public FEE_AMOUNT;
-    uint256 public ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+    uint256 public MIN_POOL_CONTRIBUTION;
 }

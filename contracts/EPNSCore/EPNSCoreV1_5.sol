@@ -165,8 +165,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // 10 PUSH  out of total deposited PUSH s is charged for Deactivating a Channel
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 PUSH  or above to create the channel
-        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        MIN_POOL_CONTRIBUTION = 1 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
+        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
         groupLastUpdate = block.number;
@@ -246,7 +246,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+     * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
      *
      * @param _newFees new minimum fees required for Channel Creation
      **/
@@ -255,8 +255,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         onlyGovernance
     {
         require(
-            _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1.5::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+            _newFees >= MIN_POOL_CONTRIBUTION,
+            "EPNSCoreV1.5::setMinChannelCreationFees: Fees should be greater than MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -453,7 +453,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     ) private {
         // Calculate channel weight
         uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+            MIN_POOL_CONTRIBUTION
         );
 
         // Next create the channel and mark user as channellized
@@ -619,7 +619,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
 
         uint256 _newChannelWeight = FEE_AMOUNT
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
@@ -648,9 +648,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
-        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
         require(
-            _amount >= _minPoolContribution,
+            _amount >= ADD_CHANNEL_MIN_FEES,
             "EPNSCoreV1.5::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
 
@@ -665,7 +664,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(_minPoolContribution);
+            .div(MIN_POOL_CONTRIBUTION);
 
         POOL_FUNDS = POOL_FUNDS.add(_amount);
         channels[msg.sender].channelState = 1;
@@ -702,7 +701,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
 
         uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         channelsCount = channelsCount.sub(1);
 

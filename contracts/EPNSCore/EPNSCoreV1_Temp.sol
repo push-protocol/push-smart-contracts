@@ -158,8 +158,8 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
-        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
+        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
         groupLastUpdate = block.number;
@@ -228,7 +228,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+     * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
      *
      * @param _newFees new minimum fees required for Channel Creation
      **/
@@ -237,8 +237,8 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         onlyGovernance
     {
         require(
-            _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+            _newFees >= MIN_POOL_CONTRIBUTION,
+            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -491,7 +491,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
 
                 uint256 poolFundRatio = newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
                 uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
-                uint256 adjustedNewWeight = adjustedPoolContribution.mul(ADJUST_FOR_FLOAT).div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+                uint256 adjustedNewWeight = adjustedPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
                 channels[_channelAddresses[i]].channelVersion = 2;
                 channels[_channelAddresses[i]].channelUpdateBlock = block.number;
@@ -517,7 +517,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
     ) private {
         // Calculate channel weight
         uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+            MIN_POOL_CONTRIBUTION
         );
 
         // Next create the channel and mark user as channellized
@@ -635,7 +635,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = FEE_AMOUNT
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         (
             groupFairShareCount,
@@ -680,7 +680,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
-        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+        uint _minPoolContribution = MIN_POOL_CONTRIBUTION;
         require(
             _amount >= _minPoolContribution,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
@@ -751,7 +751,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         channelsCount = channelsCount.sub(1);
 
