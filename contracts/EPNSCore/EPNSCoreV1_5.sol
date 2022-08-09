@@ -164,7 +164,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         UNISWAP_V2_ROUTER = _uniswapRouterAddress;
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
-        FEE_AMOUNT = 10 ether; // 10 PUSH  out of total deposited PUSH s is charged for Deactivating a Channel
+        FEE_AMOUNT = 10 ether; // PUSH Amount that will be charged as Protocol Pool Fees
         MIN_POOL_CONTRIBUTION = 1 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
@@ -340,7 +340,6 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      * @dev    Only allows users to Create One Channel for a specific address.
      *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
      *         Validates and Transfers the amount of PUSH  from the Channel Creator to the EPNS Core Contract
-     *         Updates the POOL_FUNDS state and Creates a Channel for the caller
      *
      * @param  _channelType the type of the Channel Being created
      * @param  _identity the bytes value of the identity of the Channel
@@ -364,7 +363,6 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
         emit AddChannel(msg.sender, _channelType, _identity);
 
-        POOL_FUNDS = POOL_FUNDS.add(_amount);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             address(this),
@@ -440,6 +438,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
+     *         - Updates the POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
+     * 
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
@@ -451,15 +451,21 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     ) private {
+        uint256 pool_fees = FEE_AMOUNT;
+        uint256 poolFundAmount = _amountDeposited.sub(pool_fees);
+
+        //store pool_funds & pool_fees
+        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(pool_fees);
+
         // Calculate channel weight
-        uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
+        uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
             MIN_POOL_CONTRIBUTION
         );
-
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
         channels[_channel].channelVersion = 2;
-        channels[_channel].poolContribution = _amountDeposited;
+        channels[_channel].poolContribution = poolFundAmount;
         channels[_channel].channelType = _channelType;
         channels[_channel].channelStartBlock = block.number;
         channels[_channel].channelUpdateBlock = block.number;
