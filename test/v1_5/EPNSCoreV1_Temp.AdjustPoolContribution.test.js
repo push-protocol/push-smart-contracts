@@ -24,6 +24,7 @@ describe("AdjustChannelPoolContributions Test", function () {
     let BOBSIGNER;
     let CHARLIESIGNER;
     let ABYSIGNER;
+    let TempStoreContract;
 
     let loadFixture;
     before(async() => {
@@ -101,6 +102,9 @@ describe("AdjustChannelPoolContributions Test", function () {
             TEST_CHANNEL_CTX,
             ADD_CHANNEL_MIN_FEES.mul(6)
         );
+        
+        // Temp Storage Contract
+        TempStoreContract = await ethers.getContractFactory("TempStore").then((c)=>c.deploy());
     });
 
     it("Updates channel poolContribution adequately",async()=>{
@@ -108,12 +112,16 @@ describe("AdjustChannelPoolContributions Test", function () {
         const oldPoolFunds = utils.parseEther("900");
         //169103 397346680543474387
         // pause and swap
+        const owner = await EPNSCoreV1Proxy.governance();
+        console.log("owner was",owner," signer was ",ADMINSIGNER.address,"\n");
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
-
+        
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
         console.log(newPoolFunds.toString());
+
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -151,6 +159,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
 
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -189,6 +198,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -208,13 +218,13 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(expectedChannelUpdateBlock).to.equal(abyChannelUpdateBlock)
     })
 
-
     it("Shall fail if not paused",async()=>{
         // 4 channels were created .... 50x2
         const oldPoolFunds = utils.parseEther("900");
         const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -230,6 +240,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -262,6 +273,7 @@ describe("AdjustChannelPoolContributions Test", function () {
 
         // Add all including ABY
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             5, // end index
             oldPoolFunds,
@@ -283,6 +295,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.connect(BOBSIGNER).adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -293,6 +306,7 @@ describe("AdjustChannelPoolContributions Test", function () {
 
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,

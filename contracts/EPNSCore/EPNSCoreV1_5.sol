@@ -464,7 +464,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
-        channels[_channel].channelVersion = 2;
+        // channels[_channel].channelVersion = 2;
         channels[_channel].poolContribution = poolFundAmount;
         channels[_channel].channelType = _channelType;
         channels[_channel].channelStartBlock = block.number;
