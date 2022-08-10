@@ -13,6 +13,7 @@ pragma experimental ABIEncoderV2;
 import "./EPNSCoreStorageV1_5.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IADai.sol";
+import "../interfaces/ITempStorage.sol";
 import "../interfaces/ILendingPool.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
@@ -158,7 +159,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-        MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
+        MIN_POOL_CONTRIBUTION = 1 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
@@ -476,31 +477,38 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
      * @param _channelAddresses array of address of the Channel
      */
      function adjustChannelPoolContributions(
+       address _tempStorageAddress,
        uint256 _startIndex,
        uint256 _endIndex,
        uint256 _oldPoolFunds,
+       uint256 _newPoolFunds,
        address[] calldata _channelAddresses
-     ) external onlyPushChannelAdmin() whenPaused returns(bool){
-        uint256 newPoolFunds = POOL_FUNDS;
+      ) external onlyPushChannelAdmin() whenPaused returns(bool){
+        uint256 poolFees = FEE_AMOUNT;
+        uint256 poolFundRatio = _newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
           if(channels[_channelAddresses[i]].channelState == 0 ||
-              channels[_channelAddresses[i]].channelVersion == 2){
+              ITempStorage(_tempStorageAddress).isChannelAdjusted(_channelAddresses[i]))
+              {
                 continue;
               } else{
-
-                uint256 poolFundRatio = newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
+                // Calculating new adjusted poolContribution & channelWeight
                 uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
-                uint256 adjustedNewWeight = adjustedPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
+                uint256 newPoolContribution = adjustedPoolContribution.sub(poolFees);
+                PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFees);
+                POOL_FUNDS = POOL_FUNDS.sub(poolFees);
+                uint256 adjustedNewWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
-                channels[_channelAddresses[i]].channelVersion = 2;
                 channels[_channelAddresses[i]].channelUpdateBlock = block.number;
                 channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
-                channels[_channelAddresses[i]].poolContribution = adjustedPoolContribution;
+                channels[_channelAddresses[i]].poolContribution = newPoolContribution;
+                ITempStorage(_tempStorageAddress).setChannelAdjusted(_channelAddresses[i]);
               }
         }
         return true;
      }
+
     /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
