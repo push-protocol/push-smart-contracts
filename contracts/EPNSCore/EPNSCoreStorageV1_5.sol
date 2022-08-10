@@ -53,8 +53,6 @@ contract EPNSCoreStorageV1_5 {
         uint256 channelWeight;
         // @notice The Expiry TimeStamp in case of TimeBound Channel Types
         uint256 expiryTime;
-        // @notice Represents the version of the contract when the Channel was created.
-        uint256 channelVersion;
     }
 
     /* ***************
