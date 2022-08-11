@@ -434,7 +434,6 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(channelDetailsAfterBlocked.channelState).to.be.equal(3);
         await expect(channelDetailsAfterBlocked.channelWeight).to.be.equal(expectedChannelWeightAfterBlock);
         await expect(channelDetailsAfterBlocked.poolContribution).to.be.equal(expectedPoolContributionAfterBlock);
-
       });
 
     });
