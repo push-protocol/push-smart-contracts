@@ -24,6 +24,7 @@ describe("AdjustChannelPoolContributions Test", function () {
     let BOBSIGNER;
     let CHARLIESIGNER;
     let ABYSIGNER;
+    let TempStoreContract;
 
     let loadFixture;
     before(async() => {
@@ -101,6 +102,9 @@ describe("AdjustChannelPoolContributions Test", function () {
             TEST_CHANNEL_CTX,
             ADD_CHANNEL_MIN_FEES.mul(6)
         );
+        
+        // Temp Storage Contract
+        TempStoreContract = await ethers.getContractFactory("TempStore").then((c)=>c.deploy());
     });
 
     it("Updates channel poolContribution adequately",async()=>{
@@ -110,10 +114,11 @@ describe("AdjustChannelPoolContributions Test", function () {
         // pause and swap
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
-
+        
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
-        console.log(newPoolFunds.toString());
+
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -132,8 +137,6 @@ describe("AdjustChannelPoolContributions Test", function () {
         const abyChannelNewPoolContrib = await EPNSCoreV1Proxy.channels(ABY).then(d => d.poolContribution);
 
         const aliceChannelNewWeight = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelWeight);
-        console.log(aliceChannelNewPoolContrib.toString());
-        console.log(aliceChannelNewWeight.toString());
         expect(aliceExpectedContribution).to.be.closeTo(aliceChannelNewPoolContrib, utils.parseEther("0.00001"))
         expect(bobExpectedContribution).to.be.closeTo(bobChannelNewPoolContrib, utils.parseEther("0.00001"))
         expect(charlieExpectedContribution).to.be.closeTo(charlieChannelNewPoolContrib, utils.parseEther("0.00001"))
@@ -151,6 +154,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
 
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -189,6 +193,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             4, // end index
             oldPoolFunds,
@@ -208,13 +213,13 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(expectedChannelUpdateBlock).to.equal(abyChannelUpdateBlock)
     })
 
-
     it("Shall fail if not paused",async()=>{
         // 4 channels were created .... 50x2
         const oldPoolFunds = utils.parseEther("900");
         const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -230,6 +235,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -262,6 +268,7 @@ describe("AdjustChannelPoolContributions Test", function () {
 
         // Add all including ABY
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             5, // end index
             oldPoolFunds,
@@ -283,6 +290,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.connect(BOBSIGNER).adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -293,6 +301,7 @@ describe("AdjustChannelPoolContributions Test", function () {
 
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.connect(ADMINSIGNER).adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
             0, // start index
             2, // end index
             oldPoolFunds,
@@ -309,5 +318,135 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(expectedChannelUpdateBlock).to.equal(aliceChannelUpdateBlock)
         expect(expectedChannelUpdateBlock).to.equal(bobChannelUpdateBlock)
     })
+
+    it("Shall increase pool fees on adjust poolfees",async()=>{
+        // 4 channels were created .... 50x2
+        const oldPoolFunds = utils.parseEther("900");
+
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+        
+        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const pooFees_1 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        // adjusting one channel shall increase by 10
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            1, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [ALICE] // chaneels addresses
+        )
+        const poolFees_2 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        expect(pooFees_1.add(FEE_AMOUNT)).to.equal(poolFees_2)
+
+        
+        // adjusting two channel shall increase by 20
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [BOB, CHARLIE] // chaneels addresses
+        )
+        const poolFees_3 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        expect(poolFees_2.add(FEE_AMOUNT).add(FEE_AMOUNT)).to.equal(poolFees_3)
+
+        // adjusting to used address shall make the poolfee unchanged
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            3, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [ALICE, BOB, CHARLIE] // chaneels addresses
+        )
+        const poolFees_final = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        expect(poolFees_3).to.equal(poolFees_final)
+    })
+
+    it("Shall decrease pool funds on adjust poolfees",async()=>{
+        // 4 channels were created .... 50x2
+        const oldPoolFunds = utils.parseEther("900");
+
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+        
+        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        
+        // adjusting one channel shall increase by 10
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            1, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [ALICE] // chaneels addresses
+        )
+        const poolFunds2 = await EPNSCoreV1Proxy.POOL_FUNDS();
+        expect(newPoolFunds.sub(FEE_AMOUNT)).to.equal(poolFunds2)
+
+        
+        // adjusting two channel shall increase by 20
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            2, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [BOB, CHARLIE] // chaneels addresses
+        )
+        const poolFunds3 = await EPNSCoreV1Proxy.POOL_FUNDS();
+        expect(poolFunds2.sub(FEE_AMOUNT).sub(FEE_AMOUNT)).to.equal(poolFunds3)
+
+        // adjusting to used address shall make the poolfunds unchanged
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            3, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [ALICE, BOB, CHARLIE] // chaneels addresses
+        )
+        const poolFunds_final = await EPNSCoreV1Proxy.POOL_FUNDS();
+        expect(poolFunds3).to.equal(poolFunds_final)
+    })
+
+    it("Shall increase fees and decrease funds in samme ammount",async()=>{
+        // 4 channels were created .... 50x2
+        const oldPoolFunds = utils.parseEther("900");
+        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+
+        // pause and swap
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
+        
+        const poolFundsBeforeAdjust = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const poolFeesBeforeAdjust = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();        
+
+        // adjusting to used address shall make the poolfunds unchanged
+        await EPNSCoreV1Proxy.adjustChannelPoolContributions(
+            TempStoreContract.address, //Temp Contract
+            0, // start index
+            3, // end index
+            oldPoolFunds,
+            newPoolFunds,
+            [ALICE, BOB, CHARLIE] // chaneels addresses
+        )
+
+        const poolFundsAfterAdjust = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const poolFeesAfterAdjust = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();        
+        
+        const fees_delta = poolFeesAfterAdjust.sub(poolFeesBeforeAdjust)
+        const funds_delta = poolFundsBeforeAdjust.sub(poolFundsAfterAdjust)
+       
+        expect(fees_delta).to.equal(funds_delta)
+    }) 
+
+
 
 })
