@@ -26,7 +26,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable, EPNSCoreStorageV2{
+contract EPNSCoreV1_5 is
+    Initializable,
+    EPNSCoreStorageV1_5,
+    PausableUpgradeable,
+    EPNSCoreStorageV2
+{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -220,10 +225,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         isMigrationComplete = true;
     }
 
-    function setFeeAmount(uint256 _newFees)
-        external
-        onlyGovernance
-    {
+    function setFeeAmount(uint256 _newFees) external onlyGovernance {
         require(
             _newFees > 0,
             "EPNSCoreV1.5::setFeeAmount: Fee amount must be greater than ZERO"
@@ -439,7 +441,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
      *         - Updates the POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
-     * 
+     *
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
@@ -451,12 +453,12 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     ) private {
-        uint256 pool_fees = FEE_AMOUNT;
-        uint256 poolFundAmount = _amountDeposited.sub(pool_fees);
+        uint256 poolFeeAmount = FEE_AMOUNT;
+        uint256 poolFundAmount = _amountDeposited.sub(poolFeeAmount);
 
         //store pool_funds & pool_fees
         POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(pool_fees);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         // Calculate channel weight
         uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
@@ -464,7 +466,6 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         );
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
-        channels[_channel].channelVersion = 2;
         channels[_channel].poolContribution = poolFundAmount;
         channels[_channel].channelType = _channelType;
         channels[_channel].channelStartBlock = block.number;
@@ -539,9 +540,9 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
                 msg.sender,
                 totalRefundableAmount
             );
-        }else{
-          POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
-          PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
+        } else {
+            POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
@@ -617,20 +618,19 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         Channel storage channelData = channels[msg.sender];
 
-        uint256 totalAmountDeposited = channelData.poolContribution;
-
-        uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            FEE_AMOUNT
+        uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
+        uint256 totalRefundableAmount = channelData.poolContribution.sub(
+            minPoolContribution
         );
 
-        uint256 _newChannelWeight = FEE_AMOUNT
+        uint256 _newChannelWeight = minPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(MIN_POOL_CONTRIBUTION);
+            .div(minPoolContribution);
 
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
-        channelData.poolContribution = FEE_AMOUNT;
+        channelData.poolContribution = minPoolContribution;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
             msg.sender,
@@ -644,6 +644,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
      * @notice Allows Channel Owner to Reactivate his/her Channel again.
      * @dev    - Function can only be called by previously Deactivated Channels
      *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
+     *         - Deposited PUSH amount is distributed between POOL_FUNDS and PROTOCOL_POOL_FEES
      *         - Calculation of the new Channel Weight is performed and stored as the channel's new weight.
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
      * @param _amount Amount of PUSH to be deposited
@@ -664,18 +665,24 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
             address(this),
             _amount
         );
+        Channel storage channelData = channels[msg.sender];
 
-        uint256 newChannelPoolContribution = _amount.add(
-            FEE_AMOUNT
+        uint256 poolFeeAmount = FEE_AMOUNT;
+        uint256 poolFundAmount = _amount.sub(poolFeeAmount);
+        //store pool_funds & pool_fees
+        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+
+        uint256 _newPoolContribution = channelData.poolContribution.add(
+            poolFundAmount
         );
-        uint256 _channelWeight = newChannelPoolContribution
+        uint256 _newChannelWeight = _newPoolContribution
             .mul(ADJUST_FOR_FLOAT)
             .div(MIN_POOL_CONTRIBUTION);
 
-        POOL_FUNDS = POOL_FUNDS.add(_amount);
-        channels[msg.sender].channelState = 1;
-        channels[msg.sender].poolContribution += _amount;
-        channels[msg.sender].channelWeight = _channelWeight;
+        channelData.channelState = 1;
+        channelData.poolContribution = _newPoolContribution;
+        channelData.channelWeight = _newChannelWeight;
 
         emit ReactivateChannel(msg.sender, _amount);
     }
@@ -702,19 +709,25 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         onlyPushChannelAdmin
         onlyUnblockedChannels(_channelAddress)
     {
+        uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         Channel storage channelData = channels[_channelAddress];
-        uint _channelDeactivationFees = FEE_AMOUNT;
+        // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
+        // Decrease POOL_FUNDS by currentPoolContribution
+        uint256 currentPoolContribution = channelData.poolContribution.sub(
+            minPoolContribution
+        );
+        POOL_FUNDS = POOL_FUNDS.sub(currentPoolContribution);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(currentPoolContribution);
 
-        uint256 _newChannelWeight = _channelDeactivationFees
+        uint256 _newChannelWeight = minPoolContribution
             .mul(ADJUST_FOR_FLOAT)
-            .div(MIN_POOL_CONTRIBUTION);
+            .div(minPoolContribution);
 
         channelsCount = channelsCount.sub(1);
-
         channelData.channelState = 3;
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
-        channelData.poolContribution = _channelDeactivationFees;
+        channelData.poolContribution = minPoolContribution;
 
         emit ChannelBlocked(_channelAddress);
     }
@@ -803,7 +816,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         require(
-            channelVerified == 0  || msg.sender == pushChannelAdmin,
+            channelVerified == 0 || msg.sender == pushChannelAdmin,
             "EPNSCoreV1.5::verifyChannel: Channel already verified"
         );
 
@@ -856,7 +869,8 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         (totalClaimableRewards, userHolderUnits) = getUserRewards(_user);
 
         require(
-            totalClaimableRewards > 0 && totalClaimableRewards < PROTOCOL_POOL_FEES,
+            totalClaimableRewards > 0 &&
+                totalClaimableRewards < PROTOCOL_POOL_FEES,
             "EPNSCoreV2::claimRewards: No Claimable Rewards at the Moment"
         );
 
@@ -882,7 +896,7 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
     {
         // Reading necessary PUSH details
         address _pushTokenAddress = PUSH_TOKEN_ADDRESS;
-        uint _adjustForFloat = ADJUST_FOR_FLOAT;
+        uint256 _adjustForFloat = ADJUST_FOR_FLOAT;
         uint256 pushStartBlock = IPUSH(_pushTokenAddress).born();
         uint256 pushTotalSupply = IPUSH(_pushTokenAddress).totalSupply();
 
@@ -895,7 +909,9 @@ contract EPNSCoreV1_5 is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable
         uint256 totalHolderUnits = pushTotalSupply.mul(blockGap);
 
         // Calculating the remaining holder units for the user
-        uint256 remainingHolderUnits = totalHolderUnits.sub(totalClaimedHolderUnits);
+        uint256 remainingHolderUnits = totalHolderUnits.sub(
+            totalClaimedHolderUnits
+        );
         //Calculating individual User's Ratio based on Total Holder Units & Remaining Holder Units
         uint256 userRatio = userHolderUnits.mul(_adjustForFloat).div(
             remainingHolderUnits
