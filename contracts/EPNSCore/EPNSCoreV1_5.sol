@@ -605,8 +605,8 @@ contract EPNSCoreV1_5 is
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
-     *         - Calculates the Total PUSH  Deposited by Channel Owner while Channel Creation.
-     *         - Deducts FEE_AMOUNT from the total Deposited PUSH  and Transfers back the remaining amount of PUSH  in the form of PUSH tokens.
+     *         - Calculates the totalRefundableAmount for the Channel Owner.
+     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO. 
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
@@ -645,7 +645,7 @@ contract EPNSCoreV1_5 is
      * @dev    - Function can only be called by previously Deactivated Channels
      *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
      *         - Deposited PUSH amount is distributed between POOL_FUNDS and PROTOCOL_POOL_FEES
-     *         - Calculation of the new Channel Weight is performed and stored as the channel's new weight.
+     *         - Calculation of the new Channel Weight and poolContribution is performed and stored
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
      * @param _amount Amount of PUSH to be deposited
      **/
@@ -695,10 +695,8 @@ contract EPNSCoreV1_5 is
      *         - Can only Be Called for NON-BLOCKED Channels
      *
      *         - Updates channel's state to BLOCKED ('3')
-     *         - Updates Channel's Pool Contribution to ZERO
-     *         - Updates Channel's Weight to ZERO
-     *         - Increases the Protocol Fee Pool
      *         - Decreases the Channel Count
+     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed from POOL_FUNDS
      *         - Emit 'ChannelBlocked' Event
      * @param _channelAddress Address of the Channel to be blocked
      **/
