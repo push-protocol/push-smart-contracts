@@ -128,31 +128,35 @@ describe("EPNS CoreV2 Protocol", function () {
 			var currentBlock = await ethers.provider.getBlock("latest");
 			const userHolderWeight = await PushToken.returnHolderUnits(ALICE,currentBlock.number+1)
 			const userInitalBalance = await PushToken.balanceOf(ALICE);
-
+			
 			// alice claims the reward
-			const poolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();			
+			const poolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();			
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
 			const userClaimedRewards = await EPNSCoreV1Proxy.connect(ALICESIGNER).usersRewardsClaimed(ALICE);
 
 			/**
 			 * Validates if result holds this formulation
 			 * userRatio = userHolderWeight / (pushTotalSupply * numberOfBlocksSincePushTokenLaunch)
-			 * userReward = userRatio * poolFunds
+			 * userReward = userRatio * poolFees
 			*/     	
 			var currentBlock = await ethers.provider.getBlock("latest");
 			const pushOriginBlockNumber = await PushToken.born();
 			const pushTotalSupply = await PushToken.totalSupply();
 			const blockGap = currentBlock.number - pushOriginBlockNumber;
+			
 			const totalHolderWeight = blockGap * pushTotalSupply;
-			const userRatio = Math.floor(userHolderWeight * ADJUST_FOR_FLOAT/totalHolderWeight);
-			const userReward = (userRatio * poolFunds)/ADJUST_FOR_FLOAT
+			const totalClaimedHolderUnits = await  EPNSCoreV1Proxy.totalClaimedHolderUnits()
+			const denominator = totalHolderWeight - totalClaimedHolderUnits;
+
+			const userRatio = Math.floor(userHolderWeight * ADJUST_FOR_FLOAT/denominator);
+			const userReward = (userRatio * poolFees)/ADJUST_FOR_FLOAT
 			// userClaimed value shoulld match the formulation value	
 			expect(userReward).to.equal(userClaimedRewards);
 			
 			// user PUSH balance should be increased by `userReward`
 			const expectedFinalBalance = userInitalBalance.add(userReward);
 			const userFinalBalance = await PushToken.balanceOf(ALICE);
-			expect(expectedFinalBalance).to.equal(userFinalBalance);		
+			expect(expectedFinalBalance).to.equal(userFinalBalance);		 
 		});
 
 		it("Maintains resetHolderWeight to avoid double reward", async function(){

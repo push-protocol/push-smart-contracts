@@ -910,7 +910,7 @@ contract EPNSCoreV1_5 is
 
         // Calculating the remaining holder units for the user
         uint256 remainingHolderUnits = totalHolderUnits.sub(
-            totalClaimedHolderUnits
+            totalClaimedHolderUnits 
         );
         //Calculating individual User's Ratio based on Total Holder Units & Remaining Holder Units
         uint256 userRatio = userHolderUnits.mul(_adjustForFloat).div(
