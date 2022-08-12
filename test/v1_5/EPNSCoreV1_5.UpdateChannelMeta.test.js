@@ -8,7 +8,12 @@ const {
 } = require("../../helpers/utils");
 
 describe("EPNS CoreV2 Protocol", function () {
-  const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
+  const FEE_AMOUNT = tokensBN(10)
+  const ADJUST_FOR_FLOAT = bn(10 ** 7)
+  const MIN_POOL_CONTRIBUTION = tokensBN(1)
+  const ADD_CHANNEL_MIN_FEES = tokensBN(50)
+  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
+
   let EPNSCoreV1Proxy;
   let EPNSCommV1Proxy;
   let ALICE;
@@ -17,7 +22,7 @@ describe("EPNS CoreV2 Protocol", function () {
   let ALICESIGNER;
   let BOBSIGNER;
 
-  
+
   let loadFixture;
   before(async() => {
     [wallet, other] = await ethers.getSigners()
@@ -45,15 +50,15 @@ describe("EPNS CoreV2 Protocol", function () {
     BOB = await bobSigner.getAddress();
     CHARLIE = await charlieSigner.getAddress();
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
-    
+
     ({
       PROXYADMIN,
       EPNSCoreV1Proxy,
-      EPNSCommV1Proxy, 
+      EPNSCommV1Proxy,
       ROUTER,
       PushToken,
       EPNS_TOKEN_ADDRS,
-    } = await loadFixture(epnsContractFixture)); 
+    } = await loadFixture(epnsContractFixture));
 
     ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
 
@@ -69,13 +74,13 @@ describe("EPNS CoreV2 Protocol", function () {
            beforeEach(async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-            await PushToken.transfer(BOB, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
-            await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
-            await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
-            await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(20));
+            await PushToken.transfer(BOB, ADD_CHANNEL_MIN_FEES.mul(20));
+            await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_FEES.mul(20));
+            await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(20));
+            await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(20));
 
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
-            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_FEES,0);
+            await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_FEES,0);
          });
           /**
             * "updateChannelMeta" Function CheckPoints
@@ -101,7 +106,7 @@ describe("EPNS CoreV2 Protocol", function () {
            // Pauseable Tests
           it("Should revert IF Contract is Paused", async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
-            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx).to.be.revertedWith("Pausable: paused")
           });
 
@@ -109,14 +114,14 @@ describe("EPNS CoreV2 Protocol", function () {
             const zeroAddress = "0x0000000000000000000000000000000000000000";
             const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(
               zeroAddress,
-              channelNewIdentity, 
-              ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+              channelNewIdentity,
+              ADD_CHANNEL_MIN_FEES
             );
-            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner") 
+            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
           });
 
           it("Should revert IF Caller is not the Channel Owner", async function(){
-            const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
           });
 
@@ -133,31 +138,39 @@ describe("EPNS CoreV2 Protocol", function () {
             await expect(tx).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
           });
 
-          it("Should update Channel Meta Details correctly for right Amount -> 50 PUSH Tokens", async function(){
-            const pool_fees_before = await EPNSCoreV1Proxy.POOL_FUNDS();
-            const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+          it("Updating Channel Meta should update POOL_FUNDS and PROTOCOL_POOL_FEES correctly", async function(){
+            const poolFunds_before  = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const poolFees_before = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+
+            const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
+
             const block_num = tx.blockNumber;
             const channel = await EPNSCoreV1Proxy.channels(BOB)
-            const pool_fees_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const poolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const poolFees_after = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
             const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
 
-            await expect(channel.channelUpdateBlock).to.equal(block_num);
-            await expect(pool_fees_after).to.equal(pool_fees_before.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION));
+            const expectedPoolFundsAfter = poolFunds_before;
+            const expectedPoolFeesAfter = poolFees_before.add(ADD_CHANNEL_MIN_FEES);
+
             await expect(counter).to.equal(1);
+            await expect(channel.channelUpdateBlock).to.equal(block_num);
+            await expect(poolFunds_after).to.equal(expectedPoolFundsAfter);
+            await expect(poolFees_after).to.equal(expectedPoolFeesAfter);
 
           });
 
           it("Contract should recieve 50 Push tokens for 1st Channel Update", async function(){
             const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_FEES);
           });
 
           it("2nd Channel Update should NOT execute if Fees deposited is NOT 50 * 2 Push Tokens", async function(){
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             const counter_1 = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
-            const tx_2nd = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx_2nd = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
 
             await expect(counter_1).to.equal(1);
             await expect(tx_2nd).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
@@ -166,45 +179,43 @@ describe("EPNS CoreV2 Protocol", function () {
           it("Contract should recieve 500 Push tokens for 4th Channel Update", async function(){
             const pushBalanceBefore_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
 
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(2));
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(3));
-            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(4));
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES.mul(2));
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES.mul(3));
+            await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES.mul(4));
 
             const pushBalanceAfter_coreContract = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
-            const pool_fees = await EPNSCoreV1Proxy.POOL_FUNDS()
 
-            await expect(pool_fees).to.equal(pushBalanceBefore_coreContract.add(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10)));
-            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10));
+            expect(pushBalanceAfter_coreContract.sub(pushBalanceBefore_coreContract)).to.equal(ADD_CHANNEL_MIN_FEES.mul(10));
 
-          }); 
+          });
 
           it("Grows the update fees linearly", async function(){
             const numUpdates = 5;
 
-            for (let i = 1; i <= numUpdates; i++) {              
+            for (let i = 1; i <= numUpdates; i++) {
               // should revert on paying same fees on lastupdate
-              const feePaidOnLastUpdate = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(i-1);
+              const feePaidOnLastUpdate = ADD_CHANNEL_MIN_FEES.mul(i-1);
               await expect(
                 EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, feePaidOnLastUpdate)
               ).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
-              
+
               // should pass on incresing fees linearly
-              const feeToPay = ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(i);
+              const feeToPay = ADD_CHANNEL_MIN_FEES.mul(i);
               await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, feeToPay)
             }
-            
+
           });
 
           it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
-            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx)
               .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
               .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
           });
 
           it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
-            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx)
               .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
               .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
@@ -212,9 +223,9 @@ describe("EPNS CoreV2 Protocol", function () {
 
           it("Only allows activate channel to be updated", async function(){
             // on channel deactivation cannnot create channel
-            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();             
+            await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();
             await expect(
-              EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_POOL_CONTRIBUTION)
+              EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES)
             ).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");
           });
     });
