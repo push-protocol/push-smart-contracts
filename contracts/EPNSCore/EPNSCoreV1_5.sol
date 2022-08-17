@@ -14,11 +14,8 @@ pragma experimental ABIEncoderV2;
 import "./EPNSCoreStorageV1_5.sol";
 import "./EPNSCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IADai.sol";
-import "../interfaces/ILendingPool.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
-import "../interfaces/ILendingPoolAddressesProvider.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -606,7 +603,7 @@ contract EPNSCoreV1_5 is
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the totalRefundableAmount for the Channel Owner.
-     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO. 
+     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
@@ -908,7 +905,7 @@ contract EPNSCoreV1_5 is
 
         // Calculating the remaining holder units for the user
         uint256 remainingHolderUnits = totalHolderUnits.sub(
-            totalClaimedHolderUnits 
+            totalClaimedHolderUnits
         );
         //Calculating individual User's Ratio based on Total Holder Units & Remaining Holder Units
         uint256 userRatio = userHolderUnits.mul(_adjustForFloat).div(
