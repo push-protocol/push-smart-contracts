@@ -113,6 +113,10 @@ describe("EPNS CoreV2 Protocol", function () {
 			await updateChannel(fees)
 		}
 
+    const addMoreRewards = async(fees) =>{
+      await updateChannel(fees);
+    }
+
 		const gotoBlockNumber = async(blockNumber) =>{
 			blockNumber = blockNumber.toNumber();
 			const currentBlock = await ethers.provider.getBlock("latest");
@@ -192,7 +196,7 @@ describe("EPNS CoreV2 Protocol", function () {
 			// expect(charlieRw).to.be.closeTo(ethers.utils.parseEther("0.5555555556"),ethers.utils.parseEther("0.000001"))
 		})
 
-		it.skip("Allows Multiple users claming at same time; user with larger push holding should be rewarded more", async function(){
+		it("Allows Multiple users claming at same time; user with larger push holding should be rewarded more", async function(){
 			const PUSH_BORN = await PushToken.born();
 			const BLOCK_GAP = 2000;
 			const WITHDRWAL_BLOCK_NUM = PUSH_BORN.add(BLOCK_GAP);
@@ -286,7 +290,7 @@ describe("EPNS CoreV2 Protocol", function () {
       console.log('\n');
 		})
 
-		it.skip("Tests for multiple users claming reward at diffrent block times gets correct reward", async function(){
+		it("Tests for multiple users claming reward at diffrent block times gets correct reward", async function(){
 			const PUSH_BORN = await PushToken.born();
 
 			// Add 5000 PUSH to PROTOCOL_POOL_FEES by creating the channel
@@ -376,16 +380,20 @@ describe("EPNS CoreV2 Protocol", function () {
 			// expect(aliceWt).to.equal(tokensBN(40_000_000_000))
 			// expect(bobWt).to.equal(tokensBN(60_000_000_000))
 			// expect(charlieWt).to.equal(tokensBN(80_000_000_000))
+      console.log('Total Pool before First Claim Iteration ->', ethers.utils.formatEther(poolFees));
 
 			// move to one block before `WITHDRWAL_BLOCK_NUM` and claim rewards
 			await gotoBlockNumber(ALICE_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+      await addMoreRewards(tokensBN(100))
 
 			await gotoBlockNumber(BOB_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+      await addMoreRewards(tokensBN(150))
 
 			await gotoBlockNumber(CHARLIE_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+      await addMoreRewards(tokensBN(200))
 
 
 			// finally assert reward yields
@@ -412,16 +420,20 @@ describe("EPNS CoreV2 Protocol", function () {
 				PUSH_BORN.add(7000)
 			]
 
-
+      const pool_fees2nd = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      console.log('\nPool_Fees before Second Claim Iteration', ethers.utils.formatEther(pool_fees2nd));
 			// move to one block before `WITHDRWAL_BLOCK_NUM` and claim rewards
 			await gotoBlockNumber(ALICE_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+      await addMoreRewards(tokensBN(250))
 
 			await gotoBlockNumber(BOB_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+      await addMoreRewards(tokensBN(300))
 
 			await gotoBlockNumber(CHARLIE_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+      await addMoreRewards(tokensBN(350))
 
 			// finally assert reward yields
 			var [aliceRw, bobRw, charlieRw] = await Promise.all([
@@ -430,7 +442,7 @@ describe("EPNS CoreV2 Protocol", function () {
 				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
 			]);
 
-      console.log("Part 4.b -> Alice, Bob and Charlie claims again at 5K, 6K & 7K block gap respectively");
+      console.log("\nPart 4.b -> Alice, Bob and Charlie claims again at 5K, 6K & 7K block gap respectively");
       console.log("Alice's Reward",ethers.utils.formatEther(aliceRw));
 			console.log("Bob's Reward",ethers.utils.formatEther(bobRw));
 			console.log("Charlie's Reward",ethers.utils.formatEther(charlieRw));
@@ -443,6 +455,8 @@ describe("EPNS CoreV2 Protocol", function () {
 			]
 
 
+      const pool_fees4th = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      console.log('Pool_Fees before Second Claim Iteration', ethers.utils.formatEther(pool_fees4th));
 			// move to one block before `WITHDRWAL_BLOCK_NUM` and claim rewards
 			await gotoBlockNumber(ALICE_BLOCK.sub(1));
 			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
@@ -460,7 +474,7 @@ describe("EPNS CoreV2 Protocol", function () {
 				EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE),
 			]);
 
-      console.log("Part 4.b -> Alice, Bob and Charlie claims again at 8K, 9K & 10K block gap respectively");
+      console.log("\nPart 4.c -> Alice, Bob and Charlie claims again at 8K, 9K & 10K block gap respectively");
       console.log("Alice's Reward",ethers.utils.formatEther(aliceRw));
 			console.log("Bob's Reward",ethers.utils.formatEther(bobRw));
 			console.log("Charlie's Reward",ethers.utils.formatEther(charlieRw));
@@ -554,66 +568,6 @@ describe("EPNS CoreV2 Protocol", function () {
 			expect(rewards).to.be.above(0)
 		})
 
-		it("Decays the rewards for token holder in every withdrwal", async function(){
-			const PUSH_BORN = await PushToken.born();
-
-			// Add 5000 PUSH to PROTOCOL_POOL_FEES by creating the channel
-			await addFundsToPoolFees(tokensBN(5_000))
-			const poolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-			expect(poolFees).to.equal(tokensBN(5_000))
-
-
-			// Alice gets: 1M PUSH
-			await PushToken.transfer(ALICE, tokensBN(1_000_000));
-
-			const [BG_CLAIM_1, BG_CLAIM_2, BG_CLAIM_3] = [
-				PUSH_BORN.add(1_000),
-				PUSH_BORN.add(5_000),
-				PUSH_BORN.add(10_000)
-			]
-      console.log("Part 5 -> Alice holds 1M PUSH Tokens and claims after 1k, 5k and 10K blocks");
-			// On first claim
-			await gotoBlockNumber(BG_CLAIM_1.sub(1));
-			const ALICE_WT_1 = await PushToken.returnHolderUnits(ALICE, BG_CLAIM_1);
-			// expect(ALICE_WT_1).to.equal(tokensBN(40_000_000_000))
-
-			// Holder units become ZERO due to RESETTING After Claim
-			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-			const ALICE_WT_1_afterClaim = await PushToken.returnHolderUnits(ALICE, BG_CLAIM_1);
-			// expect(ALICE_WT_1_afterClaim).to.equal(tokensBN(0))
-
-			// On First claim expected reward: 4
-			const firstRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-			// expect(firstRewardClaimed).to.equal(ethers.utils.parseEther("4"));
-			const aliceBlanceAfterFirstClaim = await PushToken.balanceOf(ALICE);
-			const expectedBalAferFirstClaim = tokensBN(40_000_000).add(tokensBN(4));
-			// expect(aliceBlanceAfterFirstClaim).to.equal(expectedBalAferFirstClaim);
-			console.log("Alice Reward - First Claim afer 1K BLOCKS", ethers.utils.formatEther(aliceBlanceAfterFirstClaim));
-
-			// On second claim expected: 3.4782609043478265
-			await gotoBlockNumber(BG_CLAIM_2.sub(1));
-			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-			const secondRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE).then(val => val.sub(firstRewardClaimed));
-			console.log("Alice Reward - 2nd Claim afer 5K BLOCKS", ethers.utils.formatEther(secondRewardClaimed));
-			// expect(secondRewardClaimed).to.be.closeTo(
-			// 	ethers.utils.parseEther("3.4782609043478265"),
-			// 	ethers.utils.parseEther("0.000001")
-			// )
-
-			// On third cliam expected: 2.5000000517391308
-			await gotoBlockNumber(BG_CLAIM_3.sub(1));
-			await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-			const thirdRewardClaimed = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
-				.then(val => val.sub(firstRewardClaimed).sub(secondRewardClaimed));
-
-			console.log("Alice Reward - First Claim afer 10K BLOCKS", ethers.utils.formatEther(thirdRewardClaimed));
-
-				// expect(thirdRewardClaimed).to.be.closeTo(
-			// 	ethers.utils.parseEther("2.5000000517391308"),
-			// 	ethers.utils.parseEther("0.000001")
-			// );
-		})
-
 		it("❌ 2 users with equal PUSH Tokens claim rewards diffrent fequencies.", async function(){
 
 			// Initally Alice and Bob withdraw after 2000 block
@@ -692,37 +646,37 @@ describe("EPNS CoreV2 Protocol", function () {
 			// expect(aliceFinalRewards).to.be.at.least(bobFinalRewards)
 		})
 
-		it.skip(" ❌ User can drain the contract by claiming at every block", async function(){
-            await PushToken.transfer(ALICE, tokensBN(50_000));
-
-            // Add 5000 PUSH to PROTOCOL_POOL_FEES by creating the channel
-			await addFundsToPoolFees(tokensBN(100_000))
-			const poolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-
-			const userBal = await PushToken.balanceOf(ALICE)
-            console.log("Users Holds",ethers.utils.formatEther(userBal)," push");
-            console.log("PROTOCOL_POOL_FEES_WERE",ethers.utils.formatEther(poolFees),"\n");
-
-            NUM_ITER = 50;
-            BLOCK_SKIP = 10;
-
-            // const currentBlock = await ethers.provider.getBlock("latest").then(b=>b.number);
-            // await gotoBlockNumber( ethers.BigNumber.from(currentBlock + 2000 - 1));
-
-            let lastReward = 0
-            let currentReward = 0
-            for (let i = 0; i < NUM_ITER; i++) {
-                await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
-                var reward = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
-                currentReward = reward.sub(lastReward)
-                lastReward = reward
-                const currentBlock = await ethers.provider.getBlock("latest").then(b=>b.number);
-                console.log("claim at blockNo got ",currentBlock," got reward",ethers.utils.formatEther(currentReward));
-                await gotoBlockNumber( ethers.BigNumber.from(currentBlock + BLOCK_SKIP - 1));
-            }
-            var reward = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
-            console.log("Total reward",ethers.utils.formatEther(reward));
-        })
+		// it.skip(" ❌ User can drain the contract by claiming at every block", async function(){
+    //         await PushToken.transfer(ALICE, tokensBN(50_000));
+    //
+    //         // Add 5000 PUSH to PROTOCOL_POOL_FEES by creating the channel
+		// 	await addFundsToPoolFees(tokensBN(100_000))
+		// 	const poolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+    //
+		// 	const userBal = await PushToken.balanceOf(ALICE)
+    //         console.log("Users Holds",ethers.utils.formatEther(userBal)," push");
+    //         console.log("PROTOCOL_POOL_FEES_WERE",ethers.utils.formatEther(poolFees),"\n");
+    //
+    //         NUM_ITER = 50;
+    //         BLOCK_SKIP = 10;
+    //
+    //         // const currentBlock = await ethers.provider.getBlock("latest").then(b=>b.number);
+    //         // await gotoBlockNumber( ethers.BigNumber.from(currentBlock + 2000 - 1));
+    //
+    //         let lastReward = 0
+    //         let currentReward = 0
+    //         for (let i = 0; i < NUM_ITER; i++) {
+    //             await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
+    //             var reward = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
+    //             currentReward = reward.sub(lastReward)
+    //             lastReward = reward
+    //             const currentBlock = await ethers.provider.getBlock("latest").then(b=>b.number);
+    //             console.log("claim at blockNo got ",currentBlock," got reward",ethers.utils.formatEther(currentReward));
+    //             await gotoBlockNumber( ethers.BigNumber.from(currentBlock + BLOCK_SKIP - 1));
+    //         }
+    //         var reward = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE)
+    //         console.log("Total reward",ethers.utils.formatEther(reward));
+    //     })
 
 	});
 });
