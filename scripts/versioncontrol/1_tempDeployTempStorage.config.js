@@ -23,13 +23,7 @@ const deploy = {
     }
   },
   args: {
-    daiAddress: null,
-    aDaiAddress: null,
-    wethAddress: null,
-    pushAddress: null,
-    uniswapRouterAddress: null,
-    aaveLendingAddress: null,
-    referralCode: null
+    epnsProxyAddress: null,
   }
 }
 

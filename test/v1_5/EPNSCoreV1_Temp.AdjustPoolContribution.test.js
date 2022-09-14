@@ -104,8 +104,9 @@ describe("AdjustChannelPoolContributions Test", function () {
         );
         
         // Temp Storage Contract
-        TempStoreContract = await ethers.getContractFactory("TempStore").then((c)=>c.deploy());
-    });
+        TempStoreContract = await ethers.getContractFactory("TempStorage")
+                                .then((c)=>c.deploy(EPNSCoreV1Proxy.address));
+    });  
 
     it("Updates channel poolContribution adequately",async()=>{
         // 4 channels were created .... 4 .. with contribution 50, 50, 500, 300
@@ -447,6 +448,8 @@ describe("AdjustChannelPoolContributions Test", function () {
         expect(fees_delta).to.equal(funds_delta)
     }) 
 
-
-
+    it("Shall avoid other address calling TempStorage",async()=>{
+        const txn = TempStoreContract.connect(ALICESIGNER).setChannelAdjusted(BOB);
+        await expect(txn).to.be.revertedWith("Can only be called via Core");
+    })
 })

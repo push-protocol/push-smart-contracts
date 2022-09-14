@@ -9,7 +9,13 @@ pragma solidity >=0.6.0 <0.7.0;
 */
 contract TempStorage{
     mapping(address=>bool) public _isChannelUpdated;
-    address public Core_Address = 0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE;
+
+    address public Core_Address; 
+    
+    constructor(address _coreAddress)public{
+        require(_coreAddress != address(0),"Core address cannot be zero");
+        Core_Address = _coreAddress;
+    }
 
     function isChannelAdjusted(address _channelAddress) external view returns(bool) {
         return _isChannelUpdated[_channelAddress];
