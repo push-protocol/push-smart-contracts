@@ -24,7 +24,7 @@
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/contracts": "^3.3.0",
     "bip39": "3.0.3",
     "chai": "^4.3.4",
     "chalk": "^4.1.1",
