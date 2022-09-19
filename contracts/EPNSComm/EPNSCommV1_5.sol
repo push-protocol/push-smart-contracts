@@ -588,9 +588,16 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         address _recipient,
         bytes memory _identity
     ) public {
-        _checkNotifReq(_channel, _recipient);
-        // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
+       // _checkNotifReq(_channel, _recipient);
+        if(
+            (_channel == 0x0000000000000000000000000000000000000000 && msg.sender == pushChannelAdmin) || 
+            (_channel == msg.sender) ||
+            (delegatedNotificationSenders[_channel][msg.sender]) ||
+            (_recipient == msg.sender))
+        {
+            // Emit the message out
+            emit SendNotification(_channel, _recipient, _identity);
+        }
     }
 
     /**
