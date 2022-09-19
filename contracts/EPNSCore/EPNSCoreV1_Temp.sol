@@ -10,9 +10,10 @@ pragma experimental ABIEncoderV2;
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
  **/
-import "./EPNSCoreStorageV1.sol";
+import "./EPNSCoreStorageV1_5.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IADai.sol";
+import "../interfaces/ITempStorage.sol";
 import "../interfaces/ILendingPool.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
@@ -26,7 +27,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 // import "hardhat/console.sol";
 
-contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeable {
+contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -157,9 +158,9 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         UNISWAP_V2_ROUTER = _uniswapRouterAddress;
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
-        CHANNEL_DEACTIVATION_FEES = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-        ADD_CHANNEL_MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
-        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+        FEE_AMOUNT = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
+        MIN_POOL_CONTRIBUTION = 1 ether; // 50 DAI or above to create the channel
+        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
         groupLastUpdate = block.number;
@@ -206,15 +207,15 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         isMigrationComplete = true;
     }
 
-    function setChannelDeactivationFees(uint256 _newFees)
+    function setFeeAmount(uint256 _newFees)
         external
         onlyGovernance
     {
         require(
             _newFees > 0,
-            "EPNSCoreV1::setChannelDeactivationFees: Channel Deactivation Fees must be greater than ZERO"
+            "EPNSCoreV1.5::setFeeAmount: Fee amount must be greater than ZERO"
         );
-        CHANNEL_DEACTIVATION_FEES = _newFees;
+        FEE_AMOUNT = _newFees;
     }
 
     function pauseContract() external onlyGovernance {
@@ -228,7 +229,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+     * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
      *
      * @param _newFees new minimum fees required for Channel Creation
      **/
@@ -237,8 +238,8 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         onlyGovernance
     {
         require(
-            _newFees >= ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than ADD_CHANNEL_MIN_POOL_CONTRIBUTION"
+            _newFees >= MIN_POOL_CONTRIBUTION,
+            "EPNSCoreV1::setMinChannelCreationFees: Fees should be greater than MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -464,6 +465,51 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
     }
 
     /**
+     * @notice Function to adjust the poolContribution and weight of channels after swap of DAI to PUSH in core contract.
+     * @dev - Should be called only by the pushChannelAdmin
+     *      - Can only be called for channels that are not in Inactive State.
+     *      - Can only be called for channels whose version is not 2, i.e., old Channels (created using DAI)
+     *      - This function updates/adjusts the pool contribution, new weight and the version of the Channel.
+     *
+     * @param _startIndex starting Index for the LOOP
+     * @param _endIndex   Last Index for the LOOP
+     * @param _oldPoolFunds total amount of DAI in the older contract version.
+     * @param _channelAddresses array of address of the Channel
+     */
+     function adjustChannelPoolContributions(
+       address _tempStorageAddress,
+       uint256 _startIndex,
+       uint256 _endIndex,
+       uint256 _oldPoolFunds,
+       uint256 _newPoolFunds,
+       address[] calldata _channelAddresses
+      ) external onlyPushChannelAdmin() whenPaused returns(bool){
+        uint256 poolFees = FEE_AMOUNT;
+        uint256 poolFundRatio = _newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
+
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
+          if(channels[_channelAddresses[i]].channelState == 0 ||
+              ITempStorage(_tempStorageAddress).isChannelAdjusted(_channelAddresses[i]))
+              {
+                continue;
+              } else{
+                // Calculating new adjusted poolContribution & channelWeight
+                uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
+                uint256 newPoolContribution = adjustedPoolContribution.sub(poolFees);
+                PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFees);
+                POOL_FUNDS = POOL_FUNDS.sub(poolFees);
+                uint256 adjustedNewWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
+
+                channels[_channelAddresses[i]].channelUpdateBlock = block.number;
+                channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
+                channels[_channelAddresses[i]].poolContribution = newPoolContribution;
+                ITempStorage(_tempStorageAddress).setChannelAdjusted(_channelAddresses[i]);
+              }
+        }
+        return true;
+     }
+
+    /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
@@ -479,7 +525,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
     ) private {
         // Calculate channel weight
         uint256 _channelWeight = _amountDeposited.mul(ADJUST_FOR_FLOAT).div(
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+            MIN_POOL_CONTRIBUTION
         );
 
         // Next create the channel and mark user as channellized
@@ -576,7 +622,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the Total DAI Deposited by Channel Owner while Channel Creation.
-     *         - Deducts CHANNEL_DEACTIVATION_FEES from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
+     *         - Deducts FEE_AMOUNT from the total Deposited DAI and Transfers back the remaining amount of DAI in the form of PUSH tokens.
      *         - Calculates the New Channel Weight and Readjusts the FS Ratio accordingly.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required DAI while reactivating.
@@ -591,13 +637,13 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
 
         uint256 _oldChannelWeight = channelData.channelWeight;
-        uint256 _newChannelWeight = CHANNEL_DEACTIVATION_FEES
+        uint256 _newChannelWeight = FEE_AMOUNT
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         (
             groupFairShareCount,
@@ -617,7 +663,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         channelData.channelState = 2;
         POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
-        channelData.poolContribution = CHANNEL_DEACTIVATION_FEES;
+        channelData.poolContribution = FEE_AMOUNT;
 
         swapAndTransferPUSH(
             msg.sender,
@@ -642,7 +688,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         whenNotPaused
         onlyDeactivatedChannels(msg.sender)
     {
-        uint _minPoolContribution = ADD_CHANNEL_MIN_POOL_CONTRIBUTION;
+        uint _minPoolContribution = MIN_POOL_CONTRIBUTION;
         require(
             _amount >= _minPoolContribution,
             "EPNSCoreV1::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
@@ -652,7 +698,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
 
         uint256 _oldChannelWeight = channels[msg.sender].channelWeight;
         uint256 newChannelPoolContribution = _amount.add(
-            CHANNEL_DEACTIVATION_FEES
+            FEE_AMOUNT
         );
         uint256 _channelWeight = newChannelPoolContribution
             .mul(ADJUST_FOR_FLOAT)
@@ -703,7 +749,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         onlyUnblockedChannels(_channelAddress)
     {
         Channel storage channelData = channels[_channelAddress];
-        uint _channelDeactivationFees = CHANNEL_DEACTIVATION_FEES;
+        uint _channelDeactivationFees = FEE_AMOUNT;
 
         uint256 totalAmountDeposited = channelData.poolContribution;
         uint256 totalRefundableAmount = totalAmountDeposited.sub(
@@ -713,7 +759,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1, PausableUpgradeabl
         uint256 _oldChannelWeight = channelData.channelWeight;
         uint256 _newChannelWeight = _channelDeactivationFees
             .mul(ADJUST_FOR_FLOAT)
-            .div(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+            .div(MIN_POOL_CONTRIBUTION);
 
         channelsCount = channelsCount.sub(1);
 
