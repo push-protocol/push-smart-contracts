@@ -149,6 +149,24 @@ describe("EPNS CommV2 Protocol", function () {
                  .to.emit(EPNSCommV1Proxy, 'SendNotification')
                  .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
           });
+
+          it("Should not allow non channel owner to send the notification to any recipient address", async() => {
+            const msg = ethers.utils.toUtf8Bytes("This is notification message");
+            const tx_sendNotif = EPNSCommV1Proxy.connect(ALICESIGNER).sendNotification(CHANNEL_CREATOR, BOB, msg);
+            await expect(tx_sendNotif)
+                 .not.to.emit(EPNSCommV1Proxy, 'SendNotification')
+                 .withArgs(ALICE, BOB, ethers.utils.hexlify(msg)); 
+          });
+
+          it("Should allow channel owner to send the notification to any recipient address", async() => {
+            const msg = ethers.utils.toUtf8Bytes("This is notification message");
+            const tx_sendNotif = EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).sendNotification(CHANNEL_CREATOR, BOB, msg);
+            await expect(tx_sendNotif)
+                 .to.emit(EPNSCommV1Proxy, 'SendNotification')
+                 .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg)); 
+          });
+
+
         });
 
 
