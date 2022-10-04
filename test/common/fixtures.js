@@ -41,13 +41,13 @@ const epnsContractFixture = async ([adminSigner, others])=>{
     // const bt = await PushToken.born()
     // console.log("Born",bt);
     
-    const EPNSCore = await ethers.getContractFactory("EPNSCoreV1_5");
+    const EPNSCore = await ethers.getContractFactory("EPNSCoreV2");
     CORE_LOGIC = await EPNSCore.deploy();
 
     const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");
     PROXYADMIN = await proxyAdmin.deploy();
 
-    const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV1_5");
+    const EPNSCommunicator = await ethers.getContractFactory("EPNSCommV2");
     COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
 
     const EPNSCoreProxyContract = await ethers.getContractFactory("EPNSCoreProxy");

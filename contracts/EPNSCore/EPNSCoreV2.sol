@@ -28,7 +28,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "hardhat/console.sol";
 
-contract EPNSCoreV1_5 is
+contract EPNSCoreV2 is
     Initializable,
     EPNSCoreStorageV1_5,
     PausableUpgradeable,
