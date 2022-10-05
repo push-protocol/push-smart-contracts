@@ -28,7 +28,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "hardhat/console.sol";
 
-contract EPNSCoreV1_5 is
+contract EPNSCoreV2 is
     Initializable,
     EPNSCoreStorageV1_5,
     PausableUpgradeable,
@@ -504,6 +504,46 @@ contract EPNSCoreV1_5 is
         }
     }
 
+    function createChannelBySig(
+        ChannelType _channelType,
+        bytes calldata _identity,
+        uint256 _amount,
+        uint256 _channelExpiryTime,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        bytes32 domainSeparator = keccak256(
+            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this))
+        );
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CREATE_CHANNEL_TYPEHASH,
+                _channelType,
+                _identity,
+                _amount,
+                _channelExpiryTime,
+                nonce,
+                expiry
+            )
+        );
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+        );
+        address signatory = ecrecover(digest, v, r, s);
+        require(
+            signatory != address(0),
+            "EPNSCoreV2::createChannelBySig: Invalid signature"
+        );
+        require(
+            nonce == nonces[signatory]++,
+            "EPNSCoreV2::createChannelBySig: Invalid nonce"
+        );
+        require(now <= expiry, "EPNSCoreV2::createChannelBySig: Signature expired");
+        _createChannel(signatory, _channelType, _amount, _channelExpiryTime);
+    }
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
      * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.

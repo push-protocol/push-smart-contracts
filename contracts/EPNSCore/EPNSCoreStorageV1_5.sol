@@ -66,7 +66,7 @@ contract EPNSCoreStorageV1_5 {
     /* ***************
     STATE VARIABLES
  *************** */
-    string public constant name = "EPNS CORE V1";
+    string public constant name = "EPNS_CORE_V2";
     bool oneTimeCheck;
     bool public isMigrationComplete;
 
