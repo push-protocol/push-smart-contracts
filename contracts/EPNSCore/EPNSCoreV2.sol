@@ -73,14 +73,17 @@ contract EPNSCoreV2 is
         address indexed channel,
         uint256 indexed amountRefunded
     );
-
+    event ChannelOwnershipTransfer(
+        address indexed channel,
+        address indexed newOwner
+    );
     /* **************
         MODIFIERS
     ***************/
     modifier onlyPushChannelAdmin() {
         require(
             msg.sender == pushChannelAdmin,
-            "EPNSCoreV1.5::onlyPushChannelAdmin: Caller not pushChannelAdmin"
+            "EPNSCoreV2::onlyPushChannelAdmin: Caller not pushChannelAdmin"
         );
         _;
     }
@@ -88,7 +91,7 @@ contract EPNSCoreV2 is
     modifier onlyGovernance() {
         require(
             msg.sender == governance,
-            "EPNSCoreV1.5::onlyGovernance: Caller not Governance"
+            "EPNSCoreV2::onlyGovernance: Caller not Governance"
         );
         _;
     }
@@ -96,14 +99,14 @@ contract EPNSCoreV2 is
     modifier onlyInactiveChannels(address _channel) {
         require(
             channels[_channel].channelState == 0,
-            "EPNSCoreV1.5::onlyInactiveChannels: Channel already Activated"
+            "EPNSCoreV2::onlyInactiveChannels: Channel already Activated"
         );
         _;
     }
     modifier onlyActivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 1,
-            "EPNSCoreV1.5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist"
+            "EPNSCoreV2::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist"
         );
         _;
     }
@@ -111,7 +114,7 @@ contract EPNSCoreV2 is
     modifier onlyDeactivatedChannels(address _channel) {
         require(
             channels[_channel].channelState == 2,
-            "EPNSCoreV1.5::onlyDeactivatedChannels: Channel is not Deactivated Yet"
+            "EPNSCoreV2::onlyDeactivatedChannels: Channel is not Deactivated Yet"
         );
         _;
     }
@@ -120,7 +123,7 @@ contract EPNSCoreV2 is
         require(
             ((channels[_channel].channelState != 3) &&
                 (channels[_channel].channelState != 0)),
-            "EPNSCoreV1.5::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet"
+            "EPNSCoreV2::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet"
         );
         _;
     }
@@ -129,7 +132,7 @@ contract EPNSCoreV2 is
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
                 (msg.sender == pushChannelAdmin && _channel == address(0x0))),
-            "EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
+            "EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner"
         );
         _;
     }
@@ -140,7 +143,7 @@ contract EPNSCoreV2 is
                 _channelType == ChannelType.InterestBearingMutual ||
                 _channelType == ChannelType.TimeBound ||
                 _channelType == ChannelType.TokenGaited),
-            "EPNSCoreV1.5::onlyUserAllowedChannelType: Channel Type Invalid"
+            "EPNSCoreV2::onlyUserAllowedChannelType: Channel Type Invalid"
         );
 
         _;
@@ -230,7 +233,7 @@ contract EPNSCoreV2 is
     function setFeeAmount(uint256 _newFees) external onlyGovernance {
         require(
             _newFees > 0,
-            "EPNSCoreV1.5::setFeeAmount: Fee amount must be greater than ZERO"
+            "EPNSCoreV2::setFeeAmount: Fee amount must be greater than ZERO"
         );
         FEE_AMOUNT = _newFees;
     }
@@ -256,7 +259,7 @@ contract EPNSCoreV2 is
     {
         require(
             _newFees >= MIN_POOL_CONTRIBUTION,
-            "EPNSCoreV1.5::setMinChannelCreationFees: Fees should be greater than MIN_POOL_CONTRIBUTION"
+            "EPNSCoreV2::setMinChannelCreationFees: Fees should be greater than MIN_POOL_CONTRIBUTION"
         );
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -267,11 +270,11 @@ contract EPNSCoreV2 is
     {
         require(
             _newAdmin != address(0),
-            "EPNSCoreV1.5::transferPushChannelAdminControl: Invalid Address"
+            "EPNSCoreV2::transferPushChannelAdminControl: Invalid Address"
         );
         require(
             _newAdmin != pushChannelAdmin,
-            "EPNSCoreV1.5::transferPushChannelAdminControl: Admin address is same"
+            "EPNSCoreV2::transferPushChannelAdminControl: Admin address is same"
         );
         pushChannelAdmin = _newAdmin;
     }
@@ -381,7 +384,7 @@ contract EPNSCoreV2 is
     {
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1.5::_createChannelWithPUSH: Insufficient Deposit Amount"
+            "EPNSCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
         );
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -420,7 +423,7 @@ contract EPNSCoreV2 is
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
-            "EPNSCoreV1.5::migrateChannelData: Migration is already done"
+            "EPNSCoreV2::migrateChannelData: Migration is already done"
         );
 
         require(
@@ -428,7 +431,7 @@ contract EPNSCoreV2 is
                 (_channelAddresses.length == _identityList.length) &&
                 (_channelAddresses.length == _amountList.length) &&
                 (_channelAddresses.length == _channelExpiryTime.length),
-            "EPNSCoreV1.5::migrateChannelData: Unequal Arrays passed as Argument"
+            "EPNSCoreV2::migrateChannelData: Unequal Arrays passed as Argument"
         );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
@@ -493,7 +496,7 @@ contract EPNSCoreV2 is
         if (_channelType == ChannelType.TimeBound) {
             require(
                 _channelExpiryTime > block.timestamp,
-                "EPNSCoreV1.5::createChannel: Invalid channelExpiryTime"
+                "EPNSCoreV2::createChannel: Invalid channelExpiryTime"
             );
             channels[_channel].expiryTime = _channelExpiryTime;
         }
@@ -578,14 +581,14 @@ contract EPNSCoreV2 is
 
         require(
             channelData.channelType == ChannelType.TimeBound,
-            "EPNSCoreV1.5::destroyTimeBoundChannel: Channel is not TIME BOUND"
+            "EPNSCoreV2::destroyTimeBoundChannel: Channel is not TIME BOUND"
         );
         require(
             (msg.sender == _channelAddress &&
                 channelData.expiryTime < block.timestamp) ||
                 (msg.sender == pushChannelAdmin &&
                     channelData.expiryTime.add(14 days) < block.timestamp),
-            "EPNSCoreV1.5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
+            "EPNSCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet"
         );
         uint256 totalRefundableAmount = channelData.poolContribution;
 
@@ -712,7 +715,7 @@ contract EPNSCoreV2 is
     {
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1.5::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
+            "EPNSCoreV2::reactivateChannel: Insufficient Funds Passed for Channel Reactivation"
         );
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
@@ -780,6 +783,47 @@ contract EPNSCoreV2 is
 
         emit ChannelBlocked(_channelAddress);
     }
+
+    
+    /**
+     * @notice    Function designed to allow transfer of channel ownership 
+     * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details
+     * @param    _channelAddress Address of the channel that needs to change its ownership
+     * @param    _newChannelAddress Address of the new channel owner
+     * @param    _amountDeposited Fee amount deposited for ownership transfer
+     * @return   success returns true after a successful execution of the function.
+     **/
+    function transferChannelOwnership(address _channelAddress, address _newChannelAddress, uint256 _amountDeposited) external onlyChannelOwner(_channelAddress) whenNotPaused returns(bool){
+        require(
+            _amountDeposited >= ADD_CHANNEL_MIN_FEES,
+            "EPNSCoreV2::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
+        );
+        //adjustFunds(_amountDeposited, 1); // PENDING: Add this after merge of PR-78
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+
+        Channel memory channelData = channels[_channelAddress];
+        channels[_newChannelAddress] = channelData;
+
+        // Unsubscribing from imperative Channels
+        address _epnsCommunicator = epnsCommunicator;
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
+            address(0x0),
+            _channelAddress
+        );
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
+            _channelAddress,
+            _channelAddress
+        );
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
+            _channelAddress,
+            pushChannelAdmin
+        );
+
+        delete channels[_channelAddress];
+        emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
+        return true;
+    }
+
 
     /* **************
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
@@ -859,14 +903,14 @@ contract EPNSCoreV2 is
         uint8 callerVerified = getChannelVerfication(msg.sender);
         require(
             callerVerified > 0,
-            "EPNSCoreV1.5::verifyChannel: Caller is not verified"
+            "EPNSCoreV2::verifyChannel: Caller is not verified"
         );
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         require(
             channelVerified == 0 || msg.sender == pushChannelAdmin,
-            "EPNSCoreV1.5::verifyChannel: Channel already verified"
+            "EPNSCoreV2::verifyChannel: Channel already verified"
         );
 
         // Verify channel
@@ -885,7 +929,7 @@ contract EPNSCoreV2 is
         require(
             channels[_channel].verifiedBy == msg.sender ||
                 msg.sender == pushChannelAdmin,
-            "EPNSCoreV1.5::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
+            "EPNSCoreV2::unverifyChannel: Only channel who verified this or Push Channel Admin can revoke"
         );
 
         // Unverify channel
