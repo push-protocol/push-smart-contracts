@@ -185,7 +185,7 @@ contract EPNSCoreV2 is
 
     /* ***************
 
-    SETTER FUNCTIONS
+    SETTER & HELPER FUNCTIONS
 
     *************** */
     function addSubGraph(bytes calldata _subGraphData)
@@ -243,10 +243,6 @@ contract EPNSCoreV2 is
         _unpause();
     }
 
-    function getTotalHolderShare() public view returns (uint256) {
-        return PROTOCOL_POOL_FEES;
-    }
-
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
@@ -280,6 +276,28 @@ contract EPNSCoreV2 is
         pushChannelAdmin = _newAdmin;
     }
 
+    /** 
+     * @notice Helper function to adjust the Funds (PUSH tokens) entering the core contract   
+     * @dev Involves 2 different phases for adjustment:
+     *      Phase 0 -> For Distribution of incoming funds between Pool_Funds & Protocol_Pool_Fees
+     *      Phase 1 -> For assigning incoming funds to Protocol_Pool_Fees only
+     * @param _fundsAmount Amount of PUSH tokens being deposited in the contract
+     * @param _phase  a unit8 value that represent the phase of adjustment for a particular execution
+     */
+    function adjustFunds(uint256 _fundsAmount, uint8 _phase) private returns(uint256 poolFunds, uint256 poolFees){
+        if (_phase == 1){
+            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_fundsAmount);
+            return(0, _fundsAmount);
+        }else {
+            uint256 poolFeeAmount = FEE_AMOUNT;
+            uint256 poolFundAmount = _fundsAmount.sub(poolFeeAmount);
+            
+            //store pool_funds & pool_fees
+            POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
+            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+            return(poolFundAmount, poolFeeAmount);
+        }
+    }
     /* ***********************************
 
         CHANNEL RELATED FUNCTIONALTIES
@@ -326,8 +344,8 @@ contract EPNSCoreV2 is
             _amount >= requiredFees,
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
-
-        PROTOCOL_POOL_FEES += _amount;
+        
+        adjustFunds(_amount, 1);
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
 
@@ -455,13 +473,8 @@ contract EPNSCoreV2 is
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     ) private {
-        uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amountDeposited.sub(poolFeeAmount);
-
-        //store pool_funds & pool_fees
-        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
-
+        
+        (uint256 poolFundAmount, ) = adjustFunds(_amountDeposited, 0);
         // Calculate channel weight
         uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
             MIN_POOL_CONTRIBUTION
@@ -708,12 +721,8 @@ contract EPNSCoreV2 is
             _amount
         );
         Channel storage channelData = channels[msg.sender];
-
-        uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amount.sub(poolFeeAmount);
-        //store pool_funds & pool_fees
-        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+        
+        (uint256 poolFundAmount,) = adjustFunds(_amount, 0);
 
         uint256 _newPoolContribution = channelData.poolContribution.add(
             poolFundAmount
