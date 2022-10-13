@@ -88,6 +88,7 @@ describe("EPNS CoreV2 Protocol", function () {
    * 7. Old Channel owner details should be erased from the contract ✅
    * 8. Function should emit the right event parameters ✅
    * 9. PUSH Channel Admin shouldn't be able to Change the ownership of any other Channel ✅
+   * 10. Channel Ownership can't be transferred to an already existing Channel ✅
    */
 
      describe("EPNS CORE: Channel Ownership transfer Tests", function(){
@@ -116,7 +117,7 @@ describe("EPNS CoreV2 Protocol", function () {
      
                  const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB,ADD_CHANNEL_MIN_FEES);
      
-                 await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
+                 await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State")
                });
 
                it("Should revert if IF Contract is paused ", async function () {    
@@ -200,25 +201,29 @@ describe("EPNS CoreV2 Protocol", function () {
             it("Channel Ownership Transfer should unsubscribes Old Channel address from PUSH Channels", async function(){
                 await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES, 0);
         
-                // before destruction should subscribe to these
-                var isSubscribedToOwnChannel = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
-                var isSubscribedTOChannelAlerter = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero, CHANNEL_CREATOR);
-                var isEPNSAdminSubscribed = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
-                expect(isSubscribedToOwnChannel).to.be.true;
-                expect(isSubscribedTOChannelAlerter).to.be.true;
-                expect(isEPNSAdminSubscribed).to.be.true;
+                // before ownership transfer 
+                var isNewOwnerSubscribedToOwnChannel_before = await EPNSCommV1Proxy.isUserSubscribed(BOB, BOB);
+                var isNewOwnerSubscribedToAlerter_before = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero, BOB);
+                var isPushAdminSubscribedToNewOwner_before = await EPNSCommV1Proxy.isUserSubscribed(BOB, ADMIN);
+                var isPushAdminSubscribedToOldChannel_before = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
+                
+                expect(isNewOwnerSubscribedToOwnChannel_before).to.be.false;
+                expect(isNewOwnerSubscribedToAlerter_before).to.be.false;
+                expect(isPushAdminSubscribedToNewOwner_before).to.be.false;
+                expect(isPushAdminSubscribedToOldChannel_before).to.be.true;
         
                 
                 await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
         
-                // after destruction should unsubscribe to these
-                var isSubscribedToOwnChannel = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, CHANNEL_CREATOR);
-                var isSubscribedTOChannelAlerter = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero, CHANNEL_CREATOR);
-                var isEPNSAdminSubscribed = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
-
-                expect(isSubscribedToOwnChannel).to.be.false;
-                expect(isSubscribedTOChannelAlerter).to.be.false;
-                expect(isEPNSAdminSubscribed).to.be.false;
+                var isNewOwnerSubscribedToOwnChannel_after = await EPNSCommV1Proxy.isUserSubscribed(BOB, BOB);
+                var isNewOwnerSubscribedToAlerter_after = await EPNSCommV1Proxy.isUserSubscribed(ethers.constants.AddressZero, BOB);
+                var isPushAdminSubscribedToNewOwner_after = await EPNSCommV1Proxy.isUserSubscribed(BOB, ADMIN);
+                var isPushAdminSubscribedToOldChannel_after = await EPNSCommV1Proxy.isUserSubscribed(CHANNEL_CREATOR, ADMIN);
+                
+                expect(isNewOwnerSubscribedToOwnChannel_after).to.be.true;
+                expect(isNewOwnerSubscribedToAlerter_after).to.be.true;
+                expect(isPushAdminSubscribedToNewOwner_after).to.be.true;
+                expect(isPushAdminSubscribedToOldChannel_after).to.be.false;
               });
      
              it("Function should emit events correctly ", async function () {  
@@ -235,7 +240,16 @@ describe("EPNS CoreV2 Protocol", function () {
     
                 const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
     
-                await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
+                await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State")
+              });
+
+              it("Ownership can't be transferred to an already existing Channel", async function () {
+                await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES,0);
+                await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES,0);
+
+                const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
+    
+                await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid address for new channel owner")
               });
      
          });

@@ -351,7 +351,7 @@ contract EPNSCoreV2 is
             _amount >= requiredFees,
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
-
+        // Phase 1: All incoming PUSH goes to Protocol_Pool_Fees
         adjustFunds(_amount, 1);
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
@@ -480,6 +480,7 @@ contract EPNSCoreV2 is
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     ) private {
+        // Phase 0: All incoming PUSH is ditributed between Pool_Fees & Pool_Funds
         (uint256 poolFundAmount, ) = adjustFunds(_amountDeposited, 0);
         // Calculate channel weight
         uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
@@ -736,7 +737,7 @@ contract EPNSCoreV2 is
             _amount
         );
         Channel storage channelData = channels[msg.sender];
-
+        // Phase 0: All incoming PUSH is ditributed between Pool_Fees & Pool_Funds
         (uint256 poolFundAmount, ) = adjustFunds(_amount, 0);
 
         uint256 _newPoolContribution = channelData.poolContribution.add(
@@ -808,7 +809,13 @@ contract EPNSCoreV2 is
         address _channelAddress,
         address _newChannelAddress,
         uint256 _amountDeposited
-    ) external onlyChannelOwner(_channelAddress) whenNotPaused returns (bool) {
+    ) external whenNotPaused returns (bool) {
+        require((channels[_channelAddress].channelState == 1 && msg.sender == _channelAddress),
+            "EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State"
+        );
+        require(_newChannelAddress != address(0) && channels[_newChannelAddress].channelState == 0,
+            "EPNSCoreV2::transferChannelOwnership: Invalid address for new channel owner"
+        );
         require(
             _amountDeposited >= ADD_CHANNEL_MIN_FEES,
             "EPNSCoreV2::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
@@ -818,21 +825,26 @@ contract EPNSCoreV2 is
             address(this),
             _amountDeposited
         );
+        // Phase 1: All incoming PUSH goes to Protocol_Pool_Fees
         adjustFunds(_amountDeposited, 1);
 
         Channel memory channelData = channels[_channelAddress];
         channels[_newChannelAddress] = channelData;
 
-        // Unsubscribing from imperative Channels
+        // Subscribe newChannelOwner address to important channels
         address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
+        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_newChannelAddress, _newChannelAddress);
+
+        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
             address(0x0),
-            _channelAddress
+            _newChannelAddress
         );
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-            _channelAddress,
-            _channelAddress
+        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
+            _newChannelAddress,
+            pushChannelAdmin
         );
+        
+        // Unsubscribing pushChannelAdmin from old Channel 
         IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
             _channelAddress,
             pushChannelAdmin
