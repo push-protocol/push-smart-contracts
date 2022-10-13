@@ -279,28 +279,32 @@ contract EPNSCoreV2 is
         pushChannelAdmin = _newAdmin;
     }
 
-    /** 
-     * @notice Helper function to adjust the Funds (PUSH tokens) entering the core contract   
+    /**
+     * @notice Helper function to adjust the Funds (PUSH tokens) entering the core contract
      * @dev Involves 2 different phases for adjustment:
      *      Phase 0 -> For Distribution of incoming funds between Pool_Funds & Protocol_Pool_Fees
      *      Phase 1 -> For assigning incoming funds to Protocol_Pool_Fees only
      * @param _fundsAmount Amount of PUSH tokens being deposited in the contract
      * @param _phase  a unit8 value that represent the phase of adjustment for a particular execution
      */
-    function adjustFunds(uint256 _fundsAmount, uint8 _phase) private returns(uint256 poolFunds, uint256 poolFees){
-        if (_phase == 1){
+    function adjustFunds(uint256 _fundsAmount, uint8 _phase)
+        private
+        returns (uint256 poolFunds, uint256 poolFees)
+    {
+        if (_phase == 1) {
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_fundsAmount);
-            return(0, _fundsAmount);
-        }else {
+            return (0, _fundsAmount);
+        } else {
             uint256 poolFeeAmount = FEE_AMOUNT;
             uint256 poolFundAmount = _fundsAmount.sub(poolFeeAmount);
-            
+
             //store pool_funds & pool_fees
             POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
-            return(poolFundAmount, poolFeeAmount);
+            return (poolFundAmount, poolFeeAmount);
         }
     }
+
     /* ***********************************
 
         CHANNEL RELATED FUNCTIONALTIES
@@ -347,7 +351,7 @@ contract EPNSCoreV2 is
             _amount >= requiredFees,
             "EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount"
         );
-        
+
         adjustFunds(_amount, 1);
         channelUpdateCounter[_channel] += 1;
         channels[_channel].channelUpdateBlock = block.number;
@@ -476,7 +480,6 @@ contract EPNSCoreV2 is
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     ) private {
-        
         (uint256 poolFundAmount, ) = adjustFunds(_amountDeposited, 0);
         // Calculate channel weight
         uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
@@ -532,7 +535,12 @@ contract EPNSCoreV2 is
         bytes32 s
     ) external {
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this))
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                getChainId(),
+                address(this)
+            )
         );
         bytes32 structHash = keccak256(
             abi.encode(
@@ -557,9 +565,13 @@ contract EPNSCoreV2 is
             nonce == nonces[signatory]++,
             "EPNSCoreV2::createChannelBySig: Invalid nonce"
         );
-        require(now <= expiry, "EPNSCoreV2::createChannelBySig: Signature expired");
+        require(
+            now <= expiry,
+            "EPNSCoreV2::createChannelBySig: Signature expired"
+        );
         _createChannel(signatory, _channelType, _amount, _channelExpiryTime);
     }
+
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
      * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
@@ -664,7 +676,7 @@ contract EPNSCoreV2 is
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the totalRefundableAmount for the Channel Owner.
-     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO. 
+     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
      *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
      **/
@@ -724,8 +736,8 @@ contract EPNSCoreV2 is
             _amount
         );
         Channel storage channelData = channels[msg.sender];
-        
-        (uint256 poolFundAmount,) = adjustFunds(_amount, 0);
+
+        (uint256 poolFundAmount, ) = adjustFunds(_amount, 0);
 
         uint256 _newPoolContribution = channelData.poolContribution.add(
             poolFundAmount
@@ -784,22 +796,29 @@ contract EPNSCoreV2 is
         emit ChannelBlocked(_channelAddress);
     }
 
-    
     /**
-     * @notice    Function designed to allow transfer of channel ownership 
+     * @notice    Function designed to allow transfer of channel ownership
      * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details
      * @param    _channelAddress Address of the channel that needs to change its ownership
      * @param    _newChannelAddress Address of the new channel owner
      * @param    _amountDeposited Fee amount deposited for ownership transfer
      * @return   success returns true after a successful execution of the function.
      **/
-    function transferChannelOwnership(address _channelAddress, address _newChannelAddress, uint256 _amountDeposited) external onlyChannelOwner(_channelAddress) whenNotPaused returns(bool){
+    function transferChannelOwnership(
+        address _channelAddress,
+        address _newChannelAddress,
+        uint256 _amountDeposited
+    ) external onlyChannelOwner(_channelAddress) whenNotPaused returns (bool) {
         require(
             _amountDeposited >= ADD_CHANNEL_MIN_FEES,
             "EPNSCoreV2::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
         );
-        //adjustFunds(_amountDeposited, 1); // PENDING: Add this after merge of PR-78
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            _channelAddress,
+            address(this),
+            _amountDeposited
+        );
+        adjustFunds(_amountDeposited, 1);
 
         Channel memory channelData = channels[_channelAddress];
         channels[_newChannelAddress] = channelData;
@@ -823,7 +842,6 @@ contract EPNSCoreV2 is
         emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
         return true;
     }
-
 
     /* **************
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
