@@ -46,8 +46,8 @@ module.exports = {
     hardhat: {
       forking: {
         url:
-          `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
-          blockNumber: 10191400
+          `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
+          blockNumber: 7755338
       },
     },
     localhost: {
