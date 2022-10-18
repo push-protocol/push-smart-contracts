@@ -117,12 +117,12 @@ describe("EPNS CoreV2 Protocol", function () {
               channelNewIdentity,
               ADD_CHANNEL_MIN_FEES
             );
-            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
           });
 
           it("Should revert IF Caller is not the Channel Owner", async function(){
             const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
-            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner")
           });
 
           it("Should revert IF Amount is 0 Push tokens", async function(){
@@ -226,7 +226,7 @@ describe("EPNS CoreV2 Protocol", function () {
             await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();
             await expect(
               EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES)
-            ).to.be.revertedWith("EPNSCoreV1.5::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");
+            ).to.be.revertedWith("EPNSCoreV2::onlyChannelOwner: Channel not Exists or Invalid Channel Owner");
           });
     });
 
