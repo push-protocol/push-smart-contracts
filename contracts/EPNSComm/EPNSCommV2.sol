@@ -1,6 +1,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
-
+import "hardhat/console.sol";
 // SPDX-License-Identifier: MIT
 
 /**
@@ -22,6 +22,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import '@openzeppelin/contracts/utils/Address.sol';
+import "../interfaces/IERC1271.sol";
 
 contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
@@ -622,6 +624,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     function sendNotifBySig(
         address _channel,
         address _recipient,
+        address _signer,
         bytes calldata _identity,
         uint256 nonce,
         uint256 expiry,
@@ -629,15 +632,26 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         bytes32 r,
         bytes32 s
     ) external {
+
+        require(_signer != address(0),"EPNSCommV1::sendNotifBySig: Invalid signer address");
+        require(nonce == nonces[_signer]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
+        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
+        
+
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                NAME_HASH,
+                getChainId(),
+                address(this)
+            )
         );
         bytes32 structHash = keccak256(
             abi.encode(
                 SEND_NOTIFICATION_TYPEHASH,
                 _channel,
                 _recipient,
-                _identity,
+                keccak256(_identity),
                 nonce,
                 expiry
             )
@@ -645,17 +659,24 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         bytes32 digest = keccak256(
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
-        address signatory = ecrecover(digest, v, r, s);
-        require(
-            signatory != address(0),
-            "EPNSCommV1::sendNotifBySig: Invalid signature"
+
+        if (Address.isContract(_signer)) {
+            // use EIP-1271 signature check
+            bytes4 result = IERC1271(_signer).isValidSignature(
+                digest,
+                abi.encodePacked(r, s, v)
+            );
+            require(result == 0x1626ba7e, "EPNSCommV1::sendNotifBySig: Invalid 1271 Signature");
+        }else{
+            address signatory = ecrecover(digest, v, r, s);
+            require(signatory == _signer, "EPNSCommV1::sendNotifBySig: Invalid signature");
+        }
+        _sendNotification(
+            _channel,
+            _recipient,
+            _signer,
+            _identity
         );
-        require(
-            nonce == nonces[signatory]++,
-            "EPNSCommV1::sendNotifBySig: Invalid nonce"
-        );
-        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
-        _sendNotification(_channel, _recipient, signatory, _identity);
     }
 
     /* **************
