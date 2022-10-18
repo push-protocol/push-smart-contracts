@@ -3,8 +3,6 @@ const { ethers, waffle } = require("hardhat");
 const {
   bn,
   tokensBN,
-  ChannelAction,
-  readjustFairShareOfChannels,
 } = require("../../helpers/utils");
 
 const { epnsContractFixture, tokenFixture } = require("../common/fixtures");
@@ -13,21 +11,16 @@ const createFixtureLoader = waffle.createFixtureLoader;
 
 describe("EPNS CoreV2 Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50);
-  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50);
-  const ADJUST_FOR_FLOAT = bn(10 ** 7);
 
   let PushToken;
   let EPNSCoreV1Proxy;
   let EPNSCommV1Proxy;
-  let ADMIN;
   let ALICE;
   let BOB;
-  let CHARLIE;
   let CHANNEL_CREATOR;
   let ADMINSIGNER;
   let ALICESIGNER;
   let BOBSIGNER;
-  let CHARLIESIGNER;
   let CHANNEL_CREATORSIGNER;
 
   let loadFixture;
