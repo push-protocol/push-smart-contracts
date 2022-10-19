@@ -119,21 +119,21 @@ describe("EPNS CoreV2 Protocol", function () {
 
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES,0);
 
-            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::onlyInactiveChannels: Channel already Activated")
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyInactiveChannels: Channel already Activated")
           });
 
           it("Should revert Channel Type is not the ALLOWED TYPES", async function () {
             const CHANNEL_TYPE = 0;
             const tx1 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_FEES,0);
 
-            await expect(tx1).to.be.revertedWith("EPNSCoreV1.5::onlyUserAllowedChannelType: Channel Type Invalid")
+            await expect(tx1).to.be.revertedWith("EPNSCoreV2::onlyUserAllowedChannelType: Channel Type Invalid")
 
             const CHANNEL_TYPE_SECOND = 1;
             const testChannelSecond = ethers.utils.toUtf8Bytes("test-channel-hello-world-two");
 
             const tx2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE_SECOND, testChannelSecond,ADD_CHANNEL_MIN_FEES,0);
 
-            await expect(tx2).to.be.revertedWith("EPNSCoreV1.5::onlyUserAllowedChannelType: Channel Type Invalid")
+            await expect(tx2).to.be.revertedWith("EPNSCoreV2::onlyUserAllowedChannelType: Channel Type Invalid")
           });
 
           it("should revert if allowance is not greater than min fees", async function(){
@@ -144,7 +144,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,tokensBN(10),0);
 
-            await expect(tx).to.be.revertedWith("EPNSCoreV1.5::_createChannelWithPUSH: Insufficient Deposit Amount")
+            await expect(tx).to.be.revertedWith("EPNSCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount")
           });
 
             it("should revert if amount being transferred is greater than actually approved", async function(){
