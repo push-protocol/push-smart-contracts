@@ -619,8 +619,8 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     /**
      * @notice Meta transaction function for Sending Notifications
      * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
+     * @return bool returns whether or not send notification credentials was successful.
      **/
-
     function sendNotifBySig(
         address _channel,
         address _recipient,
@@ -631,12 +631,11 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    ) external returns(bool) {
 
-        require(_signer != address(0),"EPNSCommV1::sendNotifBySig: Invalid signer address");
-        require(nonce == nonces[_signer]++, "EPNSCommV1::sendNotifBySig: Invalid nonce");
-        require(now <= expiry, "EPNSCommV1::sendNotifBySig: Signature expired");
-        
+        if(_signer == address(0) || nonce != nonces[_signer] || now > expiry){
+            return false;
+        }
 
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -666,17 +665,24 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
                 digest,
                 abi.encodePacked(r, s, v)
             );
-            require(result == 0x1626ba7e, "EPNSCommV1::sendNotifBySig: Invalid 1271 Signature");
+            if(result != 0x1626ba7e) return false;
         }else{
             address signatory = ecrecover(digest, v, r, s);
-            require(signatory == _signer, "EPNSCommV1::sendNotifBySig: Invalid signature");
+            if(signatory != _signer) return false;
         }
+
+        // update txn nounce
+        nonces[_signer]++; 
+
+        // check sender & emit event
         _sendNotification(
             _channel,
             _recipient,
             _signer,
             _identity
         );
+
+        return true;
     }
 
     /* **************

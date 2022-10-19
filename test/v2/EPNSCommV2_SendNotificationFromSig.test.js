@@ -1,9 +1,6 @@
 const { ethers, waffle } = require("hardhat");
 
-const {
-  bn,
-  tokensBN,
-} = require("../../helpers/utils");
+const { bn, tokensBN } = require("../../helpers/utils");
 
 const { epnsContractFixture, tokenFixture } = require("../common/fixtures");
 const { expect } = require("../common/expect");
@@ -207,7 +204,7 @@ describe("EPNS CoreV2 Protocol", function () {
           message
         );
         var { v, r, s } = ethers.utils.splitSignature(invalid_signature);
-        var tx = EPNSCommV1Proxy.sendNotifBySig(
+        var tx = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
           channel,
           subscriber,
           VerifierContract.address,
@@ -218,9 +215,8 @@ describe("EPNS CoreV2 Protocol", function () {
           r,
           s
         );
-        await expect(tx).to.be.revertedWith(
-          "Contract verifier: Invalid signer"
-        );
+        // Invalid txn yields false
+        await expect(tx).to.be.false;
 
         // Admin signer is owner of Verifier Contract
         // so Admin signer signs on behalf of contract
@@ -230,7 +226,7 @@ describe("EPNS CoreV2 Protocol", function () {
           message
         );
         var { v, r, s } = ethers.utils.splitSignature(valid_signature);
-        var tx = EPNSCommV1Proxy.sendNotifBySig(
+        var tx = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
           channel,
           subscriber,
           VerifierContract.address,
@@ -242,10 +238,26 @@ describe("EPNS CoreV2 Protocol", function () {
           s
         );
 
+        // valid sig yields true
+        await expect(tx).to.be.true;
+
+        var tx = await EPNSCommV1Proxy.sendNotifBySig(
+          channel,
+          subscriber,
+          VerifierContract.address,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
+        );
+
+        // actual txn emits event
         await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
-      it("Reverts on signature replay", async function () {
+      it("Returns false on signature replay", async function () {
         const chainId = await EPNSCommV1Proxy.chainID().then((e) =>
           e.toNumber()
         );
@@ -286,10 +298,10 @@ describe("EPNS CoreV2 Protocol", function () {
           r,
           s
         );
-
         await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification");
 
-        const tx2 = EPNSCommV1Proxy.sendNotifBySig(
+        // should return false
+        var tx2 = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
           channel,
           subscriber,
           CHANNEL_CREATOR,
@@ -300,10 +312,21 @@ describe("EPNS CoreV2 Protocol", function () {
           r,
           s
         );
+        expect(tx2).to.be.false;
 
-        await expect(tx2).to.be.revertedWith(
-          "EPNSCommV1::sendNotifBySig: Invalid nonce"
+        // should not emit any envy
+        var tx2 = EPNSCommV1Proxy.sendNotifBySig(
+          channel,
+          subscriber,
+          CHANNEL_CREATOR,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
         );
+        await expect(tx2).to.not.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
       it("Reverts on signature expire", async function () {
@@ -337,7 +360,8 @@ describe("EPNS CoreV2 Protocol", function () {
         );
         const { v, r, s } = ethers.utils.splitSignature(signature);
 
-        const tx = EPNSCommV1Proxy.sendNotifBySig(
+        // it should return false
+        var tx = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
           channel,
           subscriber,
           CHANNEL_CREATOR,
@@ -348,10 +372,21 @@ describe("EPNS CoreV2 Protocol", function () {
           r,
           s
         );
+        expect(tx).to.be.false;
 
-        await expect(tx).to.be.revertedWith(
-          "EPNSCommV1::sendNotifBySig: Signature expired"
+        // it should not emit event
+        var tx = EPNSCommV1Proxy.sendNotifBySig(
+          channel,
+          subscriber,
+          CHANNEL_CREATOR,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
         );
+        await expect(tx).to.not.emit(EPNSCommV1Proxy, "SendNotification");
       });
     });
   });
