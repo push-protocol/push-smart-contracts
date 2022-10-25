@@ -41,7 +41,6 @@ contract EPNSCoreV2 is
         EVENTS
      *************** */
     event UpdateChannel(address indexed channel, bytes identity);
-    event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(
         address indexed channel,
@@ -975,5 +974,131 @@ contract EPNSCoreV2 is
             chainId := chainid()
         }
         return chainId;
+    }
+
+
+    /* ***************
+    
+        EXPERIMENTAL ZONE - Stake and Claim Function -> V3
+    
+    *************** */
+
+    //Events
+    event Staked(address indexed user, uint256 stakedAmount);
+    event Unstake(address indexed user, uint256 withdrawAmount);
+    event RewardsClaimed(address indexed user, uint256 rewardAmount);
+
+    // Getters 
+    function lastTimeRewardApplicable() public view returns (uint256) {
+        return block.timestamp < stakeEpochEnd ? block.timestamp : stakeEpochEnd;
+    }
+
+    function rewardPerToken() public view returns (uint256) {
+        if (totalStakedAmount == 0) {
+            return rewardPerTokenStored;
+        }
+        return
+            rewardPerTokenStored.add(
+                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(ADJUST_FOR_FLOAT).div(totalStakedAmount)
+            );
+    }
+
+    function getClaimableRewards(address account) public view returns (uint256) { // earned
+        return userStakedAmount[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(ADJUST_FOR_FLOAT).add(rewards[account]);
+    }
+
+    function getRewardForDuration() external view returns (uint256) {
+        return rewardRate.mul(stakeEpochDuration);
+    }
+
+       // Stake and Claim Functions
+    function stake(uint256 _stakeAmount) external whenNotPaused updateReward(msg.sender){
+        require(_stakeAmount >= ADD_CHANNEL_MIN_FEES, "EPNSCoreV2::stake: Invalid Stake Amount");
+
+        POOL_FUNDS = POOL_FUNDS.add(_stakeAmount);
+        totalStakedAmount = totalStakedAmount.add(_stakeAmount);
+        userStakedAmount[msg.sender] = userStakedAmount[msg.sender].add(_stakeAmount);
+
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _stakeAmount
+        );
+        emit Staked(msg.sender, _stakeAmount);
+    }
+
+    // Unstakes complete staked amount
+    function unStake() external updateReward(msg.sender){
+        require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::unStake: No staked tokens");
+        
+        uint256 stakedAmount = userStakedAmount[msg.sender];
+        
+        POOL_FUNDS = POOL_FUNDS.sub(stakedAmount);
+        totalStakedAmount = totalStakedAmount.sub(stakedAmount);
+        userStakedAmount[msg.sender] = 0;     
+
+        // Calculate and transfer any pending rewards for the user
+        uint256 rewardAmount = getClaimableRewards(msg.sender);
+        uint256 totalAmount = stakedAmount.add(rewardAmount);
+        
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+            msg.sender,
+            totalAmount
+        );
+        emit Unstake(msg.sender, totalAmount);
+    }
+
+    function claimRewards() external updateReward(msg.sender){
+        require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::claimRewards: Caller is not a Staker");
+        uint256 totalClaimableRewards = rewards[msg.sender];
+        require(totalClaimableRewards > 0 && totalClaimableRewards <= PROTOCOL_POOL_FEES, "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment");
+        
+        rewards[msg.sender] = 0;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.sub(totalClaimableRewards);
+        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(totalClaimableRewards);
+        
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
+            msg.sender,
+            totalClaimableRewards
+        );
+        emit RewardsClaimed(msg.sender, totalClaimableRewards);
+    }
+    
+    function setStakeEpochDuration(uint256 _duration) external onlyPushChannelAdmin {
+        require(
+            block.timestamp > stakeEpochEnd,
+            "Previous rewards period must be complete before changing the duration for the new period"
+        );
+        stakeEpochDuration = _duration;
+    }
+
+    // RewardRate Updation function
+    function initiateNewStake(uint256 reward) external onlyPushChannelAdmin updateReward(address(0)) {
+        if (block.timestamp >= stakeEpochEnd) {
+            rewardRate = reward.div(stakeEpochDuration);
+        } else {
+            uint256 remaining = stakeEpochEnd.sub(block.timestamp);
+            uint256 leftover = remaining.mul(rewardRate);
+            rewardRate = reward.add(leftover).div(stakeEpochDuration);
+        }
+
+        uint expectedRate = PROTOCOL_POOL_FEES.div(stakeEpochDuration);
+        require(rewardRate <= expectedRate, "Provided reward too high");
+
+        lastUpdateTime = block.timestamp;
+        stakeEpochEnd = block.timestamp.add(stakeEpochDuration);
+    }
+
+    
+      /* ========== MODIFIERS ========== */
+
+    modifier updateReward(address account) {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = lastTimeRewardApplicable();
+        if (account != address(0)) {
+            rewards[account] = getClaimableRewards(account);
+            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+        }
+        _;
     }
 }
