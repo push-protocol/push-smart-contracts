@@ -983,6 +983,20 @@ contract EPNSCoreV2 is
     
     *************** */
 
+    uint256 public stakeEpochEnd = 0; // periodFinish
+    uint256 public rewardRate = 0;
+    uint256 public stakeEpochDuration = 7 days; //rewardsDuration
+    uint256 public lastUpdateTime;
+    uint256 public totalStakedAmount; // totalSupply
+    uint256 public rewardPerTokenStored;
+    uint256 public stakeStartTime; // to be removed after testing
+
+    // Mappings 
+    mapping(address => uint) public rewards;
+    mapping(address => uint256) public userStakedAmount;
+    mapping(address => uint) public userRewardPerTokenPaid;
+    mapping(address => uint256) public usersRewardsClaimed;   
+
     //Events
     event Staked(address indexed user, uint256 stakedAmount);
     event Unstake(address indexed user, uint256 withdrawAmount);
@@ -997,6 +1011,7 @@ contract EPNSCoreV2 is
         if (totalStakedAmount == 0) {
             return rewardPerTokenStored;
         }
+        //console.log("rewardRate-", rewardRate);
         return
             rewardPerTokenStored.add(
                 lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(ADJUST_FOR_FLOAT).div(totalStakedAmount)
@@ -1049,6 +1064,7 @@ contract EPNSCoreV2 is
     }
 
     function claimRewards() external updateReward(msg.sender){
+        //console.log(stakeEpochEnd);
         require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::claimRewards: Caller is not a Staker");
         uint256 totalClaimableRewards = rewards[msg.sender];
         require(totalClaimableRewards > 0 && totalClaimableRewards <= PROTOCOL_POOL_FEES, "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment");
@@ -1084,7 +1100,8 @@ contract EPNSCoreV2 is
 
         uint expectedRate = PROTOCOL_POOL_FEES.div(stakeEpochDuration);
         require(rewardRate <= expectedRate, "Provided reward too high");
-
+        
+        stakeStartTime = block.timestamp;
         lastUpdateTime = block.timestamp;
         stakeEpochEnd = block.timestamp.add(stakeEpochDuration);
     }

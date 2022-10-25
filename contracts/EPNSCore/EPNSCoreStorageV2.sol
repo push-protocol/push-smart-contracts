@@ -12,22 +12,4 @@ contract EPNSCoreStorageV2 {
     mapping(address => uint256) public nonces;
     mapping(address => uint256) public channelUpdateCounter;
 
-     /* ***************
-    
-        EXPERIMENTAL ZONE - Stake and Claim Function -> V3
-    
-    *************** */
-
-    uint256 public stakeEpochEnd = 0; // periodFinish
-    uint256 public rewardRate = 0;
-    uint256 public stakeEpochDuration = 7 days; //rewardsDuration
-    uint256 public lastUpdateTime;
-    uint256 public totalStakedAmount; // totalSupply
-    uint256 public rewardPerTokenStored;
-
-    // Mappings 
-    mapping(address => uint) public rewards;
-    mapping(address => uint256) public userStakedAmount;
-    mapping(address => uint) public userRewardPerTokenPaid;
-    mapping(address => uint256) public usersRewardsClaimed;   
 }
