@@ -49,6 +49,7 @@ module.exports = {
           `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
           blockNumber: 7755338
       },
+      allowUnlimitedContractSize: true
     },
     localhost: {
       url: "http://localhost:8545",
