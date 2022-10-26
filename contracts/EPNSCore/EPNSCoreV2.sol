@@ -1014,12 +1014,12 @@ contract EPNSCoreV2 is
         //console.log("rewardRate-", rewardRate);
         return
             rewardPerTokenStored.add(
-                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(ADJUST_FOR_FLOAT).div(totalStakedAmount)
+                lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(totalStakedAmount)
             );
     }
 
     function getClaimableRewards(address account) public view returns (uint256) { // earned
-        return userStakedAmount[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(ADJUST_FOR_FLOAT).add(rewards[account]);
+        return userStakedAmount[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
     function getRewardForDuration() external view returns (uint256) {
@@ -1064,7 +1064,13 @@ contract EPNSCoreV2 is
     }
 
     function claimRewards() external updateReward(msg.sender){
-        //console.log(stakeEpochEnd);
+
+        uint256 lasTimeUpdate = lastTimeRewardApplicable();
+         console.log("Actual RewardRate", rewardRate);
+        console.log("Actual Stake EPOCH End", stakeEpochEnd);
+        console.log("Actual lasTimeUpdate ", lasTimeUpdate);
+        console.log("-------------------------");   
+
         require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::claimRewards: Caller is not a Staker");
         uint256 totalClaimableRewards = rewards[msg.sender];
         require(totalClaimableRewards > 0 && totalClaimableRewards <= PROTOCOL_POOL_FEES, "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment");

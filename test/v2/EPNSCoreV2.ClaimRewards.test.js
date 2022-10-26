@@ -205,45 +205,103 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
         await stakePushTokens(ALICESIGNER, tokensBN(100));
         await stakePushTokens(CHARLIESIGNER, tokensBN(100));
         await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
-        
-        console.log('Stake Start',stakeStartBlock.toString());
-        console.log('Stake Start TX', tx_StakeStart.blockNumber);
 
-        const start = 12222130;
+        const start = tx_StakeStart.blockNumber;
          
         const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
           start + 86400, 
-          start + 86405, 
-          start + 86400, 
-          start + 86400
+          start + 604805, 
+          start + 604810, 
+          start + 604815
         ]		
-        await jumpToBlockNumber(12308529);
+        await jumpToBlockNumber(BOB_BLOCK - 1);
         const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-        await jumpToBlockNumber(12308534);
+        await jumpToBlockNumber(ALICE_BLOCK - 1);
         const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-        // await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
-        // const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-        // await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
-        // const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
+        await jumpToBlockNumber(CHARLIE_BLOCK - 1);
+        const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+        await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK - 1);
+        const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
         
         const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
         const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-        // const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-        // const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+        const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
         // Logs if needed
         console.log("First Claim")
         console.log(`Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
         console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
-        // console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
-        // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
+        console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
+        console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
         
-        // // Verify rewards of ChannelCreator > Charlie > Alice > BOB
+        // Verify rewards of ChannelCreator > Charlie > Alice > BOB
         // expect(aliceClaim_after).to.be.gt(bobClaim_after);
         // expect(charlieClaim_after).to.be.gt(aliceClaim_after);
         // expect(channelCreatorClaim_after).to.be.gt(charlieClaim_after);
     })
 
+    /***
+     * Case:
+     * 4 Stakers stake 100 Tokens and each of them try to claim after Complete Duration -> 1 week 
+     * Expecatations: Rewards of all stakers after 1 complete week should be corect
+     */
+     it("Total perPerperson share after 1 week should be correct", async function(){
+      // Initial Set-Up
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      await createChannel(CHARLIESIGNER);
+      await createChannel(CHANNEL_CREATORSIGNER);
+
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+      const stakeStartBlock = await EPNSCoreV1Proxy.stakeStartTime();
+
+      await stakePushTokens(BOBSIGNER, tokensBN(100));
+      await stakePushTokens(ALICESIGNER, tokensBN(100));
+      await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+      await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+
+      const start = tx_StakeStart.blockNumber;
+      const perPersonShare = tokensBN(10);
+      
+      const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
+        start + 604800, 
+        start + 604805, 
+        start + 604810, 
+        start + 604815
+      ]		
+      await jumpToBlockNumber(BOB_BLOCK - 1);
+      const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+      await jumpToBlockNumber(ALICE_BLOCK - 1);
+      const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+      await jumpToBlockNumber(CHARLIE_BLOCK - 1);
+      const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK - 1);
+      const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
+	
+      const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+      const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+      const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+      //const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+      // Logs if needed
+    // console.log("First Claim")
+    console.log(`Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
+    console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
+    console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
+    // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
+    
+    expect(ethers.BigNumber.from(bobClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+    expect(ethers.BigNumber.from(aliceClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+    expect(ethers.BigNumber.from(charlieClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+    })
+
 });
 
 });
+
+/* Notes
+* Actual RewardRate 33068783068783
+* Actual Stake EPOCH End 1670630732
+*/
