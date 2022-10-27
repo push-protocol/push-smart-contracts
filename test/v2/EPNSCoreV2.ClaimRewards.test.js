@@ -75,10 +75,16 @@ describe("EPNS Core Protocol", function () {
     /***
    * CHECKPOINTS TO CONSIDER WHILE TESTING -> Overall Stake-N-Claim Tests
    * ------------------------------------------
-   * 1. Stake and Unstake
+   * 1. Stake
    *  - Staking function should execute as expected ✅
    *  - Staking functions shouldn't be executed when PAUSED.✅
-   *  - Withdrawal should be executed as expected
+   *  - Staking functions shouldn't be executed when No Stake Epoch is Active.✅
+   * 
+   * 2. UnStake
+   *  - UnStake function should execute as expected ✅
+   *  - UnStake functions shouldn't be executed when Caller is Not a Staker.✅
+   *  - UnStaking right after staking should lead to any rewards.
+   *  - UnStaking should also transfer claimable rewards for the Caller ✅
    * 
    * 2. Reward Calculation and Claiming Reward Tests
    *  - First Claim of stakers should execute as expected ✅
@@ -89,10 +95,16 @@ describe("EPNS Core Protocol", function () {
    * 
    * 3. Initiating New Stakes
    *  - Should only be called by the governance/admin ✅
-   *  - Reward value passed should never be more than available Protocol_Pool_Fees in the protocol.
-   *  - Rewards should be accurate if new stake is initiated within an existing stakeDuration
-   *  - Rewards should be accurate if new stake is initiated After an existing stakeDuration
+   *  - Reward value passed should never be more than available Protocol_Pool_Fees in the protocol. ✅
    *  - lastUpdateTime and endPeriod should be updated accurately and stakeDuration should be increased.
+   *  - If new Stake is initiated after END of running stake epoch:
+   *    - Rewards should be accurate if new stake is initiated After an existing stakeDuration.
+   * 
+   *    - Rewards should be accurate if new stake is initiated within an existing stakeDuration.
+   *    - 
+   *  - 
+   *  - 
+   *  - 
    * 
    */
 
@@ -144,7 +156,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
         await ethers.provider.send("hardhat_mine", [blockIncreaseHex]);
       }
 
-  describe("🟢 Staking and Unstake Tests ", function()
+  describe("🟢 Staking Tests ", function()
     {
       it("Ensure STAKE function executes as expected", async function(){
           const rewardVal_before = await EPNSCoreV1Proxy.rewardRate();
@@ -178,13 +190,13 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
             
     })
     
-    it("Stake function shouldn't be executed when PAUSED", async function(){
+    it("Stake function should NOT be executed when PAUSED", async function(){
       // Initial Set-Up
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
       
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
-      await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
 
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
       const tx = stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
@@ -192,95 +204,380 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       expect(tx).to.be.revertedWith('Pausable: paused');
     }) 
 
+    it("Stake function should NOT be executed If No Active Stake EPOCH is present", async function(){
+      // Initial Set-Up
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+      const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+
+      const after7days = stakeStartBlock.add(604802);
+      await jumpToBlockNumber(after7days.sub(1));
+
+      const tx = stakePushTokens(ALICESIGNER, tokensBN(100));
+
+      expect(tx).to.be.revertedWith('EPNSCoreV2::stake: No active Stake Epoch currently');
+    }) 
+
+    it("Stake amount should be greater than the Minimum Threshold", async function(){
+      // Initial Set-Up
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+      const tx = stakePushTokens(ALICESIGNER, tokensBN(10));
+
+      expect(tx).to.be.revertedWith('EPNSCoreV2::stake: Invalid Stake Amount');
+    }) 
+
+
   });
+
+  describe("🟢 UnStaking Tests ", function()
+  {
+    it("Ensure UnStake function executes as expected", async function(){
+      // Initial Set-Up
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+      
+      await EPNSCoreV1Proxy.connect(ALICESIGNER).stake(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(2));
+      await EPNSCoreV1Proxy.connect(BOBSIGNER).stake(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(2));
+
+      // User Unstakes after 1 day
+      const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+      const afterOneDay = stakeStartBlock.add(86400);
+
+      // Before Unstake execution
+      const poolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
+      const stakerBalance_before = await PushToken.balanceOf(BOB);
+      const totalStakedAmount_before = await EPNSCoreV1Proxy.totalStakedAmount();
+
+      await EPNSCoreV1Proxy.connect(BOBSIGNER).unStake();
+
+      // After Unstake execution
+      const poolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+      const totalStakedAmount_after = await EPNSCoreV1Proxy.totalStakedAmount();
+      const bobStakeAmount = await EPNSCoreV1Proxy.userStakedAmount(BOB);
+      const stakerBalance_after = await PushToken.balanceOf(BOB);
+      
+      const totalAmountTransferred = stakerBalance_after.sub(stakerBalance_before);
+      console.log(totalAmountTransferred.toString())
+      expect(bobStakeAmount).to.be.equal(0);
+      expect(totalStakedAmount_after).to.be.lt(totalStakedAmount_before);
+      expect(poolFunds_after).to.be.lt(poolFunds_before);
+      expect(totalAmountTransferred).to.be.gt(tokensBN(100));             
+  })
+  
+  it("User shouldn't unstake if He/She isn't a Staker", async function(){
+    // Initial Set-Up
+    await createChannel(ALICESIGNER);
+    await createChannel(BOBSIGNER);
+    
+    await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+    const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+    const tx = EPNSCoreV1Proxy.connect(CHARLIESIGNER).unStake();
+    
+    expect(tx).to.be.revertedWith('EPNSCoreV2::unStake: No staked tokens');
+  }) 
+
+
+  it.skip("User Staking and Unstaking in same tx shouldn't recieve any rewards", async function(){
+    // Initial Set-Up
+    await createChannel(ALICESIGNER);
+    await createChannel(BOBSIGNER);
+    
+    await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+    const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+    const stakeBlock = bn(tx_StakeStart.blockNumber);
+
+    const stakerBalance_before = await PushToken.balanceOf(BOB); 
+
+    await ethers.provider.send("evm_setAutomine", [false]);
+		await Promise.all([
+      await stakePushTokens(BOBSIGNER, tokensBN(100)),
+      await EPNSCoreV1Proxy.connect(BOBSIGNER).unStake(),
+			]);
+    await network.provider.send("evm_mine");
+		await ethers.provider.send("evm_setAutomine", [true]);
+
+    // await stakePushTokens(BOBSIGNER, tokensBN(100));
+    // await EPNSCoreV1Proxy.connect(BOBSIGNER).unStake();
+    const stakerBalance_after = await PushToken.balanceOf(BOB);
+
+    console.log(stakerBalance_before.toString())
+    console.log(stakerBalance_after.toString())
+  }) 
+
+
+});
 
   describe("🟢 Reward Calculation and Claiming Reward Tests ", function()
   {
-  /***
-   * Case:
-   * 4 Stakers stake 100 Tokens and each of them try to claim after 100 blocks 
-   * Expecatations: Rewards of -> ChannelCreator > Charlie > Alice > BOB
-   */
-  it("First Claim: Stakers who hold more should get more Reward after 1 day", async function(){
-    // Initial Set-Up
-      await createChannel(ALICESIGNER);
-      await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
+    /***
+     * Case:
+     * 4 Stakers stake 100 Tokens and each of them try to claim after 100 blocks 
+     * Expecatations: Rewards of -> ChannelCreator > Charlie > Alice > BOB
+     */
+    it("First Claim: Stakers who hold more should get more Reward after 1 day", async function(){
+      // Initial Set-Up
+        await createChannel(ALICESIGNER);
+        await createChannel(BOBSIGNER);
+        await createChannel(CHARLIESIGNER);
+        await createChannel(CHANNEL_CREATORSIGNER);
 
-      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
-      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
-      const stakeStartBlock = await EPNSCoreV1Proxy.stakeStartTime();
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+        const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
 
-      await stakePushTokens(BOBSIGNER, tokensBN(100));
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-      await stakePushTokens(CHARLIESIGNER, tokensBN(100));
-      await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+        const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+        
+        const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
+          stakeStartBlock.add(86400), 
+          stakeStartBlock.add(86405), 
+          stakeStartBlock.add(86410), 
+          stakeStartBlock.add(86415)
+        ]		
+        await jumpToBlockNumber(BOB_BLOCK.sub(1));
+        const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+        await jumpToBlockNumber(ALICE_BLOCK.sub(1));
+        const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+        await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
+        const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+        await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
+        const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
+        
+        const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
-      const start = bn(tx_StakeStart.blockNumber);
-       
-      const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
-        start.add(86400), 
-        start.add(86405), 
-        start.add(86410), 
-        start.add(86415)
-      ]		
-      await jumpToBlockNumber(BOB_BLOCK.sub(1));
-      const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK.sub(1));
-      const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
-      const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
-      const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
-      
-      const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-      const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+        // Logs if needed
+        // console.log("First Claim")
+        // console.log(`Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
+        // console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
+        // console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
+        // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
+        
+        // Verify rewards of ChannelCreator > Charlie > Alice > BOB
+        expect(aliceClaim_after).to.be.gt(bobClaim_after);
+        expect(charlieClaim_after).to.be.gt(aliceClaim_after);
+        expect(channelCreatorClaim_after).to.be.gt(charlieClaim_after);
+    })
 
-      // Logs if needed
+    /***
+     * Case:
+     * 4 Stakers stake 100 Tokens and each of them try to claim after Complete Duration -> 1 week 
+     * Expecatations: Rewards of all stakers after 1 complete week should be corect
+     */
+    it("Equal rewards should be distributed to Users after Stake Epoch End", async function(){
+      // Initial Set-Up
+        await createChannel(ALICESIGNER);
+        await createChannel(BOBSIGNER);
+        await createChannel(CHARLIESIGNER);
+        await createChannel(CHANNEL_CREATORSIGNER);
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+        const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+
+        const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+        const perPersonShare = tokensBN(10);
+
+        const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
+          stakeStartBlock.add(604800), 
+          stakeStartBlock.add(604805), 
+          stakeStartBlock.add(604810), 
+          stakeStartBlock.add(604815)
+        ]		
+        await jumpToBlockNumber(BOB_BLOCK.sub(1));
+        const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+        await jumpToBlockNumber(ALICE_BLOCK.sub(1));
+        const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+        await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
+        const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+        await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
+        const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
+
+        const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        // Logs if needed
       // console.log("First Claim")
       // console.log(`Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
       // console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
       // console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
       // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
       
-      // Verify rewards of ChannelCreator > Charlie > Alice > BOB
-      expect(aliceClaim_after).to.be.gt(bobClaim_after);
-      expect(charlieClaim_after).to.be.gt(aliceClaim_after);
-      expect(channelCreatorClaim_after).to.be.gt(charlieClaim_after);
-  })
+      expect(ethers.BigNumber.from(bobClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+      expect(ethers.BigNumber.from(aliceClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+      expect(ethers.BigNumber.from(charlieClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+      expect(ethers.BigNumber.from(channelCreatorClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+    })
 
-  /***
-   * Case:
-   * 4 Stakers stake 100 Tokens and each of them try to claim after Complete Duration -> 1 week 
-   * Expecatations: Rewards of all stakers after 1 complete week should be corect
-   */
-  it("Equal rewards should be distributed to Users after Stake Epoch End", async function(){
-    // Initial Set-Up
+    it("Rewards should adjust automatically if new Staker enters the Pool", async function(){
+      // Initial Set-Up
+        await createChannel(ALICESIGNER);
+        await createChannel(BOBSIGNER);
+        await createChannel(CHARLIESIGNER);
+        await createChannel(CHANNEL_CREATORSIGNER);
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+        const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+
+        const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+        // Afer Day 1, Bob Claims
+        const BOB_BLOCK = stakeStartBlock.add(86400)		
+        await jumpToBlockNumber(BOB_BLOCK.sub(1));
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+        const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        
+        // After Day 1, a User Enters and Stakes Same 100 tokens 
+        await createChannel(USER_1_SIGNER);
+        await stakePushTokens(USER_1_SIGNER, tokensBN(100));
+
+        const [USER_1_BLOCK, BOB_BLOCK_2, ALICE_BLOCK_2, CHARLIE_BLOCK_2, CHANNEL_CREATOR_BLOCK_2] = [
+          stakeStartBlock.add(172800), 
+          stakeStartBlock.add(172805), 
+          stakeStartBlock.add(172813), 
+          stakeStartBlock.add(172817),
+          stakeStartBlock.add(172820)
+        ]
+
+        await jumpToBlockNumber(USER_1_BLOCK.sub(1));
+        const tx_user1 = await EPNSCoreV1Proxy.connect(USER_1_SIGNER).claimRewards();
+        await jumpToBlockNumber(BOB_BLOCK_2.sub(1));
+        const tx_bob_2 = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+        await jumpToBlockNumber(ALICE_BLOCK_2.sub(1));
+        const tx_alice_2 = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
+        await jumpToBlockNumber(CHARLIE_BLOCK_2.sub(1));
+        const tx_charlie_2 = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
+        await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_2.sub(1));
+        const tx_channelCreator_2 = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
+        
+        const user1Claim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_1);
+        const bobClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const aliceClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        const charlieClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        const channelCreatorClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        // // Logs if need be
+        // console.log("\n2nd Claim")
+        // console.log(`User1 Claimed ${user1Claim_after.toString()} tokens at Block number ${tx_user1.blockNumber}`);
+        // console.log(`Bob Claimed ${bobClaim_after_2.toString()} tokens at Block number ${tx_bob_2.blockNumber}`);
+        // console.log(`Alice Claimed ${aliceClaim_after_2.toString()} tokens at Block number ${tx_alice_2.blockNumber}`);
+        // console.log(`Charlie Claimed ${charlieClaim_after_2.toString()} tokens at Block number ${tx_charlie_2.blockNumber}`);
+        // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after_2.toString()} tokens at Block number ${tx_channelCreator_2.blockNumber}`);
+        
+        /*
+        * VERIFY:
+        * Rewards of User1 < Rewards of BOB/ALICE/CHARLIE after 1st Day -> This ensures Stakers who staked late get less rewards than old stakers
+        * Rewards of ChannelCreator > Charlie > Alice > BOB > User1
+        * Per person reward Decreases after entry of new Staker
+        */
+
+        expect(bobClaim_after_2).to.be.gt(user1Claim_after);
+        expect(aliceClaim_after_2).to.be.gt(bobClaim_after_2);
+        expect(charlieClaim_after_2).to.be.gt(aliceClaim_after_2);
+        expect(channelCreatorClaim_after_2).to.be.gt(charlieClaim_after_2);
+
+        // Calculate and Compare the Per Person shares of 1 day (for any Old Staker)
+        const perPersonShare_old = bobClaim_after;
+        const perPersonShare_new = bobClaim_after_2.sub(bobClaim_after);
+
+        expect(perPersonShare_new).to.be.lt(perPersonShare_old); // Entry of new Staker adjusts rewards for all Stakers
+        
+    })
+
+    it("NO Claim of rewards after Complete Withdrawal", async function(){
+      // Initial Set-Up
+        await createChannel(ALICESIGNER);
+        await createChannel(BOBSIGNER);
+        await createChannel(CHARLIESIGNER);
+        await createChannel(CHANNEL_CREATORSIGNER);
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+        const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+
+        const bobBalance_before = await PushToken.balanceOf(BOB);
+
+        const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+        // Afer Day 3, Bob completely Unstakes
+        const BOB_BLOCK = stakeStartBlock.add(259200)		
+        await jumpToBlockNumber(BOB_BLOCK.sub(1));
+
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unStake();
+        const bobBalance_after = await PushToken.balanceOf(BOB);
+        
+        const claimTx = EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
+
+        // Ensures that unstakes transfers Stake Amount + Claimable Rewards for BOB
+        const tokenAfterUnstake = bobBalance_after.sub(bobBalance_before);
+        expect(tokenAfterUnstake).to.be.gt(tokensBN(100));
+        expect(claimTx).to.be.revertedWith("EPNSCoreV2::claimRewards: Caller is not a Staker")
+        
+    })
+
+  });
+  
+  describe("🟢 Initiate New Stake - After the END of a STAKE EPOCH ", function()
+  {
+
+    it("Manual Testing of initiateNewStake function", async function(){
+      // 4 Stakers Stake
+      // Stake period Ends - 3 unstakes but 1 doesn't
+      // New Stake Epoch Starts with different reward value
+      // 2 new Users Stake + 1 old Staker
+      // Check all three rewards
+
+      // Initial Set-Up
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
+      // await createChannel(CHARLIESIGNER);
+      // await createChannel(CHANNEL_CREATORSIGNER);
 
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
       const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
-      const stakeStartBlock = await EPNSCoreV1Proxy.stakeStartTime();
-
       await stakePushTokens(BOBSIGNER, tokensBN(100));
       await stakePushTokens(ALICESIGNER, tokensBN(100));
       await stakePushTokens(CHARLIESIGNER, tokensBN(100));
       await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
 
-      const start = bn(tx_StakeStart.blockNumber);
-      const perPersonShare = tokensBN(10);
-
-      const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
-        start.add(604800), 
-        start.add(604805), 
-        start.add(604810), 
-        start.add(604815)
+      const stakeStartBlock = bn(tx_StakeStart.blockNumber);
+      
+      const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CC_BLOCK] = [
+        stakeStartBlock.add(604800), 
+        stakeStartBlock.add(604805), 
+        stakeStartBlock.add(604810),
+        stakeStartBlock.add(604815)
       ]		
       await jumpToBlockNumber(BOB_BLOCK.sub(1));
       const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
@@ -288,108 +585,80 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
       await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
       const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
+      await jumpToBlockNumber(CC_BLOCK.sub(1));
       const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
-
+      
       const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
       const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
       const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
       const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
+
+      const remainingRewards_1 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      const rewardRate_1 = await EPNSCoreV1Proxy.rewardRate();
       // Logs if needed
-    // console.log("First Claim")
-    // console.log(`Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
-    // console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
-    // console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
-    // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
-    
-    expect(ethers.BigNumber.from(bobClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
-    expect(ethers.BigNumber.from(aliceClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
-    expect(ethers.BigNumber.from(charlieClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
-    expect(ethers.BigNumber.from(channelCreatorClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
-  })
-
-  it("Rewards should adjust automatically if new Staker enters the Pool", async function(){
-    // Initial Set-Up
-      await createChannel(ALICESIGNER);
-      await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
-
-      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
-      const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
-
-      await stakePushTokens(BOBSIGNER, tokensBN(100));
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-      await stakePushTokens(CHARLIESIGNER, tokensBN(100));
-      await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
-
-      const start = bn(tx_StakeStart.blockNumber);
-      // Afer Day 1, Bob Claims
-      const BOB_BLOCK = start.add(86400)		
-      await jumpToBlockNumber(BOB_BLOCK.sub(1));
-      await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+      console.log("First Claim")
+      console.log('REMAINING POOL FEES', remainingRewards_1.toString())
+      console.log('REWARD RATE 1st', rewardRate_1.toString())
+      console.log(`\nBob Claimed ${bobClaim_after.toString()} tokens at Block number ${tx_bob.blockNumber}`);
+      console.log(`Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${tx_alice.blockNumber}`);
+      console.log(`Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${tx_charlie.blockNumber}`);
+      console.log(`ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${tx_channelCreator.blockNumber}`);
       
-      // After Day 1, a User Enters and Stakes Same 100 tokens 
+      // Two new Users Create Channel
       await createChannel(USER_1_SIGNER);
-      await stakePushTokens(USER_1_SIGNER, tokensBN(100));
+      await createChannel(USER_2_SIGNER);
 
-      const [USER_1_BLOCK, BOB_BLOCK_2, ALICE_BLOCK_2, CHARLIE_BLOCK_2, CHANNEL_CREATOR_BLOCK_2] = [
-        start.add(172800), 
-        start.add(172805), 
-        start.add(172813), 
-        start.add(172817),
-        start.add(172820)
-      ]
+      // Start a new EPOCH Cycle
+      // await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
+      const tx_StakeStart_2nd = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
+      
+      const stakeStartBlock_2nd = bn(tx_StakeStart_2nd.blockNumber);
+      console.log('2nd Stake Starts ->', stakeStartBlock_2nd.toString())
+      const [USER1_BLOCK, USER2_BLOCK, USER3_BLOCK] = [
+        stakeStartBlock_2nd.add(804800), 
+        stakeStartBlock_2nd.add(804806), 
+        stakeStartBlock_2nd.add(804810), 
+      ]		
+      await EPNSCoreV1Proxy.connect(BOBSIGNER).unStake();
+      await EPNSCoreV1Proxy.connect(ALICESIGNER).unStake();
+      await EPNSCoreV1Proxy.connect(CHARLIESIGNER).unStake();
+      await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).unStake();
 
-      await jumpToBlockNumber(USER_1_BLOCK.sub(1));
+      stakePushTokens(USER_1_SIGNER, tokensBN(100));
+      stakePushTokens(USER_2_SIGNER, tokensBN(100));
+      stakePushTokens(USER_3_SIGNER, tokensBN(100));
+      
+      await jumpToBlockNumber(USER1_BLOCK.sub(1));
       const tx_user1 = await EPNSCoreV1Proxy.connect(USER_1_SIGNER).claimRewards();
-      await jumpToBlockNumber(BOB_BLOCK_2.sub(1));
-      const tx_bob_2 = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK_2.sub(1));
-      const tx_alice_2 = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK_2.sub(1));
-      const tx_charlie_2 = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_2.sub(1));
-      const tx_channelCreator_2 = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
-      
-      const user1Claim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_1);
-      const bobClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      const charlieClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-      const channelCreatorClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+      await jumpToBlockNumber(USER2_BLOCK.sub(1));
+      const tx_user2 = await EPNSCoreV1Proxy.connect(USER_2_SIGNER).claimRewards();
+      await jumpToBlockNumber(USER3_BLOCK.sub(1));
+      const tx_user3 = await EPNSCoreV1Proxy.connect(USER_3_SIGNER).claimRewards();
 
-      // // Logs if need be
-      // console.log("\n2nd Claim")
-      // console.log(`User1 Claimed ${user1Claim_after.toString()} tokens at Block number ${tx_user1.blockNumber}`);
-      // console.log(`Bob Claimed ${bobClaim_after_2.toString()} tokens at Block number ${tx_bob_2.blockNumber}`);
-      // console.log(`Alice Claimed ${aliceClaim_after_2.toString()} tokens at Block number ${tx_alice_2.blockNumber}`);
-      // console.log(`Charlie Claimed ${charlieClaim_after_2.toString()} tokens at Block number ${tx_charlie_2.blockNumber}`);
-      // console.log(`ChannelCreator Claimed ${channelCreatorClaim_after_2.toString()} tokens at Block number ${tx_channelCreator_2.blockNumber}`);
-      
-      /*
-       * VERIFY:
-       * Rewards of User1 < Rewards of BOB/ALICE/CHARLIE after 1st Day -> This ensures Stakers who staked late get less rewards than old stakers
-       * Rewards of ChannelCreator > Charlie > Alice > BOB > User1
-       * Per person reward Decreases after entry of new Staker
-      */
+      const user3Rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_3);
+      const user1Rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_1);
+      const user2Rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_2);
 
-      expect(bobClaim_after_2).to.be.gt(user1Claim_after);
-      expect(aliceClaim_after_2).to.be.gt(bobClaim_after_2);
-      expect(charlieClaim_after_2).to.be.gt(aliceClaim_after_2);
-      expect(channelCreatorClaim_after_2).to.be.gt(charlieClaim_after_2);
+      const rewardRate_2 = await EPNSCoreV1Proxy.rewardRate();
+      const remainingRewards_2 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
-      // Calculate and Compare the Per Person shares of 1 day (for any Old Staker)
-      const perPersonShare_old = bobClaim_after;
-      const perPersonShare_new = bobClaim_after_2.sub(bobClaim_after);
+      console.log("\n 2nd Claim")
+      console.log('REWARD RATE 2nd', rewardRate_2.toString())
+      console.log('REMAINING POOL FEES2nd', remainingRewards_2.toString())
+      console.log(`User1 Claimed ${user1Rewards.toString()} tokens at Block number ${tx_user1.blockNumber}`);
+      console.log(`User2 Claimed ${user2Rewards.toString()} tokens at Block number ${tx_user2.blockNumber}`);
+      console.log(`User3 Claimed ${user3Rewards.toString()} tokens at Block number ${tx_user3.blockNumber}`);
 
-      expect(perPersonShare_new).to.be.lt(perPersonShare_old); // Entry of new Staker adjusts rewards for all Stakers
-      
-  })
+    })
 
   });
  
+  describe("🟢 Initiate New Stake - During an On-Going Staketeh a ", function()
+  {
+
+
+  });
 });
 
 });

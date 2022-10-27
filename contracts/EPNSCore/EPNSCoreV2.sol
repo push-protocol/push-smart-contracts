@@ -989,7 +989,6 @@ contract EPNSCoreV2 is
     uint256 public lastUpdateTime;
     uint256 public totalStakedAmount; // totalSupply
     uint256 public rewardPerTokenStored;
-    uint256 public stakeStartTime; // to be removed after testing
 
     // Mappings 
     mapping(address => uint) public rewards;
@@ -1028,6 +1027,7 @@ contract EPNSCoreV2 is
 
        // Stake and Claim Functions
     function stake(uint256 _stakeAmount) external whenNotPaused updateReward(msg.sender){
+        require(block.timestamp < stakeEpochEnd, "EPNSCoreV2::stake: No active Stake Epoch currently");
         require(_stakeAmount >= ADD_CHANNEL_MIN_FEES, "EPNSCoreV2::stake: Invalid Stake Amount");
 
         POOL_FUNDS = POOL_FUNDS.add(_stakeAmount);
@@ -1065,11 +1065,11 @@ contract EPNSCoreV2 is
 
     function claimRewards() external updateReward(msg.sender){
 
-        uint256 lasTimeUpdate = lastTimeRewardApplicable();
-         console.log("Actual RewardRate", rewardRate);
-        console.log("Actual Stake EPOCH End", stakeEpochEnd);
-        console.log("Actual lasTimeUpdate ", lasTimeUpdate);
-        console.log("-------------------------");   
+        // uint256 lasTimeUpdate = lastTimeRewardApplicable();
+        //  console.log("Actual RewardRate", rewardRate);
+        // console.log("Actual Stake EPOCH End", stakeEpochEnd);
+        // console.log("Actual lasTimeUpdate ", lasTimeUpdate);
+        // console.log("-------------------------");   
 
         require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::claimRewards: Caller is not a Staker");
         uint256 totalClaimableRewards = rewards[msg.sender];
@@ -1107,7 +1107,6 @@ contract EPNSCoreV2 is
         uint expectedRate = PROTOCOL_POOL_FEES.div(stakeEpochDuration);
         require(rewardRate <= expectedRate, "Provided reward too high");
         
-        stakeStartTime = block.timestamp;
         lastUpdateTime = block.timestamp;
         stakeEpochEnd = block.timestamp.add(stakeEpochDuration);
     }
