@@ -4,7 +4,7 @@ const {expect} = require("../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
 const {
-  tokensBN,
+  tokensBN, bn
 } = require("../../helpers/utils");
 
 describe("EPNS Core Protocol", function () {
@@ -137,7 +137,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
     }
 
     const jumpToBlockNumber = async(blockNumber) =>{
-        //blockNumber = blockNumber.toNumber();
+        blockNumber = blockNumber.toNumber();
         const currentBlock = await ethers.provider.getBlock("latest");
         const numBlockToIncrease = blockNumber - currentBlock.number;
         const blockIncreaseHex = `0x${numBlockToIncrease.toString(16)}`;
@@ -201,7 +201,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
    * 4 Stakers stake 100 Tokens and each of them try to claim after 100 blocks 
    * Expecatations: Rewards of -> ChannelCreator > Charlie > Alice > BOB
    */
-  it.skip("First Claim: Stakers who hold more should get more Reward after 1 day", async function(){
+  it("First Claim: Stakers who hold more should get more Reward after 1 day", async function(){
     // Initial Set-Up
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
@@ -217,21 +217,21 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       await stakePushTokens(CHARLIESIGNER, tokensBN(100));
       await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
 
-      const start = tx_StakeStart.blockNumber;
+      const start = bn(tx_StakeStart.blockNumber);
        
       const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
-        start + 86400, 
-        start + 86405, 
-        start + 86410, 
-        start + 86415
+        start.add(86400), 
+        start.add(86405), 
+        start.add(86410), 
+        start.add(86415)
       ]		
-      await jumpToBlockNumber(BOB_BLOCK - 1);
+      await jumpToBlockNumber(BOB_BLOCK.sub(1));
       const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK - 1);
+      await jumpToBlockNumber(ALICE_BLOCK.sub(1));
       const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK - 1);
+      await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
       const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK - 1);
+      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
       const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
       
       const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -257,7 +257,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
    * 4 Stakers stake 100 Tokens and each of them try to claim after Complete Duration -> 1 week 
    * Expecatations: Rewards of all stakers after 1 complete week should be corect
    */
-  it.skip("Equal rewards should be distributed to Users after Stake Epoch End", async function(){
+  it("Equal rewards should be distributed to Users after Stake Epoch End", async function(){
     // Initial Set-Up
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
@@ -273,28 +273,28 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       await stakePushTokens(CHARLIESIGNER, tokensBN(100));
       await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
 
-      const start = tx_StakeStart.blockNumber;
+      const start = bn(tx_StakeStart.blockNumber);
       const perPersonShare = tokensBN(10);
 
       const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
-        start + 604800, 
-        start + 604805, 
-        start + 604810, 
-        start + 604815
+        start.add(604800), 
+        start.add(604805), 
+        start.add(604810), 
+        start.add(604815)
       ]		
-      await jumpToBlockNumber(BOB_BLOCK - 1);
+      await jumpToBlockNumber(BOB_BLOCK.sub(1));
       const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK - 1);
+      await jumpToBlockNumber(ALICE_BLOCK.sub(1));
       const tx_alice = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK - 1);
+      await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
       const tx_charlie = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK - 1);
+      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
       const tx_channelCreator = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
 
       const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
       const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
       const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-      //const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+      const channelCreatorClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
       // Logs if needed
     // console.log("First Claim")
@@ -306,6 +306,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
     expect(ethers.BigNumber.from(bobClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
     expect(ethers.BigNumber.from(aliceClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
     expect(ethers.BigNumber.from(charlieClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
+    expect(ethers.BigNumber.from(channelCreatorClaim_after)).to.be.closeTo(ethers.BigNumber.from(perPersonShare), ethers.utils.parseEther("10"));
   })
 
   it("Rewards should adjust automatically if new Staker enters the Pool", async function(){
@@ -317,17 +318,16 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
 
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).setStakeEpochDuration(604800);
       const tx_StakeStart = await EPNSCoreV1Proxy.connect(ADMINSIGNER).initiateNewStake(tokensBN(20));
-      const stakeStartBlock = await EPNSCoreV1Proxy.stakeStartTime();
 
       await stakePushTokens(BOBSIGNER, tokensBN(100));
       await stakePushTokens(ALICESIGNER, tokensBN(100));
       await stakePushTokens(CHARLIESIGNER, tokensBN(100));
       await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
 
-      const start = tx_StakeStart.blockNumber;
-      const BOB_BLOCK = start + 86400;		
-      await jumpToBlockNumber(BOB_BLOCK - 1);
-      // To calculate change in PerPerson Share later
+      const start = bn(tx_StakeStart.blockNumber);
+      // Afer Day 1, Bob Claims
+      const BOB_BLOCK = start.add(86400)		
+      await jumpToBlockNumber(BOB_BLOCK.sub(1));
       await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
       const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
       
@@ -336,22 +336,22 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       await stakePushTokens(USER_1_SIGNER, tokensBN(100));
 
       const [USER_1_BLOCK, BOB_BLOCK_2, ALICE_BLOCK_2, CHARLIE_BLOCK_2, CHANNEL_CREATOR_BLOCK_2] = [
-        start + 172800, 
-        start + 172805, 
-        start + 172812, 
-        start + 172815,
-        start + 172820
+        start.add(172800), 
+        start.add(172805), 
+        start.add(172813), 
+        start.add(172817),
+        start.add(172820)
       ]
 
-      await jumpToBlockNumber(USER_1_BLOCK - 1);
+      await jumpToBlockNumber(USER_1_BLOCK.sub(1));
       const tx_user1 = await EPNSCoreV1Proxy.connect(USER_1_SIGNER).claimRewards();
-      await jumpToBlockNumber(BOB_BLOCK_2 - 1);
+      await jumpToBlockNumber(BOB_BLOCK_2.sub(1));
       const tx_bob_2 = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK_2 - 1);
+      await jumpToBlockNumber(ALICE_BLOCK_2.sub(1));
       const tx_alice_2 = await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK_2 - 1);
+      await jumpToBlockNumber(CHARLIE_BLOCK_2.sub(1));
       const tx_charlie_2 = await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_2 - 1);
+      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_2.sub(1));
       const tx_channelCreator_2 = await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
       
       const user1Claim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(USER_1);
@@ -360,7 +360,7 @@ describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", function()
       const charlieClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
       const channelCreatorClaim_after_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
-      // Logs if need be
+      // // Logs if need be
       // console.log("\n2nd Claim")
       // console.log(`User1 Claimed ${user1Claim_after.toString()} tokens at Block number ${tx_user1.blockNumber}`);
       // console.log(`Bob Claimed ${bobClaim_after_2.toString()} tokens at Block number ${tx_bob_2.blockNumber}`);
