@@ -1010,7 +1010,6 @@ contract EPNSCoreV2 is
         if (totalStakedAmount == 0) {
             return rewardPerTokenStored;
         }
-        //console.log("rewardRate-", rewardRate);
         return
             rewardPerTokenStored.add(
                 lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(totalStakedAmount)
@@ -1025,7 +1024,15 @@ contract EPNSCoreV2 is
         return rewardRate.mul(stakeEpochDuration);
     }
 
-       // Stake and Claim Functions
+       // Stake-Claim & Setter Functions
+
+    function setStakeEpochDuration(uint256 _duration) external onlyPushChannelAdmin {
+        require(
+            block.timestamp > stakeEpochEnd,
+            "Previous rewards period must be complete before changing the duration for the new period"
+        );
+        stakeEpochDuration = _duration;
+    }
     function stake(uint256 _stakeAmount) external whenNotPaused updateReward(msg.sender){
         require(block.timestamp < stakeEpochEnd, "EPNSCoreV2::stake: No active Stake Epoch currently");
         require(_stakeAmount >= ADD_CHANNEL_MIN_FEES, "EPNSCoreV2::stake: Invalid Stake Amount");
@@ -1063,20 +1070,14 @@ contract EPNSCoreV2 is
         emit Unstake(msg.sender, totalAmount);
     }
 
+    uint public REWARD_POOL;
     function claimRewards() external updateReward(msg.sender){
-
-        // uint256 lasTimeUpdate = lastTimeRewardApplicable();
-        //  console.log("Actual RewardRate", rewardRate);
-        // console.log("Actual Stake EPOCH End", stakeEpochEnd);
-        // console.log("Actual lasTimeUpdate ", lasTimeUpdate);
-        // console.log("-------------------------");   
-
         require(userStakedAmount[msg.sender] > 0, "EPNSCoreV2::claimRewards: Caller is not a Staker");
         uint256 totalClaimableRewards = rewards[msg.sender];
-        require(totalClaimableRewards > 0 && totalClaimableRewards <= PROTOCOL_POOL_FEES, "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment");
+        require(totalClaimableRewards > 0, "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment");
         
         rewards[msg.sender] = 0;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.sub(totalClaimableRewards);
+        REWARD_POOL = REWARD_POOL.sub(totalClaimableRewards);
         usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(totalClaimableRewards);
         
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
@@ -1085,17 +1086,10 @@ contract EPNSCoreV2 is
         );
         emit RewardsClaimed(msg.sender, totalClaimableRewards);
     }
-    
-    function setStakeEpochDuration(uint256 _duration) external onlyPushChannelAdmin {
-        require(
-            block.timestamp > stakeEpochEnd,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
-        stakeEpochDuration = _duration;
-    }
 
-    // RewardRate Updation function
-    function initiateNewStake(uint256 reward) external onlyPushChannelAdmin updateReward(address(0)) {
+    //RewardRate Updation function
+    function initiateNewStake() external onlyPushChannelAdmin updateReward(address(0)) {
+        uint reward = PROTOCOL_POOL_FEES;
         if (block.timestamp >= stakeEpochEnd) {
             rewardRate = reward.div(stakeEpochDuration);
         } else {
@@ -1107,11 +1101,13 @@ contract EPNSCoreV2 is
         uint expectedRate = PROTOCOL_POOL_FEES.div(stakeEpochDuration);
         require(rewardRate <= expectedRate, "Provided reward too high");
         
+        REWARD_POOL += reward;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.sub(reward);
         lastUpdateTime = block.timestamp;
         stakeEpochEnd = block.timestamp.add(stakeEpochDuration);
     }
-
     
+
       /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
