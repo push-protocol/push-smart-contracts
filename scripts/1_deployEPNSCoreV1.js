@@ -58,7 +58,6 @@ async function setupAllContracts(versionDetails) {
   // const epns = await deploy("EPNS");
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
-  console.log("Deploying core v1");
   const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
   deployedContracts.push(EPNSCoreV1)
 
