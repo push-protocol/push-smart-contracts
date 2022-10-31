@@ -10,7 +10,7 @@ require("@nomiclabs/hardhat-ethers");
 const { ethers } = require("ethers");
 const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
 
-// Check ENV File first and load ENV
+// Check ENV File first and load EmnemonicNV
 verifyENV();
 async function verifyENV() {
   const envVerifierLoader = require('./loaders/envVerifier');
@@ -33,6 +33,7 @@ function mnemonic() {
   }
   return "";
 }
+
 
 module.exports = {
   defaultNetwork,
@@ -78,6 +79,7 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+
       accounts: {
         mnemonic: mnemonic(),
       },

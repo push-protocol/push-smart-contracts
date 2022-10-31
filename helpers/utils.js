@@ -128,7 +128,7 @@ verifyAllContracts = async function verifyAllContracts(deployedContracts, versio
           if (hre.network.name != "hardhat" && hre.network.name != "localhost") {
             // Mostly a real network, verify
             const { spawnSync } = require( 'child_process' )
-            const ls = spawnSync( `npx`, [ 'hardhat', 'verify', '--network', hre.network.name, contract.address, '--contract', `contracts/${contract.customid}.sol:${contract.customid}` ].concat(arguments) )
+            const ls = spawnSync( `npx`, [ 'hardhat', 'verify', '--network', hre.network.name, contract.address, '--contract', `contracts/EPNSCore/${contract.customid}.sol:${contract.customid}` ].concat(arguments) )
 
             console.log( `Error: ${ ls.stderr.toString() }` )
             console.log( `Output: ${ ls.stdout.toString() }` )

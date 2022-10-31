@@ -61,29 +61,14 @@ describe("EPNS CoreV2 Protocol", function () {
     ({ MOCKDAI, ADAI } = await loadFixture(tokenFixture));
   });
 
-  /***
-   * CHECKPOINTS TO CONSIDER WHILE TESTING -> Specific CLAIM Simulations
-   * ------------------------------------------
-   * Consider total 5 different Stakers -> A, B, C, D, E -> All Staked 100 Tokens
-   * 1. Case: Multiple Users claiming reward at different Blocks.
-   *    Expectations: One who holds more, gets more rewards
-   *
-   * 2. Case: User A, B and C claims for a week and then User D and E enters the Staking Pool.
-   *    Expectations: Rewards should still be distributed fairly among all users
-   *
-   * 3. Case: User A and B claims after every 500 blocks for 2 days but C and D claims only once after 2 days.
-   *    Expectations: All should receiev equal rewards after 2 days.
-   *
-   * 4. Case: User A and B starts with 100 staked tokens at a specific block. After 3 days, A increases Stake to 200. Both withdraws after 1 week.
-   *    Expectations:  Rewards should be adequate and mathematically correct
-   *
-   * 5. Multiple users trying to Claim in Same Transaction
-   */
   describe("EPNS CORE: CLAIM REWARD TEST-ReardRate Procedure", () => {
     const CHANNEL_TYPE = 2;
     const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes(
       "test-channel-hello-world"
     );
+
+    const SEVEN_DAYS = 7 * 24 * 3600;
+    const EPOCH_DURATION = SEVEN_DAYS;
 
     beforeEach(async function () {
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(
@@ -166,542 +151,295 @@ describe("EPNS CoreV2 Protocol", function () {
       await ethers.provider.send("hardhat_mine", [blockIncreaseHex]);
     };
 
-    it.skip("Total Pool_Fee should be distrubuted adequately after a DAILY Iteration of CLAIM rewards", async function () {
-      const bobClaim_before = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_before = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        ALICE
+    const claimRewardsInSingleBlock = async (signers) => {
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all(
+        signers.map((signer) => EPNSCoreV1Proxy.connect(signer).claimRewards())
       );
-
-      const rewardValue = tokensBN(40);
-      await EPNSCoreV1Proxy.setRewardRate(rewardValue);
-
-      await createChannel(ALICESIGNER);
-      await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
-      await stakePushTokens(BOBSIGNER, tokensBN(100));
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-      await stakePushTokens(CHARLIESIGNER, tokensBN(100));
-      await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
-
-      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      const stakeStartBlock = await EPNSCoreV1Proxy.stakeStartTime();
-      // All Stakers Claiming after First Day
-
-      const [BOB_BLOCK, ALICE_BLOCK, CHARLIE_BLOCK, CHANNEL_CREATOR_BLOCK] = [
-        stakeStartBlock.add(86400),
-        stakeStartBlock.add(86405),
-        stakeStartBlock.add(86410),
-        stakeStartBlock.add(86415),
-      ];
-      await jumpToBlockNumber(BOB_BLOCK.sub(1));
-      const tx_bob = await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK.sub(1));
-      const tx_alice = await EPNSCoreV1Proxy.connect(
-        ALICESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK.sub(1));
-      const tx_charlie = await EPNSCoreV1Proxy.connect(
-        CHARLIESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK.sub(1));
-      const tx_channelCreator = await EPNSCoreV1Proxy.connect(
-        CHANNEL_CREATORSIGNER
-      ).claimRewards();
-
-      const bobClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      const charlieClaim_after = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        CHARLIE
-      );
-      const channelCreatorClaim_after =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
-
-      const totalPool_Fee_after = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      console.log(
-        "\n---------------Starting First Claim with 4 total Stakers----------------------------"
-      );
-      console.log("Total Pool Fee", totalPool_Fee.toString());
-      console.log(
-        "Total Pool Fee After First Claim",
-        totalPool_Fee_after.toString()
-      );
-      console.log("\n");
-      console.log(
-        `Bob Claimed ${bobClaim_after.toString()} tokens at Block number ${
-          tx_bob.blockNumber
-        }`
-      );
-      console.log(
-        `Alice Claimed ${aliceClaim_after.toString()} tokens at Block number ${
-          tx_alice.blockNumber
-        }`
-      );
-      console.log(
-        `Charlie Claimed ${charlieClaim_after.toString()} tokens at Block number ${
-          tx_charlie.blockNumber
-        }`
-      );
-      console.log(
-        `ChannelCreator Claimed ${channelCreatorClaim_after.toString()} tokens at Block number ${
-          tx_channelCreator.blockNumber
-        }`
-      );
-
-      // STARTING 2nd CLAIM
-      const [
-        BOB_BLOCK_2nd,
-        ALICE_BLOCK_2nd,
-        CHARLIE_BLOCK_2nd,
-        CHANNEL_CREATOR_BLOCK_2nd,
-      ] = [
-        stakeStartBlock.add(172800),
-        stakeStartBlock.add(172805),
-        stakeStartBlock.add(172810),
-        stakeStartBlock.add(172815),
-      ];
-      await jumpToBlockNumber(BOB_BLOCK_2nd.sub(1));
-      const tx_bob_2nd = await EPNSCoreV1Proxy.connect(
-        BOBSIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK_2nd.sub(1));
-      const tx_alice_2nd = await EPNSCoreV1Proxy.connect(
-        ALICESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK_2nd.sub(1));
-      const tx_charlie_2nd = await EPNSCoreV1Proxy.connect(
-        CHARLIESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_2nd.sub(1));
-      const tx_channelCreator_2nd = await EPNSCoreV1Proxy.connect(
-        CHANNEL_CREATORSIGNER
-      ).claimRewards();
-
-      const bobClaim_after_2nd = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_after_2nd = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        ALICE
-      );
-      const charlieClaim_after_2nd = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        CHARLIE
-      );
-      const channelCreatorClaim_after_2nd =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
-
-      const totalPool_Fee_after_2nd =
-        await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      console.log(
-        "\n---------------Starting 2nd Claim with 4 total Stakers----------------------------"
-      );
-      console.log("Total Pool Fee", totalPool_Fee.toString());
-      console.log(
-        "Total Pool Fee After First Claim",
-        totalPool_Fee_after.toString()
-      );
-      console.log(
-        "Total Pool Fee After 2nd Claim",
-        totalPool_Fee_after_2nd.toString()
-      );
-      console.log("\n");
-      console.log(
-        `Bob Claimed ${bobClaim_after_2nd.toString()} tokens at Block number ${
-          tx_bob_2nd.blockNumber
-        }`
-      );
-      console.log(
-        `Alice Claimed ${aliceClaim_after_2nd.toString()} tokens at Block number ${
-          tx_alice_2nd.blockNumber
-        }`
-      );
-      console.log(
-        `Charlie Claimed ${charlieClaim_after_2nd.toString()} tokens at Block number ${
-          tx_charlie_2nd.blockNumber
-        }`
-      );
-      console.log(
-        `ChannelCreator Claimed ${channelCreatorClaim_after_2nd.toString()} tokens at Block number ${
-          tx_channelCreator_2nd.blockNumber
-        }`
-      );
-
-      // STARTING 3rd CLAIM
-      await stakePushTokens(ADMINSIGNER, tokensBN(100));
-      const [
-        ADMIN_1st,
-        BOB_BLOCK_3rd,
-        ALICE_BLOCK_3rd,
-        CHARLIE_BLOCK_3rd,
-        CHANNEL_CREATOR_BLOCK_3rd,
-      ] = [
-        stakeStartBlock.add(259200),
-        stakeStartBlock.add(259205),
-        stakeStartBlock.add(259210),
-        stakeStartBlock.add(259215),
-        stakeStartBlock.add(259220),
-      ];
-
-      await jumpToBlockNumber(ADMIN_1st.sub(1));
-      const tx_admin_1st = await EPNSCoreV1Proxy.connect(
-        ADMINSIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(BOB_BLOCK_3rd.sub(1));
-      const tx_bob_3rd = await EPNSCoreV1Proxy.connect(
-        BOBSIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(ALICE_BLOCK_3rd.sub(1));
-      const tx_alice_3rd = await EPNSCoreV1Proxy.connect(
-        ALICESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHARLIE_BLOCK_3rd.sub(1));
-      const tx_charlie_3rd = await EPNSCoreV1Proxy.connect(
-        CHARLIESIGNER
-      ).claimRewards();
-      await jumpToBlockNumber(CHANNEL_CREATOR_BLOCK_3rd.sub(1));
-      const tx_channelCreator_3rd = await EPNSCoreV1Proxy.connect(
-        CHANNEL_CREATORSIGNER
-      ).claimRewards();
-
-      const adminClaim_after_1st = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        ADMIN
-      );
-      const bobClaim_after_3rd = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      const aliceClaim_after_3rd = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        ALICE
-      );
-      const charlieClaim_after_3rd = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        CHARLIE
-      );
-      const channelCreatorClaim_after_3rd =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
-
-      const totalPool_Fee_after_3rd =
-        await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      console.log(
-        "\n---------------Starting 3rd Claim with 5 total Stakers----------------------------"
-      );
-      console.log("Total Pool Fee", totalPool_Fee.toString());
-      console.log(
-        "Total Pool Fee After First Claim",
-        totalPool_Fee_after.toString()
-      );
-      console.log(
-        "Total Pool Fee After 2nd Claim",
-        totalPool_Fee_after_2nd.toString()
-      );
-      console.log("\n");
-      console.log(
-        `ADMIN Claimed ${adminClaim_after_1st.toString()} tokens at Block number ${
-          tx_admin_1st.blockNumber
-        }`
-      );
-      console.log(
-        `Bob Claimed ${bobClaim_after_3rd.toString()} tokens at Block number ${
-          tx_bob_3rd.blockNumber
-        }`
-      );
-      console.log(
-        `Alice Claimed ${aliceClaim_after_3rd.toString()} tokens at Block number ${
-          tx_alice_3rd.blockNumber
-        }`
-      );
-      console.log(
-        `Charlie Claimed ${charlieClaim_after_3rd.toString()} tokens at Block number ${
-          tx_charlie_3rd.blockNumber
-        }`
-      );
-      console.log(
-        `ChannelCreator Claimed ${channelCreatorClaim_after_3rd.toString()} tokens at Block number ${
-          tx_channelCreator_3rd.blockNumber
-        }`
-      );
-    });
-
-    it.skip("shold work propertly after 7 days", async () => {
-      const rewardValue = tokensBN(40);
-      await EPNSCoreV1Proxy.setRewardRate(rewardValue);
-
-      // Making pool funds 20
-      await createChannel(ALICESIGNER);
-      await createChannel(BOBSIGNER);
-
-      // alice and bod stakes
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-      await stakePushTokens(BOBSIGNER, tokensBN(100));
-      console.log("Alice & Bob stakes 100 PUSH each...");
-
-      // wait for 6days
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 6]);
       await network.provider.send("evm_mine");
-      console.log("6 days passes...");
-
-      // claim rewards
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-
-      console.log("They both claim");
-      const aliceRewardsClaimed_first =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      const bobRewardsClaimed_second =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      console.log(
-        "alice reward",
-        ethers.utils.formatEther(aliceRewardsClaimed_first)
-      );
-      console.log(
-        "bob reward",
-        ethers.utils.formatEther(bobRewardsClaimed_second)
-      );
-      console.log();
-
-      // new channel is created
-      console.log("Two more channels added....increasing pool fees");
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
-
-      // wait for 6days
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 6]);
-      await network.provider.send("evm_mine");
-      console.log("6 days passes...");
-
-      // claim rewards
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-
-      const aliceRewardsClaimed_first_2 =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      const bobRewardsClaimed_second_2 =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      console.log("They both claim");
-      console.log(
-        "alice reward",
-        ethers.utils.formatEther(
-          aliceRewardsClaimed_first_2.sub(aliceRewardsClaimed_first)
-        )
-      );
-      console.log(
-        "bob reward",
-        ethers.utils.formatEther(
-          bobRewardsClaimed_second_2.sub(bobRewardsClaimed_second)
-        )
-      );
-    });
-
-    it.skip("has some issue", async () => {
-      const rewardValue = tokensBN(40);
-      await EPNSCoreV1Proxy.setRewardRate(rewardValue);
-
-      // Making pool funds 20
-      await createChannel(ALICESIGNER);
-      await createChannel(BOBSIGNER);
-
-      // alice and bod stakes
-      console.log("Alice stakes 100 PUSH ...");
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-
-      // wait for  7 days
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
-      await network.provider.send("evm_mine");
-      console.log("7 days passes...");
-
-      // claim rewards
-      console.log("Alice claims");
-      await expect(
-        EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards()
-      ).to.be.revertedWith(
-        "EPNSCoreV2::claimRewards: No Claimable Rewards at the moment"
-      );
-      const aliceRewardsClaimed_first =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log(
-        "alice reward calimed",
-        ethers.utils.formatEther(aliceRewardsClaimed_first)
-      );
-      console.log();
-
-      // new channel is created
-      console.log("Two more channels added....increasing pool fees");
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
-
-      // claim rewards
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      const aliceRewardsClaimed_first_2 =
-        await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("Alice claims again");
-      console.log(
-        "alice reward",
-        ethers.utils.formatEther(
-          aliceRewardsClaimed_first_2.sub(aliceRewardsClaimed_first)
-        )
-      );
-    });
-
-    const getCurrentPoolFees = async () => {
-      const poolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES().then((e) =>
-        weiToEth(e)
-      );
-      return poolFees;
+      await ethers.provider.send("evm_setAutomine", [true]);
     };
 
-    it("reward fix", async () => {
-      // Making pool funds 30 with 3 channels
+    const getRewardsClaimed = async (signers) => {
+      return await Promise.all(
+        signers.map((signer) => EPNSCoreV1Proxy.usersRewardsClaimed(signer))
+      );
+    };
+
+    it("should distrubute reward evenly for different users staking same ammount", async function () {
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      await createChannel(CHARLIESIGNER);
+      await createChannel(CHANNEL_CREATORSIGNER);
+
+      // 4 users stakes push
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all([
+        await stakePushTokens(BOBSIGNER, tokensBN(100)),
+        await stakePushTokens(ALICESIGNER, tokensBN(100)),
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100)),
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100)),
+      ]);
+      await network.provider.send("evm_mine");
+      await ethers.provider.send("evm_setAutomine", [true]);
+
+      // Admin sets epoch
+      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+
+      // 1 day passes
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
+      await network.provider.send("evm_mine");
+
+      // all users claims
+      await claimRewardsInSingleBlock([
+        ALICESIGNER,
+        BOBSIGNER,
+        CHANNEL_CREATORSIGNER,
+        CHARLIESIGNER,
+      ]);
+
+      var [
+        aliceClaimed1,
+        bobClaimed1,
+        charlieClaimed1,
+        channelCreatorClaimed1,
+      ] = await getRewardsClaimed([ALICE, BOB, CHARLIE, CHANNEL_CREATOR]);
+
+      expect(aliceClaimed1).to.equal(bobClaimed1);
+      expect(aliceClaimed1).to.equal(charlieClaimed1);
+      expect(aliceClaimed1).to.equal(channelCreatorClaimed1);
+
+      // 10 days passes
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
+      await network.provider.send("evm_mine");
+
+      // all users claims
+      await claimRewardsInSingleBlock([
+        ALICESIGNER,
+        BOBSIGNER,
+        CHANNEL_CREATORSIGNER,
+        CHARLIESIGNER,
+      ]);
+
+      var [
+        aliceClaimed1,
+        bobClaimed1,
+        charlieClaimed1,
+        channelCreatorClaimed1,
+      ] = await getRewardsClaimed([ALICE, BOB, CHARLIE, CHANNEL_CREATOR]);
+
+      expect(aliceClaimed1).to.equal(bobClaimed1);
+      expect(aliceClaimed1).to.equal(charlieClaimed1);
+      expect(aliceClaimed1).to.equal(channelCreatorClaimed1);
+    });
+
+    it("should yield reward proportional to staked capital", async () => {
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      await createChannel(CHARLIESIGNER);
+      await createChannel(CHANNEL_CREATORSIGNER);
+
+      // 2 users stakes push
+      // Alice stakes twices as BOB
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all([
+        await stakePushTokens(BOBSIGNER, tokensBN(100)),
+        await stakePushTokens(ALICESIGNER, tokensBN(200)),
+      ]);
+      await network.provider.send("evm_mine");
+      await ethers.provider.send("evm_setAutomine", [true]);
+
+      // Admin sets epoch
+      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+
+      // 3 day passes
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
+      await network.provider.send("evm_mine");
+
+      // all users claims
+      await claimRewardsInSingleBlock([ALICESIGNER, BOBSIGNER]);
+
+      var [aliceClaimed1, bobClaimed1] = await getRewardsClaimed([
+        ALICE,
+        BOB,
+        CHARLIE,
+        CHANNEL_CREATOR,
+      ]);
+
+      expect(bobClaimed1).to.be.above(bn(0));
+      expect(aliceClaimed1).to.equal(bobClaimed1.mul(2));
+    });
+
+    it("should yield reward proportional to time staked", async () => {
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      await createChannel(CHARLIESIGNER);
+      await createChannel(CHANNEL_CREATORSIGNER);
+
+      // 2 users stakes push evenly
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all([
+        await stakePushTokens(BOBSIGNER, tokensBN(100)),
+        await stakePushTokens(ALICESIGNER, tokensBN(200)),
+      ]);
+      await network.provider.send("evm_mine");
+      await ethers.provider.send("evm_setAutomine", [true]);
+
+      // Admin sets epoch
+      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+
+      // BOB claims after 1 day
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
+      await network.provider.send("evm_mine");
+      await claimRewardsInSingleBlock([BOBSIGNER]);
+
+      // ALICE claims after 7 days
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 6]);
+      await network.provider.send("evm_mine");
+      await claimRewardsInSingleBlock([ALICESIGNER]);
+
+      var [aliceClaimed1, bobClaimed1] = await getRewardsClaimed([
+        ALICE,
+        BOB,
+        CHARLIE,
+        CHANNEL_CREATOR,
+      ]);
+
+      expect(bobClaimed1).to.be.above(bn(0));
+      expect(aliceClaimed1).to.be.above(bobClaimed1);
+    });
+
+    it("should not yield reward after epoch ends and yields after admin reset", async () => {
+      await createChannel(ALICESIGNER);
+      await createChannel(BOBSIGNER);
+      await createChannel(CHARLIESIGNER);
+
+      // 4 users stakes push
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all([
+        await stakePushTokens(BOBSIGNER, tokensBN(100)),
+        await stakePushTokens(ALICESIGNER, tokensBN(100)),
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100)),
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100)),
+      ]);
+      await network.provider.send("evm_mine");
+      await ethers.provider.send("evm_setAutomine", [true]);
+
+      // Admin sets epoch
+      var totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+
+      // 7 day passes
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
+      await network.provider.send("evm_mine");
+
+      // all users claims
+      await claimRewardsInSingleBlock([
+        ALICESIGNER,
+        BOBSIGNER,
+        CHANNEL_CREATORSIGNER,
+        CHARLIESIGNER,
+      ]);
+
+      var [
+        aliceClaimed1,
+        bobClaimed1,
+        charlieClaimed1,
+        channelCreatorClaimed1,
+      ] = await getRewardsClaimed([ALICE, BOB, CHARLIE, CHANNEL_CREATOR]);
+
+      // all users again claims
+      await claimRewardsInSingleBlock([
+        ALICESIGNER,
+        BOBSIGNER,
+        CHANNEL_CREATORSIGNER,
+        CHARLIESIGNER,
+      ]);
+
+      // all user claims
+      var [
+        aliceClaimed2,
+        bobClaimed2,
+        charlieClaimed2,
+        channelCreatorClaimed2,
+      ] = await getRewardsClaimed([ALICE, BOB, CHARLIE, CHANNEL_CREATOR]);
+
+      // All users should get zero rewards
+      expect(aliceClaimed1).to.equal(aliceClaimed2);
+      expect(bobClaimed1).to.equal(bobClaimed2);
+      expect(channelCreatorClaimed1).to.equal(channelCreatorClaimed2);
+      expect(charlieClaimed1).to.equal(charlieClaimed2);
+
+      // new channels created
+      await createChannel(CHANNEL_CREATORSIGNER);
+
+      // Admin sets epoch
+      var totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+
+      // 7 day passes
+      await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
+      await network.provider.send("evm_mine");
+
+      // all user claims
+      await claimRewardsInSingleBlock([
+        ALICESIGNER,
+        BOBSIGNER,
+        CHANNEL_CREATORSIGNER,
+        CHARLIESIGNER,
+      ]);
+
+      var [
+        aliceClaimed3,
+        bobClaimed3,
+        charlieClaimed3,
+        channelCreatorClaimed3,
+      ] = await getRewardsClaimed([ALICE, BOB, CHARLIE, CHANNEL_CREATOR]);
+
+      // All users should get rewards
+      expect(aliceClaimed3).to.above(aliceClaimed2);
+      expect(bobClaimed3).to.above(bobClaimed2);
+      expect(channelCreatorClaimed3).to.above(channelCreatorClaimed2);
+      expect(charlieClaimed3).to.above(charlieClaimed2);
+
+    });
+
+    it("should not favour user claiming every 1 day vs claiming 7day", async () => {
+      // Making pool funds 20 with 2 channels
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
 
+      // Alice & Bob stakes
       await stakePushTokens(ALICESIGNER, tokensBN(100));
       await stakePushTokens(BOBSIGNER, tokensBN(100));
-      //   await createChannel(CHANNEL_CREATORSIGNER);
 
+      // admin sets rewards
       var rewardValue = tokensBN(20);
       await EPNSCoreV1Proxy.setStakeEpochDuration(7 * 24 * 3600);
       await EPNSCoreV1Proxy.initiateNewStake(rewardValue);
 
-      console.log("Alice rewards");
+      // Alice claims every day
       for (let i = 0; i < 7; i++) {
         await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
         await network.provider.send("evm_mine");
         await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-
-        var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-        console.log("ALICE cumulative reward claimed", weiToEth(aliceR1), " at day ", i+1);
       }
 
-      console.log("BOB claims");
+      // bod claims at the end of 7 days
       await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
 
-    //   var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-    //   console.log("ALICE reward claimed", weiToEth(aliceR1));
-      var bobR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      console.log("BOB reward claimed", weiToEth(bobR1));
+      var [aliceClaimed1, bobClaimed1] = await getRewardsClaimed([ALICE, BOB]);
 
-      return;
-
-      console.log("Now all users try to claim a reward");
-      var poolFees = await getCurrentPoolFees();
-      console.log("before claim POOL_FEES: ", poolFees);
-
-      // claim rewards
-      var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("ALICE reward claimed", weiToEth(aliceR1));
-
-      // add two more channels
-      await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-
-      // admin resets
-      await EPNSCoreV1Proxy.initiateNewStake(tokensBN(20));
-
-      console.log("\n30 days pass ...");
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 30]);
-      await network.provider.send("evm_mine");
-
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      var aliceR2 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("ALICE reward claimed", weiToEth(aliceR2.sub(aliceR1)));
-
-      console.log("\n30 days pass ...");
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 30]);
-      await network.provider.send("evm_mine");
-
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      var aliceR3 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("ALICE reward claimed", weiToEth(aliceR3.sub(aliceR2)));
-
-      //   await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      //   var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      //   console.log("BOB reward claimed", weiToEth(aliceR1));
-
-      return;
-
-      var poolFees = await getCurrentPoolFees();
-      console.log("bbb before claim POOL_FEES", poolFees);
-
-      await createChannel(BOBSIGNER);
-      await createChannel(CHARLIESIGNER);
-
-      console.log("7 days pass...");
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 30]);
-      await network.provider.send("evm_mine");
-
-      console.log("Now all users tries to claim reward");
-      var poolFees = await getCurrentPoolFees();
-      console.log("aaaa before claim POOL_FEES", poolFees);
-
-      // claim rewards
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      const wasDone = EPNSCommV1Proxy.lastGame();
-      console.log("Was done", wasDone);
-      var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("alice reward calimed", weiToEth(aliceR1));
-
-      console.log("7 days pass...");
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 30]);
-      await network.provider.send("evm_mine");
-
-      console.log("Now all users tries to claim reward");
-      var poolFees = await getCurrentPoolFees();
-      console.log("before claim POOL_FEES", poolFees);
-
-      // claim rewards
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      var aliceR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      console.log("alice reward calimed", weiToEth(aliceR1));
-
-      await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-      var bodR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-      console.log("bob reward calimed", weiToEth(bodR1));
-      await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards();
-      var charlieR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-      console.log("charlie reward calimed", weiToEth(charlieR1));
-      await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).claimRewards();
-      var creatorR1 = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        CHANNEL_CREATOR
-      );
-      console.log("charlie reward calimed", weiToEth(creatorR1));
-
-      // console.log("Bob claims");
-      // await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards()
-      // console.log("Charlie claims");
-      // await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimRewards()
-      // const aliceRewardsClaimed_first =
-      //   await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      // console.log(
-      //   "alice reward calimed",
-      //   ethers.utils.formatEther(aliceRewardsClaimed_first)
-      // );
-      // console.log();
-
-      return;
-
-      // // new channel is created
-      console.log("Two more channels added....increasing pool fees");
-      await createChannel(CHARLIESIGNER);
-      await createChannel(CHANNEL_CREATORSIGNER);
-
-      await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      var aliceRewardsClaimed_first = await EPNSCoreV1Proxy.usersRewardsClaimed(
-        ALICE
-      );
-      console.log(
-        "alice reward calimed",
-        ethers.utils.formatEther(aliceRewardsClaimed_first)
-      );
-
-      // wait for  8 days
-      await network.provider.send("evm_increaseTime", [3600 * 24 * 20]);
-      await network.provider.send("evm_mine");
-      console.log("8 days passes...");
-
-      // // claim rewards
-      // await EPNSCoreV1Proxy.connect(ALICESIGNER).claimRewards();
-      // const aliceRewardsClaimed_first_2 =
-      //   await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-      // console.log("Alice claims again");
-      // console.log(
-      //   "alice reward",
-      //   ethers.utils.formatEther(
-      //     aliceRewardsClaimed_first_2.sub(aliceRewardsClaimed_first)
-      //   )
-      // );
+      // reward claimed should be same
+      expect(aliceClaimed1).to.equal(bobClaimed1);
     });
   });
 });
