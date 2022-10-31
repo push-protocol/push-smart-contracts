@@ -172,6 +172,11 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(CHARLIESIGNER);
       await createChannel(CHANNEL_CREATORSIGNER);
 
+      // Admin sets epoch
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake();
+
+
       // 4 users stakes push
       await ethers.provider.send("evm_setAutomine", [false]);
       await Promise.all([
@@ -182,11 +187,6 @@ describe("EPNS CoreV2 Protocol", function () {
       ]);
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
-
-      // Admin sets epoch
-      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
-      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
 
       // 1 day passes
       await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
@@ -241,6 +241,10 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(CHARLIESIGNER);
       await createChannel(CHANNEL_CREATORSIGNER);
 
+      // Admin sets epoch
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake();
+
       // 2 users stakes push
       // Alice stakes twices as BOB
       await ethers.provider.send("evm_setAutomine", [false]);
@@ -250,11 +254,6 @@ describe("EPNS CoreV2 Protocol", function () {
       ]);
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
-
-      // Admin sets epoch
-      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
-      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
 
       // 3 day passes
       await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
@@ -280,6 +279,10 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(CHARLIESIGNER);
       await createChannel(CHANNEL_CREATORSIGNER);
 
+      // Admin sets epoch
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake();
+
       // 2 users stakes push evenly
       await ethers.provider.send("evm_setAutomine", [false]);
       await Promise.all([
@@ -288,11 +291,6 @@ describe("EPNS CoreV2 Protocol", function () {
       ]);
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
-
-      // Admin sets epoch
-      const totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
-      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
 
       // BOB claims after 1 day
       await network.provider.send("evm_increaseTime", [3600 * 24 * 1]);
@@ -320,6 +318,11 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(BOBSIGNER);
       await createChannel(CHARLIESIGNER);
 
+      // Admin sets epoch
+      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
+      await EPNSCoreV1Proxy.initiateNewStake();
+
+
       // 4 users stakes push
       await ethers.provider.send("evm_setAutomine", [false]);
       await Promise.all([
@@ -330,11 +333,6 @@ describe("EPNS CoreV2 Protocol", function () {
       ]);
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
-
-      // Admin sets epoch
-      var totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-      await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
-      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
 
       // 7 day passes
       await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
@@ -381,9 +379,8 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(CHANNEL_CREATORSIGNER);
 
       // Admin sets epoch
-      var totalPool_Fee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
       await EPNSCoreV1Proxy.setStakeEpochDuration(EPOCH_DURATION);
-      await EPNSCoreV1Proxy.initiateNewStake(totalPool_Fee);
+      await EPNSCoreV1Proxy.initiateNewStake();
 
       // 7 day passes
       await network.provider.send("evm_increaseTime", [3600 * 24 * 7]);
@@ -417,14 +414,18 @@ describe("EPNS CoreV2 Protocol", function () {
       await createChannel(ALICESIGNER);
       await createChannel(BOBSIGNER);
 
-      // Alice & Bob stakes
-      await stakePushTokens(ALICESIGNER, tokensBN(100));
-      await stakePushTokens(BOBSIGNER, tokensBN(100));
-
       // admin sets rewards
-      var rewardValue = tokensBN(20);
       await EPNSCoreV1Proxy.setStakeEpochDuration(7 * 24 * 3600);
-      await EPNSCoreV1Proxy.initiateNewStake(rewardValue);
+      await EPNSCoreV1Proxy.initiateNewStake();
+
+      // Alice & Bob stakes at same block
+      await ethers.provider.send("evm_setAutomine", [false]);
+      await Promise.all([
+        stakePushTokens(ALICESIGNER, tokensBN(100)),
+        stakePushTokens(BOBSIGNER, tokensBN(100))
+      ]);
+      await network.provider.send("evm_mine");
+      await ethers.provider.send("evm_setAutomine", [true]);
 
       // Alice claims every day
       for (let i = 0; i < 7; i++) {
@@ -435,7 +436,6 @@ describe("EPNS CoreV2 Protocol", function () {
 
       // bod claims at the end of 7 days
       await EPNSCoreV1Proxy.connect(BOBSIGNER).claimRewards();
-
       var [aliceClaimed1, bobClaimed1] = await getRewardsClaimed([ALICE, BOB]);
 
       // reward claimed should be same
