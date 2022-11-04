@@ -498,55 +498,6 @@ contract EPNSCoreV2 is
         }
     }
 
-    function createChannelBySig(
-        ChannelType _channelType,
-        bytes calldata _identity,
-        uint256 _amount,
-        uint256 _channelExpiryTime,
-        uint256 nonce,
-        uint256 expiry,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external {
-        bytes32 domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
-                getChainId(),
-                address(this)
-            )
-        );
-        bytes32 structHash = keccak256(
-            abi.encode(
-                CREATE_CHANNEL_TYPEHASH,
-                _channelType,
-                _identity,
-                _amount,
-                _channelExpiryTime,
-                nonce,
-                expiry
-            )
-        );
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", domainSeparator, structHash)
-        );
-        address signatory = ecrecover(digest, v, r, s);
-        require(
-            signatory != address(0),
-            "EPNSCoreV2::createChannelBySig: Invalid signature"
-        );
-        require(
-            nonce == nonces[signatory]++,
-            "EPNSCoreV2::createChannelBySig: Invalid nonce"
-        );
-        require(
-            now <= expiry,
-            "EPNSCoreV2::createChannelBySig: Signature expired"
-        );
-        _createChannel(signatory, _channelType, _amount, _channelExpiryTime);
-    }
-
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
      * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
@@ -625,12 +576,16 @@ contract EPNSCoreV2 is
      *  @param _notifOptions - Total Notification options provided by the Channel Owner
      *  @param _notifSettings- Deliminated String of Notification Settings
      *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
+     *  @param _amountDeposited - Fees required for setting up channel notification settings
      **/
     function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
-        string calldata _notifDescription
+        string calldata _notifDescription,
+        uint256 _amountDeposited
     ) external onlyActivatedChannels(msg.sender) {
+        require(_amountDeposited >= ADD_CHANNEL_MIN_FEES, "EPNSCoreV2::createChannelSettings: Insufficient Funds Passed");
+
         string memory notifSetting = string(
             abi.encodePacked(
                 Strings.toString(_notifOptions),
@@ -639,6 +594,13 @@ contract EPNSCoreV2 is
             )
         );
         channelNotifSettings[msg.sender] = notifSetting;
+
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amountDeposited
+        );
         emit ChannelNotifcationSettingsAdded(
             msg.sender,
             _notifOptions,
@@ -777,7 +739,8 @@ contract EPNSCoreV2 is
 
     /**
      * @notice    Function designed to allow transfer of channel ownership
-     * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details
+     * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details.
+     * 
      * @param    _channelAddress Address of the channel that needs to change its ownership
      * @param    _newChannelAddress Address of the new channel owner
      * @param    _amountDeposited Fee amount deposited for ownership transfer
