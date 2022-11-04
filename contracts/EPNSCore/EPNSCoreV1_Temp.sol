@@ -470,10 +470,12 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
      *      - Can only be called for channels that are not in Inactive State.
      *      - Can only be called for channels whose version is not 2, i.e., old Channels (created using DAI)
      *      - This function updates/adjusts the pool contribution, new weight and the version of the Channel.
-     *
+     * 
+     * @param _tempStorageAddress address of a temp contract to store and flag the adjusted Channels.
      * @param _startIndex starting Index for the LOOP
      * @param _endIndex   Last Index for the LOOP
      * @param _oldPoolFunds total amount of DAI in the older contract version.
+     * @param _newPoolFunds total amount of PUSH in the new contract version.
      * @param _channelAddresses array of address of the Channel
      */
      function adjustChannelPoolContributions(
