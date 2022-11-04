@@ -553,15 +553,18 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
      *  ->  We ensure "Caller of the Function is the Recipient of the Notification"
     **/
 
-    function _checkNotifReq(address _channel, address _recipient) private view {
-        require(
+    function _checkNotifReq(address _channel, address _recipient) private view returns(bool) {
+        if(
             (_channel == 0x0000000000000000000000000000000000000000 &&
                 msg.sender == pushChannelAdmin) ||
                 (_channel == msg.sender) ||
                 (delegatedNotificationSenders[_channel][msg.sender]) ||
-                (_recipient == msg.sender),
-            "EPNSCommV1::_checkNotifReq: Invalid Channel, Delegate or Subscriber"
-        );
+                (_recipient == msg.sender)
+        ){
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -575,10 +578,15 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         address _channel,
         address _recipient,
         bytes memory _identity
-    ) public {
-        _checkNotifReq(_channel, _recipient);
-        // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
+    ) public returns(bool){
+        bool success = _checkNotifReq(_channel, _recipient);
+        if(success){
+            // Emit the message out
+            emit SendNotification(_channel, _recipient, _identity);
+            return true;
+        }
+
+        return false;
     }
 
     /**
