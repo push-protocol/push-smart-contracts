@@ -166,6 +166,82 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
+      it("Allows delegatee to send notification with sig", async function () {
+        const chainId = await EPNSCommV1Proxy.chainID().then((e) =>
+          e.toNumber()
+        );
+        const [EPNS_DOMAIN, _] = getDomainParameters(
+          chainId,
+          EPNSCommV1Proxy.address
+        );
+
+        // Alice is not delegattee nut tries to send notification
+        const [channel, subscriber, expiry] = [
+          CHANNEL_CREATOR,
+          BOBSIGNER.address,
+          Date.now() + 3600,
+        ];
+        const nonce = await EPNSCommV1Proxy.nonces(channel);
+        const message = {
+          channel: channel,
+          recipient: subscriber,
+          identity: testChannel,
+          nonce: nonce,
+          expiry: expiry,
+        };
+        const signature = await ALICESIGNER._signTypedData(
+          EPNS_DOMAIN,
+          type,
+          message
+        );
+        const { v, r, s } = ethers.utils.splitSignature(signature);
+        var tx = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
+          channel,
+          subscriber,
+          ALICE,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
+        );
+
+        // Not notification sent
+        expect(tx).to.be.false;
+
+        // Now channel creator adds Alice as delegattee
+        await EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(ALICE);
+        
+        // Again alice tries to send notification with sig
+        var tx = await EPNSCommV1Proxy.callStatic.sendNotifBySig(
+          channel,
+          subscriber,
+          ALICE,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
+        ); 
+        expect(tx).to.be.true;
+        
+        // Actual txn emits notification
+        var tx = await EPNSCommV1Proxy.sendNotifBySig(
+          channel,
+          subscriber,
+          ALICE,
+          testChannel,
+          nonce,
+          expiry,
+          v,
+          r,
+          s
+        ); 
+        await expect(tx).to.emit(EPNSCommV1Proxy, "SendNotification");
+      });
+
       it("Allow to send channel notification with 1271 sig", async function () {
         // mock verifier contract
         const VerifierContract = await ethers
@@ -329,7 +405,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx2).to.not.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
-      it("Reverts on signature expire", async function () {
+      it("Returns false on signature expire", async function () {
         const chainId = await EPNSCommV1Proxy.chainID().then((e) =>
           e.toNumber()
         );

@@ -71,20 +71,6 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         _;
     }
 
-    modifier sendNotifViaSignReq(
-        address _channel,
-        address _recipient,
-        address signatory
-    ) {
-        require(
-            (_channel == signatory) ||
-                (delegatedNotificationSenders[_channel][signatory]) ||
-                (_recipient == signatory),
-            "EPNSCommV1::sendNotifViaSignReq: Invalid Channel, Delegate Or Subscriber"
-        );
-        _;
-    }
-
     /* ***************
 
         INITIALIZER
@@ -611,9 +597,18 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         address _recipient,
         address _signatory,
         bytes calldata _identity
-    ) private sendNotifViaSignReq(_channel, _recipient, _signatory) {
-        // Emit the message out
-        emit SendNotification(_channel, _recipient, _identity);
+    )private returns(bool) {
+        if(
+            _channel == _signatory || 
+            delegatedNotificationSenders[_channel][_signatory] ||
+            _recipient == _signatory
+        ){
+            // Emit the message out
+            emit SendNotification(_channel, _recipient, _identity);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -633,7 +628,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         bytes32 s
     ) external returns(bool) {
 
-        if(_signer == address(0) || nonce != nonces[_signer] || now > expiry){
+        if(_signer == address(0) || nonce != nonces[_signer]++ || now > expiry){
             return false;
         }
 
@@ -671,18 +666,15 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
             if(signatory != _signer) return false;
         }
 
-        // update txn nounce
-        nonces[_signer]++; 
-
         // check sender & emit event
-        _sendNotification(
+        bool success = _sendNotification(
             _channel,
             _recipient,
             _signer,
             _identity
         );
 
-        return true;
+        return success;
     }
 
     /* **************
