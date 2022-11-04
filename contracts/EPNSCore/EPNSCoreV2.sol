@@ -440,7 +440,7 @@ contract EPNSCoreV2 is
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
-     *         - Updates the POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
+     *         - Updates the CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
      *
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
@@ -456,7 +456,7 @@ contract EPNSCoreV2 is
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited.sub(poolFeeAmount);
         //store funds in pool_funds & pool_fees
-        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(poolFundAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
         
         // Calculate channel weight
@@ -556,8 +556,8 @@ contract EPNSCoreV2 is
      *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
-     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back & POOL_FUNDS decreases.
-     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES & POOL_FUNDS decreases.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back & CHANNEL_POOL_FUNDS decreases.
+     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES & CHANNEL_POOL_FUNDS decreases.
      *         - Deletes the Channel completely
      *         - It transfers back 40 PUSH Tokens back to the USER.
      **/
@@ -583,13 +583,13 @@ contract EPNSCoreV2 is
         uint256 totalRefundableAmount = channelData.poolContribution;
 
         if (msg.sender != pushChannelAdmin) {
-            POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
                 msg.sender,
                 totalRefundableAmount
             );
         } else {
-            POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         }
         // Unsubscribing from imperative Channels
@@ -676,7 +676,7 @@ contract EPNSCoreV2 is
             .div(minPoolContribution);
 
         channelData.channelState = 2;
-        POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = minPoolContribution;
 
@@ -692,7 +692,7 @@ contract EPNSCoreV2 is
      * @notice Allows Channel Owner to Reactivate his/her Channel again.
      * @dev    - Function can only be called by previously Deactivated Channels
      *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
-     *         - Deposited PUSH amount is distributed between POOL_FUNDS and PROTOCOL_POOL_FEES
+     *         - Deposited PUSH amount is distributed between CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES
      *         - Calculation of the new Channel Weight and poolContribution is performed and stored
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
      * @param _amount Amount of PUSH to be deposited
@@ -716,7 +716,7 @@ contract EPNSCoreV2 is
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amount.sub(poolFeeAmount);
         //store funds in pool_funds & pool_fees
-        POOL_FUNDS = POOL_FUNDS.add(poolFundAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(poolFundAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         Channel storage channelData = channels[msg.sender];
@@ -744,7 +744,7 @@ contract EPNSCoreV2 is
      *
      *         - Updates channel's state to BLOCKED ('3')
      *         - Decreases the Channel Count
-     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed from POOL_FUNDS
+     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed from CHANNEL_POOL_FUNDS
      *         - Emit 'ChannelBlocked' Event
      * @param _channelAddress Address of the Channel to be blocked
      **/
@@ -758,11 +758,11 @@ contract EPNSCoreV2 is
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
-        // Decrease POOL_FUNDS by currentPoolContribution
+        // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution.sub(
             minPoolContribution
         );
-        POOL_FUNDS = POOL_FUNDS.sub(currentPoolContribution);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(currentPoolContribution);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(currentPoolContribution);
 
         uint256 _newChannelWeight = minPoolContribution

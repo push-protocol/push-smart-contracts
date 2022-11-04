@@ -91,7 +91,7 @@ contract EPNSCoreStorageV1_5 {
     uint256 public groupFairShareCount;
 
     // @notice Necessary variables for Keeping track of Funds and Fees
-    uint256 public POOL_FUNDS;
+    uint256 public CHANNEL_POOL_FUNDS;
     uint256 public PROTOCOL_POOL_FEES;
     uint256 public ADD_CHANNEL_MIN_FEES;
     uint256 public FEE_AMOUNT;

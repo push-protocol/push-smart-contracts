@@ -147,13 +147,13 @@ describe("EPNS CoreV2 Protocol", function () {
             it("Incoming PUSH Tokens should adjusted accurately in Protocol Pool Fee (and Not Pool Funds)", async function(){
                 await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES, 0);
                 
-                const poolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
+                const poolFunds_before = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
                 const poolFee_before = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
                 const coreBalance_before = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
 
                 const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
 
-                const poolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+                const poolFunds_after = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
                 const poolFee_after = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
                 const coreBalance_after = await PushToken.balanceOf(EPNSCoreV1Proxy.address);
 

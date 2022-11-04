@@ -116,7 +116,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
         
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
 
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -152,7 +152,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
 
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
 
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -191,7 +191,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
 
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -217,7 +217,7 @@ describe("AdjustChannelPoolContributions Test", function () {
     it("Shall fail if not paused",async()=>{
         // 4 channels were created .... 50x2
         const oldPoolFunds = utils.parseEther("900");
-        const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds_before = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -233,7 +233,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
 
-        const newPoolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds_after = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         // admin updates channel pool contribution
         const tx = await EPNSCoreV1Proxy.adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -261,7 +261,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         // pause and swap
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
-        const newPoolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds_after = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
 
         const FALSE_CHANNEL_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
         const falseChannelContribInitial = await EPNSCoreV1Proxy.channels(FALSE_CHANNEL_ADDRESS).then(d => d.poolContribution);
@@ -288,7 +288,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         // pause and swap
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
-        const newPoolFunds_before = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const newPoolFunds_before = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         // without pause txn will fail
         const txn1 = EPNSCoreV1Proxy.connect(BOBSIGNER).adjustChannelPoolContributions(
             TempStoreContract.address, //Temp Contract
@@ -328,7 +328,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
         
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();        
         const pooFees_1 = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
         
         // adjusting one channel shall increase by 10
@@ -377,7 +377,7 @@ describe("AdjustChannelPoolContributions Test", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
         
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();        
         
         // adjusting one channel shall increase by 10
         await EPNSCoreV1Proxy.adjustChannelPoolContributions(
@@ -388,7 +388,7 @@ describe("AdjustChannelPoolContributions Test", function () {
             newPoolFunds,
             [ALICE] // chaneels addresses
         )
-        const poolFunds2 = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const poolFunds2 = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         expect(newPoolFunds.sub(FEE_AMOUNT)).to.equal(poolFunds2)
 
         
@@ -401,7 +401,7 @@ describe("AdjustChannelPoolContributions Test", function () {
             newPoolFunds,
             [BOB, CHARLIE] // chaneels addresses
         )
-        const poolFunds3 = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const poolFunds3 = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         expect(poolFunds2.sub(FEE_AMOUNT).sub(FEE_AMOUNT)).to.equal(poolFunds3)
 
         // adjusting to used address shall make the poolfunds unchanged
@@ -413,20 +413,20 @@ describe("AdjustChannelPoolContributions Test", function () {
             newPoolFunds,
             [ALICE, BOB, CHARLIE] // chaneels addresses
         )
-        const poolFunds_final = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const poolFunds_final = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         expect(poolFunds3).to.equal(poolFunds_final)
     })
 
     it("Shall increase fees and decrease funds in samme ammount",async()=>{
         // 4 channels were created .... 50x2
         const oldPoolFunds = utils.parseEther("900");
-        const newPoolFunds = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const newPoolFunds = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();        
 
         // pause and swap
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(0);
         
-        const poolFundsBeforeAdjust = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const poolFundsBeforeAdjust = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();        
         const poolFeesBeforeAdjust = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();        
 
         // adjusting to used address shall make the poolfunds unchanged
@@ -439,7 +439,7 @@ describe("AdjustChannelPoolContributions Test", function () {
             [ALICE, BOB, CHARLIE] // chaneels addresses
         )
 
-        const poolFundsAfterAdjust = await EPNSCoreV1Proxy.POOL_FUNDS();        
+        const poolFundsAfterAdjust = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();        
         const poolFeesAfterAdjust = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();        
         
         const fees_delta = poolFeesAfterAdjust.sub(poolFeesBeforeAdjust)

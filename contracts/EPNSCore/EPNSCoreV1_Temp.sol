@@ -461,7 +461,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         );
 
         // Update pool funds
-        POOL_FUNDS = IERC20(_push_token_address).balanceOf(address(this));
+        CHANNEL_POOL_FUNDS = IERC20(_push_token_address).balanceOf(address(this));
     }
 
     /**
@@ -497,7 +497,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
                 uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
                 uint256 newPoolContribution = adjustedPoolContribution.sub(poolFees);
                 PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFees);
-                POOL_FUNDS = POOL_FUNDS.sub(poolFees);
+                CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(poolFees);
                 uint256 adjustedNewWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
                 channels[_channelAddresses[i]].channelUpdateBlock = block.number;
@@ -661,7 +661,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         );
 
         channelData.channelState = 2;
-        POOL_FUNDS = POOL_FUNDS.sub(totalRefundableAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = FEE_AMOUNT;
 
@@ -914,7 +914,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
      * @param   amount - Amount that is to be deposited
      **/
     function _depositFundsToPool(uint256 amount) private {
-        POOL_FUNDS = POOL_FUNDS.add(amount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(amount);
 
         ILendingPoolAddressesProvider provider = ILendingPoolAddressesProvider(
             lendingPoolProviderAddress

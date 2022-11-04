@@ -136,7 +136,7 @@ describe("Swap aDai with PUSH", function () {
         expect(daiBal).to.equal(0)
     })
 
-    it('should updated POOL_FUNDS after swap', async() => {
+    it('should updated CHANNEL_POOL_FUNDS after swap', async() => {
         // Creating a channel so that contract has some aDAI
         const CHANNEL_TYPE = 2;
         await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(
@@ -149,7 +149,7 @@ describe("Swap aDai with PUSH", function () {
         const minAmmountToReceive = await getMinReceivableAmmount();
 
         // expect poolBalance before to be ADD_CHANNEL_MIN_POOL_CONTRIBUTION
-        const pooFundsBefore = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const pooFundsBefore = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         expect(pooFundsBefore).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
         // pausing the contract and swap
@@ -159,7 +159,7 @@ describe("Swap aDai with PUSH", function () {
 
         // Check balance after swap
         const new_push_bal = await EPNS.balanceOf(EPNSCoreV1Proxy.address);
-        const pooFundsAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const pooFundsAfter = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         expect(pooFundsAfter).to.equal(new_push_bal);
         expect(pooFundsAfter).to.be.above(minAmmountToReceive);
     });

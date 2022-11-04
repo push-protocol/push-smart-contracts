@@ -138,15 +138,15 @@ describe("EPNS CoreV2 Protocol", function () {
             await expect(tx).to.be.revertedWith("EPNSCoreV2::updateChannelMeta: Insufficient Deposit Amount")
           });
 
-          it("Updating Channel Meta should update POOL_FUNDS and PROTOCOL_POOL_FEES correctly", async function(){
-            const poolFunds_before  = await EPNSCoreV1Proxy.POOL_FUNDS();
+          it("Updating Channel Meta should update CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES correctly", async function(){
+            const poolFunds_before  = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
             const poolFees_before = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
             const tx = await EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
 
             const block_num = tx.blockNumber;
             const channel = await EPNSCoreV1Proxy.channels(BOB)
-            const poolFunds_after = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const poolFunds_after = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
             const poolFees_after = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
             const counter = await EPNSCoreV1Proxy.channelUpdateCounter(BOB);
 

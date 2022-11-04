@@ -269,12 +269,12 @@ describe("EPNS CORE Protocol ", function () {
              const amountArray = [ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, ADD_CHANNEL_MIN_POOL_CONTRIBUTION]
              const totalDaiDepsitedByAdmin = tokensBN(200);
 
-            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.POOL_FUNDS()
+            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
             const aDAIBalanceBefore = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).migrateChannelData(startIndex, endIndex, channelArray, channelTypeArray, identityArray, amountArray);
 
-            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
             const aDAIBalanceAfter = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
             expect(POOL_FUNDSAfter.sub(POOL_FUNDSBefore)).to.equal(totalDaiDepsitedByAdmin);

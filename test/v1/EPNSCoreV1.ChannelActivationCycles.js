@@ -211,17 +211,17 @@ describe("EPNS Core Protocol", function () {
         })
 
         it("Pool balance should decrease on Channel Deactivation", async function() {
-           const POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel(1);
-           const POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
-           await expect(POOL_FUNDSBeforeChannelCreation).to.be.equal(0);
-           await expect(POOL_FUNDSAfterChannelCreation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           await expect(POOL_FUNDSAfterChannelDeactivation).to.be.equal(CHANNEL_DEACTIVATION_FEES);
+           await expect(CHANNEL_POOL_FUNDSBeforeChannelCreation).to.be.equal(0);
+           await expect(CHANNEL_POOL_FUNDSAfterChannelCreation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+           await expect(CHANNEL_POOL_FUNDSAfterChannelDeactivation).to.be.equal(CHANNEL_DEACTIVATION_FEES);
 
         });
 
@@ -234,7 +234,7 @@ describe("EPNS Core Protocol", function () {
            const daiBalanceAfterChannelCreation = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel(1);
-           const POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
            const aDAIBalanceAfterChannelDeactivation = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
            const daiBalanceAfterChannelDeactivation = await MOCKDAI.connect(CHANNEL_CREATORSIGNER).balanceOf(EPNSCoreV1Proxy.address);
 
@@ -243,7 +243,7 @@ describe("EPNS Core Protocol", function () {
            await expect(aDAIBalanceAfterChannelCreation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
            await expect(daiBalanceAfterChannelCreation).to.be.equal(0);
            //await expect(aDAIBalanceAfterChannelDeactivation.toString()).to.be.equal('10000001039236351664');
-           await expect(aDAIBalanceAfterChannelCreation.sub(POOL_FUNDSAfterChannelDeactivation)).to.be.equal(daiBalanceAfterChannelDeactivation);
+           await expect(aDAIBalanceAfterChannelCreation.sub(CHANNEL_POOL_FUNDSAfterChannelDeactivation)).to.be.equal(daiBalanceAfterChannelDeactivation);
 
         });
 
@@ -381,21 +381,21 @@ describe("EPNS Core Protocol", function () {
        })
 
         it("Pool balance should UPdate Correctly on Channel Reactivation", async function() {
-           const POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSBeforeChannelCreation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelCreation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel(1);
-           const POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelDeactivation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
            await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           const POOL_FUNDSAfterChannelReactivation = await EPNSCoreV1Proxy.POOL_FUNDS()
+           const CHANNEL_POOL_FUNDSAfterChannelReactivation = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
 
-           await expect(POOL_FUNDSBeforeChannelCreation).to.be.equal(0);
-           await expect(POOL_FUNDSAfterChannelCreation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-           await expect(POOL_FUNDSAfterChannelDeactivation).to.be.equal(CHANNEL_DEACTIVATION_FEES);
-           await expect(POOL_FUNDSAfterChannelReactivation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.add(CHANNEL_DEACTIVATION_FEES));
+           await expect(CHANNEL_POOL_FUNDSBeforeChannelCreation).to.be.equal(0);
+           await expect(CHANNEL_POOL_FUNDSAfterChannelCreation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+           await expect(CHANNEL_POOL_FUNDSAfterChannelDeactivation).to.be.equal(CHANNEL_DEACTIVATION_FEES);
+           await expect(CHANNEL_POOL_FUNDSAfterChannelReactivation).to.be.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION.add(CHANNEL_DEACTIVATION_FEES));
 
         });
 

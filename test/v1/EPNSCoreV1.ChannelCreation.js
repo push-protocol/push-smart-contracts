@@ -249,12 +249,12 @@ describe("EPNS Core Protocol", function () {
           it("should deposit funds to pool and receive aDAI", async function(){
             const CHANNEL_TYPE = 2;
 
-            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.POOL_FUNDS()
+            const POOL_FUNDSBefore = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS()
             const aDAIBalanceBefore = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithFees(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.POOL_FUNDS();
+            const POOL_FUNDSAfter = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
             const aDAIBalanceAfter = await ADAICONTRACT.balanceOf(EPNSCoreV1Proxy.address);
 
             expect(POOL_FUNDSAfter.sub(POOL_FUNDSBefore)).to.equal(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);

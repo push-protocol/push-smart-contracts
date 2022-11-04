@@ -105,7 +105,7 @@ describe("EPNS CoreV2 Protocol", function () {
             *
             * FUNCTION Execution CHECKS
             * The Channel Creation Fees should be Transferred to the EPNS Core Proxy
-            * Should deposit funds EPNS Core Proxy Contract and Increase the POOL_FUNDS State variable
+            * Should deposit funds EPNS Core Proxy Contract and Increase the CHANNEL_POOL_FUNDS State variable
             * Should Update the State Variables Correctly and Activate the Channel
             * Readjustment of the FS Ratio should be checked
             * Should Interact successfully with EPNS Communicator and Subscribe Channel Owner to his own Channel
@@ -183,10 +183,10 @@ describe("EPNS CoreV2 Protocol", function () {
           const expectedPoolContribution = ADD_CHANNEL_MIN_FEES.sub(FEE_AMOUNT)
           const channelWeight = expectedPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
           const channelsCountAfter = await EPNSCoreV1Proxy.channelsCount();
-          const pool_funds = await EPNSCoreV1Proxy.POOL_FUNDS();
+          const CHANNEL_POOL_FUNDS = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
 
-          // console.log(pool_funds.toString());
-          expect(pool_funds).to.equal(expectedPoolContribution);
+          // console.log(CHANNEL_POOL_FUNDS.toString());
+          expect(CHANNEL_POOL_FUNDS).to.equal(expectedPoolContribution);
           expect(channel.channelState).to.equal(1);
           expect(channel.poolContribution).to.equal(expectedPoolContribution);
           expect(channel.channelType).to.equal(CHANNEL_TYPE);
@@ -197,18 +197,18 @@ describe("EPNS CoreV2 Protocol", function () {
           expect(channelsCountBefore.add(1)).to.equal(channelsCountAfter);
         }).timeout(10000);
 
-      it("POOL_FUNDS & PROTOCOL_POOL_FEES should be updated correctly for Single Channel Creation", async function(){
+      it("CHANNEL_POOL_FUNDS & PROTOCOL_POOL_FEES should be updated correctly for Single Channel Creation", async function(){
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES,0);
 
         const expectedPoolContribution = ADD_CHANNEL_MIN_FEES.sub(FEE_AMOUNT)
-        const pool_funds = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const CHANNEL_POOL_FUNDS = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
         expect(pool_fees).to.equal(FEE_AMOUNT);
-        expect(pool_funds).to.equal(expectedPoolContribution);
+        expect(CHANNEL_POOL_FUNDS).to.equal(expectedPoolContribution);
       }).timeout(10000);
 
-      it("POOL_FUNDS & PROTOCOL_POOL_FEES should be updated correctly for Multiple Channel Creation", async function(){
+      it("CHANNEL_POOL_FUNDS & PROTOCOL_POOL_FEES should be updated correctly for Multiple Channel Creation", async function(){
         // CHANNEL_CREATOR -> creates with 50 Push
         // BOB -> creates with 150 Push
         // Alice -> Creates with 290 PUSH
@@ -222,11 +222,11 @@ describe("EPNS CoreV2 Protocol", function () {
         const totalAmounDeposited = ADD_CHANNEL_MIN_FEES.add(tokensBN(150).add(tokensBN(290).add(tokensBN(500))));
         const totalPoolFunds = totalAmounDeposited.sub(totalFeeFunds);
 
-        const pool_funds = await EPNSCoreV1Proxy.POOL_FUNDS();
+        const CHANNEL_POOL_FUNDS = await EPNSCoreV1Proxy.CHANNEL_POOL_FUNDS();
         const pool_fees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
         expect(pool_fees).to.equal(totalFeeFunds);
-        expect(pool_funds).to.equal(totalPoolFunds);
+        expect(CHANNEL_POOL_FUNDS).to.equal(totalPoolFunds);
       }).timeout(10000);
 
 
