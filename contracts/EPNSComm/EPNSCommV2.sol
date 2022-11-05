@@ -368,17 +368,6 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         User storage user = users[_user];
 
         user.isSubscribed[_channel] = 0;
-        // Remove the mappings and cleanup
-        // a bit tricky, swap and delete to maintain mapping
-        // Remove From Users mapping
-        // Find the id of the channel and swap it with the last id, use channel.memberCount as index
-        // Slack too deep fix
-        // address usrSubToSwapAdrr = user.mapAddressSubscribed[user.subscribedCount];
-        // uint usrSubSwapID = user.subscribed[_channel];
-
-        // // swap to last one and then
-        // user.subscribed[usrSubToSwapAdrr] = usrSubSwapID;
-        // user.mapAddressSubscribed[usrSubSwapID] = usrSubToSwapAdrr;
 
         user.subscribed[user.mapAddressSubscribed[user.subscribedCount]] = user
             .subscribed[_channel];
