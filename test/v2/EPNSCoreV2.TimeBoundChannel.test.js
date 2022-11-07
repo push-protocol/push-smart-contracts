@@ -3,8 +3,6 @@ const { ethers,waffle } = require("hardhat");
 const {
   bn,
   tokensBN,
-  ChannelAction,
-  readjustFairShareOfChannels,
 } = require("../../helpers/utils");
 
 
@@ -15,7 +13,7 @@ const createFixtureLoader = waffle.createFixtureLoader;
 describe("EPNS CoreV2 Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
   const CHANNEL_DEACTIVATION_FEES = tokensBN(10)
-  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
+  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250 * 50)
   const ADJUST_FOR_FLOAT = bn(10 ** 7)
 
   let PushToken;

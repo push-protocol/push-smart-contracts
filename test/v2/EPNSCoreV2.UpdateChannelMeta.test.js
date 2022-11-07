@@ -12,7 +12,7 @@ describe("EPNS CoreV2 Protocol", function () {
   const ADJUST_FOR_FLOAT = bn(10 ** 7)
   const MIN_POOL_CONTRIBUTION = tokensBN(1)
   const ADD_CHANNEL_MIN_FEES = tokensBN(50)
-  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
+  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250 * 50)
 
   let EPNSCoreV1Proxy;
   let EPNSCommV1Proxy;

@@ -184,9 +184,7 @@ contract EPNSCoreV2 is
     }
 
     /* ***************
-
     SETTER & HELPER FUNCTIONS
-
     *************** */
     function addSubGraph(bytes calldata _subGraphData)
         external
@@ -277,9 +275,7 @@ contract EPNSCoreV2 is
     }
 
     /* ***********************************
-
         CHANNEL RELATED FUNCTIONALTIES
-
     **************************************/
     function getChannelState(address _channel)
         external
