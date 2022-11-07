@@ -48,10 +48,9 @@ describe("Swap aDai with PUSH", function () {
           WETH_ADDRS
         } = await loadFixture(epnsContractFixture));
 
-        ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
+        ({MOCKDAI, ADAI, DAI_WHALE_SIGNER} = await loadFixture(tokenFixture));
         
         // DAI Token
-        const DAI_WHALE_SIGNER  = await ethers.getImpersonatedSigner("0x7c8CA1a587b2c4c40fC650dB8196eE66DC9c46F4");
         await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(ALICE,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 

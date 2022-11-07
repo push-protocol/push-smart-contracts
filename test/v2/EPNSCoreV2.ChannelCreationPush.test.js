@@ -3,8 +3,6 @@ const { ethers,waffle } = require("hardhat");
 const {
   bn,
   tokensBN,
-  ChannelAction,
-  readjustFairShareOfChannels,
 } = require("../../helpers/utils");
 
 
@@ -16,7 +14,7 @@ describe("EPNS CoreV2 Protocol", function () {
   const FEE_AMOUNT = tokensBN(10)
   const MIN_POOL_CONTRIBUTION = tokensBN(1)
   const ADD_CHANNEL_MIN_FEES = tokensBN(50)
-  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250000 * 50)
+  const ADD_CHANNEL_MAX_POOL_CONTRIBUTION = tokensBN(250 * 50)
   const ADJUST_FOR_FLOAT = bn(10 ** 7)
 
   let PushToken;
@@ -62,7 +60,6 @@ describe("EPNS CoreV2 Protocol", function () {
     CHARLIE = await charlieSigner.getAddress();
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
-
     ({
       PROXYADMIN,
       EPNSCoreV1Proxy,
@@ -86,6 +83,7 @@ describe("EPNS CoreV2 Protocol", function () {
            beforeEach(async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
+            
             await PushToken.transfer(BOB, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
             await PushToken.transfer(ALICE, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
             await PushToken.transfer(CHARLIE, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
