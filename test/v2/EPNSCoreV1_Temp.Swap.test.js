@@ -84,10 +84,8 @@ describe("Swap aDai with PUSH", function () {
         // pause the contract
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
         
-        console.log("mint ammit");
         // get expected Token ammount after the swap
         const minAmmountToReceive = await getMinReceivableAmmount();
-        console.log("min ammout to get",minAmmountToReceive);
         
         // Admin to swaps aDai for PUSH
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive);
