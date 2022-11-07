@@ -35,7 +35,7 @@
     "ethereum-waffle": "^3.3.0",
     "ethereumjs-wallet": "1.0.1",
     "ethers": "^5.1.4",
-    "hardhat": "^2.7.0",
+    "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1",
     "solidity-bytes-utils": "^0.0.9"
