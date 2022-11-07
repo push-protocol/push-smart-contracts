@@ -184,7 +184,9 @@ contract EPNSCoreV2 is
     }
 
     /* ***************
+
     SETTER & HELPER FUNCTIONS
+
     *************** */
     function addSubGraph(bytes calldata _subGraphData)
         external
@@ -275,7 +277,9 @@ contract EPNSCoreV2 is
     }
 
     /* ***********************************
+
         CHANNEL RELATED FUNCTIONALTIES
+
     **************************************/
     function getChannelState(address _channel)
         external
@@ -451,7 +455,7 @@ contract EPNSCoreV2 is
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(poolFundAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
-        
+
         // Calculate channel weight
         uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
             MIN_POOL_CONTRIBUTION
@@ -500,10 +504,10 @@ contract EPNSCoreV2 is
      *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
-     *         - If Channel Owner destroys the channel after expiration, he/she recieves back 40 PUSH Token back & CHANNEL_POOL_FUNDS decreases.
-     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES & CHANNEL_POOL_FUNDS decreases.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back refundable amount & CHANNEL_POOL_FUNDS decreases.
+     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES.
      *         - Deletes the Channel completely
-     *         - It transfers back 40 PUSH Tokens back to the USER.
+     *         - It transfers back refundable tokenAmount back to the USER.
      **/
 
     function destroyTimeBoundChannel(address _channelAddress)
@@ -580,7 +584,10 @@ contract EPNSCoreV2 is
         string calldata _notifDescription,
         uint256 _amountDeposited
     ) external onlyActivatedChannels(msg.sender) {
-        require(_amountDeposited >= ADD_CHANNEL_MIN_FEES, "EPNSCoreV2::createChannelSettings: Insufficient Funds Passed");
+        require(
+            _amountDeposited >= ADD_CHANNEL_MIN_FEES,
+            "EPNSCoreV2::createChannelSettings: Insufficient Funds Passed"
+        );
 
         string memory notifSetting = string(
             abi.encodePacked(
@@ -736,7 +743,7 @@ contract EPNSCoreV2 is
     /**
      * @notice    Function designed to allow transfer of channel ownership
      * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details.
-     * 
+     *
      * @param    _channelAddress Address of the channel that needs to change its ownership
      * @param    _newChannelAddress Address of the new channel owner
      * @param    _amountDeposited Fee amount deposited for ownership transfer
@@ -747,10 +754,14 @@ contract EPNSCoreV2 is
         address _newChannelAddress,
         uint256 _amountDeposited
     ) external whenNotPaused returns (bool) {
-        require((channels[_channelAddress].channelState == 1 && msg.sender == _channelAddress),
+        require(
+            (channels[_channelAddress].channelState == 1 &&
+                msg.sender == _channelAddress),
             "EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State"
         );
-        require(_newChannelAddress != address(0) && channels[_newChannelAddress].channelState == 0,
+        require(
+            _newChannelAddress != address(0) &&
+                channels[_newChannelAddress].channelState == 0,
             "EPNSCoreV2::transferChannelOwnership: Invalid address for new channel owner"
         );
         require(
@@ -769,7 +780,10 @@ contract EPNSCoreV2 is
 
         // Subscribe newChannelOwner address to important channels
         address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_newChannelAddress, _newChannelAddress);
+        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
+            _newChannelAddress,
+            _newChannelAddress
+        );
 
         IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
             address(0x0),
@@ -779,8 +793,8 @@ contract EPNSCoreV2 is
             _newChannelAddress,
             pushChannelAdmin
         );
-        
-        // Unsubscribing pushChannelAdmin from old Channel 
+
+        // Unsubscribing pushChannelAdmin from old Channel
         IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
             _channelAddress,
             pushChannelAdmin
