@@ -49,9 +49,10 @@ describe("Swap aDai with PUSH", function () {
         } = await loadFixture(epnsContractFixture));
 
         ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
-
+        
         // DAI Token
-        await MOCKDAI.connect(ALICESIGNER).mint(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
+        const DAI_WHALE_SIGNER  = await ethers.getImpersonatedSigner("0x7c8CA1a587b2c4c40fC650dB8196eE66DC9c46F4");
+        await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(ALICE,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
         await MOCKDAI.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
     });
@@ -78,15 +79,17 @@ describe("Swap aDai with PUSH", function () {
         await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithFees(
             CHANNEL_TYPE,
             testChannel,
-            ADD_CHANNEL_MIN_POOL_CONTRIBUTION
+            ADD_CHANNEL_MIN_POOL_CONTRIBUTION,
         );
 
         // pause the contract
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
-
+        
+        console.log("mint ammit");
         // get expected Token ammount after the swap
         const minAmmountToReceive = await getMinReceivableAmmount();
-
+        console.log("min ammout to get",minAmmountToReceive);
+        
         // Admin to swaps aDai for PUSH
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).swapADaiForPush(minAmmountToReceive);
 

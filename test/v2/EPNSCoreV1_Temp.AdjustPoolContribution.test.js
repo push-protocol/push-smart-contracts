@@ -65,17 +65,20 @@ describe("AdjustChannelPoolContributions Test", function () {
 
         ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
 
-        // Transfer  Token
-        await MOCKDAI.connect(ALICESIGNER).mint(ADD_CHANNEL_MIN_FEES);
+        // DAI Token
+        const DAI_WHALE_SIGNER  = await ethers.getImpersonatedSigner("0x7c8CA1a587b2c4c40fC650dB8196eE66DC9c46F4");
+        
+        // Trasnfers
+        await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(ALICE,ADD_CHANNEL_MIN_FEES.mul(100));
+        await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(BOB,ADD_CHANNEL_MIN_FEES.mul(100));
+        await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(CHARLIE,ADD_CHANNEL_MIN_FEES.mul(100));
+        await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(ABY,ADD_CHANNEL_MIN_FEES.mul(100));
+
+
+        // Approve
         await MOCKDAI.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES);
-
-        await MOCKDAI.connect(BOBSIGNER).mint(ADD_CHANNEL_MIN_FEES);
         await MOCKDAI.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES);
-
-        await MOCKDAI.connect(CHARLIESIGNER).mint(ADD_CHANNEL_MIN_FEES.mul(10));
         await MOCKDAI.connect(CHARLIESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(10));
-
-        await MOCKDAI.connect(ABYSIGNER).mint(ADD_CHANNEL_MIN_FEES.mul(10));
         await MOCKDAI.connect(ABYSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(10));
 
         // create channel
@@ -138,10 +141,10 @@ describe("AdjustChannelPoolContributions Test", function () {
         const abyChannelNewPoolContrib = await EPNSCoreV1Proxy.channels(ABY).then(d => d.poolContribution);
 
         const aliceChannelNewWeight = await EPNSCoreV1Proxy.channels(ALICE).then(d => d.channelWeight);
-        expect(aliceExpectedContribution).to.be.closeTo(aliceChannelNewPoolContrib, utils.parseEther("0.00001"))
-        expect(bobExpectedContribution).to.be.closeTo(bobChannelNewPoolContrib, utils.parseEther("0.00001"))
-        expect(charlieExpectedContribution).to.be.closeTo(charlieChannelNewPoolContrib, utils.parseEther("0.00001"))
-        expect(abyExpectedContribution).to.be.closeTo(abyChannelNewPoolContrib, utils.parseEther("0.00001"))
+        expect(aliceExpectedContribution).to.be.closeTo(aliceChannelNewPoolContrib, utils.parseEther("0.0001"))
+        expect(bobExpectedContribution).to.be.closeTo(bobChannelNewPoolContrib, utils.parseEther("0.0001"))
+        expect(charlieExpectedContribution).to.be.closeTo(charlieChannelNewPoolContrib, utils.parseEther("0.0001"))
+        expect(abyExpectedContribution).to.be.closeTo(abyChannelNewPoolContrib, utils.parseEther("0.0001"))
     })
 
     it("Updates channel poolWeight properly",async()=>{
@@ -178,10 +181,10 @@ describe("AdjustChannelPoolContributions Test", function () {
         const charlieChannelWeight = await EPNSCoreV1Proxy.channels(CHARLIE).then(d => d.channelWeight);
         const abyChannelWeight = await EPNSCoreV1Proxy.channels(ABY).then(d => d.channelWeight);
 
-        expect(aliceExpectedWeight).to.be.closeTo(aliceChannelNewWeight, 100)
-        expect(bobExpectedWeight).to.be.closeTo(bobChannelNewWeight, 100)
-        expect(charlieExpectedWeight).to.be.closeTo(charlieChannelWeight, 100)
-        expect(abyExpectedWeight).to.be.closeTo(abyChannelWeight, 100)
+        expect(aliceExpectedWeight).to.be.closeTo(aliceChannelNewWeight, 1000)
+        expect(bobExpectedWeight).to.be.closeTo(bobChannelNewWeight, 1000)
+        expect(charlieExpectedWeight).to.be.closeTo(charlieChannelWeight, 1000)
+        expect(abyExpectedWeight).to.be.closeTo(abyChannelWeight, 1000)
     })
 
     it("Assignes correct channelUpdateBlock value ",async()=>{

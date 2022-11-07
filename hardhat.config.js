@@ -5,7 +5,7 @@ const fs = require("fs");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
-require("hardhat-gas-reporter");
+// require("hardhat-gas-reporter");
 
 const { ethers } = require("ethers");
 const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
@@ -46,8 +46,9 @@ module.exports = {
     hardhat: {
       forking: {
         url:
-          `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_API}`,
-          blockNumber: 7755338
+          // `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API}`,
+          'https://eth-mainnet.g.alchemy.com/v2/rtkd-a4JWpnViQBZdNCiFBGTJdp5e0R2',
+          blockNumber: 15917401
       },
     },
     localhost: {
