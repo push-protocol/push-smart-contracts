@@ -97,7 +97,7 @@ describe("EPNS CoreV2 Protocol", function () {
     
       it("Should Revert if Channel is Inactiave", async function () {
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-        await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
+        await expect(tx).to.be.revertedWith("EPNSCoreV1_5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
       });
     
       it("Should Revert if Channel is already Deactivated", async function () {
@@ -105,7 +105,7 @@ describe("EPNS CoreV2 Protocol", function () {
     
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
-        await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
+        await expect(tx).to.be.revertedWith("EPNSCoreV1_5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
       });
     
       it("Should set the created Channel State to '1' and decativated to '2' ", async function() {
@@ -224,20 +224,20 @@ describe("EPNS CoreV2 Protocol", function () {
         // try to reactivate activated channel
         const tx1 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_FEES);
         await expect(tx1)
-          .to.be.revertedWith('EPNSCoreV2::onlyDeactivatedChannels: Channel is not Deactivated Yet');
+          .to.be.revertedWith('EPNSCoreV1_5::onlyDeactivatedChannels: Channel is not Deactivated Yet');
     
         // try to reactive the blocked channel
         await EPNSCoreV1Proxy.blockChannel(CHANNEL_CREATOR);
         const tx2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_FEES);
         await expect(tx2)
-          .to.be.revertedWith('EPNSCoreV2::onlyDeactivatedChannels: Channel is not Deactivated Yet');
+          .to.be.revertedWith('EPNSCoreV1_5::onlyDeactivatedChannels: Channel is not Deactivated Yet');
       });
     
       it("Should Revert if Minimum Required Amount is not passed while Reactivating Channel", async function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_FEES,0);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(FEE_AMOUNT);
-        await expect(tx).to.be.revertedWith("EPNSCoreV2::reactivateChannel: Insufficient Funds Passed for Channel Reactivation");
+        await expect(tx).to.be.revertedWith("EPNSCoreV1_5::reactivateChannel: Insufficient Funds Passed for Channel Reactivation");
       });
     
       it("Should set the reactivated Channel State to '1' ", async function() {
@@ -334,7 +334,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
         const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).blockChannel(CHANNEL_CREATOR);
 
-        await expect(tx).to.be.revertedWith("EPNSCoreV2::onlyPushChannelAdmin: Caller not pushChannelAdmin")
+        await expect(tx).to.be.revertedWith("EPNSCoreV1_5::onlyPushChannelAdmin: Caller not pushChannelAdmin")
       });
 
       it("Allows admin to block any channel is active state", async function(){
@@ -359,7 +359,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       it("Should revert if Target Channel is NOT ACTIVATED YET", async function () {
         const tx1 = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
-        await expect(tx1).to.be.revertedWith("EPNSCoreV2::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
+        await expect(tx1).to.be.revertedWith("EPNSCoreV1_5::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
       });
 
       it("Should revert if Target Channel is NOT BLOCKED ALREADY", async function () {
@@ -368,7 +368,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
 
         const tx1 = EPNSCoreV1Proxy.connect(ADMINSIGNER).blockChannel(CHANNEL_CREATOR);
-        await expect(tx1).to.be.revertedWith("EPNSCoreV2::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
+        await expect(tx1).to.be.revertedWith("EPNSCoreV1_5::onlyUnblockedChannels: Channel is BLOCKED Already or Not Activated Yet")
       });
 
       it("After Blocking, PoolFunds and PoolFees Should be Updated correctly", async function(){

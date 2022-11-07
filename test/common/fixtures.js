@@ -33,7 +33,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   });
   await PushToken.connect(PUSH_WHALE_SIGNER).transfer(ADMIN, AMT_TO_TRASFER);
 
-  const EPNSCore = await ethers.getContractFactory("EPNSCoreV2");
+  const EPNSCore = await ethers.getContractFactory("EPNSCoreV1_5");
   CORE_LOGIC = await EPNSCore.deploy();
 
   const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");

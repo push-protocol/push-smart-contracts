@@ -117,7 +117,7 @@ describe("EPNS CoreV2 Protocol", function () {
      
                  const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB,ADD_CHANNEL_MIN_FEES);
      
-                 await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State")
+                 await expect(tx).to.be.revertedWith("EPNSCoreV1_5::transferChannelOwnership: Invalid Channel Owner or Channel State")
                });
 
                it("Should revert if IF Contract is paused ", async function () {    
@@ -141,7 +141,7 @@ describe("EPNS CoreV2 Protocol", function () {
     
                 const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, feeAmount);
 
-                await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation")
+                await expect(tx).to.be.revertedWith("EPNSCoreV1_5::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation")
             });
 
             it("Incoming PUSH Tokens should adjusted accurately in Protocol Pool Fee (and Not Pool Funds)", async function(){
@@ -240,7 +240,7 @@ describe("EPNS CoreV2 Protocol", function () {
     
                 const tx = EPNSCoreV1Proxy.connect(ADMINSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
     
-                await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid Channel Owner or Channel State")
+                await expect(tx).to.be.revertedWith("EPNSCoreV1_5::transferChannelOwnership: Invalid Channel Owner or Channel State")
               });
 
               it("Ownership can't be transferred to an already existing Channel", async function () {
@@ -249,7 +249,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
                 const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).transferChannelOwnership(CHANNEL_CREATOR, BOB, ADD_CHANNEL_MIN_FEES);
     
-                await expect(tx).to.be.revertedWith("EPNSCoreV2::transferChannelOwnership: Invalid address for new channel owner")
+                await expect(tx).to.be.revertedWith("EPNSCoreV1_5::transferChannelOwnership: Invalid address for new channel owner")
               });
      
          });
