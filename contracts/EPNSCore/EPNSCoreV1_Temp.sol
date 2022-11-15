@@ -11,7 +11,6 @@ pragma experimental ABIEncoderV2;
  * Functionalties.
  **/
 import "./EPNSCoreStorageV1_5.sol";
-import "../interfaces/IPUSH.sol";
 import "../interfaces/IADai.sol";
 import "../interfaces/ITempStorage.sol";
 import "../interfaces/ILendingPool.sol";
@@ -245,7 +244,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
     }
 
     function transferPushChannelAdminControl(address _newAdmin)
-        public
+        external
         onlyPushChannelAdmin
     {
         require(
@@ -490,12 +489,13 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         uint256 poolFundRatio = _newPoolFunds.mul(ADJUST_FOR_FLOAT).div(_oldPoolFunds);
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
-          if(channels[_channelAddresses[i]].channelState == 0 ||
+            if(channels[_channelAddresses[i]].channelState == 0 ||
               ITempStorage(_tempStorageAddress).isChannelAdjusted(_channelAddresses[i]))
               {
                 continue;
               } else{
                 // Calculating new adjusted poolContribution & channelWeight
+
                 uint256 adjustedPoolContribution = channels[_channelAddresses[i]].poolContribution.mul(poolFundRatio).div(ADJUST_FOR_FLOAT);
                 uint256 newPoolContribution = adjustedPoolContribution.sub(poolFees);
                 PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFees);
@@ -506,7 +506,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
                 channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
                 channels[_channelAddresses[i]].poolContribution = newPoolContribution;
                 ITempStorage(_tempStorageAddress).setChannelAdjusted(_channelAddresses[i]);
-              }
+            }
         }
         return true;
      }
