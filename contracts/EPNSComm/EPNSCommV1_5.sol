@@ -667,7 +667,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         bytes32 s
     ) external returns (bool) {
         if (
-            _signer == address(0) || nonce != nonces[_signer]++ || now > expiry
+            _signer == address(0) || nonce != nonces[_signer] || now > expiry
         ) {
             return false;
         }
@@ -708,6 +708,9 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
             _signer,
             _identity
         );
+
+        // update nocce if signature valid
+        nonces[_signer] = nonce.add(1);
 
         return success;
     }
