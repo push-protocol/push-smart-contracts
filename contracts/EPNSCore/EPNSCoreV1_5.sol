@@ -23,8 +23,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 contract EPNSCoreV1_5 is
     Initializable,
     EPNSCoreStorageV1_5,
@@ -262,7 +260,7 @@ contract EPNSCoreV1_5 is
     }
 
     function transferPushChannelAdminControl(address _newAdmin)
-        public
+        external
         onlyPushChannelAdmin
     {
         require(
@@ -323,7 +321,7 @@ contract EPNSCoreV1_5 is
             "EPNSCoreV1_5::updateChannelMeta: Insufficient Deposit Amount"
         );
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amount);
-        channelUpdateCounter[_channel] += 1;
+        channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
@@ -468,8 +466,9 @@ contract EPNSCoreV1_5 is
         channels[_channel].channelUpdateBlock = block.number;
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
-        channelById[channelsCount] = _channel;
-        channelsCount = channelsCount.add(1);
+        uint256 _channelsCount = channelsCount;
+        channelById[_channelsCount] = _channel;
+        channelsCount = _channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
             require(
@@ -515,7 +514,7 @@ contract EPNSCoreV1_5 is
         whenNotPaused
         onlyActivatedChannels(_channelAddress)
     {
-        Channel storage channelData = channels[_channelAddress];
+        Channel memory channelData = channels[_channelAddress];
 
         require(
             channelData.channelType == ChannelType.TimeBound,
@@ -556,7 +555,7 @@ contract EPNSCoreV1_5 is
         );
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount.sub(1);
-        delete channels[msg.sender];
+        delete channels[_channelAddress];
 
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
