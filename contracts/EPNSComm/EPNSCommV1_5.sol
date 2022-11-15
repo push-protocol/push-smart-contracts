@@ -1,6 +1,5 @@
 pragma solidity >=0.6.0 <0.7.0;
 pragma experimental ABIEncoderV2;
-import "hardhat/console.sol";
 // SPDX-License-Identifier: MIT
 
 /**
@@ -116,7 +115,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
     }
 
     function transferPushChannelAdminControl(address _newAdmin)
-        public
+        external
         onlyPushChannelAdmin
     {
         require(
@@ -235,12 +234,14 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         _addUser(_user);
 
         User storage user = users[_user];
+        
+        uint256 _subscribedCount = user.subscribedCount;
 
         user.isSubscribed[_channel] = 1;
         // treat the count as index and update user struct
-        user.subscribed[_channel] = user.subscribedCount;
-        user.mapAddressSubscribed[user.subscribedCount] = _channel;
-        user.subscribedCount = user.subscribedCount.add(1); // Finally increment the subscribed count
+        user.subscribed[_channel] = _subscribedCount;
+        user.mapAddressSubscribed[_subscribedCount] = _channel;
+        user.subscribedCount = _subscribedCount.add(1); // Finally increment the subscribed count
         // Emit it
         emit Subscribe(_channel, _user);
     }
@@ -258,7 +259,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public {
+    ) external {
         // EIP-712
         require(
             subscriber != address(0),
@@ -366,17 +367,19 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         // Add the channel to gray list so that it can't subscriber the user again as delegated
         User storage user = users[_user];
 
+        uint _subscribedCount = user.subscribedCount;
+
         user.isSubscribed[_channel] = 0;
 
-        user.subscribed[user.mapAddressSubscribed[user.subscribedCount]] = user
+        user.subscribed[user.mapAddressSubscribed[_subscribedCount]] = user
             .subscribed[_channel];
         user.mapAddressSubscribed[user.subscribed[_channel]] = user
-            .mapAddressSubscribed[user.subscribedCount];
+            .mapAddressSubscribed[_subscribedCount];
 
         // delete the last one and substract
         delete (user.subscribed[_channel]);
-        delete (user.mapAddressSubscribed[user.subscribedCount]);
-        user.subscribedCount = user.subscribedCount.sub(1);
+        delete (user.mapAddressSubscribed[_subscribedCount]);
+        user.subscribedCount = _subscribedCount.sub(1);
 
         // Emit it
         emit Unsubscribe(_channel, _user);
@@ -395,7 +398,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public {
+    ) external {
         require(
             subscriber != address(0),
             "EPNSCommV1_5::unsubscribeBySig: Invalid signature"
@@ -605,7 +608,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         address _channel,
         address _recipient,
         bytes memory _identity
-    ) public returns (bool) {
+    ) external returns (bool) {
         bool success = _checkNotifReq(_channel, _recipient);
         if (success) {
             // Emit the message out
