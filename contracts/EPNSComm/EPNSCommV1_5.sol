@@ -18,7 +18,6 @@ pragma experimental ABIEncoderV2;
 import "./EPNSCommStorageV1_5.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -709,7 +708,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
             _identity
         );
 
-        // update nocce if signature valid
+        // update nonce if signature valid
         nonces[_signer] = nonce.add(1);
 
         return success;
