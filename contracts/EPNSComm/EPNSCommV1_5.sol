@@ -136,16 +136,16 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
      * @notice Helper function to check if User is Subscribed to a Specific Address
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber
-     * @return isSubscriber True if User is actually a subscriber of a Channel
+     * @return True if User is actually a subscriber of a Channel
      **/
     function isUserSubscribed(address _channel, address _user)
         public
         view
-        returns (bool isSubscriber)
+        returns (bool)
     {
         User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
-            isSubscriber = true;
+            return true;
         }
     }
 
@@ -223,24 +223,21 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
      * @param _user    address of the Subscriber
      **/
     function _subscribe(address _channel, address _user) private {
-        require(
-            !isUserSubscribed(_channel, _user),
-            "EPNSCommV1_5::_subscribe: User already Subscribed"
-        );
+        if (!isUserSubscribed(_channel, _user)) {
+            _addUser(_user);
 
-        _addUser(_user);
+            User storage user = users[_user];
 
-        User storage user = users[_user];
-        
-        uint256 _subscribedCount = user.subscribedCount;
+            uint256 _subscribedCount = user.subscribedCount;
 
-        user.isSubscribed[_channel] = 1;
-        // treat the count as index and update user struct
-        user.subscribed[_channel] = _subscribedCount;
-        user.mapAddressSubscribed[_subscribedCount] = _channel;
-        user.subscribedCount = _subscribedCount.add(1); // Finally increment the subscribed count
-        // Emit it
-        emit Subscribe(_channel, _user);
+            user.isSubscribed[_channel] = 1;
+            // treat the count as index and update user struct
+            user.subscribed[_channel] = _subscribedCount;
+            user.mapAddressSubscribed[_subscribedCount] = _channel;
+            user.subscribedCount = _subscribedCount.add(1); // Finally increment the subscribed count
+            // Emit it
+            emit Subscribe(_channel, _user);
+        }
     }
 
     /**
@@ -357,29 +354,26 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
      * @param _user address of the Subscriber
      **/
     function _unsubscribe(address _channel, address _user) private {
-        require(
-            isUserSubscribed(_channel, _user),
-            "EPNSCommV1_5::_unsubscribe: User not subscribed to channel"
-        );
-        // Add the channel to gray list so that it can't subscriber the user again as delegated
-        User storage user = users[_user];
+        if (isUserSubscribed(_channel, _user)) {
+            User storage user = users[_user];
 
-        uint _subscribedCount = user.subscribedCount;
+            uint256 _subscribedCount = user.subscribedCount;
 
-        user.isSubscribed[_channel] = 0;
+            user.isSubscribed[_channel] = 0;
 
-        user.subscribed[user.mapAddressSubscribed[_subscribedCount]] = user
-            .subscribed[_channel];
-        user.mapAddressSubscribed[user.subscribed[_channel]] = user
-            .mapAddressSubscribed[_subscribedCount];
+            user.subscribed[user.mapAddressSubscribed[_subscribedCount]] = user
+                .subscribed[_channel];
+            user.mapAddressSubscribed[user.subscribed[_channel]] = user
+                .mapAddressSubscribed[_subscribedCount];
 
-        // delete the last one and substract
-        delete (user.subscribed[_channel]);
-        delete (user.mapAddressSubscribed[_subscribedCount]);
-        user.subscribedCount = _subscribedCount.sub(1);
+            // delete the last one and substract
+            delete (user.subscribed[_channel]);
+            delete (user.mapAddressSubscribed[_subscribedCount]);
+            user.subscribedCount = _subscribedCount.sub(1);
 
-        // Emit it
-        emit Unsubscribe(_channel, _user);
+            // Emit it
+            emit Unsubscribe(_channel, _user);
+        }
     }
 
     /**
@@ -663,9 +657,7 @@ contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
         bytes32 r,
         bytes32 s
     ) external returns (bool) {
-        if (
-            _signer == address(0) || nonce != nonces[_signer] || now > expiry
-        ) {
+        if (_signer == address(0) || nonce != nonces[_signer] || now > expiry) {
             return false;
         }
 
