@@ -19,13 +19,11 @@ import "./EPNSCommStorageV1_5.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IERC1271.sol";
 
 contract EPNSCommV1_5 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     /** EVENTS **/
     event SendNotification(
