@@ -227,7 +227,7 @@ contract EPNSCoreV1_5 is
 
     function setFeeAmount(uint256 _newFees) external onlyGovernance {
         require(
-            _newFees > 0,
+            _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
             "EPNSCoreV1_5::setFeeAmount: Fee amount must be greater than ZERO"
         );
         FEE_AMOUNT = _newFees;
