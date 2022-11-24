@@ -752,12 +752,7 @@ contract EPNSCoreV1_5 is
         address _channelAddress,
         address _newChannelAddress,
         uint256 _amountDeposited
-    ) external whenNotPaused returns (bool) {
-        require(
-            (channels[_channelAddress].channelState == 1 &&
-                msg.sender == _channelAddress),
-            "EPNSCoreV1_5::transferChannelOwnership: Invalid Channel Owner or Channel State"
-        );
+    ) external whenNotPaused onlyActivatedChannels(msg.sender) returns (bool) {
         require(
             _newChannelAddress != address(0) &&
                 channels[_newChannelAddress].channelState == 0,
