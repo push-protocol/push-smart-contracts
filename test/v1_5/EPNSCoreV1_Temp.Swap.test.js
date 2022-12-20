@@ -2,7 +2,7 @@ const { utils } = require("ethers");
 const { ethers, waffle} = require("hardhat");
 
 const {expect} = require("../common/expect")
-const {epnsContractFixture,tokenFixture} = require("../common/fixtures_temp")
+const {epnsContractFixture} = require("../common/fixtures_temp")
 const createFixtureLoader = waffle.createFixtureLoader;
 
 const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = utils.parseEther("50");

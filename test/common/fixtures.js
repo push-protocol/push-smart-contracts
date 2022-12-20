@@ -20,18 +20,11 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   const ADMIN = await adminSigner.getAddress();
   ROUTER = await ethers.getContractAt("IUniswapV2Router", UNISWAP_ROUTER);
 
-  // deploy push token
-  const PushToken = await ethers.getContractAt("EPNS", EPNS_TOKEN_ADDRS);
+  // deploy dummy push token
+  let PushToken = await ethers.getContractFactory("EPNS");
+  PushToken = await PushToken.deploy(ADMIN);
 
-  // PUSH token trasnfered to the admin
-  const PUSH_WHALE_SIGNER = await ethers.getImpersonatedSigner(
-    PUSH_WHALE_ADDRESS
-  );
-  await adminSigner.sendTransaction({
-    to: PUSH_WHALE_ADDRESS,
-    value: ethers.utils.parseEther("1.0"),
-  });
-  await PushToken.connect(PUSH_WHALE_SIGNER).transfer(ADMIN, AMT_TO_TRASFER);
+  console.log("ALL GOOD HERE");
 
   const EPNSCore = await ethers.getContractFactory("EPNSCoreV1_5");
   CORE_LOGIC = await EPNSCore.deploy();
@@ -86,23 +79,8 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   };
 };
 
-const tokenFixture = async ([adminSigner, others]) => {
-  const MOCKDAITOKEN = await ethers.getContractFactory("MockDAI");
-  MOCKDAI = await MOCKDAITOKEN.attach(DAI);
 
-  const ADAIContract = await ethers.getContractAt("IADai", ADAI);
-  const DAI_WHALE_SIGNER = await ethers.getImpersonatedSigner(
-    "0x7c8CA1a587b2c4c40fC650dB8196eE66DC9c46F4"
-  );
-
-  return {
-    MOCKDAI,
-    ADAI: ADAIContract,
-    DAI_WHALE_SIGNER,
-  };
-};
 
 module.exports = {
   epnsContractFixture,
-  tokenFixture,
 };

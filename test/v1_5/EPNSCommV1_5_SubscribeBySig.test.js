@@ -8,7 +8,7 @@ const {
 } = require("../../helpers/utils");
 
 
-const {epnsContractFixture,tokenFixture} = require("../common/fixtures")
+const {epnsContractFixture,} = require("../common/fixtures")
 const {expect} = require("../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
@@ -69,8 +69,6 @@ describe("EPNS Comm V1_5 Protocol", function () {
       PushToken,
       EPNS_TOKEN_ADDRS,
     } = await loadFixture(epnsContractFixture)); 
-
-    ({MOCKDAI, ADAI} = await loadFixture(tokenFixture));
 
   });
 

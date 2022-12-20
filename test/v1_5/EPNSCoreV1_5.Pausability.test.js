@@ -1,5 +1,5 @@
 const { ethers,waffle } = require("hardhat");
-const {epnsContractFixture,tokenFixture} = require("../common/fixtures")
+const {epnsContractFixture} = require("../common/fixtures")
 const {expect} = require("../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
@@ -56,8 +56,6 @@ describe("EPNS Core Protocol", function () {
       PushToken,
       EPNS_TOKEN_ADDRS,
     } = await loadFixture(epnsContractFixture)); 
-
-    ({MOCKDAI, ADAI, DAI_WHALE_SIGNER} = await loadFixture(tokenFixture));
 
   });
 
