@@ -748,56 +748,56 @@ contract EPNSCoreV1_5 is
      * @param    _amountDeposited Fee amount deposited for ownership transfer
      * @return   success returns true after a successful execution of the function.
      **/
-    function transferChannelOwnership(
-        address _channelAddress,
-        address _newChannelAddress,
-        uint256 _amountDeposited
-    ) external whenNotPaused onlyActivatedChannels(msg.sender) returns (bool) {
-        require(
-            _newChannelAddress != address(0) &&
-                channels[_newChannelAddress].channelState == 0,
-            "EPNSCoreV1_5::transferChannelOwnership: Invalid address for new channel owner"
-        );
-        require(
-            _amountDeposited >= ADD_CHANNEL_MIN_FEES,
-            "EPNSCoreV1_5::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
-        );
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            _channelAddress,
-            address(this),
-            _amountDeposited
-        );
+    // function transferChannelOwnership(
+    //     address _channelAddress,
+    //     address _newChannelAddress,
+    //     uint256 _amountDeposited
+    // ) external whenNotPaused onlyActivatedChannels(msg.sender) returns (bool) {
+    //     require(
+    //         _newChannelAddress != address(0) &&
+    //             channels[_newChannelAddress].channelState == 0,
+    //         "EPNSCoreV1_5::transferChannelOwnership: Invalid address for new channel owner"
+    //     );
+    //     require(
+    //         _amountDeposited >= ADD_CHANNEL_MIN_FEES,
+    //         "EPNSCoreV1_5::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
+    //     );
+    //     IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+    //         _channelAddress,
+    //         address(this),
+    //         _amountDeposited
+    //     );
 
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
-        Channel memory channelData = channels[_channelAddress];
-        channels[_newChannelAddress] = channelData;
+    //     PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+    //     Channel memory channelData = channels[_channelAddress];
+    //     channels[_newChannelAddress] = channelData;
 
-        // Subscribe newChannelOwner address to important channels
-        address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-            _newChannelAddress,
-            _newChannelAddress
-        );
+    //     // Subscribe newChannelOwner address to important channels
+    //     address _epnsCommunicator = epnsCommunicator;
+    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
+    //         _newChannelAddress,
+    //         _newChannelAddress
+    //     );
 
-        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-            address(0x0),
-            _newChannelAddress
-        );
-        IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-            _newChannelAddress,
-            pushChannelAdmin
-        );
+    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
+    //         address(0x0),
+    //         _newChannelAddress
+    //     );
+    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
+    //         _newChannelAddress,
+    //         pushChannelAdmin
+    //     );
 
-        // Unsubscribing pushChannelAdmin from old Channel
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-            _channelAddress,
-            pushChannelAdmin
-        );
+    //     // Unsubscribing pushChannelAdmin from old Channel
+    //     IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
+    //         _channelAddress,
+    //         pushChannelAdmin
+    //     );
 
-        delete channels[_channelAddress];
-        emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
-        return true;
-    }
+    //     delete channels[_channelAddress];
+    //     emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
+    //     return true;
+    // }
 
     /* **************
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
