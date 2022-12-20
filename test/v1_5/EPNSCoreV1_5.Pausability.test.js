@@ -68,11 +68,7 @@ describe("EPNS Core Protocol", function () {
            beforeEach(async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
-            
-            // DAI Token
-            await MOCKDAI.connect(DAI_WHALE_SIGNER).transfer(CHANNEL_CREATOR,ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-            await MOCKDAI.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
-
+          
             await PushToken.transfer(CHANNEL_CREATOR, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
             await PushToken.connect(CHANNEL_CREATORSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
          });
