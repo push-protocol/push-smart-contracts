@@ -170,7 +170,7 @@ contract EPNSCoreV1_5 is
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // PUSH Amount that will be charged as Protocol Pool Fees
-        MIN_POOL_CONTRIBUTION = 1 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
+        MIN_POOL_CONTRIBUTION = 50 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
@@ -231,6 +231,14 @@ contract EPNSCoreV1_5 is
             "EPNSCoreV1_5::setFeeAmount: Fee amount must be greater than ZERO"
         );
         FEE_AMOUNT = _newFees;
+    }
+
+    function setMinPoolContribution(uint256 _newAmount) external onlyGovernance {
+        require(
+            _newAmount > 0,
+            "EPNSCoreV1_5::setMinPoolContribution: New Pool Contribution amount must be greater than ZERO"
+        );
+        MIN_POOL_CONTRIBUTION = _newAmount;
     }
 
     function pauseContract() external onlyGovernance {
