@@ -158,7 +158,7 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
         lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // 10 DAI out of total deposited DAIs is charged for Deactivating a Channel
-        MIN_POOL_CONTRIBUTION = 1 ether; // 50 DAI or above to create the channel
+        MIN_POOL_CONTRIBUTION = 50 ether; // 50 DAI or above to create the channel
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10**7;
@@ -502,7 +502,6 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
                 CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(poolFees);
                 uint256 adjustedNewWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
-                channels[_channelAddresses[i]].channelUpdateBlock = block.number;
                 channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
                 channels[_channelAddresses[i]].poolContribution = newPoolContribution;
                 ITempStorage(_tempStorageAddress).setChannelAdjusted(_channelAddresses[i]);
