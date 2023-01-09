@@ -502,7 +502,6 @@ contract EPNSCoreV1_Temp is Initializable, EPNSCoreStorageV1_5, PausableUpgradea
                 CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(poolFees);
                 uint256 adjustedNewWeight = newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
-                channels[_channelAddresses[i]].channelUpdateBlock = block.number;
                 channels[_channelAddresses[i]].channelWeight = adjustedNewWeight;
                 channels[_channelAddresses[i]].poolContribution = newPoolContribution;
                 ITempStorage(_tempStorageAddress).setChannelAdjusted(_channelAddresses[i]);
