@@ -11,5 +11,6 @@ contract EPNSCoreStorageV2 {
 
     mapping(address => uint256) public nonces;
     mapping(address => uint256) public channelUpdateCounter;
+    /** v2 state variables **/
     mapping(address => uint256) public usersRewardsClaimed;
 }
