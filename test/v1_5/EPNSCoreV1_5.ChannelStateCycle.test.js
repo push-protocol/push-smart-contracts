@@ -81,6 +81,7 @@ describe("EPNS CoreV2 Protocol", function () {
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
     
       beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setMinPoolContribution(ethers.utils.parseEther('1'));
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
         await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
         await PushToken.transfer(BOB, ADD_CHANNEL_MAX_POOL_CONTRIBUTION);
@@ -197,6 +198,7 @@ describe("EPNS CoreV2 Protocol", function () {
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
     
       beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setMinPoolContribution(ethers.utils.parseEther('1'));
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
         await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
         await PushToken.transfer(BOB, ADD_CHANNEL_MIN_FEES);
@@ -316,6 +318,7 @@ describe("EPNS CoreV2 Protocol", function () {
       const testChannel = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
       beforeEach(async function(){
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).setMinPoolContribution(ethers.utils.parseEther('1'));
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(EPNSCommV1Proxy.address)
         await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
         await PushToken.transfer(BOB, ADD_CHANNEL_MIN_FEES);
