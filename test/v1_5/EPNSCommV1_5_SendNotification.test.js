@@ -56,8 +56,6 @@ describe("EPNS Comm V1_5 Protocol", function () {
       PushToken,
       EPNS_TOKEN_ADDRS,
     } = await loadFixture(epnsContractFixture));
-
-    ({ MOCKDAI, ADAI } = await loadFixture(tokenFixture));
   });
 
   describe("EPNS COMM: EIP 1271 & 712 Support", function () {
