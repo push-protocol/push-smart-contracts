@@ -930,4 +930,63 @@ contract EPNSCoreV2 is
     }
 
     /*** Core-v2: Stake n Claim Experiment starts here ***/
+
+    // Structs & State variables
+
+    uint256 public genesisEpoch;
+    uint256 lastEpochInitialized;
+    uint256 public epochDuration; // 20 * number of blocks per day(7160) ~ 20 day approx
+    uint256 public totalStakedWeight;
+    uint256 public lastTotalStakedBlock;
+    uint256 public previouslySetEpochRewards;
+    
+    struct UserFessInfo {
+      uint256 stakedAmount;
+      uint256 stakedWeight;
+
+      uint256 lastStakedBlock;
+      uint256 lastClaimedBlock;
+
+      mapping(uint256 => uint256) epochToUserStakedWeight;
+    }
+
+    // Stores all the individual epoch rewards
+    mapping (uint256 => uint256) public epochReward; 
+    // Stores User's Fees Details 
+    mapping (address => UserFessInfo) public userFeesInfo;
+    // Stores the total staked weight at a specific epoch.
+    mapping(uint256 => uint256) public epochToTotalStakedWeight;
+    
+    /** Functions **/
+
+    /**
+     * Owner can add pool_fees at any given time - Coule be a TEMP-FUNCTION
+    **/
+    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
+    }
+
+   /**
+     * Function to return User's Push Holder weight based on amount being staked & current block number 
+    **/
+    function _returnPushTokenWeight(address _account, uint _amount, uint _atBlock) internal view returns (uint) {
+      return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
+    }
+    function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
+        require(_to >= _from, "EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow");
+        return uint256((_to - _from) / epochDuration + 1);
+    }
+
+    function initializeStake() external{
+        require(genesisEpoch == 0, "EPNSCoreV2::initializeStake: Already Initialized");
+        genesisEpoch = block.number; 
+        epochDuration = 20 * 7156;
+        lastEpochInitialized = genesisEpoch;
+        lastTotalStakedBlock = genesisEpoch;
+
+        //IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
+        //_stake(address(this), 1e18);
+    }
+
 }
