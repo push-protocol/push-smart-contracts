@@ -2,7 +2,7 @@ const { ethers, waffle } = require("hardhat");
 
 const { tokensBN } = require("../../helpers/utils");
 
-const { epnsContractFixture, tokenFixture } = require("../common/fixtures");
+const { epnsContractFixture, tokenFixture } = require("../common/fixturesV2");
 const { expect } = require("../common/expect");
 const createFixtureLoader = waffle.createFixtureLoader;
 
@@ -96,7 +96,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
   describe("EPNS CORE V2: Stake and Claim Tests", () => {
     const CHANNEL_TYPE = 2;
-    const EPOCH_DURATION = 20 * 7156 // number of blocks
+    const EPOCH_DURATION = 20 * 7160 // number of blocks
     const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes(
       "test-channel-hello-world"
     );
@@ -112,6 +112,8 @@ describe("EPNS CoreV2 Protocol", function () {
       await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(
         EPNSCoreV1Proxy.address
       );
+
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).initializeStake();
 
       // await PushToken.transfer(
       //   EPNSCoreV1Proxy.address,
@@ -165,7 +167,7 @@ describe("EPNS CoreV2 Protocol", function () {
         true
       );
     });
-    //*** Helper Functions ***//
+    //*** Helper Functions - Related to Channel, Tokens and Stakes ***//
     const addPoolFees = async (signer, amount) => {
       await EPNSCoreV1Proxy.connect(signer).addPoolFees(amount);
     };
@@ -193,6 +195,13 @@ describe("EPNS CoreV2 Protocol", function () {
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
     };
+    //*** Helper Functions - Related to Block numbers, Jump Blocks, Epochs and Rewards ***//
+
+    const getCurrentBlock = async () => {
+      const currentBlock = await ethers.provider.getBlock("latest");
+      return currentBlock;
+    }
+
     /** ⛔️ Not used currently - Prefer using passBlockNumbers **/
     const jumpToBlockNumber = async (blockNumber) => {
       blockNumber = blockNumber.toNumber();
@@ -243,9 +252,43 @@ describe("EPNS CoreV2 Protocol", function () {
         console.log(`Rewards for EPOCH ID ${i} is ${reward}`)
       }
     }
+
 /** Test Cases Starts Here **/
+
+   /* CHECKPOINTS: lastEpochRelative() function 
+    * Should Reverts on overflow
+    * Should calculate relative epoch numbers accurately
+    * Shouldn't change epoch value if epoch "to" block number lies in same epoch boundry
+    * **/
     describe("🟢 lastEpochRelative Tests ", function()
     {
+
+      it("Should revert on Block number overflow", async function(){
+        const genesisBlock = await getCurrentBlock()
+        await passBlockNumers(2*EPOCH_DURATION);
+        const futureBlock = await getCurrentBlock();
+
+        const tx = EPNSCoreV1Proxy.lastEpochRelative(futureBlock.number, genesisBlock.number);
+        await expect(tx).to.be.revertedWith("EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow");
+      })
+
+      it("Should calculate relative epoch numbers accurately", async function(){
+        const genesisBlock = await getCurrentBlock()
+        await passBlockNumers(5*EPOCH_DURATION);
+        const futureBlock = await getCurrentBlock();
+
+        const epochID = await EPNSCoreV1Proxy.lastEpochRelative(genesisBlock.number, futureBlock.number);
+        await expect(epochID).to.be.equal(6);
+      })
+
+      it("Shouldn't change epoch value if '_to' block lies in same epoch boundary", async function(){
+        const genesisBlock = await getCurrentBlock()
+        await passBlockNumers(EPOCH_DURATION/2);
+        const futureBlock = await getCurrentBlock();
+
+        const epochID = await EPNSCoreV1Proxy.lastEpochRelative(genesisBlock.number, futureBlock.number);
+        await expect(epochID).to.be.equal(1);
+      })
 
     });
 
