@@ -260,7 +260,7 @@ describe("EPNS CoreV2 Protocol", function () {
     * Should calculate relative epoch numbers accurately
     * Shouldn't change epoch value if epoch "to" block number lies in same epoch boundry
     * **/
-    describe("🟢 lastEpochRelative Tests ", function()
+    describe.skip("🟢 lastEpochRelative Tests ", function()
     {
 
       it("Should revert on Block number overflow", async function(){

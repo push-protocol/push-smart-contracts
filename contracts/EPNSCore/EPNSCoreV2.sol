@@ -951,7 +951,7 @@ contract EPNSCoreV2 is
     }
 
     // Stores all the individual epoch rewards
-    mapping (uint256 => uint256) public epochReward; 
+    mapping (uint256 => uint256) public epochRewards; 
     // Stores User's Fees Details 
     mapping (address => UserFessInfo) public userFeesInfo;
     // Stores the total staked weight at a specific epoch.
@@ -968,14 +968,26 @@ contract EPNSCoreV2 is
     }
 
    /**
-     * Function to return User's Push Holder weight based on amount being staked & current block number 
+     * @notice Function to return User's Push Holder weight based on amount being staked & current block number 
     **/
     function _returnPushTokenWeight(address _account, uint _amount, uint _atBlock) internal view returns (uint) {
       return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
     }
+    /**
+     * @notice Returns the epoch ID based on the start and end block numbers passed as input 
+    **/
     function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
         require(_to >= _from, "EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow");
         return uint256((_to - _from) / epochDuration + 1);
+    }
+
+    /**
+     * @notice Calculates and returns the claimable reward amount for a user at a given EPOCH ID.
+     * @dev    Formulae for reward calculation:
+     *         rewards = ( userStakedWeight at Epoch(N) * avalailable rewards at EPOCH(N) ) / totalStakedWeight at EPOCH(N)
+    **/
+    function calculateEpochRewards(uint256 _epochId) public view returns(uint256 rewards) {
+        rewards = userFeesInfo[msg.sender].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(epochToTotalStakedWeight[_epochId]);
     }
 
     function initializeStake() external{
@@ -985,8 +997,33 @@ contract EPNSCoreV2 is
         lastEpochInitialized = genesisEpoch;
         lastTotalStakedBlock = genesisEpoch;
 
+        // PENDING: Enable Transfer of tokens and Stake
         //IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
         //_stake(address(this), 1e18);
     }
+
+    /**
+     * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
+     * @dev    Initializes (sets reward) for every epoch ID that falls between the lastEpochInitialized and currentEpoch
+     *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees. 
+                - If no new fees was accumulated, rewards for particular epoch ids can be zero
+                - Records the Pool_Fees value used as rewards.
+                - Records the last epoch id whose rewards were set.
+     */
+
+     function _setupEpochsReward() private{
+
+        uint256 _currentEpochId = lastEpochRelative(genesisEpoch, block.number);
+        uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
+
+        if(_currentEpochId > _lastEpochInitiliazed){
+            uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
+            epochRewards[_currentEpochId - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch
+            // epochRewards[_currentEpochId] = availableRewardsPerEpoch;
+
+            lastEpochInitialized = block.number;
+            previouslySetEpochRewards = PROTOCOL_POOL_FEES; 
+        }
+     }
 
 }
