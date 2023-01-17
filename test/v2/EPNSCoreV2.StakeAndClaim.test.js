@@ -58,7 +58,6 @@ describe("EPNS CoreV2 Protocol", function () {
     ({ PROXYADMIN, EPNSCoreV1Proxy, EPNSCommV1Proxy, ROUTER, PushToken } =
       await loadFixture(epnsContractFixture));
 
-    //({ MOCKDAI, ADAI } = await loadFixture(tokenFixture));
   });
   /***
    * CHECKPOINTS TO CONSIDER WHILE TESTING -> Overall Stake-N-Claim Tests
@@ -102,8 +101,11 @@ describe("EPNS CoreV2 Protocol", function () {
       "test-channel-hello-world"
     );
 
-
     beforeEach(async function () {
+        /** INITIAL SET-UP **/
+      await EPNSCoreV1Proxy.connect(ADMINSIGNER).setMinPoolContribution(
+        ethers.utils.parseEther('1')
+        );
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).setEpnsCommunicatorAddress(
         EPNSCommV1Proxy.address
       );
@@ -115,6 +117,7 @@ describe("EPNS CoreV2 Protocol", function () {
       //   EPNSCoreV1Proxy.address,
       //   ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10)
       // );
+       /** PUSH Token Transfers **/
       await PushToken.transfer(
         BOB,
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10000)
@@ -190,7 +193,7 @@ describe("EPNS CoreV2 Protocol", function () {
       await network.provider.send("evm_mine");
       await ethers.provider.send("evm_setAutomine", [true]);
     };
-
+    /** ⛔️ Not used currently - Prefer using passBlockNumbers **/
     const jumpToBlockNumber = async (blockNumber) => {
       blockNumber = blockNumber.toNumber();
       const currentBlock = await ethers.provider.getBlock("latest");
@@ -240,7 +243,7 @@ describe("EPNS CoreV2 Protocol", function () {
         console.log(`Rewards for EPOCH ID ${i} is ${reward}`)
       }
     }
-/**Starts Here **/
+/** Test Cases Starts Here **/
     describe("🟢 lastEpochRelative Tests ", function()
     {
 
@@ -271,6 +274,6 @@ describe("EPNS CoreV2 Protocol", function () {
 
     });
 
-/**Ends Here **/
+/**Test Cases Ends Here **/
   });
 });
