@@ -24,8 +24,6 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   let PushToken = await ethers.getContractFactory("EPNS");
   PushToken = await PushToken.deploy(ADMIN);
 
-  console.log("ALL GOOD HERE");
-
   const EPNSCore = await ethers.getContractFactory("EPNSCoreV1_5");
   CORE_LOGIC = await EPNSCore.deploy();
 
