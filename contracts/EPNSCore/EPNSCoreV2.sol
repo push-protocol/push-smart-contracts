@@ -997,9 +997,160 @@ contract EPNSCoreV2 is
         lastEpochInitialized = genesisEpoch;
         lastTotalStakedBlock = genesisEpoch;
 
-        // PENDING: Enable Transfer of tokens and Stake
-        //IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
-        //_stake(address(this), 1e18);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
+        _stake(address(this), 1e18);
+    }
+
+   /**
+     * @notice Function to allow users to stake in the protocol
+     * @dev    Records total Amount staked so far by a particular user
+     *         Triggers weight adjustents functions
+     * @param  _amount represents amount of tokens to be staked
+    **/
+    function stake(uint256 _amount) external {
+      _stake(msg.sender, _amount);
+    }
+
+    function _stake(address _staker, uint256 _amount) private {
+        uint256 userWeight = _returnPushTokenWeight(_staker, _amount, block.number);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+
+        userFeesInfo[_staker].stakedAmount = userFeesInfo[_staker].stakedAmount + _amount;
+        userFeesInfo[_staker].lastClaimedBlock = 
+            userFeesInfo[_staker].lastClaimedBlock == 0 ? genesisEpoch : userFeesInfo[_staker].lastClaimedBlock;
+    
+       // Adjust user and total rewards, piggyback method
+        _adjustUserAndTotalStake(_staker, userWeight);
+    }
+
+   /**
+     * @notice Function to allow users to Unstake from the protocol
+     * @dev    Allows stakers to claim rewards before unstaking their tokens
+     *         Triggers weight adjustents functions
+     *         Allows users to unstake all amount at once
+    **/
+    function unstake() external {
+        require(userFeesInfo[msg.sender].stakedAmount > 0, "EPNSCoreV2::unstake: Caller is not a staker");
+        // Before unstaking, reset holder weight
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+     
+        //harvestAll();
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, userFeesInfo[msg.sender].stakedAmount);
+      
+        // Adjust user and total rewards, piggyback method
+         _adjustUserAndTotalStake(msg.sender, -userFeesInfo[msg.sender].stakedWeight);
+
+        // change staked amount to 0 and lastClaimedBlock to current
+        userFeesInfo[msg.sender].stakedAmount = 0;
+        userFeesInfo[msg.sender].stakedWeight = 0;
+        userFeesInfo[msg.sender].lastClaimedBlock = block.number; //@audit - should this be turned to 0?
+    }
+
+    /**
+     * @notice Allows users to harvest/claim their earned rewards from the protocol
+     * @dev    Takes in the current block number as an arg - calculates reward till the current block number
+     *         Rewards are calculated and added for all epochs between, user's lastClaimedEpoch and current epoch Id
+    **/
+    function harvestAll() public {
+      harvestTill(block.number);
+    }
+
+    function harvestTill(uint256 _tillBlockNumber) public {
+      // Before harvesting, reset holder weight
+      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+      _adjustUserAndTotalStake(msg.sender, 0);
+     
+      uint256 userLastStakedBlock = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastStakedBlock); 
+      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
+      uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);
+      
+      // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch
+      lastClaimedEpoch = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userLastStakedBlock :  lastClaimedEpoch;
+
+      uint256 rewards = 0;
+      for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(i);
+            rewards = rewards.add(calculateEpochRewards(i));
+            
+            // console.log("\n CHECKS");
+            // console.log('USER STAKED WEIGHT of User for EPOCH', i, "is equal to - ", userFeesInfo[msg.sender].epochToUserStakedWeight[i]);
+            // console.log('TOTAL STAKED WEIGHT of User for EPOCH', i, "is equal to - ", epochToTotalStakedWeight[i]);
+            // console.log('TOTAL REWARD stored for EPOCH', i, "is equal to - ", epochReward[i]);
+            // console.log('Reward of User for EPOCH', i, "is equal to - ", rewards);
+
+      }
+      usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
+      userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
+      IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, rewards);
+    }
+
+
+    /**
+     * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for reward calculation at a particular epoch.
+     * @dev     Enables adjustments of user's stakedWeight, totalStakedWeight, epochToTotalStakedWeight as well as epochToTotalStakedWeight.
+     *          triggers _setupEpochsReward() to adjust rewards for every epoch till the current epoch
+     *          
+     *          Includes 2 main cases of weight adjustments
+     *          1st Case: User stakes for the very first time:
+     *              - Simply update userFeesInfo, totalStakedWeight and epochToTotalStakedWeight of currentEpoch
+     * 
+     *          2nd Case: User is NOT staking for first time - 2 Subcases
+     *              2.1 Case: User stakes again but in Same Epoch
+     *                  - Increase user's stake and totalStakedWeight
+     *                  - Record the epochToUserStakedWeight for that epoch
+     *                  - Record the epochToTotalStakedWeight of that epoch
+     *      
+     *              2.2 Case: - User stakes again but in different Epoch
+     *                  - Update the epochs between lastStakedEpoch & (currentEpoch - 1) with the old staked weight amounts
+     *                  - While updating epochs between lastStaked & current Epochs, if any epoch has zero value for totalStakedWeight, update it with current totalStakedWeight value of the protocol 
+     *                  - For currentEpoch, initialize the epoch id with updated weight values for epochToUserStakedWeight & epochToTotalStakedWeight
+     */
+    function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
+        _setupEpochsReward();
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+
+        // Initiating 1st Case: User stakes for first time
+        if(userFeesInfo[_user].stakedWeight == 0){
+            userFeesInfo[_user].stakedWeight = _userWeight;
+            totalStakedWeight = totalStakedWeight + _userWeight;
+        }
+        else{
+            // Initiating 2.1 Case: User stakes again but in Same Epoch
+            uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
+            if(currentEpoch == lastStakedEpoch){
+                userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+                totalStakedWeight = totalStakedWeight + _userWeight;
+            }
+            else{
+            // Initiating 2.2 Case: User stakes again but in Different Epoch
+                uint256 lastTotalStakedEpoch = lastEpochRelative(genesisEpoch, lastTotalStakedBlock);
+
+                for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
+                    if (i != currentEpoch - 1) {
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+                        
+                        if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
+                        epochToTotalStakedWeight[i] = totalStakedWeight; 
+                        }
+                        // if (i >= _lastTotalStakedEpoch) { //@audit : changed > to >= -> REMOVED 
+                        //     epochToTotalStakedWeight[i] = totalStakedWeight; 
+                        // }
+                    }
+                    else{
+                        userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+                        totalStakedWeight = totalStakedWeight + _userWeight;
+                        epochToTotalStakedWeight[i] = totalStakedWeight;
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+                    }
+                }
+            }
+        }
+
+        if(_userWeight != 0){
+            userFeesInfo[_user].lastStakedBlock = block.number;
+            lastTotalStakedBlock = block.number;
+        }
     }
 
     /**
