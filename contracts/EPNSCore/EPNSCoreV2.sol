@@ -997,8 +997,8 @@ contract EPNSCoreV2 is
         lastEpochInitialized = genesisEpoch;
         lastTotalStakedBlock = genesisEpoch;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
-        _stake(address(this), 1e18);
+        // IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
+        // _stake(address(this), 1e18);
     }
 
    /**
@@ -1059,31 +1059,22 @@ contract EPNSCoreV2 is
       // Before harvesting, reset holder weight
       IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
       _adjustUserAndTotalStake(msg.sender, 0);
-     
-      uint256 userLastStakedBlock = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastStakedBlock); 
-      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
-      uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);
       
-      // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch
-      lastClaimedEpoch = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userLastStakedBlock :  lastClaimedEpoch;
-
+      uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);   
+      // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
+      uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
+      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock); 
+    
       uint256 rewards = 0;
       for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(i);
             rewards = rewards.add(calculateEpochRewards(i));
-            
-            // console.log("\n CHECKS");
-            // console.log('USER STAKED WEIGHT of User for EPOCH', i, "is equal to - ", userFeesInfo[msg.sender].epochToUserStakedWeight[i]);
-            // console.log('TOTAL STAKED WEIGHT of User for EPOCH', i, "is equal to - ", epochToTotalStakedWeight[i]);
-            // console.log('TOTAL REWARD stored for EPOCH', i, "is equal to - ", epochReward[i]);
-            // console.log('Reward of User for EPOCH', i, "is equal to - ", rewards);
-
       }
+
       usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
       userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
       IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, rewards);
     }
-
 
     /**
      * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for reward calculation at a particular epoch.
