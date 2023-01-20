@@ -44,6 +44,7 @@ module.exports = {
 
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: true,
       forking: {
         url:
           `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API}`,
