@@ -933,13 +933,14 @@ contract EPNSCoreV2 is
 
     // Structs & State variables
 
-    uint256 public genesisEpoch;
-    uint256 lastEpochInitialized;
-    uint256 public epochDuration; // 20 * number of blocks per day(7160) ~ 20 day approx
-    uint256 public totalStakedWeight;
-    uint256 public lastTotalStakedBlock;
-    uint256 public previouslySetEpochRewards;
+    uint256 public genesisEpoch;                // Block number at which Stakig starts
+    uint256 lastEpochInitialized;               // The last EPOCH ID that was initialized with respective epoch rewards
+    uint256 public epochDuration;               // 20 * number of blocks per day(7160) ~ 20 day approx
+    uint256 public totalStakedWeight;           // Total token weight staked in Protocol at any given time 
+    uint256 public lastTotalStakedBlock;        // The last block number stake/unstake took place
+    uint256 public previouslySetEpochRewards;   // Amount of rewards set in last initialized epoch
     
+    //@notice: Stores all user's staking details
     struct UserFessInfo {
       uint256 stakedAmount;
       uint256 stakedWeight;
@@ -949,18 +950,15 @@ contract EPNSCoreV2 is
 
       mapping(uint256 => uint256) epochToUserStakedWeight;
     }
-
-    // Stores all the individual epoch rewards
+    // @notice: Stores all the individual epoch rewards
     mapping (uint256 => uint256) public epochRewards; 
-    // Stores User's Fees Details 
+    // @notice: Stores User's Fees Details 
     mapping (address => UserFessInfo) public userFeesInfo;
-    // Stores the total staked weight at a specific epoch.
+    // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-    
-    /** Functions **/
 
     /**
-     * Owner can add pool_fees at any given time - Coule be a TEMP-FUNCTION
+     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
     **/
     function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
@@ -989,7 +987,10 @@ contract EPNSCoreV2 is
     function calculateEpochRewards(uint256 _epochId) public view returns(uint256 rewards) {
         rewards = userFeesInfo[msg.sender].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(epochToTotalStakedWeight[_epochId]);
     }
-
+    /**
+     * @notice Function to initialize the staking procedure in Core contract
+     * @dev    Requires caller to deposit/stake 1 PUSH token to ensure staking pool is never zero.
+    **/
     function initializeStake() external{
         require(genesisEpoch == 0, "EPNSCoreV2::initializeStake: Already Initialized");
         genesisEpoch = block.number; 
@@ -1034,16 +1035,15 @@ contract EPNSCoreV2 is
         // Before unstaking, reset holder weight
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
      
-        //harvestAll();
+        harvestAll();
         IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, userFeesInfo[msg.sender].stakedAmount);
       
         // Adjust user and total rewards, piggyback method
          _adjustUserAndTotalStake(msg.sender, -userFeesInfo[msg.sender].stakedWeight);
 
-        // change staked amount to 0 and lastClaimedBlock to current
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
-        userFeesInfo[msg.sender].lastClaimedBlock = block.number; //@audit - should this be turned to 0?
+        userFeesInfo[msg.sender].lastClaimedBlock = block.number; //@audit - TBD:should this be turned to 0?
     }
 
     /**
@@ -1074,6 +1074,30 @@ contract EPNSCoreV2 is
       usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
       userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
       IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, rewards);
+    }
+
+    /**
+     * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
+     * @dev    only accessible by Push Admin - Similar to harvestTill() function
+    **/
+    function daoHarvest() external onlyPushChannelAdmin(){ //@audit-info - Need to be reviewed
+        uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+        _adjustUserAndTotalStake(address(this), 0);
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
+        uint256 userLastClaimedBlock = userFeesInfo[address(this)].lastClaimedBlock == genesisEpoch ? userFeesInfo[address(this)].lastStakedBlock : userFeesInfo[address(this)].lastClaimedBlock;
+        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock);
+        
+        uint256 rewards = 0;
+        for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
+                rewards = rewards.add(calculateEpochRewards(i));
+        }
+
+        usersRewardsClaimed[address(this)] = usersRewardsClaimed[address(this)].add(rewards);
+        userFeesInfo[address(this)].lastClaimedBlock = block.number;
+
     }
 
     /**
