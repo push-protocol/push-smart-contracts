@@ -10,7 +10,7 @@ pragma experimental ABIEncoderV2;
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
  **/
-
+import "hardhat/console.sol";
 import "./EPNSCoreStorageV1_5.sol";
 import "./EPNSCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
@@ -956,6 +956,8 @@ contract EPNSCoreV2 is
     mapping (address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
+    // @notice: Stores the user's staked weight for specific epoch
+    mapping(address => mapping (uint256 => uint256)) epochToUserStakedWeightt;
 
     /**
      * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
@@ -998,8 +1000,8 @@ contract EPNSCoreV2 is
         lastEpochInitialized = genesisEpoch;
         lastTotalStakedBlock = genesisEpoch;
 
-        // IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
-        // _stake(address(this), 1e18);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), 1e18);
+        _stake(address(this), 1e18);
     }
 
    /**
@@ -1064,11 +1066,12 @@ contract EPNSCoreV2 is
       // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
       uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
       uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock); 
-    
+ 
       uint256 rewards = 0;
-      for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
+      for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
             uint256 claimableReward = calculateEpochRewards(i);
             rewards = rewards.add(calculateEpochRewards(i));
+
       }
 
       usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
@@ -1190,6 +1193,14 @@ contract EPNSCoreV2 is
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES; 
         }
+     }
+
+     // FOR TEST -//
+     function setUserEpochToWeight(address _user, uint256 _epochId, uint256 _num) public{
+        userFeesInfo[_user].epochToUserStakedWeight[_epochId] = _num;
+     }
+     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint){
+        uint result = epochToUserStakedWeightt[_user][_epochId];
      }
 
 }
