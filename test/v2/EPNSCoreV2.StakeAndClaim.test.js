@@ -96,7 +96,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
   describe("EPNS CORE V2: Stake and Claim Tests", () => {
     const CHANNEL_TYPE = 2;
-    const EPOCH_DURATION = 20 * 7160 // number of blocks
+    const EPOCH_DURATION = 20 * 7160 // number of blocks = 143200 
     const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes(
       "test-channel-hello-world"
     );
@@ -113,7 +113,7 @@ describe("EPNS CoreV2 Protocol", function () {
         EPNSCoreV1Proxy.address
       );
 
-      await EPNSCoreV1Proxy.connect(ADMINSIGNER).initializeStake();
+    await EPNSCoreV1Proxy.connect(ADMINSIGNER).initializeStake();
 
       // await PushToken.transfer(
       //   EPNSCoreV1Proxy.address,
@@ -260,7 +260,7 @@ describe("EPNS CoreV2 Protocol", function () {
     * Should calculate relative epoch numbers accurately
     * Shouldn't change epoch value if epoch "to" block number lies in same epoch boundry
     * **/
-    describe.skip("🟢 lastEpochRelative Tests ", function()
+    describe("🟢 lastEpochRelative Tests ", function()
     {
 
       it("Should revert on Block number overflow", async function(){
@@ -288,6 +288,21 @@ describe("EPNS CoreV2 Protocol", function () {
 
         const epochID = await EPNSCoreV1Proxy.lastEpochRelative(genesisBlock.number, futureBlock.number);
         await expect(epochID).to.be.equal(1);
+      })
+      // User A stakes: Check lastStakedEpoch, lastClaimedEpoch 
+      it("Should count staked EPOCH of user correctly", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const passBlocks = 5;
+
+        await passBlockNumers(passBlocks * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(10));
+
+        const bobDetails_2nd = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_2nd.lastStakedBlock.toNumber());
+        const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_2nd.lastClaimedBlock.toNumber());
+
+        console.log(userLastClaimedEpochId.toNumber())
+        await expect(userLastStakedEpochId).to.be.equal(passBlocks + 1);
       })
 
     });
