@@ -234,25 +234,14 @@ describe("EPNS CoreV2 Protocol", function () {
 
     const getEachEpochDetails = async(user, totalEpochs) =>{
       for(i = 1; i <= totalEpochs; i++){
-        // var reward = await EPNSCoreV1Proxy.epochRewards(i);
-
-        // const userData = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        // var userStakedWeight = userData.epochToUserStakedWeight(i);
         var epochToTotalWeight = await EPNSCoreV1Proxy.epochToTotalStakedWeight(i);
         var epochRewardsStored = await EPNSCoreV1Proxy.epochRewards(i);
         const userEpochToStakedWeight = await EPNSCoreV1Proxy.getUserEpochToWeight(user, i);
-        //const userStakedWeight = await EPNSCoreV1Proxy.userFeesInfo(user);
-        //var tempVal = await EPNSCoreV1Proxy.epochToUserStakedWeightt();
-
+        
         console.log('\n EACH EPOCH DETAILS ');
-        // console.log(`EPOCH to Total Weight for EPOCH ID ${i} is ${userStakedWeight}`)
-        console.log(`EPOCH to Total Weight for EPOCH ID ${i} is ${epochToTotalWeight}`)
         console.log(`EPOCH Rewards for EPOCH ID ${i} is ${epochRewardsStored}`)
-        //console.log(`USER STAKED WEIGHT for EPOCH ID ${i} is ${userStakedWeight.stakedWeight}`)
+        console.log(`EPOCH to Total Weight for EPOCH ID ${i} is ${epochToTotalWeight}`)
         console.log(`userEpochToStakedWeight for EPOCH ID ${i} is ${userEpochToStakedWeight}`)
-        // console.log(`\n TEMP VAL ${i} is ${tempVal}`)
-
-       // console.log(userStakedWeight.epochToUserStakedWeight)
       }
     }
 
@@ -262,11 +251,13 @@ describe("EPNS CoreV2 Protocol", function () {
     * Should Reverts on overflow
     * Should calculate relative epoch numbers accurately
     * Shouldn't change epoch value if epoch "to" block number lies in same epoch boundry
+    * User BOB stakes: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are recorded accurately 
+    * User BOB stakes & then Harvests: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are updated accurately 
     * **/
     describe("🟢 lastEpochRelative Tests ", function()
     {
 
-      it.skip("Should revert on Block number overflow", async function(){
+      it("Should revert on Block number overflow", async function(){
         const genesisBlock = await getCurrentBlock()
         await passBlockNumers(2*EPOCH_DURATION);
         const futureBlock = await getCurrentBlock();
@@ -275,7 +266,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(tx).to.be.revertedWith("EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow");
       })
 
-      it.skip("Should calculate relative epoch numbers accurately", async function(){
+      it("Should calculate relative epoch numbers accurately", async function(){
         const genesisBlock = await getCurrentBlock()
         await passBlockNumers(5*EPOCH_DURATION);
         const futureBlock = await getCurrentBlock();
@@ -284,7 +275,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(epochID).to.be.equal(6);
       })
 
-      it.skip("Shouldn't change epoch value if '_to' block lies in same epoch boundary", async function(){
+      it("Shouldn't change epoch value if '_to' block lies in same epoch boundary", async function(){
         const genesisBlock = await getCurrentBlock()
         await passBlockNumers(EPOCH_DURATION/2);
         const futureBlock = await getCurrentBlock();
@@ -292,8 +283,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const epochID = await EPNSCoreV1Proxy.lastEpochRelative(genesisBlock.number, futureBlock.number);
         await expect(epochID).to.be.equal(1);
       })
-      // User A stakes: Check lastStakedEpoch, lastClaimedEpoch 
-      it.skip("Should count staked EPOCH of user correctly", async function(){
+  
+      it("Should count staked EPOCH of user correctly", async function(){
         await addPoolFees(ADMINSIGNER, tokensBN(200))
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const passBlocks = 5;
@@ -309,7 +300,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(userLastStakedEpochId).to.be.equal(passBlocks + 1);
       })
 
-      it.skip("Should track User's Staked and Harvest block accurately", async function(){
+      it("Should track User's Staked and Harvest block accurately", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const fiveBlocks = 5;
         const tenBlocks = 10;
@@ -327,42 +318,7 @@ describe("EPNS CoreV2 Protocol", function () {
         const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
 
         await expect(userLastStakedEpochId).to.be.equal(fiveBlocks + 1);
-        await expect(userLastClaimedEpochId).to.be.equal(16);
-      })
-
-      it("TEST CHECKS", async function(){
-        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-        const fiveBlocks = 1;
-        const tenBlocks = 5;
-       
-        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
-        // const poolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-        // console.log('POOL FEE - ', poolFee.toString())
-
-        await stakePushTokens(BOBSIGNER, tokensBN(100));
-        const bobDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        const userLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterStake.lastStakedBlock.toNumber());
-
-        await passBlockNumers(tenBlocks * EPOCH_DURATION);
-        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
-        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-        await getEachEpochDetails(BOB, 11);
-
-        // await EPNSCoreV1Proxy.setUserEpochToWeight(BOB, 1, tokensBN(14322300))
-        // const epochToStakedWeight = await EPNSCoreV1Proxy.connect(BOBSIGNER).getUserEpochToWeight(1);
-        // console.log(epochToStakedWeight.toNumber())
-
-        const rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-        console.log('\n REWARDS OF BOB',rewards.toString())
-
-
-        // console.log('\n BOBs Details ')
-        // const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        // console.log(bobDetails)
-        // const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        // const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
-
-
+        await expect(userLastClaimedEpochId).to.be.equal(fiveBlocks + tenBlocks + 1);
       })
 
     });
@@ -392,6 +348,43 @@ describe("EPNS CoreV2 Protocol", function () {
 
     });
 
+    describe.skip("🟢 Random Tests -To Be Removed later", function()
+    {
+
+      it("TEST CHECKS", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const fiveBlocks = 1;
+        const tenBlocks = 5;
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        // const poolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        // console.log('POOL FEE - ', poolFee.toString())
+
+        await stakePushTokens(BOBSIGNER, tokensBN(1129));
+        const bobDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterStake.lastStakedBlock.toNumber());
+
+        await passBlockNumers(tenBlocks * EPOCH_DURATION);
+        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await getEachEpochDetails(BOB, 11);
+
+        // await EPNSCoreV1Proxy.setUserEpochToWeight(BOB, 1, tokensBN(14322300))
+        // const epochToStakedWeight = await EPNSCoreV1Proxy.connect(BOBSIGNER).getUserEpochToWeight(1);
+        // console.log(epochToStakedWeight.toNumber())
+
+        const rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log('\n REWARDS OF BOB',rewards.toString())
+
+
+        // console.log('\n BOBs Details ')
+        // const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        // console.log(bobDetails)
+        // const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        // const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
+
+
+      })
+    });
 /**Test Cases Ends Here **/
   });
 });

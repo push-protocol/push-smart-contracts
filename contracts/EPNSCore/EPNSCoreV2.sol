@@ -956,8 +956,6 @@ contract EPNSCoreV2 is
     mapping (address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-    // @notice: Stores the user's staked weight for specific epoch
-    mapping(address => mapping (uint256 => uint256)) epochToUserStakedWeightt;
 
     /**
      * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
@@ -1073,7 +1071,6 @@ contract EPNSCoreV2 is
             rewards = rewards.add(calculateEpochRewards(i));
 
       }
-
       usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
       userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
       IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, rewards);
@@ -1179,7 +1176,6 @@ contract EPNSCoreV2 is
                 - Records the Pool_Fees value used as rewards.
                 - Records the last epoch id whose rewards were set.
      */
-
      function _setupEpochsReward() private{
 
         uint256 _currentEpochId = lastEpochRelative(genesisEpoch, block.number);
@@ -1196,11 +1192,8 @@ contract EPNSCoreV2 is
      }
 
      // FOR TEST -//
-     function setUserEpochToWeight(address _user, uint256 _epochId, uint256 _num) public{
-        userFeesInfo[_user].epochToUserStakedWeight[_epochId] = _num;
-     }
-     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint){
-        uint result = epochToUserStakedWeightt[_user][_epochId];
+     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
+        result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
      }
 
 }
