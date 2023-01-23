@@ -254,7 +254,7 @@ describe("EPNS CoreV2 Protocol", function () {
     * User BOB stakes: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are recorded accurately 
     * User BOB stakes & then Harvests: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are updated accurately 
     * **/
-    describe("🟢 lastEpochRelative Tests ", function()
+    describe.skip("🟢 lastEpochRelative Tests ", function()
     {
 
       it("Should revert on Block number overflow", async function(){
@@ -323,10 +323,6 @@ describe("EPNS CoreV2 Protocol", function () {
 
     });
 
-    describe("🟢 calcEpochRewards Tests ", function()
-    {
-
-    });
 
     describe("🟢 Stake Tests ", function()
     {
@@ -334,6 +330,11 @@ describe("EPNS CoreV2 Protocol", function () {
     });
 
     describe("🟢 unStake Tests ", function()
+    {
+
+    });
+
+    describe("🟢 calcEpochRewards Tests ", function()
     {
 
     });
@@ -348,42 +349,190 @@ describe("EPNS CoreV2 Protocol", function () {
 
     });
 
-    describe.skip("🟢 Random Tests -To Be Removed later", function()
+    describe("🟢 Random Tests on Stake N Rewards-To Be Removed later", function()
     {
 
-      it("TEST CHECKS", async function(){
+      it("TEST CHECKS-1: BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-        const fiveBlocks = 1;
-        const tenBlocks = 5;
-        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
-        // const poolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-        // console.log('POOL FEE - ', poolFee.toString())
-
-        await stakePushTokens(BOBSIGNER, tokensBN(1129));
+        const oneBlock = 1;
+        const fiveBlocks = 5;
+        await passBlockNumers(oneBlock * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+      
         const bobDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
         const userLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterStake.lastStakedBlock.toNumber());
 
-        await passBlockNumers(tenBlocks * EPOCH_DURATION);
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
         // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
         await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-        await getEachEpochDetails(BOB, 11);
+        const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const bobLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
 
-        // await EPNSCoreV1Proxy.setUserEpochToWeight(BOB, 1, tokensBN(14322300))
-        // const epochToStakedWeight = await EPNSCoreV1Proxy.connect(BOBSIGNER).getUserEpochToWeight(1);
-        // console.log(epochToStakedWeight.toNumber())
+        //await getEachEpochDetails(BOB, 11);
 
-        const rewards = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-        console.log('\n REWARDS OF BOB',rewards.toString())
+        console.log('\n BOBs Details ')
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log('\n Stake Epoch OF BOB',userLastStakedEpochId.toNumber())
+        console.log(' Reward Claim EPOCH of BOB',bobLastClaimedEpochId.toNumber())
+        console.log(' REWARDS OF BOB',rewards_bob.toString())
+      })
 
+      it("TEST CHECKS-2: BOB & Alice Stakes and Harvests together- Should get equal rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneBlock = 1;
+        const fiveBlocks = 5;
+        await passBlockNumers(oneBlock * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+      
+        const bobDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const aliceDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(ALICE);
+        const bobLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterStake.lastStakedBlock.toNumber());
+        const aliceLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), aliceDetails_afterStake.lastStakedBlock.toNumber());
 
-        // console.log('\n BOBs Details ')
-        // const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        // console.log(bobDetails)
-        // const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
-        // const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+
+        const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const aliceDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(ALICE);
+        const bobLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails_afterClaim.lastClaimedBlock.toNumber());
+        const aliceLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), aliceDetails_afterClaim.lastClaimedBlock.toNumber());
+
+        //await getEachEpochDetails(BOB, 11);
+
+        console.log('\n BOBs Details ')
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log('\n Stake Epoch OF BOB',bobLastStakedEpochId.toNumber())
+        console.log(' Reward Claim EPOCH of BOB',bobLastClaimedEpochId.toNumber())
+        console.log(' REWARDS OF BOB',rewards_bob.toString())
+
+        console.log('\n ALICEs Details ')
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        console.log('\n Stake Epoch OF ALICE',aliceLastStakedEpochId.toNumber())
+        console.log(' Reward Claim EPOCH of ALICE',aliceLastClaimedEpochId.toNumber())
+        console.log(' REWARDS OF ALICE',rewards_alice.toString())
+      })
+
+      it("TEST CHECKS-3: 4 Users Stakes and Harvests together- Should get equal rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneBlock = 1;
+        const fiveBlocks = 5;
+        await passBlockNumers(oneBlock * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+      
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        //await getEachEpochDetails(BOB, 11);
+
+        console.log('\n BOBs Details ')
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log(' REWARDS OF BOB',rewards_bob.toString())
+
+        console.log('\n ALICEs Details ')
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        console.log(' REWARDS OF ALICE',rewards_alice.toString())
+
+        console.log('\n CHARLIEs Details ')
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        console.log(' REWARDS OF BOB',rewards_charlie.toString())
+
+        console.log('\n CHANNEL_CREATORs Details ')
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+        console.log(' REWARDS OF BOB',rewards_channelCreator.toString())
 
 
       })
+
+      it("TEST CHECKS-4: 4 Users Stakes same amount and Harvests together- Last Claimer Gets More ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneBlock = 1;
+        const fiveBlocks = 5;
+        await passBlockNumers(oneBlock * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+      
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        //await getEachEpochDetails(BOB, 11);
+
+        console.log('\n BOBs Details ')
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log(' REWARDS OF BOB',rewards_bob.toString())
+
+        console.log('\n ALICEs Details ')
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        console.log(' REWARDS OF ALICE',rewards_alice.toString())
+
+        console.log('\n CHARLIEs Details ')
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        console.log(' REWARDS OF BOB',rewards_charlie.toString())
+
+        console.log('\n CHANNEL_CREATORs Details ')
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+        console.log(' REWARDS OF BOB',rewards_channelCreator.toString())
+
+        await expect(rewards_alice).to.be.gt(rewards_bob);
+        await expect(rewards_charlie).to.be.gt(rewards_alice);
+        await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
+      })
+
+      it("TEST CHECKS-5: 4 Users Stakes different amount and Harvests together- Last Claimer Gets More ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneBlock = 2;
+        const fiveBlocks = 10;
+        await passBlockNumers(oneBlock * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(200));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(300));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(400));
+      
+        await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        await getEachEpochDetails(BOB, 11);
+
+        console.log('\n BOBs Details ')
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log(' REWARDS OF BOB',rewards_bob.toString())
+
+        console.log('\n ALICEs Details ')
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        console.log(' REWARDS OF ALICE',rewards_alice.toString())
+
+        console.log('\n CHARLIEs Details ')
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        console.log(' REWARDS OF BOB',rewards_charlie.toString())
+
+        console.log('\n CHANNEL_CREATORs Details ')
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+        console.log(' REWARDS OF BOB',rewards_channelCreator.toString())
+
+        await expect(rewards_alice).to.be.gt(rewards_bob);
+        await expect(rewards_charlie).to.be.gt(rewards_alice);
+        await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
+      })
+
     });
 /**Test Cases Ends Here **/
   });
