@@ -1148,9 +1148,6 @@ contract EPNSCoreV2 is
                         if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
                         epochToTotalStakedWeight[i] = totalStakedWeight; 
                         }
-                        // if (i >= _lastTotalStakedEpoch) { //@audit : changed > to >= -> REMOVED 
-                        //     epochToTotalStakedWeight[i] = totalStakedWeight; 
-                        // }
                     }
                     else{
                         userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
@@ -1183,7 +1180,7 @@ contract EPNSCoreV2 is
 
         if(_currentEpochId > _lastEpochInitiliazed){
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            epochRewards[_currentEpochId - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch
+            epochRewards[_currentEpochId - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
             // epochRewards[_currentEpochId] = availableRewardsPerEpoch;
 
             lastEpochInitialized = block.number;
