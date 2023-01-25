@@ -1236,7 +1236,6 @@ contract EPNSCoreV2 is
     }
     uint256 public lastTotalStakeEpochInitialized;
     function _setUpTotalWeight(uint256 _userWeight, uint256 _currentEpoch) internal{
-        // if(_userWeight != 0 ){
             if(lastTotalStakeEpochInitialized == 0){
                 epochToTotalStakedWeight[_currentEpoch] = _userWeight;
                 epochToTotalStakedWeight[_currentEpoch - 1] = _userWeight;
@@ -1255,7 +1254,6 @@ contract EPNSCoreV2 is
                 }
             }
             lastTotalStakeEpochInitialized = _currentEpoch;
-        // }
     }
 
     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
