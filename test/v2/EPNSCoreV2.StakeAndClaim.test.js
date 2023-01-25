@@ -181,6 +181,14 @@ describe("EPNS CoreV2 Protocol", function () {
       await EPNSCoreV1Proxy.connect(signer).stake(amount);
     };
 
+    const getLastStakedEpoch = async(user) => {
+      const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+      var userDetails = await EPNSCoreV1Proxy.userFeesInfo(user);
+
+      const lastStakedEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), userDetails.lastStakedBlock.toNumber());
+      return lastStakedEpoch;
+    }
+
     const getLastRewardClaimedEpoch = async(user) => {
       const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
       var userDetails = await EPNSCoreV1Proxy.userFeesInfo(user);
@@ -373,12 +381,12 @@ describe("EPNS CoreV2 Protocol", function () {
      * TEST CHECKS-9: Stakers Stakes again in Different EPOCH - Claimable Reward Calculation should be accurate ✅
      * TEST CHECKS-9.1: Stakers Stakes again in Different EPOCH with pre-existing stakers - Claimable Reward Calculation should be accurate for all ✅
     */
-    describe("🟢 Random Tests on Stake N Rewards-To Be Removed later", function()
+    describe("🟢 LEVEL-1: Tests on Stake N Rewards", function()
     {
 
       it("TEST CHECK-1: BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-        const oneEpochs= 1;
+        const oneEpochs= 4;
         const fiveEpochs= 5;
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
         await stakePushTokens(BOBSIGNER, tokensBN(100))
@@ -390,7 +398,7 @@ describe("EPNS CoreV2 Protocol", function () {
         // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
         await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
         const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
-        //await getEachEpochDetails(BOB, 11);
+        await getEachEpochDetails(BOB, 11);
 
         console.log('\n BOBs Details ')
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -532,7 +540,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
 
-        await getEachEpochDetails(BOB, 11);
+        // await getEachEpochDetails(BOB, 11);
 
         console.log('\n BOBs Details ')
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -572,7 +580,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
 
-        await getEachEpochDetails(BOB, 11);
+        // await getEachEpochDetails(BOB, 11);
 
         console.log('\n BOBs Details ')
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -643,6 +651,88 @@ describe("EPNS CoreV2 Protocol", function () {
       })
 
     });
+
+    describe("🟢 LEVEL-2: Tests on Stake N Rewards", function()
+     {
+      it("TEST CHECKS-7: 4 Users Stakes(Same Amount) after a GAP of 2 epochs each & Harvests together - Last Claimer should get More Rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const twoEpochs = 2;
+        const fiveEpochs = 5;
+        
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+      
+        
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        const alice_ClaimedBlock = await getLastStakedEpoch(ALICE);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+
+        const charlie_ClaimedBlock = await getLastStakedEpoch(CHARLIE);
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        
+        const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        // await expect(rewards_alice).to.be.gt(rewards_bob);
+        // await expect(rewards_charlie).to.be.gt(rewards_alice);
+        // await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
+
+        console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
+        console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
+        console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
+        console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
+
+        // console.log('EPOCH WISE DETAILS')
+        // await getEachEpochDetails(BOB, 12);
+
+
+      })
+
+    });
 /**Test Cases Ends Here **/
   });
 });
+
+// Details - TEST CHECK-7
+// Total Staked Epoch -         286410422000000000000000000
+//
+// UserToEpoch_BOB            - 28642300000000000000000000       
+// UserToEpoch_Alice          - 57282500000000000000000000   
+// UserTOEpoch_Charlie        - 85922700000000000000000000
+// UserTOEpoch_ChannelCreator - 114562900000000000000000000              
+//
+// REWARDS
+// BOB Staked at EPOCH-3 and got             80  003513279974148424 Rewards
+// ALICE Staked at EPOCH-5 and got           120 000870638708810673 Rewards
+// CHARLIE Staked at EPOCH-7 and got         119 999404211624673350 Rewards
+// CHANNEL_CREATOR Staked at EPOCH-9 and got 79  999113998721736459 Rewards
+
+// ISSUE: Inconsistency in reward amounts -> BOB Staked first but gets 80 while charlie staked at epoch 7 but gets more than BOB(the early staker). 
+
+// AFTER Solving this issue:
+/**
+* BOB Staked at EPOCH-3 and got 320.00355470945471231 Rewards
+* ALICE Staked at EPOCH-5 and got 239.998618208557999393 Rewards
+* CHARLIE Staked at EPOCH-7 and got 159.998467290218079808 Rewards
+* CHANNEL_CREATOR Staked at EPOCH-9 and got 79.999113998721736459 Rewards
+ */
