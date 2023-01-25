@@ -1062,12 +1062,16 @@ contract EPNSCoreV2 is
       
       uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);   
       // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
-      uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
-      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock); 
- 
+      //uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
+      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
+
+    //   console.log('currentEpoch - ',currentEpoch);
+    //   console.log('lastClaimedEpoch - ',lastClaimedEpoch);
       uint256 rewards = 0;
       for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
             uint256 claimableReward = calculateEpochRewards(i);
+            // console.log('EPOCH VALUE-',i);
+            // console.log('claimableReward-',claimableReward);
             rewards = rewards.add(calculateEpochRewards(i));
 
       }
@@ -1087,8 +1091,8 @@ contract EPNSCoreV2 is
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
-        uint256 userLastClaimedBlock = userFeesInfo[address(this)].lastClaimedBlock == genesisEpoch ? userFeesInfo[address(this)].lastStakedBlock : userFeesInfo[address(this)].lastClaimedBlock;
-        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock);
+        // uint256 userLastClaimedBlock = userFeesInfo[address(this)].lastClaimedBlock == genesisEpoch ? userFeesInfo[address(this)].lastStakedBlock : userFeesInfo[address(this)].lastClaimedBlock;
+        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[address(this)].lastClaimedBlock);
         
         uint256 rewards = 0;
         for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
@@ -1214,15 +1218,10 @@ contract EPNSCoreV2 is
                 for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
                     if (i != currentEpoch - 1) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
-                        
-                        // if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
-                        // epochToTotalStakedWeight[i] = totalStakedWeight; 
-                        // }
                     }
                     else{
                         userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
                         totalStakedWeight = totalStakedWeight + _userWeight;
-                        //epochToTotalStakedWeight[i] = totalStakedWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
