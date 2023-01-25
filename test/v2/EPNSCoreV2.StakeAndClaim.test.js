@@ -346,14 +346,14 @@ describe("EPNS CoreV2 Protocol", function () {
     });
 
     describe("🟢 unStake Tests ", function()
-    {
+    { 
 
     });
 
     describe("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
     {
 
-      it("TEST CHECK-1: BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
+      it("BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs= 1;
         const fiveEpochs= 5;
@@ -374,7 +374,7 @@ describe("EPNS CoreV2 Protocol", function () {
         expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
       })
 
-      it("TEST CHECK-2: BOB & Alice Stakes(Same Amount) and Harvests together- Should get equal rewards ✅", async function(){
+      it("BOB & Alice Stakes(Same Amount) and Harvests together- Should get equal rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs = 1;
         const fiveEpochs = 5;
@@ -404,7 +404,7 @@ describe("EPNS CoreV2 Protocol", function () {
         expect(ethers.BigNumber.from(rewards_alice)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee.div(2)), ethers.utils.parseEther("10"));
       })
 
-      it("TEST CHECK-3: 4 Users Stakes(Same Amount) and Harvests together- Should get equal rewards ✅", async function(){
+      it("4 Users Stakes(Same Amount) and Harvests together- Should get equal rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs = 1;
         const fiveEpochs = 5;
@@ -436,7 +436,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
       })
 
-      it("TEST CHECK-4: 4 Users Stakes(Same Amount) and Harvests together- Last Claimer Gets More ✅", async function(){
+      it("4 Users Stakes(Same Amount) and Harvests together- Last Claimer Gets More ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs = 1;
         const fiveEpochs = 5;
@@ -463,7 +463,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
       })
 
-      it("TEST CHECKS-5: 4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More ✅", async function(){
+      it("4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs = 2;
         const fiveEpochs = 10;
@@ -517,7 +517,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(rewards_bob).to.be.gt(rewards_alice);
       })
 
-      it("TEST CHECKS-6: 4 Users Stakes(Same Amount) & Harvests after a gap of 2 epochs each - Last Claimer should get More Rewards ✅", async function(){
+      it(" 4 Users Stakes(Same Amount) & Harvests after a gap of 2 epochs each - Last Claimer should get More Rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const twoEpochs = 2;
         const fiveEpochs = 5;
@@ -549,6 +549,27 @@ describe("EPNS CoreV2 Protocol", function () {
         await expect(rewards_charlie).to.be.gt(rewards_alice);
         await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
       })
+
+      it("BOB Stakes and Harvests alone in same Epoch- Should get ZERO rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        // Fast Forward 1/2 epoch, lands in same EPOCH more epochs 
+        await passBlockNumers(EPOCH_DURATION/2);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+
+        const bobLastStakedEpoch = await getLastStakedEpoch(BOB);
+        const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        await expect(rewards_bob).to.be.equal(0);
+        await expect(bobLastStakedEpoch).to.be.equal(oneEpochs+1);
+        await expect(bobLastClaimedEpochId).to.be.equal(oneEpochs+1);
+      })
+
     });
 
     describe("🟢 Harvesting Rewards Tests ", function()
