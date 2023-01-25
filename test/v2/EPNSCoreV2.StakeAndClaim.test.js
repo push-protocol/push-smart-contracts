@@ -266,7 +266,7 @@ describe("EPNS CoreV2 Protocol", function () {
     * User BOB stakes: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are recorded accurately 
     * User BOB stakes & then Harvests: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are updated accurately 
     * **/
-    describe.skip("🟢 lastEpochRelative Tests ", function()
+    describe("🟢 lastEpochRelative Tests ", function()
     {
 
       it("Should revert on Block number overflow", async function(){
@@ -462,7 +462,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
     });
 
-    describe.skip("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
+    describe("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
     {
 
       it("BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
@@ -710,7 +710,7 @@ describe("EPNS CoreV2 Protocol", function () {
      * TEST CHECKS-9: Stakers Stakes again in Different EPOCH - Claimable Reward Calculation should be accurate ✅
      * TEST CHECKS-9.1: Stakers Stakes again in Different EPOCH with pre-existing stakers - Claimable Reward Calculation should be accurate for all ✅
     */
-    describe.skip("🟢 LEVEL-2: Tests on Stake N Rewards", function()
+    describe("🟢 LEVEL-2: Tests on Stake N Rewards", function()
      {
       it("TEST CHECKS-7: 4 Users Stakes(Same Amount) after a GAP of 2 epochs each & Harvests together - Last Claimer should get More Rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
