@@ -693,9 +693,9 @@ describe("EPNS CoreV2 Protocol", function () {
         const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
         const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
-        // await expect(rewards_alice).to.be.gt(rewards_bob);
-        // await expect(rewards_charlie).to.be.gt(rewards_alice);
-        // await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
+        await expect(rewards_bob).to.be.gt(rewards_alice);
+        await expect(rewards_alice).to.be.gt(rewards_charlie);
+        await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
 
         console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
         console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
@@ -714,25 +714,23 @@ describe("EPNS CoreV2 Protocol", function () {
 });
 
 // Details - TEST CHECK-7
-// Total Staked Epoch -         286410422000000000000000000
+/** Case 1: Constant Total Staked Weight leading to wrong results */
+// Total Staked Epoch -         286410422000000000000000000     
 //
-// UserToEpoch_BOB            - 28642300000000000000000000       
-// UserToEpoch_Alice          - 57282500000000000000000000   
-// UserTOEpoch_Charlie        - 85922700000000000000000000
-// UserTOEpoch_ChannelCreator - 114562900000000000000000000              
-//
-// REWARDS
-// BOB Staked at EPOCH-3 and got             80  003513279974148424 Rewards
-// ALICE Staked at EPOCH-5 and got           120 000870638708810673 Rewards
-// CHARLIE Staked at EPOCH-7 and got         119 999404211624673350 Rewards
-// CHANNEL_CREATOR Staked at EPOCH-9 and got 79  999113998721736459 Rewards
-
+// REWARDS History: Case 1
+// BOB Staked at EPOCH-3 and got             80.003513279974148424 Rewards
+// ALICE Staked at EPOCH-5 and got           120.000870638708810673 Rewards
+// CHARLIE Staked at EPOCH-7 and got         119.999404211624673350 Rewards
+// CHANNEL_CREATOR Staked at EPOCH-9 and got 79.999113998721736459 Rewards
 // ISSUE: Inconsistency in reward amounts -> BOB Staked first but gets 80 while charlie staked at epoch 7 but gets more than BOB(the early staker). 
 
-// AFTER Solving this issue:
-/**
-* BOB Staked at EPOCH-3 and got 320.00355470945471231 Rewards
-* ALICE Staked at EPOCH-5 and got 239.998618208557999393 Rewards
-* CHARLIE Staked at EPOCH-7 and got 159.998467290218079808 Rewards
-* CHANNEL_CREATOR Staked at EPOCH-9 and got 79.999113998721736459 Rewards
- */
+/** Case 2: After fixing - Variable Total Staked Weight leading to RIGHT Intended results */
+/** REWARDS History: Case 2
+ * 
+ * Oldest Staker gets the HIGHEST Reward
+ * 
+  * BOB Staked at EPOCH-3 and got               320.00355470945471231 Rewards
+  * ALICE Staked at EPOCH-5 and got             239.998618208557999393 Rewards
+  * CHARLIE Staked at EPOCH-7 and got           159.998467290218079808 Rewards
+  * CHANNEL_CREATOR Staked at EPOCH-9 and got   79.999113998721736459 Rewards
+**/
