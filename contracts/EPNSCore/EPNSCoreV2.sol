@@ -1120,50 +1120,50 @@ contract EPNSCoreV2 is
      *                  - While updating epochs between lastStaked & current Epochs, if any epoch has zero value for totalStakedWeight, update it with current totalStakedWeight value of the protocol 
      *                  - For currentEpoch, initialize the epoch id with updated weight values for epochToUserStakedWeight & epochToTotalStakedWeight
      */
-    function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
-        _setupEpochsReward();
+    // function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
+    //     _setupEpochsReward();
 
-        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+    //     uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
-        // Initiating 1st Case: User stakes for first time
-        if(userFeesInfo[_user].stakedWeight == 0){
-            userFeesInfo[_user].stakedWeight = _userWeight;
-            totalStakedWeight = totalStakedWeight + _userWeight;
-        }
-        else{
-            // Initiating 2.1 Case: User stakes again but in Same Epoch
-            uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
-            if(currentEpoch == lastStakedEpoch){
-                userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                totalStakedWeight = totalStakedWeight + _userWeight;
-            }
-            else{
-            // Initiating 2.2 Case: User stakes again but in Different Epoch
-                uint256 lastTotalStakedEpoch = lastEpochRelative(genesisEpoch, lastTotalStakedBlock);
+    //     // Initiating 1st Case: User stakes for first time
+    //     if(userFeesInfo[_user].stakedWeight == 0){
+    //         userFeesInfo[_user].stakedWeight = _userWeight;
+    //         totalStakedWeight = totalStakedWeight + _userWeight;
+    //     }
+    //     else{
+    //         // Initiating 2.1 Case: User stakes again but in Same Epoch
+    //         uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
+    //         if(currentEpoch == lastStakedEpoch){
+    //             userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+    //             totalStakedWeight = totalStakedWeight + _userWeight;
+    //         }
+    //         else{
+    //         // Initiating 2.2 Case: User stakes again but in Different Epoch
+    //             uint256 lastTotalStakedEpoch = lastEpochRelative(genesisEpoch, lastTotalStakedBlock);
 
-                for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
-                    if (i != currentEpoch - 1) {
-                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+    //             for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
+    //                 if (i != currentEpoch - 1) {
+    //                     userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                         
-                        if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
-                        epochToTotalStakedWeight[i] = totalStakedWeight; 
-                        }
-                    }
-                    else{
-                        userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                        totalStakedWeight = totalStakedWeight + _userWeight;
-                        epochToTotalStakedWeight[i] = totalStakedWeight;
-                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
-                    }
-                }
-            }
-        }
+    //                     if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
+    //                     epochToTotalStakedWeight[i] = totalStakedWeight; 
+    //                     }
+    //                 }
+    //                 else{
+    //                     userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+    //                     totalStakedWeight = totalStakedWeight + _userWeight;
+    //                     epochToTotalStakedWeight[i] = totalStakedWeight;
+    //                     userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        if(_userWeight != 0){
-            userFeesInfo[_user].lastStakedBlock = block.number;
-            lastTotalStakedBlock = block.number;
-        }
-    }
+    //     if(_userWeight != 0){
+    //         userFeesInfo[_user].lastStakedBlock = block.number;
+    //         lastTotalStakedBlock = block.number;
+    //     }
+    // }
 
     /**
      * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
@@ -1188,8 +1188,77 @@ contract EPNSCoreV2 is
         }
      }
 
+        
      // FOR TEST -//
-     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
+         function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        _setupEpochsReward();
+        _setUpTotalWeight(_userWeight, currentEpoch);
+
+        // Initiating 1st Case: User stakes for first time
+        if(userFeesInfo[_user].stakedWeight == 0){
+            userFeesInfo[_user].stakedWeight = _userWeight;
+            totalStakedWeight = totalStakedWeight + _userWeight;
+        }
+        else{
+            // Initiating 2.1 Case: User stakes again but in Same Epoch
+            uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
+            if(currentEpoch == lastStakedEpoch){
+                userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+                totalStakedWeight = totalStakedWeight + _userWeight;
+            }
+            else{
+            // Initiating 2.2 Case: User stakes again but in Different Epoch
+                uint256 lastTotalStakedEpoch = lastEpochRelative(genesisEpoch, lastTotalStakedBlock);
+
+                for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
+                    if (i != currentEpoch - 1) {
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+                        
+                        // if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
+                        // epochToTotalStakedWeight[i] = totalStakedWeight; 
+                        // }
+                    }
+                    else{
+                        userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
+                        totalStakedWeight = totalStakedWeight + _userWeight;
+                        //epochToTotalStakedWeight[i] = totalStakedWeight;
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
+                    }
+                }
+            }
+        }
+
+        if(_userWeight != 0){
+            userFeesInfo[_user].lastStakedBlock = block.number;
+            lastTotalStakedBlock = block.number;
+        }
+    }
+    uint256 public lastTotalStakeEpochInitialized;
+    function _setUpTotalWeight(uint256 _userWeight, uint256 _currentEpoch) internal{
+        // if(_userWeight != 0 ){
+            if(lastTotalStakeEpochInitialized == 0){
+                epochToTotalStakedWeight[_currentEpoch] = _userWeight;
+                epochToTotalStakedWeight[_currentEpoch - 1] = _userWeight;
+            }else{
+                if(lastTotalStakeEpochInitialized == _currentEpoch){
+                    epochToTotalStakedWeight[_currentEpoch] += _userWeight;
+                    epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
+                }else{
+                    for(uint256 i = lastTotalStakeEpochInitialized + 1; i < _currentEpoch-1; i++ ){
+                        if(epochToTotalStakedWeight[i] == 0){
+                            epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
+                        }
+                    }
+                    epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+                    epochToTotalStakedWeight[_currentEpoch] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+                }
+            }
+            lastTotalStakeEpochInitialized = _currentEpoch;
+        // }
+    }
+
+    function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
         result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
      }
 
