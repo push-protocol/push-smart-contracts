@@ -934,7 +934,8 @@ contract EPNSCoreV2 is
     // Structs & State variables
 
     uint256 public genesisEpoch;                // Block number at which Stakig starts
-    uint256 lastEpochInitialized;               // The last EPOCH ID that was initialized with respective epoch rewards
+    uint256 lastEpochInitialized;               // The last EPOCH ID initialized with the respective epoch rewards
+    uint256 lastTotalStakeEpochInitialized;     // The last EPOCH ID initialized with the respective total staked weight
     uint256 public epochDuration;               // 20 * number of blocks per day(7160) ~ 20 day approx
     uint256 public totalStakedWeight;           // Total token weight staked in Protocol at any given time 
     uint256 public lastTotalStakedBlock;        // The last block number stake/unstake took place
@@ -956,14 +957,6 @@ contract EPNSCoreV2 is
     mapping (address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-
-    /**
-     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
-    **/
-    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
-    }
 
    /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number 
@@ -1065,13 +1058,9 @@ contract EPNSCoreV2 is
       //uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
       uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
 
-    //   console.log('currentEpoch - ',currentEpoch);
-    //   console.log('lastClaimedEpoch - ',lastClaimedEpoch);
       uint256 rewards = 0;
       for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
             uint256 claimableReward = calculateEpochRewards(i);
-            // console.log('EPOCH VALUE-',i);
-            // console.log('claimableReward-',claimableReward);
             rewards = rewards.add(calculateEpochRewards(i));
 
       }
@@ -1202,14 +1191,14 @@ contract EPNSCoreV2 is
         // Initiating 1st Case: User stakes for first time
         if(userFeesInfo[_user].stakedWeight == 0){
             userFeesInfo[_user].stakedWeight = _userWeight;
-            totalStakedWeight = totalStakedWeight + _userWeight;
+            //totalStakedWeight = totalStakedWeight + _userWeight;
         }
         else{
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if(currentEpoch == lastStakedEpoch){
                 userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                totalStakedWeight = totalStakedWeight + _userWeight;
+                //totalStakedWeight = totalStakedWeight + _userWeight;
             }
             else{
             // Initiating 2.2 Case: User stakes again but in Different Epoch
@@ -1221,7 +1210,7 @@ contract EPNSCoreV2 is
                     }
                     else{
                         userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                        totalStakedWeight = totalStakedWeight + _userWeight;
+                        //totalStakedWeight = totalStakedWeight + _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -1233,26 +1222,30 @@ contract EPNSCoreV2 is
             lastTotalStakedBlock = block.number;
         }
     }
-    uint256 public lastTotalStakeEpochInitialized;
+
     function _setUpTotalWeight(uint256 _userWeight, uint256 _currentEpoch) internal{
-            if(lastTotalStakeEpochInitialized == 0){
-                epochToTotalStakedWeight[_currentEpoch] = _userWeight;
-                epochToTotalStakedWeight[_currentEpoch - 1] = _userWeight;
+            if(lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch){
+                epochToTotalStakedWeight[_currentEpoch] += _userWeight;
+                epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
             }else{
-                if(lastTotalStakeEpochInitialized == _currentEpoch){
-                    epochToTotalStakedWeight[_currentEpoch] += _userWeight;
-                    epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
-                }else{
                     for(uint256 i = lastTotalStakeEpochInitialized + 1; i < _currentEpoch-1; i++ ){
                         if(epochToTotalStakedWeight[i] == 0){
                             epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                         }
                     }
-                    epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
                     epochToTotalStakedWeight[_currentEpoch] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
-                }
+                    epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
             }
             lastTotalStakeEpochInitialized = _currentEpoch;
+    }
+
+    /** TEMP Functions */
+        /**
+     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
+    **/
+    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
     }
 
     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
