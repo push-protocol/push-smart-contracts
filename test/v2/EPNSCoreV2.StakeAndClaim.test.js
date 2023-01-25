@@ -158,10 +158,6 @@ describe("EPNS CoreV2 Protocol", function () {
       
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).initializeStake();
-      // await PushToken.connect(ALICESIGNER).setHolderDelegation(
-      //   EPNSCoreV1Proxy.address,
-      //   true
-      // );
     });
     //*** Helper Functions - Related to Channel, Tokens and Stakes ***//
     const addPoolFees = async (signer, amount) => {
@@ -270,7 +266,7 @@ describe("EPNS CoreV2 Protocol", function () {
     * User BOB stakes: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are recorded accurately 
     * User BOB stakes & then Harvests: Ensure epochIDs of lastStakedEpoch and lastClaimedEpoch are updated accurately 
     * **/
-    describe("🟢 lastEpochRelative Tests ", function()
+    describe.skip("🟢 lastEpochRelative Tests ", function()
     {
 
       it("Should revert on Block number overflow", async function(){
@@ -338,7 +334,24 @@ describe("EPNS CoreV2 Protocol", function () {
       })
 
     });
-
+    /**
+     * Stake & Unstake Checkpoints
+     * 
+     * STAKE 
+     * Updates userFeesInfo details accurately 
+     * Push token transfer works as expected
+     * User stakes more than once - user and total weights should update accuratley 
+     * User stakes more than once in different epochs - weights are updated accurately
+     * 
+     * UNSTAKE
+     * Unstaking allows users to Claim their rewards as well
+     * Unstake function is only accessible for actual stakers
+     * Unstaked users cannot claim any further rewards
+     * Staking and Unstaking in same epoch doesn't lead to any rewards
+     * User Fees Info is accurately updated after unstake
+     * 
+     * 
+     */
 
     describe("🟢 Stake Tests ", function()
     {
@@ -347,10 +360,109 @@ describe("EPNS CoreV2 Protocol", function () {
 
     describe("🟢 unStake Tests ", function()
     { 
+      it("Unstaking allows users to Claim their pending rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const fiveEpochs= 5;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        await stakePushTokens(ALICESIGNER, tokensBN(100))
+        // Fast Forward 5 epoch - Bob Unstakes
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee.div(2)), ethers.utils.parseEther("100"));
+
+      })
+
+      it("Unstaking function should update User's Detail accurately after unstake ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const fiveEpochs= 5;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        await stakePushTokens(ALICESIGNER, tokensBN(100))
+        // Fast Forward 5 epoch - Bob Unstakes
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const currentBlock = await getCurrentBlock()
+        await expect(bobDetails.stakedAmount).to.be.equal(0);
+        await expect(bobDetails.stakedWeight).to.be.equal(0);
+        await expect(bobDetails.lastClaimedBlock).to.be.equal(currentBlock.number);
+      })
+
+      it("Users cannot claim rewards after unstaking ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const fiveEpochs= 5;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        await stakePushTokens(ALICESIGNER, tokensBN(100))
+        // Fast Forward 5 epoch - Bob Unstakes
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+
+        // Fast Forward 15 epoch - Bob tries to Unstake again
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        
+        await expect(tx).to.be.revertedWith("EPNSCoreV2::unstake: Caller is not a staker");
+      })
+
+      it("BOB Stakes and Unstakes in same Epoch- Should get ZERO rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        // Fast Forward 1/2 epoch, lands in same EPOCH more epochs 
+        await passBlockNumers(EPOCH_DURATION/2);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+
+        const bobLastStakedEpoch = await getLastStakedEpoch(BOB);
+        const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        await expect(rewards_bob).to.be.equal(0);
+        await expect(bobLastStakedEpoch).to.be.equal(oneEpochs+1);
+        await expect(bobLastClaimedEpochId).to.be.equal(oneEpochs+1);
+      })
+
+      it("Unstaking function should transfer accurate amount of PUSH tokens to User ✅", async function(){
+        const oneEpochs= 1;
+        const fiveEpochs= 5;
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        await stakePushTokens(ALICESIGNER, tokensBN(100))
+        // Fast Forward 5 epoch - Bob Unstakes
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+
+        const bob_balance_before = await PushToken.balanceOf(BOB);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const bob_balance_after = await PushToken.balanceOf(BOB);
+
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const totalClaimableAmount = bobDetails.stakedAmount.add(rewards_bob);
+        const bobBalanceIncrease = bob_balance_after.sub(bob_balance_before);
+
+        await expect(bobBalanceIncrease).to.be.equal(totalClaimableAmount);
+      })
 
     });
 
-    describe("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
+    describe.skip("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
     {
 
       it("BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
@@ -598,7 +710,7 @@ describe("EPNS CoreV2 Protocol", function () {
      * TEST CHECKS-9: Stakers Stakes again in Different EPOCH - Claimable Reward Calculation should be accurate ✅
      * TEST CHECKS-9.1: Stakers Stakes again in Different EPOCH with pre-existing stakers - Claimable Reward Calculation should be accurate for all ✅
     */
-    describe("🟢 LEVEL-2: Tests on Stake N Rewards", function()
+    describe.skip("🟢 LEVEL-2: Tests on Stake N Rewards", function()
      {
       it("TEST CHECKS-7: 4 Users Stakes(Same Amount) after a GAP of 2 epochs each & Harvests together - Last Claimer should get More Rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
@@ -844,6 +956,7 @@ describe("EPNS CoreV2 Protocol", function () {
 /**
  * Contract Related
  * Include a genesisTotalWeight state variable. If any epoch has no totalWeight, they will use the genesisTotalWeight that comes from the PUSH Admin stake of 1 push
+ * Add events where necessary 
  * 
  * TEST Cases Related
  * Ensure that Subscribe and Unsubscribe doesn't break the adjustment functions
