@@ -626,11 +626,192 @@ describe("EPNS CoreV2 Protocol", function () {
         console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
         console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
         console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
+      })
 
-        // console.log('EPOCH WISE DETAILS')
-        // await getEachEpochDetails(BOB, 12);
+      it("TEST CHECKS-8: Stakers Stakes again in same EPOCH - Claimable Reward Calculation should be accurate ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const twoEpochs = 2;
+        const fiveEpochs = 5;
+        
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
 
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
 
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+      
+        
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        const alice_ClaimedBlock = await getLastStakedEpoch(ALICE);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+
+        const charlie_ClaimedBlock = await getLastStakedEpoch(CHARLIE);
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        
+        const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        await expect(rewards_bob).to.be.gt(rewards_alice);
+        await expect(rewards_alice).to.be.gt(rewards_charlie);
+        await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
+        console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
+        console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
+        console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
+        console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
+
+      })
+
+      it("TEST CHECKS-8.1: Stakers Stakes again in Same EPOCH with other pre-existing stakers - Claimable Reward Calculation should be accurate for all", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const twoEpochs = 2;
+        const fiveEpochs = 5;
+        
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+      
+        
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        const alice_ClaimedBlock = await getLastStakedEpoch(ALICE);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+
+        const charlie_ClaimedBlock = await getLastStakedEpoch(CHARLIE);
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        
+        const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        await expect(rewards_bob).to.be.gt(rewards_alice);
+        await expect(rewards_alice).to.be.gt(rewards_charlie);
+        await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
+        console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
+        console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
+        console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
+        console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
+      })
+
+      it("TEST CHECKS-9: Stakers Stakes again in Different EPOCH - Claimable Reward Calculation should be accurate", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const twoEpochs = 2;
+        const fiveEpochs = 5;
+        
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+
+        const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        // await expect(rewards_bob).to.be.gt(rewards_alice);
+        // await expect(rewards_alice).to.be.gt(rewards_charlie);
+        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
+        console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
+      })
+
+      it("TEST CHECKS-9.1: Stakers Stakes again in Different EPOCH with pre-existing stakers - Claimable Reward Calculation should be accurate for all ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const twoEpochs = 2;
+        const fiveEpochs = 5;
+        
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        await stakePushTokens(CHARLIESIGNER, tokensBN(100));
+
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await stakePushTokens(CHANNEL_CREATORSIGNER, tokensBN(100));
+        
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+       
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
+
+        const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+
+        const alice_ClaimedBlock = await getLastStakedEpoch(ALICE);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+
+        const charlie_ClaimedBlock = await getLastStakedEpoch(CHARLIE);
+        const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
+        
+        const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
+        const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
+
+        // await expect(rewards_bob).to.be.gt(rewards_alice);
+        // await expect(rewards_alice).to.be.gt(rewards_charlie);
+        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
+        console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
+        console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
+        console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
+        console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
       })
 
     });
@@ -638,24 +819,23 @@ describe("EPNS CoreV2 Protocol", function () {
   });
 });
 
-// Details - TEST CHECK-7
-/** Case 1: Constant Total Staked Weight leading to wrong results */
-// Total Staked Epoch -         286410422000000000000000000     
-//
-// REWARDS History: Case 1
-// BOB Staked at EPOCH-3 and got             80.003513279974148424 Rewards
-// ALICE Staked at EPOCH-5 and got           120.000870638708810673 Rewards
-// CHARLIE Staked at EPOCH-7 and got         119.999404211624673350 Rewards
-// CHANNEL_CREATOR Staked at EPOCH-9 and got 79.999113998721736459 Rewards
-// ISSUE: Inconsistency in reward amounts -> BOB Staked first but gets 80 while charlie staked at epoch 7 but gets more than BOB(the early staker). 
+// PENDING Items
+/**
+ * Contract Related
+ * Include a genesisTotalWeight state variable. If any epoch has no totalWeight, they will use the genesisTotalWeight that comes from the PUSH Admin stake of 1 push
+ * 
+ * TEST Cases Related
+ * Ensure that Subscribe and Unsubscribe doesn't break the adjustment functions
+ * Ensure that Total Epoch Rewards of 1 epoch gets equally distributed among all users - Manually ✅
+ * Ensure that Total Epoch Rewards of 1 epoch gets equally distributed among all users - Using Script
+ * Write a script to check CLAIMABLE rewards for staker, given their weight, amount and current block.
+ * Arrange test cases in their respective slots
+ * 
+ */
 
-/** Case 2: After fixing - Variable Total Staked Weight leading to RIGHT Intended results */
-/** REWARDS History: Case 2
- * 
- * Oldest Staker gets the HIGHEST Reward
- * 
-  * BOB Staked at EPOCH-3 and got               320.00355470945471231 Rewards
-  * ALICE Staked at EPOCH-5 and got             239.998618208557999393 Rewards
-  * CHARLIE Staked at EPOCH-7 and got           159.998467290218079808 Rewards
-  * CHANNEL_CREATOR Staked at EPOCH-9 and got   79.999113998721736459 Rewards
-**/
+
+// Details - TEST CHECK-9
+/**
+ * ISSUE: Calculation of userLastClaimedBlock in harvestTill() function was flawed - lead to errors in reward calculation coz of epoch differences, Made the fix.
+ * lastClaimedEpoch can actually be acheieved via - lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
+ */
