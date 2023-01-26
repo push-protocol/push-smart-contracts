@@ -59,41 +59,7 @@ describe("EPNS CoreV2 Protocol", function () {
       await loadFixture(epnsContractFixture));
 
   });
-  /***
-   * CHECKPOINTS TO CONSIDER WHILE TESTING -> Overall Stake-N-Claim Tests
-   * ------------------------------------------
-   * 1. Stake
-   *  - Staking function should execute as expected-Updates user's staked amount, PUSH transfer etc ✅
-   *  - FIRST stake should update user's stakedWeight, stakedAmount and other imperative details accurately
-   *  - Consecutive stakes should update details accurately: 2 cases
-   *    - a. User staking again in same epoch, Should add user's stake details in the same epoch
-   *    - b. User staking in different epoch, should update the epoch's in between with last epoch details - and last epoch with latest details
-   * 
-   * 
-   * 2. UnStake
-   *  - UnStake function should execute as expected ✅
-   *  - UnStake functions shouldn't be executed when Caller is Not a Staker.✅
-   *  - UnStaking right after staking should lead to any rewards.
-   *  - UnStaking should also transfer claimable rewards for the Caller ✅
-   * 
-   * 2. Reward Calculation and Claiming Reward Tests
-   *  - First Claim of stakers should execute as expected ✅
-   *  - First Claim: Stakers who hold longer should get more rewards ✅
-   *  - Verify that total reward actually gets distrubuted between stakers in one given epoch ✅
-   *  - Rewards should adjust automatically if new Staker comes into picture ✅
-   *  - Users shouldn't be able to claim any rewards after withdrawal 
-   * 
-   * 3. Initiating New Stakes
-   *  - Should only be called by the governance/admin ✅
-   *  - Reward value passed should never be more than available Protocol_Pool_Fees in the protocol. ✅
-   *  - lastUpdateTime and endPeriod should be updated accurately and stakeDuration should be increased.
-   *  - If new Stake is initiated after END of running stake epoch:
-   *    - Rewards should be accurate if new stake is initiated After an existing stakeDuration.
-   * 
-   *    - Rewards should be accurate if new stake is initiated within an existing stakeDuration.
-   * 
-   */
-
+  
   describe("EPNS CORE V2: Stake and Claim Tests", () => {
     const CHANNEL_TYPE = 2;
     const EPOCH_DURATION = 20 * 7160 // number of blocks = 143200 
