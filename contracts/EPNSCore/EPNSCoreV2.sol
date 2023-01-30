@@ -934,7 +934,8 @@ contract EPNSCoreV2 is
     // Structs & State variables
 
     uint256 public genesisEpoch;                // Block number at which Stakig starts
-    uint256 lastEpochInitialized;               // The last EPOCH ID that was initialized with respective epoch rewards
+    uint256 lastEpochInitialized;               // The last EPOCH ID initialized with the respective epoch rewards
+    uint256 lastTotalStakeEpochInitialized;     // The last EPOCH ID initialized with the respective total staked weight
     uint256 public epochDuration;               // 20 * number of blocks per day(7160) ~ 20 day approx
     uint256 public totalStakedWeight;           // Total token weight staked in Protocol at any given time 
     uint256 public lastTotalStakedBlock;        // The last block number stake/unstake took place
@@ -956,14 +957,6 @@ contract EPNSCoreV2 is
     mapping (address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-
-    /**
-     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
-    **/
-    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
-    }
 
    /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number 
@@ -1043,7 +1036,7 @@ contract EPNSCoreV2 is
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
-        userFeesInfo[msg.sender].lastClaimedBlock = block.number; //@audit - TBD:should this be turned to 0?
+        userFeesInfo[msg.sender].lastClaimedBlock = block.number; 
     }
 
     /**
@@ -1061,10 +1054,8 @@ contract EPNSCoreV2 is
       _adjustUserAndTotalStake(msg.sender, 0);
       
       uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);   
-      // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
-      uint256 userLastClaimedBlock = userFeesInfo[msg.sender].lastClaimedBlock == genesisEpoch ? userFeesInfo[msg.sender].lastStakedBlock :  userFeesInfo[msg.sender].lastClaimedBlock;
-      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock); 
- 
+      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
+
       uint256 rewards = 0;
       for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
             uint256 claimableReward = calculateEpochRewards(i);
@@ -1086,9 +1077,7 @@ contract EPNSCoreV2 is
         _adjustUserAndTotalStake(address(this), 0);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        // Case: when user is harvesting for very first time - lastClaimedBlock is equal to genesisEpoch - Check stake() function
-        uint256 userLastClaimedBlock = userFeesInfo[address(this)].lastClaimedBlock == genesisEpoch ? userFeesInfo[address(this)].lastStakedBlock : userFeesInfo[address(this)].lastClaimedBlock;
-        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userLastClaimedBlock);
+        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[address(this)].lastClaimedBlock);
         
         uint256 rewards = 0;
         for(uint i = lastClaimedEpoch; i < currentEpoch; i++) {
@@ -1099,6 +1088,8 @@ contract EPNSCoreV2 is
         userFeesInfo[address(this)].lastClaimedBlock = block.number;
 
     }
+        
+     // FOR TEST - To Be Reviewed - //
 
     /**
      * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for reward calculation at a particular epoch.
@@ -1121,21 +1112,18 @@ contract EPNSCoreV2 is
      *                  - For currentEpoch, initialize the epoch id with updated weight values for epochToUserStakedWeight & epochToTotalStakedWeight
      */
     function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
-        _setupEpochsReward();
-
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
 
         // Initiating 1st Case: User stakes for first time
         if(userFeesInfo[_user].stakedWeight == 0){
             userFeesInfo[_user].stakedWeight = _userWeight;
-            totalStakedWeight = totalStakedWeight + _userWeight;
         }
         else{
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if(currentEpoch == lastStakedEpoch){
                 userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                totalStakedWeight = totalStakedWeight + _userWeight;
             }
             else{
             // Initiating 2.2 Case: User stakes again but in Different Epoch
@@ -1144,15 +1132,9 @@ contract EPNSCoreV2 is
                 for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
                     if (i != currentEpoch - 1) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
-                        
-                        if(epochToTotalStakedWeight[i] == 0 ){ //@audit : New Addition - Updates epochToTotalStakedWeight if its still zero
-                        epochToTotalStakedWeight[i] = totalStakedWeight; 
-                        }
                     }
                     else{
                         userFeesInfo[_user].stakedWeight = userFeesInfo[_user].stakedWeight + _userWeight;
-                        totalStakedWeight = totalStakedWeight + _userWeight;
-                        epochToTotalStakedWeight[i] = totalStakedWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -1165,7 +1147,7 @@ contract EPNSCoreV2 is
         }
     }
 
-    /**
+        /**
      * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
      * @dev    Initializes (sets reward) for every epoch ID that falls between the lastEpochInitialized and currentEpoch
      *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees. 
@@ -1173,23 +1155,42 @@ contract EPNSCoreV2 is
                 - Records the Pool_Fees value used as rewards.
                 - Records the last epoch id whose rewards were set.
      */
-     function _setupEpochsReward() private{
-
-        uint256 _currentEpochId = lastEpochRelative(genesisEpoch, block.number);
+     function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private{
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
-
-        if(_currentEpochId > _lastEpochInitiliazed){
+        // Setting up Epoch Based Rewards
+        if(_currentEpoch > _lastEpochInitiliazed){
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            epochRewards[_currentEpochId - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
-            // epochRewards[_currentEpochId] = availableRewardsPerEpoch;
+            epochRewards[_currentEpoch - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES; 
         }
+        // Setting up Epoch Based TotalWeight
+        if(lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch){
+                epochToTotalStakedWeight[_currentEpoch] += _userWeight;
+                epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
+            }else{
+                    for(uint256 i = lastTotalStakeEpochInitialized + 1; i < _currentEpoch-1; i++ ){
+                        if(epochToTotalStakedWeight[i] == 0){
+                            epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
+                        }
+                    }
+                    epochToTotalStakedWeight[_currentEpoch] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+                    epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+            }
+            lastTotalStakeEpochInitialized = _currentEpoch;
      }
 
-     // FOR TEST -//
-     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
+    /** TEMP Functions - Will be removed before Deployment - */
+    /**
+     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
+    **/
+    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
+    }
+
+    function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
         result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
      }
 
