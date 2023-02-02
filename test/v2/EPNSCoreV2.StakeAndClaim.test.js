@@ -345,19 +345,25 @@ describe("EPNS CoreV2 Protocol", function () {
         const passBlocks = 1;
         const stakeAmount = tokensBN(100);
 
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+
+        const stakedweight = await bobDetails.epochToTotalStakedWeight[passBlocks]; //staked weight before staking
+
         await passBlockNumers(passBlocks * EPOCH_DURATION);
         await stakePushTokens(BOBSIGNER, stakeAmount);
         await stakePushTokens(BOBSIGNER, stakeAmount);
 
-        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        
         const userLastStakedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails.lastStakedBlock.toNumber());
         const userLastClaimedEpochId = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), bobDetails.lastClaimedBlock.toNumber());
+        
+        const userweight = await EPNSCoreV1Proxy.userWeight(BOB); //user weight after staking
 
         expect(userLastStakedEpochId).to.be.equal(passBlocks + 1);
         expect(userLastClaimedEpochId).to.be.equal(1); // Epoch 1 - since no claim done yet
         expect(bobDetails.stakedAmount).to.be.equal(stakeAmount.mul(2));
         expect(bobDetails.lastStakedBlock).to.be.equal(await getCurrentBlock());
-        expect(bobDetails.epochToUserStakedWeight[passBlocks + 1]).to.be.equal(stakeAmount.mul(2));
+        expect(bobDetails.epochToUserStakedWeight[passBlocks + 1]).to.be.equal(stakedweight.add(userweight));
       });
 
       it("User stakes more than once in different epochs - weights are updated accurately ✅", async function(){
