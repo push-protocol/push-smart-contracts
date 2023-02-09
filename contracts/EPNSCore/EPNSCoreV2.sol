@@ -1058,9 +1058,7 @@ contract EPNSCoreV2 is
 
       uint256 rewards = 0;
       for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
-            uint256 claimableReward = calculateEpochRewards(i);
             rewards = rewards.add(calculateEpochRewards(i));
-
       }
       usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
       userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
