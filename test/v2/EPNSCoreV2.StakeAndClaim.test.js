@@ -404,8 +404,65 @@ describe("EPNS CoreV2 Protocol", function () {
         const lastepoch = await getLastStakedEpoch(BOB);
         console.log("Last Epoch", lastepoch.toString());
         await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        // const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        // console.log("Rewards Bob", rewards_bob.toString());
+      });
+
+      it("Bob unstakes stakes and again unstakes at the same epoch, should not get any rewards", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const stakeAmount = tokensBN(100);
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userWeight = await bobDetails.stakedWeight;
+        expect(userWeight).to.be.equal(0);
+        const fourEpochs=4;
+
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        await passBlockNumers(fourEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-        console.log("Rewards Bob", rewards_bob.toString());
+        console.log("Rewards Bob after unstaking at epoch 5 after staking at epoch 1 : ", rewards_bob.toString());
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        passBlockNumers(EPOCH_DURATION/2);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const rewards_bob2 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log("Rewards Bob after staking and unstaking again at epoch 5 : ", rewards_bob2.toString());
+      });
+
+      it("Bob stakes after 5 epoch and unstake at the same epoch", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const stakeAmount = tokensBN(100);
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userWeight = await bobDetails.stakedWeight;
+        expect(userWeight).to.be.equal(0);
+        const fourEpochs=4;
+
+        await passBlockNumers(fourEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        await passBlockNumers(EPOCH_DURATION/2);        
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log("Rewards Bob after unstaking at epoch 5 after staking at epoch 5 : ", rewards_bob.toString());
+      })
+
+      it("Bob stakes at epoch 1 and unstakes at epoch 5, also Alice stakes and unstake at epoch 5 :", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const stakeAmount = tokensBN(100);
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userWeight = await bobDetails.stakedWeight;
+        expect(userWeight).to.be.equal(0);
+        const fourEpochs=4;
+
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        await passBlockNumers(fourEpochs * EPOCH_DURATION);
+        await stakePushTokens(ALICESIGNER, stakeAmount);  
+        await passBlockNumers(EPOCH_DURATION/2);
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        console.log("Rewards Bob after unstaking at epoch 5 after staking at epoch 1 : ", rewards_bob.toString());
+        console.log("Rewards Alice after unstaking at epoch 5 after staking at epoch 1 : ", rewards_alice.toString());
+
       });
 
     });
