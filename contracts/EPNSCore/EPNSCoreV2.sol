@@ -981,6 +981,15 @@ contract EPNSCoreV2 is
         rewards = userFeesInfo[msg.sender].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(epochToTotalStakedWeight[_epochId]);
     }
     /**
+     * @notice Calculates and returns the total epoch numbers that a user has been staking for, at any given time.
+     * @dev    Uses lastClaimedBlock as a reference to start the Total Epoch calculation for a given user.
+    **/
+    function getTotalEpochStaked(address _user) public view returns(uint256 toatlStakedEpochs) {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock); 
+        toatlStakedEpochs = currentEpoch.sub(lastClaimedEpoch);
+    }
+    /**
      * @notice Function to initialize the staking procedure in Core contract
      * @dev    Requires caller to deposit/stake 1 PUSH token to ensure staking pool is never zero.
     **/
@@ -1046,6 +1055,21 @@ contract EPNSCoreV2 is
     **/
     function harvestAll() public {
       harvestTill(block.number);
+    }
+
+    /**
+     * @notice Allows users to harvest/claim their earned rewards till a specific EPOCH number, instead of all epochs.
+     * @dev    Takes the desired epoch number as argument.
+     *         The Epoch ID is theh converted to the block number, i.e., the block number upto which the rewards can be harvested.
+     *         Rewards are calculated and added for all epochs between, user's lastClaimedEpoch and desired epoch Id provided by the user.
+    **/
+    function harvestTillEpoch(uint256 _epochId) public{
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);   
+        if(_epochId <= currentEpoch){
+            uint256 totalDurationOfEpochs = _epochId.mul(epochDuration);
+            uint256 rewardsTillBlockNumber = totalDurationOfEpochs.add(genesisEpoch);
+            harvestTill(rewardsTillBlockNumber);
+        }
     }
 
     function harvestTill(uint256 _tillBlockNumber) public {
