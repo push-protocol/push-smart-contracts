@@ -854,11 +854,9 @@ describe("EPNS CoreV2 Protocol", function () {
 
         const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const totalPoolFees = tokensBN(600);
 
-        // await expect(rewards_bob).to.be.gt(rewards_alice);
-        // await expect(rewards_alice).to.be.gt(rewards_charlie);
-        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
-
+        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFees), ethers.utils.parseEther("100"));
         console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
       })
 
@@ -903,16 +901,12 @@ describe("EPNS CoreV2 Protocol", function () {
         const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
         const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
-        // await expect(rewards_bob).to.be.gt(rewards_alice);
-        // await expect(rewards_alice).to.be.gt(rewards_charlie);
-        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
-
         console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
         console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
         console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
         console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
       })
-
+      
     });
 /**Test Cases Ends Here **/
   });
