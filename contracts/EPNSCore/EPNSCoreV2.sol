@@ -1155,12 +1155,12 @@ contract EPNSCoreV2 is
                 - Records the Pool_Fees value used as rewards.
                 - Records the last epoch id whose rewards were set.
      */
-     function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private{
+    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private{
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
-        if(_currentEpoch > _lastEpochInitiliazed){
+        if(_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1){
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            epochRewards[_currentEpoch - 1] = availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
+            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES; 
@@ -1169,16 +1169,16 @@ contract EPNSCoreV2 is
         if(lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch){
                 epochToTotalStakedWeight[_currentEpoch] += _userWeight;
                 epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
-            }else{
-                    for(uint256 i = lastTotalStakeEpochInitialized + 1; i < _currentEpoch-1; i++ ){
-                        if(epochToTotalStakedWeight[i] == 0){
-                            epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
-                        }
+        }else{
+                for(uint256 i = lastTotalStakeEpochInitialized + 1; i < _currentEpoch-1; i++ ){
+                    if(epochToTotalStakedWeight[i] == 0){
+                        epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                     }
-                    epochToTotalStakedWeight[_currentEpoch] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
-                    epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
-            }
-            lastTotalStakeEpochInitialized = _currentEpoch;
+                }
+                epochToTotalStakedWeight[_currentEpoch] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+                epochToTotalStakedWeight[_currentEpoch - 1] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+        }
+        lastTotalStakeEpochInitialized = _currentEpoch;
      }
 
     /** TEMP Functions - Will be removed before Deployment - */
