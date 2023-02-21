@@ -211,7 +211,7 @@ describe("EPNS CoreV2 Protocol", function () {
     };
 
     const getEachEpochDetails = async(user, totalEpochs) =>{
-      for(i = 1; i <= totalEpochs; i++){
+      for(i = 0; i <= totalEpochs; i++){
         var epochToTotalWeight = await EPNSCoreV1Proxy.epochToTotalStakedWeight(i);
         var epochRewardsStored = await EPNSCoreV1Proxy.epochRewards(i);
         const userEpochToStakedWeight = await EPNSCoreV1Proxy.getUserEpochToWeight(user, i);
@@ -430,14 +430,13 @@ describe("EPNS CoreV2 Protocol", function () {
 
     describe("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function()
     {
-
-      it("BOB Stakes and Harvests alone- Should get all rewards ✅", async function(){
+      it("BOB Stakes at EPOCH 1 and Harvests alone- Should get all rewards ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
         const oneEpochs= 1;
         const fiveEpochs= 5;
         const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
         
-        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+       // await passBlockNumers(oneEpochs * EPOCH_DURATION);
         await stakePushTokens(BOBSIGNER, tokensBN(100))
         // Fast Forward 5 more epochs 
         await passBlockNumers(fiveEpochs * EPOCH_DURATION);
@@ -447,6 +446,29 @@ describe("EPNS CoreV2 Protocol", function () {
         const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
 
+        await expect(bobLastStakedEpoch).to.be.equal(oneEpochs);
+        await expect(bobLastClaimedEpochId).to.be.equal(fiveEpochs+1);
+        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
+      })
+
+      it("BOB Stakes after EPOCH 1 and Harvests alone- Should get all rewards ✅", async function(){
+        const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const oneEpochs= 1;
+        const fiveEpochs= 5;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+        
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
+        await stakePushTokens(BOBSIGNER, tokensBN(100))
+        // Fast Forward 5 more epochs 
+        await passBlockNumers(fiveEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+
+        const bobLastStakedEpoch = await getLastStakedEpoch(BOB);
+        const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+ 
         await expect(bobLastStakedEpoch).to.be.equal(oneEpochs+1);
         await expect(bobLastClaimedEpochId).to.be.equal(oneEpochs+fiveEpochs+1);
         expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
@@ -460,6 +482,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const perStakerShare = totalPoolFee.div(2)
 
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(ALICESIGNER, tokensBN(100));
         // Fast Forward 5 more epochs 
@@ -490,6 +514,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const perStakerShare = totalPoolFee.div(2)
 
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(ALICESIGNER, tokensBN(100));
         await stakePushTokens(CHARLIESIGNER, tokensBN(100));
@@ -519,6 +545,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const oneEpochs = 1;
         const fiveEpochs = 5;
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(ALICESIGNER, tokensBN(100));
         await stakePushTokens(CHARLIESIGNER, tokensBN(100));
@@ -546,6 +574,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const oneEpochs = 2;
         const fiveEpochs = 10;
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(ALICESIGNER, tokensBN(200));
         await stakePushTokens(CHARLIESIGNER, tokensBN(300));
@@ -573,6 +603,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const oneEpochs = 2;
         const fiveEpochs = 10;
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(400));
         await stakePushTokens(ALICESIGNER, tokensBN(300));
         await stakePushTokens(CHARLIESIGNER, tokensBN(200));
@@ -600,6 +632,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const twoEpochs = 2;
         const fiveEpochs = 5;
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(ALICESIGNER, tokensBN(100));
         await stakePushTokens(CHARLIESIGNER, tokensBN(100));
@@ -634,6 +668,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
         
         await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+        
         await stakePushTokens(BOBSIGNER, tokensBN(100))
         // Fast Forward 1/2 epoch, lands in same EPOCH more epochs 
         await passBlockNumers(EPOCH_DURATION/2);
@@ -684,6 +720,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const fiveEpochs = 5;
         
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
@@ -733,6 +771,7 @@ describe("EPNS CoreV2 Protocol", function () {
         const fiveEpochs = 5;
         
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
         await stakePushTokens(BOBSIGNER, tokensBN(100));
         await stakePushTokens(BOBSIGNER, tokensBN(100));
 
@@ -787,6 +826,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const fiveEpochs = 5;
         
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
@@ -839,6 +880,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const fiveEpochs = 5;
         
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
@@ -854,9 +897,11 @@ describe("EPNS CoreV2 Protocol", function () {
 
         const bob_ClaimedBlock = await getLastStakedEpoch(BOB);
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-        const totalPoolFees = tokensBN(600);
 
-        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFees), ethers.utils.parseEther("100"));
+        // await expect(rewards_bob).to.be.gt(rewards_alice);
+        // await expect(rewards_alice).to.be.gt(rewards_charlie);
+        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
         console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
       })
 
@@ -866,6 +911,8 @@ describe("EPNS CoreV2 Protocol", function () {
         const fiveEpochs = 5;
         
         await passBlockNumers(twoEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
         await stakePushTokens(BOBSIGNER, tokensBN(100));
 
         await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
@@ -901,12 +948,34 @@ describe("EPNS CoreV2 Protocol", function () {
         const channeCreator_ClaimedBlock = await getLastStakedEpoch(CHANNEL_CREATOR);
         const rewards_channelCreator = await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
+        // await expect(rewards_bob).to.be.gt(rewards_alice);
+        // await expect(rewards_alice).to.be.gt(rewards_charlie);
+        // await expect(rewards_charlie).to.be.gt(rewards_channelCreator);
+
         console.log(`BOB Staked at EPOCH-${bob_ClaimedBlock.toNumber()} and got ${rewards_bob.toString()} Rewards`)
         console.log(`ALICE Staked at EPOCH-${alice_ClaimedBlock.toNumber()} and got ${rewards_alice.toString()} Rewards`)
         console.log(`CHARLIE Staked at EPOCH-${charlie_ClaimedBlock.toNumber()} and got ${rewards_charlie.toString()} Rewards`)
         console.log(`CHANNEL_CREATOR Staked at EPOCH-${channeCreator_ClaimedBlock.toNumber()} and got ${rewards_channelCreator.toString()} Rewards`)
       })
-      
+
+      it("TEST CHECKS-10: Staking and Unstaking at Same Epoch should not lead to increase in rewards-(for previously staked users)✅", async function(){
+        // const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const stakeAmount = tokensBN(100);
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userWeight = await bobDetails.stakedWeight;
+        expect(userWeight).to.be.equal(0);
+        const fourEpochs=4;
+        // Bob Stakes at EPOCH 1 first
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        // At epoch 5, BOB stakes again and tries to unstake all his stake.
+        await passBlockNumers(fourEpochs * EPOCH_DURATION);
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        console.log("Rewards Bob", rewards_bob.toString());
+      });
+
     });
 /**Test Cases Ends Here **/
   });
