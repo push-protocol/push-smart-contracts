@@ -929,35 +929,15 @@ contract EPNSCoreV2 is
         return chainId;
     }
 
-    /*** Core-v2: Stake n Claim Experiment starts here ***/
+    /*** Core-v2: Stake and Claim Functions***/
 
-    // Structs & State variables
-
-    uint256 public genesisEpoch;                // Block number at which Stakig starts
-    uint256 lastEpochInitialized;               // The last EPOCH ID initialized with the respective epoch rewards
-    uint256 lastTotalStakeEpochInitialized;     // The last EPOCH ID initialized with the respective total staked weight
-    uint256 public epochDuration;               // 20 * number of blocks per day(7160) ~ 20 day approx
-    uint256 public totalStakedWeight;           // Total token weight staked in Protocol at any given time 
-    uint256 public lastTotalStakedBlock;        // The last block number stake/unstake took place
-    uint256 public previouslySetEpochRewards;   // Amount of rewards set in last initialized epoch
-    
-    //@notice: Stores all user's staking details
-    struct UserFessInfo {
-      uint256 stakedAmount;
-      uint256 stakedWeight;
-
-      uint256 lastStakedBlock;
-      uint256 lastClaimedBlock;
-
-      mapping(uint256 => uint256) epochToUserStakedWeight;
+   /**
+     * Allows caller to add pool_fees at any given epoch 
+    **/
+    function addPoolFees(uint256 _rewardAmount) external{
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
     }
-    // @notice: Stores all the individual epoch rewards
-    mapping (uint256 => uint256) public epochRewards; 
-    // @notice: Stores User's Fees Details 
-    mapping (address => UserFessInfo) public userFeesInfo;
-    // @notice: Stores the total staked weight at a specific epoch.
-    mapping(uint256 => uint256) public epochToTotalStakedWeight;
-
    /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number 
     **/
@@ -1057,7 +1037,7 @@ contract EPNSCoreV2 is
       uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock); 
 
       uint256 rewards = 0;
-      for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) { //@audit-info - changed lastClaimedEpoch to lastClaimedEpoch-1 - and then rewards work
+      for(uint i = lastClaimedEpoch-1; i < currentEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(i);
             rewards = rewards.add(calculateEpochRewards(i));
 
@@ -1071,7 +1051,7 @@ contract EPNSCoreV2 is
      * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
     **/
-    function daoHarvest() external onlyPushChannelAdmin(){ //@audit-info - Need to be reviewed
+    function daoHarvest() external onlyPushChannelAdmin(){
         uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
@@ -1088,8 +1068,6 @@ contract EPNSCoreV2 is
         userFeesInfo[address(this)].lastClaimedBlock = block.number;
 
     }
-        
-     // FOR TEST - To Be Reviewed - //
 
     /**
      * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for reward calculation at a particular epoch.
@@ -1129,7 +1107,7 @@ contract EPNSCoreV2 is
             // Initiating 2.2 Case: User stakes again but in Different Epoch
                 uint256 lastTotalStakedEpoch = lastEpochRelative(genesisEpoch, lastTotalStakedBlock);
 
-                for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){  // @audit -> "uint i = lastStakedEpoch" changed to "uint i = lastStakedEpoch -1"
+                for(uint i = lastStakedEpoch - 1; i < currentEpoch; i++){
                     if (i != currentEpoch - 1) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
@@ -1146,8 +1124,7 @@ contract EPNSCoreV2 is
             lastTotalStakedBlock = block.number;
         }
     }
-
-        /**
+   /**
      * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
      * @dev    Initializes (sets reward) for every epoch ID that falls between the lastEpochInitialized and currentEpoch
      *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees. 
@@ -1160,7 +1137,7 @@ contract EPNSCoreV2 is
         // Setting up Epoch Based Rewards
         if(_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1){
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch; // @audit - we store rewards in previous epoch but userStakedWeight in currentEpoch - FIXED in harvestAll() function Line 1069
+            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES; 
@@ -1182,14 +1159,6 @@ contract EPNSCoreV2 is
      }
 
     /** TEMP Functions - Will be removed before Deployment - */
-    /**
-     * Owner can add pool_fees at any given time - Could be a TEMP-FUNCTION
-    **/
-    function addPoolFees(uint256 _rewardAmount) external onlyPushChannelAdmin() {
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
-    }
-
     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
         result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
      }
