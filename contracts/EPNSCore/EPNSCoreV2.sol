@@ -1161,6 +1161,31 @@ contract EPNSCoreV2 is
     /** TEMP Functions - Will be removed before Deployment - */
     function getUserEpochToWeight(address _user, uint256 _epochId) public view returns(uint result){
         result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
-     }
+    }
+
+    /** Handling bridged information **/
+    address public relayerAddress;
+    mapping(address => uint256) public celebUserFunds;
+    event IncentivizeChatReqReceived(
+        address requestSender,
+        address requestReceiver,
+        uint256 amountForReqReceiver,
+        uint256 feePoolAmount,
+        uint256 timestamp
+    );
+    function setRelayerAddress(address _relayer) external onlyPushChannelAdmin {
+        relayerAddress = _relayer;
+    }
+
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external{
+        require(msg.sender == relayerAddress, "EPNSCoreV2:handleChatRequestData::Unauthorized caller");
+        uint256 poolFeeAmount = FEE_AMOUNT;
+        uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
+
+        celebUserFunds[requestReceiver] = requestReceiverAmount;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+
+        emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp);
+    }
 
 }
