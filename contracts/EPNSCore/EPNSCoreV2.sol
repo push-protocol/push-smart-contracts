@@ -986,14 +986,18 @@ contract EPNSCoreV2 is
     }
 
     function _stake(address _staker, uint256 _amount) private {
+        // uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);   
+        // uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        // uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
+
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, block.number);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
         userFeesInfo[_staker].stakedAmount = userFeesInfo[_staker].stakedAmount + _amount;
         userFeesInfo[_staker].lastClaimedBlock = 
             userFeesInfo[_staker].lastClaimedBlock == 0 ? genesisEpoch : userFeesInfo[_staker].lastClaimedBlock;
-    
-       // Adjust user and total rewards, piggyback method
+
+        // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(_staker, userWeight);
     }
 
