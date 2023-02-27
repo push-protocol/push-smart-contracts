@@ -1010,7 +1010,7 @@ contract EPNSCoreV2 is
             address(this),
             1e18
         );
-        _stake(address(this), 1e18); //@audit -> Change this to msg.sender or keep as is? -> daoHarvest discussion.
+        _stake(address(this), 1e18);
     }
 
     /**
@@ -1114,7 +1114,7 @@ contract EPNSCoreV2 is
      * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
      **/
-    function daoHarvest() external onlyPushChannelAdmin {  //@audit - Is thsi really needed - TBD
+    function daoHarvest() external onlyGovernance {
         uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
@@ -1133,6 +1133,7 @@ contract EPNSCoreV2 is
         usersRewardsClaimed[address(this)] = usersRewardsClaimed[address(this)]
             .add(rewards);
         userFeesInfo[address(this)].lastClaimedBlock = block.number;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
     }
 
     /**
