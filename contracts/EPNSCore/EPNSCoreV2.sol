@@ -1330,7 +1330,7 @@ contract EPNSCoreV2 is
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
 
-        celebUserFunds[requestReceiver] = requestReceiverAmount;
+        celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         ITokenBridge(bridgeAddress).completeTransferWithPayload(vaa);
