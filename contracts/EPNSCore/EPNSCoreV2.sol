@@ -72,6 +72,26 @@ contract EPNSCoreV2 is
         address indexed channel,
         address indexed newOwner
     );
+    event Staked(
+        address indexed user,
+        uint256 indexed amountStaked
+    );
+    event UnStaked(
+        address indexed user,
+        uint256 indexed amountUnstaked
+    );
+    event RewardsHarvested(
+        address indexed user,
+        uint256 indexed rewardAmount,
+        uint256 tillBlockNumber
+    );
+    event RewardsHarvestedPaginated(
+        address indexed user,
+        uint256 indexed rewardAmount,
+        uint256 fromEpoch,
+        uint256 tillEpoch
+    );
+
     /* **************
         MODIFIERS
     ***************/
@@ -1108,6 +1128,8 @@ contract EPNSCoreV2 is
         );
         userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+        
+        emit RewardsHarvested(msg.sender, rewards, block.number);
     }
 
     function harvestPaginated(uint256 _startepoch, uint256 _endepoch) external {
@@ -1130,6 +1152,8 @@ contract EPNSCoreV2 is
       uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
       userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
       IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+
+      emit RewardsHarvestedPaginated(msg.sender, rewards, _startepoch, _endepoch-1);         
     }
 
     /**
@@ -1159,6 +1183,8 @@ contract EPNSCoreV2 is
         uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
         userFeesInfo[address(this)].lastClaimedBlock = _epoch_to_block_number;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
+
+        emit RewardsHarvestedPaginated(msg.sender, rewards, _startepoch, _endepoch-1);     
     }
 
     /**
