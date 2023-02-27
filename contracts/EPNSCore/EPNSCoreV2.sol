@@ -986,10 +986,6 @@ contract EPNSCoreV2 is
     }
 
     function _stake(address _staker, uint256 _amount) private {
-        // uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);   
-        // uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
-        // uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
-
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, block.number);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -1010,7 +1006,7 @@ contract EPNSCoreV2 is
     function unstake() external {
         require(userFeesInfo[msg.sender].stakedAmount > 0, "EPNSCoreV2::unstake: Caller is not a staker");
         // Before unstaking, reset holder weight
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
      
         harvestAll();
         IERC20(PUSH_TOKEN_ADDRESS).transfer(msg.sender, userFeesInfo[msg.sender].stakedAmount);
@@ -1034,7 +1030,7 @@ contract EPNSCoreV2 is
 
     function harvestTill(uint256 _tillBlockNumber) public {
       // Before harvesting, reset holder weight
-      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
       _adjustUserAndTotalStake(msg.sender, 0);
       
       uint256 currentEpoch = lastEpochRelative(genesisEpoch, _tillBlockNumber);   
@@ -1055,7 +1051,7 @@ contract EPNSCoreV2 is
      * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
     **/
-    function daoHarvest() external onlyPushChannelAdmin(){
+    function daoHarvest() external onlyPushChannelAdmin(){ //@audit - Is thsi really needed - TBD
         uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
