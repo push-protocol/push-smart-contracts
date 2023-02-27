@@ -769,20 +769,35 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         return chainId;
     }
 
-    function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin(){
+    function setPushTokenAddress(address _tokenAddress)
+        external
+        onlyPushChannelAdmin
+    {
         PUSH_TOKEN_ADDRESS = _tokenAddress;
-    } 
+    }
 
-    function createIncentivizeChatRequest(string calldata requestReceiver,uint256 amount) external{
+    function createIncentivizeChatRequest(
+        string calldata requestReceiver,
+        uint256 amount
+    ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
-         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amount
+        );
 
-         ChatDetails storage chatData = userChatData[msg.sender];
-         chatData.requestSender = msg.sender;
-         chatData.requestReceiver = requestReceiver;
-         chatData.timestamp = block.timestamp;
-         chatData.amountDeposited += amount;
+        ChatDetails storage chatData = userChatData[msg.sender];
+        chatData.requestSender = msg.sender;
+        chatData.requestReceiver = requestReceiver;
+        chatData.timestamp = block.timestamp;
+        chatData.amountDeposited += amount;
 
-         emit IncentivizeChatReqInitiated(msg.sender, requestReceiver, amount, block.timestamp);
+        emit IncentivizeChatReqInitiated(
+            msg.sender,
+            requestReceiver,
+            amount,
+            block.timestamp
+        );
     }
 }

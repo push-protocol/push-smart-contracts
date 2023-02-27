@@ -73,14 +73,8 @@ contract EPNSCoreV2 is
         address indexed channel,
         address indexed newOwner
     );
-    event Staked(
-        address indexed user,
-        uint256 indexed amountStaked
-    );
-    event UnStaked(
-        address indexed user,
-        uint256 indexed amountUnstaked
-    );
+    event Staked(address indexed user, uint256 indexed amountStaked);
+    event UnStaked(address indexed user, uint256 indexed amountUnstaked);
     event RewardsHarvested(
         address indexed user,
         uint256 indexed rewardAmount,
@@ -953,7 +947,7 @@ contract EPNSCoreV2 is
         return chainId;
     }
 
-    /*** Core-v2: Stake and Claim Functions***/
+    /*** Core-V2: Stake and Claim Functions ***/
 
     /**
      * Allows caller to add pool_fees at any given epoch
@@ -1045,10 +1039,16 @@ contract EPNSCoreV2 is
     }
 
     function _stake(address _staker, uint256 _amount) private {
-        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);  
-        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
-        uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
-        
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 blockNumberToConsider = genesisEpoch.add(
+            epochDuration.mul(currentEpoch)
+        );
+        uint256 userWeight = _returnPushTokenWeight(
+            _staker,
+            _amount,
+            blockNumberToConsider
+        );
+
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             address(this),
@@ -1079,7 +1079,7 @@ contract EPNSCoreV2 is
             "EPNSCoreV2::unstake: Caller is not a staker"
         );
         harvestAll(); //@audit - If someone unstakes very late, its gonna be lots of epochs to iterate over. OOG case. Should if statement be added?
-        
+
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
             msg.sender,
             userFeesInfo[msg.sender].stakedAmount
@@ -1128,39 +1128,60 @@ contract EPNSCoreV2 is
         );
         userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
-        
+
         emit RewardsHarvested(msg.sender, rewards, block.number);
     }
 
     function harvestPaginated(uint256 _startepoch, uint256 _endepoch) external {
-      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
-      _adjustUserAndTotalStake(msg.sender, 0);
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
+        _adjustUserAndTotalStake(msg.sender, 0);
 
-      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock);
-      uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);   
-      require(_startepoch == lastClaimedEpoch,"EPNSCoreV2::harvest::epoch should be sequential without repetation");
-      require(currentEpoch >= _endepoch,"EPNSCoreV2::harverst::cannot harvest future epoch");
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 lastClaimedEpoch = lastEpochRelative(
+            genesisEpoch,
+            userFeesInfo[msg.sender].lastClaimedBlock
+        );
+        require(
+            _startepoch == lastClaimedEpoch,
+            "EPNSCoreV2::harvestPaginated::epoch should be sequential without repetation"
+        );
+        require(
+            currentEpoch >= _endepoch,
+            "EPNSCoreV2::harvestPaginated::cannot harvest future epoch"
+        );
 
-      uint256 rewards = 0;
-      for(uint i = _startepoch; i < _endepoch; i++) { 
-        uint256 claimableReward = calculateEpochRewards(i);
-        rewards = rewards.add(claimableReward);
-      }
-      usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
-      
-      // set the lastClaimedBlock = blocknumer at the endof `_endepoch`
-      uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
-      userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
-      IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+        uint256 rewards = 0;
+        for (uint256 i = _startepoch; i < _endepoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(i);
+            rewards = rewards.add(claimableReward);
+        }
+        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
+            rewards
+        );
 
-      emit RewardsHarvestedPaginated(msg.sender, rewards, _startepoch, _endepoch-1);         
+        // set the lastClaimedBlock to blocknumer at the end of `_endepoch`
+        uint256 _epoch_to_block_number = genesisEpoch +
+            _endepoch.sub(1) *
+            epochDuration;
+        userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+
+        emit RewardsHarvestedPaginated(
+            msg.sender,
+            rewards,
+            _startepoch,
+            _endepoch - 1
+        );
     }
 
     /**
      * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
      **/
-    function daoHarvestPaginated(uint256 _startepoch, uint256 _endepoch) external onlyGovernance {
+    function daoHarvestPaginated(uint256 _startepoch, uint256 _endepoch)
+        external
+        onlyGovernance
+    {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
 
@@ -1169,22 +1190,38 @@ contract EPNSCoreV2 is
             genesisEpoch,
             userFeesInfo[address(this)].lastClaimedBlock
         );
-        require(_startepoch == lastClaimedEpoch,"EPNSCoreV2::harvest::Invalid Start Epoch passed.");
-        require(currentEpoch >= _endepoch,"EPNSCoreV2::harverst::Invalid END Epoch passed");
+        require(
+            _startepoch == lastClaimedEpoch,
+            "EPNSCoreV2::daoHarvestPaginated::Invalid Start Epoch passed."
+        );
+        require(
+            currentEpoch >= _endepoch,
+            "EPNSCoreV2::daoHarvestPaginated::Invalid END Epoch passed"
+        );
 
         uint256 rewards = 0;
-        for(uint i = _startepoch; i < _endepoch; i++) { 
-            uint256 claimableReward = calculateEpochRewards(i);
+        for (uint256 i = _startepoch; i < _endepoch; i++) {
+            uint256 claimableReward = userFeesInfo[address(this)]
+                .epochToUserStakedWeight[i]
+                .mul(epochRewards[i])
+                .div(epochToTotalStakedWeight[i]);
             rewards = rewards.add(claimableReward);
         }
 
         usersRewardsClaimed[address(this)] = usersRewardsClaimed[address(this)]
             .add(rewards);
-        uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
+        uint256 _epoch_to_block_number = genesisEpoch +
+            _endepoch.sub(1) *
+            epochDuration;
         userFeesInfo[address(this)].lastClaimedBlock = _epoch_to_block_number;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
 
-        emit RewardsHarvestedPaginated(msg.sender, rewards, _startepoch, _endepoch-1);     
+        emit RewardsHarvestedPaginated(
+            msg.sender,
+            rewards,
+            _startepoch,
+            _endepoch - 1
+        );
     }
 
     /**
@@ -1309,7 +1346,7 @@ contract EPNSCoreV2 is
     address public bridgeAddress;
     address public relayerAddress;
     mapping(address => uint256) public celebUserFunds;
-    
+
     event IncentivizeChatReqReceived(
         address requestSender,
         address requestReceiver,
@@ -1317,6 +1354,7 @@ contract EPNSCoreV2 is
         uint256 feePoolAmount,
         uint256 timestamp
     );
+
     function setRelayerAddress(address _relayer) external onlyPushChannelAdmin {
         relayerAddress = _relayer;
     }
@@ -1325,8 +1363,16 @@ contract EPNSCoreV2 is
         bridgeAddress = _bridge;
     }
 
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount, bytes calldata vaa) external{
-        require(msg.sender == relayerAddress, "EPNSCoreV2:handleChatRequestData::Unauthorized caller");
+    function handleChatRequestData(
+        address requestSender,
+        address requestReceiver,
+        uint256 amount,
+        bytes calldata vaa
+    ) external {
+        require(
+            msg.sender == relayerAddress,
+            "EPNSCoreV2:handleChatRequestData::Unauthorized caller"
+        );
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
 
@@ -1334,6 +1380,12 @@ contract EPNSCoreV2 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         ITokenBridge(bridgeAddress).completeTransferWithPayload(vaa);
-        emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp);
+        emit IncentivizeChatReqReceived(
+            requestSender,
+            requestReceiver,
+            requestReceiverAmount,
+            poolFeeAmount,
+            block.timestamp
+        );
     }
 }
