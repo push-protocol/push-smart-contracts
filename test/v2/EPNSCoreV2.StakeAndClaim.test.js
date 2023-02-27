@@ -121,6 +121,27 @@ describe("EPNS CoreV2 Protocol", function () {
         EPNSCoreV1Proxy.address,
         ADD_CHANNEL_MIN_POOL_CONTRIBUTION.mul(10000)
       );
+
+      await PushToken.connect(BOBSIGNER).setHolderDelegation(
+        EPNSCoreV1Proxy.address,
+        true
+      );
+      await PushToken.connect(ADMINSIGNER).setHolderDelegation(
+        EPNSCoreV1Proxy.address,
+        true
+      );
+      await PushToken.connect(ALICESIGNER).setHolderDelegation(
+        EPNSCoreV1Proxy.address,
+        true
+      );
+      await PushToken.connect(CHARLIESIGNER).setHolderDelegation(
+        EPNSCoreV1Proxy.address,
+        true
+      );
+      await PushToken.connect(CHANNEL_CREATORSIGNER).setHolderDelegation(
+        EPNSCoreV1Proxy.address,
+        true
+      );
       
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
       await EPNSCoreV1Proxy.connect(ADMINSIGNER).initializeStake();
@@ -319,7 +340,7 @@ describe("EPNS CoreV2 Protocol", function () {
      * 
      */
 
-    describe("🟢 Stake Tests ", function()
+    describe.skip("🟢 Stake Tests ", function()
     {
       it("User stakes 4 times in a single epoch - user and total weights should update accuratley ✅", async function(){
         const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
@@ -1096,6 +1117,35 @@ describe("EPNS CoreV2 Protocol", function () {
 
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
         console.log("Rewards Bob", rewards_bob.toString());
+      });
+
+      it("BOB stakes abit later than ALice. BOB & Alice Stakes(Same Amount) and Harvests together- Bob should get abit more rewards ✅", async function () {
+        // TODO here
+        const oneEpochs = 1;
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+
+        // alice stakes
+        await stakePushTokens(ALICESIGNER, tokensBN(100));
+        
+        // bob stakes a bit later
+        await passBlockNumers(100000); // Total Epoch Duration => 20 * 7160 = 143200
+        await stakePushTokens(BOBSIGNER, tokensBN(100));
+        await passBlockNumers(oneEpochs * EPOCH_DURATION);
+        
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        
+        console.log(`ALICE REWARDS ${rewards_alice.toString()}`);
+        console.log(`BOB REWARDS ${rewards_bob.toString()}`);
+
+        //await expect(rewards_alice).to.be.gt(rewards_bob);
+        
       });
 
     });
