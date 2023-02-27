@@ -1174,7 +1174,11 @@ contract EPNSCoreV2 is
 
         uint256 rewards = 0;
         for(uint i = _startepoch; i < _endepoch; i++) { 
-            uint256 claimableReward = calculateEpochRewards(i);
+            uint256 claimableReward = userFeesInfo[address(this)]
+                .epochToUserStakedWeight[i]
+                .mul(epochRewards[i])
+                .div(epochToTotalStakedWeight[i]);
+            
             rewards = rewards.add(claimableReward);
         }
 
