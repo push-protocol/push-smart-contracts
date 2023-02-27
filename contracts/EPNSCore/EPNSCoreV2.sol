@@ -1110,12 +1110,33 @@ contract EPNSCoreV2 is
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
     }
 
+    function harvestPaginated(uint256 _startepoch, uint256 _endepoch) external {
+      IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
+      _adjustUserAndTotalStake(msg.sender, 0);
+
+      uint256 lastClaimedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[msg.sender].lastClaimedBlock);
+      uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);   
+      require(_startepoch == lastClaimedEpoch,"EPNSCoreV2::harvest::epoch should be sequential without repetation");
+      require(currentEpoch >= _endepoch,"EPNSCoreV2::harverst::cannot harvest future epoch");
+
+      uint256 rewards = 0;
+      for(uint i = _startepoch; i < _endepoch; i++) { 
+        uint256 claimableReward = calculateEpochRewards(i);
+        rewards = rewards.add(claimableReward);
+      }
+      usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(rewards);
+      
+      // set the lastClaimedBlock = blocknumer at the endof `_endepoch`
+      uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
+      userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+      IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+    }
+
     /**
-     * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
+     * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
      **/
-    function daoHarvest() external onlyGovernance {
-        uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
+    function daoHarvestPaginated(uint256 _startepoch, uint256 _endepoch) external onlyGovernance {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
 
@@ -1124,15 +1145,19 @@ contract EPNSCoreV2 is
             genesisEpoch,
             userFeesInfo[address(this)].lastClaimedBlock
         );
+        require(_startepoch == lastClaimedEpoch,"EPNSCoreV2::harvest::Invalid Start Epoch passed.");
+        require(currentEpoch >= _endepoch,"EPNSCoreV2::harverst::Invalid END Epoch passed");
 
         uint256 rewards = 0;
-        for (uint256 i = lastClaimedEpoch; i < currentEpoch; i++) {
-            rewards = rewards.add(calculateEpochRewards(i));
+        for(uint i = _startepoch; i < _endepoch; i++) { 
+            uint256 claimableReward = calculateEpochRewards(i);
+            rewards = rewards.add(claimableReward);
         }
 
         usersRewardsClaimed[address(this)] = usersRewardsClaimed[address(this)]
             .add(rewards);
-        userFeesInfo[address(this)].lastClaimedBlock = block.number;
+        uint256 _epoch_to_block_number = genesisEpoch + _endepoch.sub(1) * epochDuration;
+        userFeesInfo[address(this)].lastClaimedBlock = _epoch_to_block_number;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
     }
 
