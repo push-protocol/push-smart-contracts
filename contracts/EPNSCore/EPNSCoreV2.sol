@@ -978,7 +978,7 @@ contract EPNSCoreV2 is
     /**
      * @notice Calculates and returns the claimable reward amount for a user at a given EPOCH ID.
      * @dev    Formulae for reward calculation:
-     *         rewards = ( userStakedWeight at Epoch(N) * avalailable rewards at EPOCH(N) ) / totalStakedWeight at EPOCH(N)
+     *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at EPOCH(n)
      **/
     function calculateEpochRewards(uint256 _epochId)
         public
@@ -1010,7 +1010,7 @@ contract EPNSCoreV2 is
             address(this),
             1e18
         );
-        _stake(address(this), 1e18);
+        _stake(address(this), 1e18); //@audit -> Change this to msg.sender or keep as is? -> daoHarvest discussion.
     }
 
     /**
@@ -1024,7 +1024,7 @@ contract EPNSCoreV2 is
     }
 
     function _stake(address _staker, uint256 _amount) private {
-        uint256 userWeight = _returnPushTokenWeight(
+        uint256 userWeight = _returnPushTokenWeight( //@audit -> TBD - To be changed to adjustable user weight
             _staker,
             _amount,
             block.number
@@ -1058,10 +1058,8 @@ contract EPNSCoreV2 is
             userFeesInfo[msg.sender].stakedAmount > 0,
             "EPNSCoreV2::unstake: Caller is not a staker"
         );
-        // Before unstaking, reset holder weight
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
-
-        harvestAll();
+        harvestAll(); //@audit - If someone unstakes very late, its gonna be lots of epochs to iterate over. OOG case. Should if statement be added?
+        
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
             msg.sender,
             userFeesInfo[msg.sender].stakedAmount
@@ -1103,7 +1101,6 @@ contract EPNSCoreV2 is
 
         uint256 rewards = 0;
         for (uint256 i = lastClaimedEpoch - 1; i < currentEpoch; i++) {
-            uint256 claimableReward = calculateEpochRewards(i);
             rewards = rewards.add(calculateEpochRewards(i));
         }
         usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
@@ -1117,8 +1114,7 @@ contract EPNSCoreV2 is
      * @notice Allows Push Admin to harvest/claim the earned rewards for its stake in the protocol
      * @dev    only accessible by Push Admin - Similar to harvestTill() function
      **/
-    function daoHarvest() external onlyPushChannelAdmin {
-        //@audit - Is thsi really needed - TBD
+    function daoHarvest() external onlyPushChannelAdmin {  //@audit - Is thsi really needed - TBD
         uint256 weightContract = userFeesInfo[address(this)].stakedWeight;
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
         _adjustUserAndTotalStake(address(this), 0);
@@ -1180,11 +1176,6 @@ contract EPNSCoreV2 is
                     _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
-                uint256 lastTotalStakedEpoch = lastEpochRelative(
-                    genesisEpoch,
-                    lastTotalStakedBlock
-                );
-
                 for (uint256 i = lastStakedEpoch - 1; i < currentEpoch; i++) {
                     if (i != currentEpoch - 1) {
                         userFeesInfo[_user].epochToUserStakedWeight[
@@ -1260,14 +1251,5 @@ contract EPNSCoreV2 is
                 _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
-    }
-
-    /** TEMP Functions - Will be removed before Deployment - */
-    function getUserEpochToWeight(address _user, uint256 _epochId)
-        public
-        view
-        returns (uint256 result)
-    {
-        result = userFeesInfo[_user].epochToUserStakedWeight[_epochId];
     }
 }
