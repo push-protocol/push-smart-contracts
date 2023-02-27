@@ -1044,11 +1044,11 @@ contract EPNSCoreV2 is
     }
 
     function _stake(address _staker, uint256 _amount) private {
-        uint256 userWeight = _returnPushTokenWeight( //@audit -> TBD - To be changed to adjustable user weight
-            _staker,
-            _amount,
-            block.number
-        );
+        //2nd version
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);  
+        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
+        
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             address(this),
