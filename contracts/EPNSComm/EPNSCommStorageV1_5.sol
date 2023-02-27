@@ -55,4 +55,15 @@ contract EPNSCommStorageV1_5 {
         keccak256(
             "SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
         );
+    // New State Variables 
+    address public PUSH_TOKEN_ADDRESS;
+
+    struct ChatDetails{
+        address requestSender;
+        string requestReceiver;
+        uint256 timestamp;
+        uint256 amountDeposited;
+    }
+
+    mapping(address => ChatDetails) public userChatData;
 }

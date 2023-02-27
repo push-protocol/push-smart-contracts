@@ -16,6 +16,7 @@ import "./EPNSCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
+import "../interfaces/ITokenBridge.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -1302,5 +1303,37 @@ contract EPNSCoreV2 is
                 _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
+    }
+
+    /** Handling bridged information **/
+    address public bridgeAddress;
+    address public relayerAddress;
+    mapping(address => uint256) public celebUserFunds;
+    
+    event IncentivizeChatReqReceived(
+        address requestSender,
+        address requestReceiver,
+        uint256 amountForReqReceiver,
+        uint256 feePoolAmount,
+        uint256 timestamp
+    );
+    function setRelayerAddress(address _relayer) external onlyPushChannelAdmin {
+        relayerAddress = _relayer;
+    }
+
+    function setBridgeAddress(address _bridge) external onlyPushChannelAdmin {
+        bridgeAddress = _bridge;
+    }
+
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount, bytes calldata vaa) external{
+        require(msg.sender == relayerAddress, "EPNSCoreV2:handleChatRequestData::Unauthorized caller");
+        uint256 poolFeeAmount = FEE_AMOUNT;
+        uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
+
+        celebUserFunds[requestReceiver] = requestReceiverAmount;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+
+        ITokenBridge(bridgeAddress).completeTransferWithPayload(vaa);
+        emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp);
     }
 }
