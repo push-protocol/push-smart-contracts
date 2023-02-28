@@ -62,7 +62,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
   describe("EPNS CORE V2: Stake and Claim Tests", () => {
     const CHANNEL_TYPE = 2;
-    const EPOCH_DURATION = 21* 7160; // number of blocks = 143200
+    const EPOCH_DURATION = 21* 7156; // number of blocks = 143200
     const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes(
       "test-channel-hello-world"
     );
@@ -388,7 +388,219 @@ describe("EPNS CoreV2 Protocol", function () {
      */
 
     describe("🟢 Stake Tests ", function () {
+
+      describe("Staking and unstaking tests", async () => {
+
+        it("User stakes 3 times in a single epoch - user and total weights should update accuratley ✅", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight = await bobDetails.stakedWeight;
+          expect(userWeight).to.be.equal(0);
+          
+          
+          //Stakes for 1st time and add pool fees
+          let holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          let currentBlock = await getCurrentBlock();
+          let currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+          let blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+
+          const bobDetails_1st = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight_1st = await bobDetails_1st.stakedWeight;
+
+          expect(userWeight_1st).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)));
+
+          //Stakes for 2nd time
+          let bobDetails_beforeStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          let userWeight_beforeStake = await bobDetails_beforeStake.stakedWeight;
+          holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          currentBlock = await getCurrentBlock();
+          currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+          blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          const bobDetails_2nd = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight_2nd = await bobDetails_2nd.stakedWeight;
+          expect(userWeight_2nd).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)).add(userWeight_beforeStake));
+
+
+          //Stakes for 3rd time
+          bobDetails_beforeStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          userWeight_beforeStake = await bobDetails_beforeStake.stakedWeight;
+          holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          currentBlock = await getCurrentBlock();
+          currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+          blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          const bobDetails_3rd = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight_3rd = await bobDetails_3rd.stakedWeight;
+          expect(userWeight_3rd).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)).add(userWeight_beforeStake));
+        });
+
+  
+        it("3 users stakes 1 time in a single epoch - total weights should update accuratley ✅", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight = await bobDetails.stakedWeight;
+          expect(userWeight).to.be.equal(0);
+          
+          
+          let holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          let currentBlock = await getCurrentBlock();
+          let currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+          let blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+          
+          //Bob stakes for 1st time 
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+
+          const bobDetails_1st = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight_1st = await bobDetails_1st.stakedWeight;
+
+          expect(userWeight_1st).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)));
+
+          //Alice stakes for 1st time
+          holderweight = await PushToken.holderWeight(ALICE);
+          holderweight = holderweight.toString();
+          await stakePushTokens(ALICESIGNER, stakeAmount);
+          const aliceDetails_1st = await EPNSCoreV1Proxy.userFeesInfo(ALICE);
+          const aliceWeight_1st = await aliceDetails_1st.stakedWeight;
+          expect(aliceWeight_1st).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)));
+
+          //Charlie stakes for 1st time
+          holderweight = await PushToken.holderWeight(CHARLIE);
+          holderweight = holderweight.toString();
+          await stakePushTokens(CHARLIESIGNER, stakeAmount);
+          const charlieDetails_1st = await EPNSCoreV1Proxy.userFeesInfo(CHARLIE);
+          const charlieWeight_1st = await charlieDetails_1st.stakedWeight;
+          expect(charlieWeight_1st).to.be.equal((stakeAmount.mul(blockNumberToConsider - holderweight)));
+
+        });
+  
+        it("Bob should not get rewards for staking and unstaking at same epoch", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+  
+          const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight = await bobDetails.stakedWeight;
+          expect(userWeight).to.be.equal(0);
+          const fourEpochs=4;
+  
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
+        });
+  
+        it("Bob stakes at epoch 1 and again at epoch 5 user weight should update accurately ✅", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const fourEpochs=4;
+
+          let holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          let currentBlock = await getCurrentBlock();
+          let currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+          let blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+  
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          let userWeight_1 = await bobDetails.stakedWeight;
+  
+          await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          holderweight = await PushToken.holderWeight(BOB);
+          holderweight = holderweight.toString();
+          currentBlock = await getCurrentBlock();
+          currentEpoch = await EPNSCoreV1Proxy.lastEpochRelative(genesisEpoch.toNumber(), currentBlock.number);
+
+          blockNumberToConsider = genesisEpoch.add(
+            EPOCH_DURATION * currentEpoch);
+          const userWeight = (stakeAmount.mul(blockNumberToConsider - holderweight));
+
+          bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          let userWeight_2 = await bobDetails.stakedWeight;
+  
+  
+          expect(userWeight_2).to.be.equal(userWeight_1.add(userWeight));
+  
+        });
+  
+        it("Bob unstakes stakes and again unstakes at the same epoch, should not get any rewards", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight = await bobDetails.stakedWeight;
+          expect(userWeight).to.be.equal(0);
+          const fourEpochs=4;
+  
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          passBlockNumers(EPOCH_DURATION/2);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+          const rewards_bob2 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          expect(rewards_bob2).to.be.equal(rewards_bob);
+        });
+  
+        it("Bob stakes after 5 epoch and unstake at the same epoch", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+          const stakeAmount = tokensBN(100);
+          const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+          const userWeight = await bobDetails.stakedWeight;
+          expect(userWeight).to.be.equal(0);
+          const fourEpochs=4;
+  
+          await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await stakePushTokens(BOBSIGNER, stakeAmount);
+          await passBlockNumers(EPOCH_DURATION/2);        
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          expect(rewards_bob).to.be.equal("0");
+        })
+        
+        it("Bob stakes at epich 1 pass to 5 epoch, bob unstakes, Alice stakes and unstake at same epoch, gets 0 rewards ✅", async function(){
+          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
+        const stakeAmount = tokensBN(100);
+        const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
+
+        const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
+        const userWeight = await bobDetails.stakedWeight;
+        expect(userWeight).to.be.equal(0);
+        const fourEpochs=4;
+
+        await stakePushTokens(BOBSIGNER, stakeAmount);
+        await passBlockNumers(fourEpochs * EPOCH_DURATION);
+        await stakePushTokens(ALICESIGNER, stakeAmount);  
+        await passBlockNumers(EPOCH_DURATION/2);
+        await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+        await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+        const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+        const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
+        expect(rewards_alice).to.be.equal("0");
+
+        });
+
+      });
+
       describe("Staking tests", async () => {
+        
         it("BOB & Alice Stakes(Same Amount) and Harvests together- Should get equal rewards ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
           const oneEpochs = 1;
