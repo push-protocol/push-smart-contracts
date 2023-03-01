@@ -501,7 +501,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await stakePushTokens(BOBSIGNER, stakeAmount);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("0.0000000000000001"));
         });
   
         it("Bob stakes at epoch 1 and again at epoch 5 user weight should update accurately ✅", async function(){
@@ -592,7 +592,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
         const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
         const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("10"));
+        expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(ethers.BigNumber.from(totalPoolFee), ethers.utils.parseEther("0.0000000000000001"));
         expect(rewards_alice).to.be.equal("0");
 
         });
@@ -714,7 +714,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             ethers.BigNumber.from(totalPoolFee.div(2)),
-            ethers.utils.parseEther(".000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
@@ -826,7 +826,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await expect(bobLastClaimedEpochId).to.be.equal(fiveEpochs + 1);
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             ethers.BigNumber.from(totalPoolFee),
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
@@ -858,7 +858,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const expected_reward = parseEther("200").sub(reward_admin);
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             expected_reward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
@@ -903,11 +903,11 @@ describe("EPNS CoreV2 Protocol", function () {
 
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
           expect(ethers.BigNumber.from(rewards_alice)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
@@ -949,21 +949,21 @@ describe("EPNS CoreV2 Protocol", function () {
 
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
 
           expect(ethers.BigNumber.from(rewards_alice)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
           expect(ethers.BigNumber.from(rewards_charlie)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
 
           expect(ethers.BigNumber.from(rewards_channelCreator)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
@@ -1159,7 +1159,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const expectedReward = parseEther("200").sub(rewards_admin)
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
 
         });
@@ -1186,7 +1186,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const expectedReward = parseEther("200").sub(rewards_admin);
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             expectedReward,
-            ethers.utils.parseEther("0.000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
       });
@@ -1357,13 +1357,13 @@ describe("EPNS CoreV2 Protocol", function () {
           // TODO: fix with the constant block number
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             ethers.utils.parseEther("400").sub(rewards_admin).div(2),
-            ethers.utils.parseEther("1")
+            ethers.utils.parseEther("0.0000001")
           );
 
           // TODO: fix with the constant block number
           expect(ethers.BigNumber.from(rewards_alice)).to.be.closeTo(
             ethers.utils.parseEther("400").sub(rewards_admin).div(2),
-            ethers.utils.parseEther("1")
+            ethers.utils.parseEther("0.0000001")
           );
         });
 
@@ -1461,7 +1461,7 @@ describe("EPNS CoreV2 Protocol", function () {
             ethers.BigNumber.from(rewards_bob.add(rewards_admin))
           ).to.be.closeTo(
             ethers.utils.parseEther("100"),
-            ethers.utils.parseEther("0.00000000001")
+            ethers.utils.parseEther("0.0000000000000001")
           );
         });
 
