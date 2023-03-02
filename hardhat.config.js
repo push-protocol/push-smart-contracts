@@ -57,21 +57,9 @@ module.exports = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      aaccounts: {
         mnemonic: mnemonic(),
       },
     },
@@ -93,13 +81,30 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      aaccounts: {
+    bnbTestnet: {  
+      url: `https://data-seed-prebsc-1-s1.binance.org:8545`,  // Bnb Testnet - Chain Id = 97
+      accounts: {
         mnemonic: mnemonic(),
       },
     },
-
+    bnbMainnet: {
+      url: `https://bsc-dataseed1.binance.org`,               // Bnb Mainnet - Chain Id = 56
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    arbitrumTestnet: {
+      url: `https://endpoints.omniatech.io/v1/arbitrum/goerli/public`, // Arbitrum Goerli testnet -> Chain id = 421613
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    arbitrumMainnet: {
+      url: `https://endpoints.omniatech.io/v1/arbitrum/one/public`, // Arbitrum Goerli testnet -> Chain id = 42161
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
