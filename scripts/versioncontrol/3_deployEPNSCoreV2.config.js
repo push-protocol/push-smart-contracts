@@ -24,6 +24,12 @@ const deploy = {
     arbitrumMainnet: {
       version: 1,
     },
+    optimismGoerli: {
+      version: 1,
+    },
+    optimismMainnet: {
+      version: 1,
+    },
     hardhat: {
       version: 1,
     },
