@@ -6,10 +6,10 @@ const deploy = {
     goerli: {
       version: 1,
     },
-    kovan: {
+    polygon: {
       version: 1,
     },
-    ropsten: {
+    polygonMumbai: {
       version: 1,
     },
     rinkeby: {
