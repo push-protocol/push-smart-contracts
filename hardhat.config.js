@@ -100,7 +100,7 @@ module.exports = {
       },
     },
     arbitrumMainnet: {
-      url: `https://endpoints.omniatech.io/v1/arbitrum/one/public`, // Arbitrum Goerli testnet -> Chain id = 42161
+      url: `https://endpoints.omniatech.io/v1/arbitrum/one/public`,   // Arbitrum Goerli testnet -> Chain id = 42161
       accounts: {
         mnemonic: mnemonic(),
       },
