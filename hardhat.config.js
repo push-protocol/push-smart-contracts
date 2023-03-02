@@ -105,6 +105,18 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    optimismGoerli: {
+      url: `https://goerli.optimism.io`,   // Optimism Goerli testnet -> Chain id = 420
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    optimismMainnet: {
+      url: `https://mainnet.optimism.io`,   // Optimism -> Chain id = 10
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     xdai: {
       url: "https://dai.poa.network",
       gasPrice: 1000000000,
