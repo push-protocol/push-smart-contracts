@@ -12,7 +12,10 @@ const deploy = {
     polygonMumbai: {
       version: 1,
     },
-    rinkeby: {
+    bnbTestnet: {
+      version: 1,
+    },
+    bnbMainnet: {
       version: 1,
     },
     hardhat: {
