@@ -6,13 +6,22 @@ const deploy = {
     goerli: {
       version: 1,
     },
-    kovan: {
+    polygon: {
       version: 1,
     },
-    ropsten: {
+    polygonMumbai: {
       version: 1,
     },
-    rinkeby: {
+    bnbTestnet: {
+      version: 1,
+    },
+    bnbMainnet: {
+      version: 1,
+    },
+    arbitrumTestnet: {
+      version: 1,
+    },
+    arbitrumMainnet: {
       version: 1,
     },
     hardhat: {
