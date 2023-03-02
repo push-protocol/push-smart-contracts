@@ -18,6 +18,12 @@ const deploy = {
     bnbMainnet: {
       version: 1,
     },
+    arbitrumTestnet: {
+      version: 1,
+    },
+    arbitrumMainnet: {
+      version: 1,
+    },
     hardhat: {
       version: 1,
     },
