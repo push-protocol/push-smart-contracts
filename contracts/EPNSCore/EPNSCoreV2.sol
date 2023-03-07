@@ -1133,37 +1133,7 @@ contract EPNSCoreV2 is
     }
 
     function harvestPaginated(uint256 _startepoch, uint256 _endepoch) external {
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
-        _adjustUserAndTotalStake(msg.sender, 0);
-
-        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 lastClaimedEpoch = lastEpochRelative(
-            genesisEpoch,
-            userFeesInfo[msg.sender].lastClaimedBlock
-        );
-        require(
-            _startepoch == lastClaimedEpoch,
-            "EPNSCoreV2::harvestPaginated::epoch should be sequential without repetation"
-        );
-        require(
-            currentEpoch >= _endepoch,
-            "EPNSCoreV2::harvestPaginated::cannot harvest future epoch"
-        );
-
-        uint256 rewards = 0;
-        for (uint256 i = _startepoch; i < _endepoch; i++) {
-            uint256 claimableReward = calculateEpochRewards(msg.sender, i);
-            rewards = rewards.add(claimableReward);
-        }
-        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
-            rewards
-        );
-
-        // set the lastClaimedBlock to blocknumer at the end of `_endepoch`
-        uint256 _epoch_to_block_number = genesisEpoch +
-            _endepoch.sub(1) *
-            epochDuration;
-        userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+        uint256 rewards = harvest(msg.sender, _startepoch, _endepoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
 
         emit RewardsHarvestedPaginated(
@@ -1182,35 +1152,7 @@ contract EPNSCoreV2 is
         external
         onlyGovernance
     {
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
-        _adjustUserAndTotalStake(address(this), 0);
-
-        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 lastClaimedEpoch = lastEpochRelative(
-            genesisEpoch,
-            userFeesInfo[address(this)].lastClaimedBlock
-        );
-        require(
-            _startepoch == lastClaimedEpoch,
-            "EPNSCoreV2::daoHarvestPaginated::Invalid Start Epoch passed."
-        );
-        require(
-            currentEpoch >= _endepoch,
-            "EPNSCoreV2::daoHarvestPaginated::Invalid END Epoch passed"
-        );
-
-        uint256 rewards = 0;
-        for (uint256 i = _startepoch; i < _endepoch; i++) {
-            uint256 claimableReward = calculateEpochRewards(address(this), i);
-            rewards = rewards.add(claimableReward);
-        }
-
-        usersRewardsClaimed[address(this)] = usersRewardsClaimed[address(this)]
-            .add(rewards);
-        uint256 _epoch_to_block_number = genesisEpoch +
-            _endepoch.sub(1) *
-            epochDuration;
-        userFeesInfo[address(this)].lastClaimedBlock = _epoch_to_block_number;
+        uint256 rewards = harvest(address(this), _startepoch, _endepoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
 
         emit RewardsHarvestedPaginated(
