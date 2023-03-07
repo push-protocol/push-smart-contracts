@@ -1098,74 +1098,72 @@ contract EPNSCoreV2 is
 
     /**
      * @notice Allows users to harvest/claim their earned rewards from the protocol
-     * @dev    Takes in the current block number as an arg - calculates reward till the current block number
-     *         Rewards are calculated and added for all epochs between, user's lastClaimedEpoch and current epoch Id
+     * @dev    Computes lastClaimedEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
+     *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
+     *         Once calculated, user's total claimed rewards and lastClaimedEpoch details is updated.
      **/
     function harvestAll() public {
-        harvestTill(block.number);
-    }
-
-    function harvestTill(uint256 _tillBlockNumber) public {
-        // Before harvesting, reset holder weight
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(msg.sender);
-        _adjustUserAndTotalStake(msg.sender, 0);
-
-        uint256 currentEpoch = lastEpochRelative(
-            genesisEpoch,
-            _tillBlockNumber
-        );
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 lastClaimedEpoch = lastEpochRelative(
             genesisEpoch,
             userFeesInfo[msg.sender].lastClaimedBlock
         );
 
-        uint256 rewards = 0;
-        for (uint256 i = lastClaimedEpoch - 1; i < currentEpoch; i++) {
-            rewards = rewards.add(calculateEpochRewards(msg.sender, i));
-        }
-        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
-            rewards
-        );
-        userFeesInfo[msg.sender].lastClaimedBlock = _tillBlockNumber;
+        uint256 rewards = harvest(msg.sender, lastClaimedEpoch, currentEpoch - 1);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
 
         emit RewardsHarvested(msg.sender, rewards, block.number);
     }
 
-    function harvestPaginated(uint256 _startepoch, uint256 _endepoch) external {
-        uint256 rewards = harvest(msg.sender, _startepoch, _endepoch);
+      /**
+     * @notice Allows paginated harvests for users between a particular number of epochs.
+     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
+     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
+     * @dev    _endEpoch should never be equal to currentEpoch.
+     *         Transfers rewards to caller and updates user's details.
+     **/
+    function harvestPaginated(uint256 _startEpoch, uint256 _endEpoch) external {
+        uint256 rewards = harvest(msg.sender, _startEpoch, _endEpoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
 
         emit RewardsHarvestedPaginated(
             msg.sender,
             rewards,
-            _startepoch,
-            _endepoch - 1
+            _startEpoch,
+            _endEpoch
         );
     }
 
     /**
      * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
-     * @dev    only accessible by Push Admin - Similar to harvestTill() function
+     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
+     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
+     * @dev    only accessible by Push Admin 
+     *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      **/
-    function daoHarvestPaginated(uint256 _startepoch, uint256 _endepoch)
+    function daoHarvestPaginated(uint256 _startEpoch, uint256 _endEpoch)
         external
         onlyGovernance
     {
-        uint256 rewards = harvest(address(this), _startepoch, _endepoch);
+        uint256 rewards = harvest(address(this), _startEpoch, _endEpoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
 
         emit RewardsHarvestedPaginated(
             msg.sender,
             rewards,
-            _startepoch,
-            _endepoch - 1
+            _startEpoch,
+            _endEpoch
         );
     }
 
-        /***
-     * notice Internal harvest function
-     */
+    /**
+     * @notice Internal harvest function that is called for all types of harvest procedure.
+     * @param  _user       - The user address for which the rewards will be calculated.
+     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
+     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
+     * @dev    _endEpoch should never be equal to currentEpoch.
+     *         Transfers rewards to caller and updates user's details.
+     **/
     function harvest(address _user, uint256 _startEpoch, uint256 _endEpoch) internal returns(uint256 rewards){
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
@@ -1188,7 +1186,7 @@ contract EPNSCoreV2 is
             _endEpoch > lastClaimedEpoch,
             "EPNSCoreV2::harvestPaginated::_endEpoch can't be lower than lastClaimedEpoch"
         );
-
+        // For stakers staked at Epoch 1, the rewards will be stored in epoch 0. Therefore we iterate from epoch 0.
         uint256 startEpoch = lastClaimedEpoch == 1 ? 0 : _startEpoch;
 
         for (uint256 i = startEpoch; i < _endEpoch; i++) {
