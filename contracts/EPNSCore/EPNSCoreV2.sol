@@ -995,12 +995,12 @@ contract EPNSCoreV2 is
      * @dev    Formulae for reward calculation:
      *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at EPOCH(n)
      **/
-    function calculateEpochRewards(uint256 _epochId)
+    function calculateEpochRewards(address _user, uint256 _epochId)
         public
         view
         returns (uint256 rewards)
     {
-        rewards = userFeesInfo[msg.sender]
+        rewards = userFeesInfo[_user]
             .epochToUserStakedWeight[_epochId]
             .mul(epochRewards[_epochId])
             .div(epochToTotalStakedWeight[_epochId]);
@@ -1121,7 +1121,7 @@ contract EPNSCoreV2 is
 
         uint256 rewards = 0;
         for (uint256 i = lastClaimedEpoch - 1; i < currentEpoch; i++) {
-            rewards = rewards.add(calculateEpochRewards(i));
+            rewards = rewards.add(calculateEpochRewards(msg.sender, i));
         }
         usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
             rewards
@@ -1152,7 +1152,7 @@ contract EPNSCoreV2 is
 
         uint256 rewards = 0;
         for (uint256 i = _startepoch; i < _endepoch; i++) {
-            uint256 claimableReward = calculateEpochRewards(i);
+            uint256 claimableReward = calculateEpochRewards(msg.sender, i);
             rewards = rewards.add(claimableReward);
         }
         usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender].add(
@@ -1201,10 +1201,7 @@ contract EPNSCoreV2 is
 
         uint256 rewards = 0;
         for (uint256 i = _startepoch; i < _endepoch; i++) {
-            uint256 claimableReward = userFeesInfo[address(this)]
-                .epochToUserStakedWeight[i]
-                .mul(epochRewards[i])
-                .div(epochToTotalStakedWeight[i]);
+            uint256 claimableReward = calculateEpochRewards(address(this), i);
             rewards = rewards.add(claimableReward);
         }
 
@@ -1222,6 +1219,47 @@ contract EPNSCoreV2 is
             _startepoch,
             _endepoch - 1
         );
+    }
+
+        /***
+     * notice Internal harvest function
+     */
+    function harvest(address _user, uint256 _startEpoch, uint256 _endEpoch) internal returns(uint256 rewards){
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+        _adjustUserAndTotalStake(_user, 0);
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 lastClaimedEpoch = lastEpochRelative(
+            genesisEpoch,
+            userFeesInfo[_user].lastClaimedBlock
+        );
+
+        require(
+            _startEpoch == lastClaimedEpoch,
+            "EPNSCoreV2::harvestPaginated::epoch should be sequential without repetation"
+        );
+        require(
+            currentEpoch > _endEpoch,
+            "EPNSCoreV2::harvestPaginated::cannot harvest future or current epoch"
+        );
+        require(
+            _endEpoch > lastClaimedEpoch,
+            "EPNSCoreV2::harvestPaginated::_endEpoch can't be lower than lastClaimedEpoch"
+        );
+
+        uint256 startEpoch = lastClaimedEpoch == 1 ? 0 : _startEpoch;
+
+        for (uint256 i = startEpoch; i < _endEpoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(_user, i);
+            rewards = rewards.add(claimableReward);
+        }
+
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user]
+            .add(rewards);
+        // set the lastClaimedBlock to blocknumer at the end of `_endEpoch`
+        uint256 _epoch_to_block_number = genesisEpoch +
+            _endEpoch* epochDuration;
+        userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
     }
 
     /**
