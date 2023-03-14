@@ -23,6 +23,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "hardhat/console.sol";
+
 
 contract EPNSCoreV2 is
     Initializable,
@@ -1197,7 +1199,7 @@ contract EPNSCoreV2 is
         // For stakers staked at Epoch 1, the rewards will be stored in epoch 0. Therefore we iterate from epoch 0.
         uint256 startEpoch = lastClaimedEpoch == 1 ? 0 : _startEpoch;
 
-        for (uint256 i = startEpoch; i < _endEpoch; i++) {
+        for (uint256 i = startEpoch; i <= _endEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards.add(claimableReward);
         }
@@ -1294,7 +1296,9 @@ contract EPNSCoreV2 is
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
+            
             epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
+
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES;
