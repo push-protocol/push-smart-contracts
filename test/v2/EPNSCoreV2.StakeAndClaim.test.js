@@ -289,7 +289,7 @@ describe("EPNS CoreV2 Protocol", function () {
           genesisBlock.number
         );
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow"
+          "EPNSCoreV2:lastEpochRelative:: Relative Block Number Overflow"
         );
       });
 
