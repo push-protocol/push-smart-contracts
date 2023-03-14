@@ -86,6 +86,14 @@ contract EPNSCoreV2 is
         uint256 fromEpoch,
         uint256 tillEpoch
     );
+    event RelayerAddressUpdated(
+        address indexed oldRelayer,
+        address indexed newRelayer
+    );
+    event BridgeAddressUpdated(
+        address indexed oldBridge,
+        address indexed newBridge
+    );
 
     /* **************
         MODIFIERS
@@ -985,7 +993,7 @@ contract EPNSCoreV2 is
     {
         require(
             _to >= _from,
-            "EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow"
+            "EPNSCoreV2:lastEpochRelative:: Relative Block Number Overflow"
         );
         return uint256((_to - _from) / epochDuration + 1);
     }
@@ -1334,10 +1342,12 @@ contract EPNSCoreV2 is
     );
 
     function setRelayerAddress(address _relayer) external onlyPushChannelAdmin {
+        emit RelayerAddressUpdated(relayerAddress, _relayer);
         relayerAddress = _relayer;
     }
 
     function setBridgeAddress(address _bridge) external onlyPushChannelAdmin {
+        emit BridgeAddressUpdated(bridgeAddress, _bridge);
         bridgeAddress = _bridge;
     }
 
