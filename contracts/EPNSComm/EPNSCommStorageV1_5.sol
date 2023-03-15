@@ -64,7 +64,6 @@ contract EPNSCommStorageV1_5 {
 
     struct ChatDetails {
         address requestSender;
-        string requestReceiver;
         uint256 timestamp;
         uint256 amountDeposited;
     }
