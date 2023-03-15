@@ -1025,7 +1025,6 @@ contract EPNSCoreV2 is
             "EPNSCoreV2::initializeStake: Already Initialized"
         );
         genesisEpoch = block.number;
-        epochDuration = 21 * 7156;
         lastEpochInitialized = genesisEpoch;
         lastTotalStakedBlock = genesisEpoch;
 
