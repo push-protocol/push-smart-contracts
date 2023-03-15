@@ -788,7 +788,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         );
 
         ChatDetails storage chatData = userChatData[msg.sender];
-        if(chatData.amountDeposited == 0){
+        if (chatData.amountDeposited == 0) {
             chatData.requestSender = msg.sender;
         }
         chatData.timestamp = block.timestamp;

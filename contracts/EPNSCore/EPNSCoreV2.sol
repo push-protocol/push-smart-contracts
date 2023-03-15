@@ -24,7 +24,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-
 contract EPNSCoreV2 is
     Initializable,
     EPNSCoreStorageV1_5,
@@ -1117,13 +1116,17 @@ contract EPNSCoreV2 is
             userFeesInfo[msg.sender].lastClaimedBlock
         );
 
-        uint256 rewards = harvest(msg.sender, lastClaimedEpoch, currentEpoch - 1);
+        uint256 rewards = harvest(
+            msg.sender,
+            lastClaimedEpoch,
+            currentEpoch - 1
+        );
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
 
         emit RewardsHarvested(msg.sender, rewards, block.number);
     }
 
-      /**
+    /**
      * @notice Allows paginated harvests for users between a particular number of epochs.
      * @param  _startEpoch - the start epoch from which we start counts claimable rewards
      * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
@@ -1146,7 +1149,7 @@ contract EPNSCoreV2 is
      * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
      * @param  _startEpoch - the start epoch from which we start counts claimable rewards
      * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
-     * @dev    only accessible by Push Admin 
+     * @dev    only accessible by Push Admin
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      **/
     function daoHarvestPaginated(uint256 _startEpoch, uint256 _endEpoch)
@@ -1172,7 +1175,11 @@ contract EPNSCoreV2 is
      * @dev    _endEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
      **/
-    function harvest(address _user, uint256 _startEpoch, uint256 _endEpoch) internal returns(uint256 rewards){
+    function harvest(
+        address _user,
+        uint256 _startEpoch,
+        uint256 _endEpoch
+    ) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
 
@@ -1202,11 +1209,11 @@ contract EPNSCoreV2 is
             rewards = rewards.add(claimableReward);
         }
 
-        usersRewardsClaimed[_user] = usersRewardsClaimed[_user]
-            .add(rewards);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
         // set the lastClaimedBlock to blocknumer at the end of `_endEpoch`
         uint256 _epoch_to_block_number = genesisEpoch +
-            _endEpoch* epochDuration;
+            _endEpoch *
+            epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
     }
 
@@ -1295,9 +1302,8 @@ contract EPNSCoreV2 is
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
-            
-            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
 
+            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES;

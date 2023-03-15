@@ -24,7 +24,7 @@ contract EPNSCoreStorageV2 {
         uint256 lastClaimedBlock;
         mapping(uint256 => uint256) epochToUserStakedWeight;
     }
-    
+
     uint256 public genesisEpoch; // Block number at which Stakig starts
     uint256 lastEpochInitialized; // The last EPOCH ID initialized with the respective epoch rewards
     uint256 lastTotalStakeEpochInitialized; // The last EPOCH ID initialized with the respective total staked weight
