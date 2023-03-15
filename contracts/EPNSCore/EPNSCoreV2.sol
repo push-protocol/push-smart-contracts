@@ -1235,9 +1235,10 @@ contract EPNSCoreV2 is
     {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
+        uint256 userStakedWeight = userFeesInfo[_user].stakedWeight;
 
         // Initiating 1st Case: User stakes for first time
-        if (userFeesInfo[_user].stakedWeight == 0) {
+        if (userStakedWeight == 0) {
             userFeesInfo[_user].stakedWeight = _userWeight;
         } else {
             // Initiating 2.1 Case: User stakes again but in Same Epoch
@@ -1247,7 +1248,7 @@ contract EPNSCoreV2 is
             );
             if (currentEpoch == lastStakedEpoch) {
                 userFeesInfo[_user].stakedWeight =
-                    userFeesInfo[_user].stakedWeight +
+                    userStakedWeight +
                     _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
@@ -1255,10 +1256,10 @@ contract EPNSCoreV2 is
                     if (i != currentEpoch - 1) {
                         userFeesInfo[_user].epochToUserStakedWeight[
                                 i
-                            ] = userFeesInfo[_user].stakedWeight;
+                            ] = userStakedWeight;
                     } else {
                         userFeesInfo[_user].stakedWeight =
-                            userFeesInfo[_user].stakedWeight +
+                            userStakedWeight +
                             _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[
                                 i
