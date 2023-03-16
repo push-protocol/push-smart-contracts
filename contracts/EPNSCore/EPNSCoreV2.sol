@@ -190,11 +190,7 @@ contract EPNSCoreV2 is
     {
         governance = _governanceAddress;
     }
-
-    function setMigrationComplete() external onlyPushChannelAdmin { //@audit-issue - Can be removed ???
-        isMigrationComplete = true;
-    }
-
+    
     function setFeeAmount(uint256 _newFees) external onlyGovernance {
         require(
             _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
@@ -360,69 +356,6 @@ contract EPNSCoreV2 is
     }
 
     /**
-     * @notice Migration function that allows pushChannelAdmin to migrate the previous Channel Data to this protocol
-     *
-     * @dev   can only be Called by the pushChannelAdmin
-     *        Channel's identity is simply emitted out
-     *        Channel's on-Chain details are stored by calling the "_crateChannel" function
-     *        PUSH  required for Channel Creation will be PAID by pushChannelAdmin
-     *
-     * @param _startIndex       starting Index for the LOOP
-     * @param _endIndex         Last Index for the LOOP
-     * @param _channelAddresses array of address of the Channel
-     * @param _channelTypeList   array of type of the Channel being created
-     * @param _identityList     array of list of identity Bytes
-     * @param _amountList       array of amount of PUSH  to be depositeds
-     * @param  _channelExpiryTime the expiry time for time bound channels
-     **/
-    function migrateChannelData(
-        uint256 _startIndex,
-        uint256 _endIndex,
-        address[] calldata _channelAddresses,
-        ChannelType[] calldata _channelTypeList,
-        bytes[] calldata _identityList,
-        uint256[] calldata _amountList,
-        uint256[] calldata _channelExpiryTime
-    ) external onlyPushChannelAdmin returns (bool) {
-        require(
-            !isMigrationComplete,
-            "EPNSCoreV1_5::migrateChannelData: Migration completed"
-        );
-
-        require(
-            (_channelAddresses.length == _channelTypeList.length) &&
-                (_channelAddresses.length == _identityList.length) &&
-                (_channelAddresses.length == _amountList.length) &&
-                (_channelAddresses.length == _channelExpiryTime.length),
-            "EPNSCoreV1_5::migrateChannelData: Unequal Arrays length"
-        );
-
-        for (uint256 i = _startIndex; i < _endIndex; i++) {
-            if (channels[_channelAddresses[i]].channelState != 0) {
-                continue;
-            } else {
-                IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    _amountList[i]
-                );
-                emit AddChannel(
-                    _channelAddresses[i],
-                    _channelTypeList[i],
-                    _identityList[i]
-                );
-                _createChannel(
-                    _channelAddresses[i],
-                    _channelTypeList[i],
-                    _amountList[i],
-                    _channelExpiryTime[i]
-                );
-            }
-        }
-        return true;
-    }
-
-    /**
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
@@ -568,39 +501,39 @@ contract EPNSCoreV2 is
      *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
      *  @param _amountDeposited - Fees required for setting up channel notification settings
      **/
-    // function createChannelSettings( //@audit-issue - Can this be removed ???
-    //     uint256 _notifOptions,
-    //     string calldata _notifSettings,
-    //     string calldata _notifDescription,
-    //     uint256 _amountDeposited
-    // ) external onlyActivatedChannels(msg.sender) {
-    //     require(
-    //         _amountDeposited >= ADD_CHANNEL_MIN_FEES,
-    //         "EPNSCoreV1_5::createChannelSettings: Insufficient Funds Passed"
-    //     );
+    function createChannelSettings(
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription,
+        uint256 _amountDeposited
+    ) external onlyActivatedChannels(msg.sender) {
+        require(
+            _amountDeposited >= ADD_CHANNEL_MIN_FEES,
+            "EPNSCoreV1_5::createChannelSettings: Insufficient Funds Passed"
+        );
 
-    //     string memory notifSetting = string(
-    //         abi.encodePacked(
-    //             Strings.toString(_notifOptions),
-    //             "+",
-    //             _notifSettings
-    //         )
-    //     );
-    //     channelNotifSettings[msg.sender] = notifSetting;
+        string memory notifSetting = string(
+            abi.encodePacked(
+                Strings.toString(_notifOptions),
+                "+",
+                _notifSettings
+            )
+        );
+        channelNotifSettings[msg.sender] = notifSetting;
 
-    //     PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
-    //     IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-    //         msg.sender,
-    //         address(this),
-    //         _amountDeposited
-    //     );
-    //     emit ChannelNotifcationSettingsAdded(
-    //         msg.sender,
-    //         _notifOptions,
-    //         notifSetting,
-    //         _notifDescription
-    //     );
-    // }
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amountDeposited
+        );
+        emit ChannelNotifcationSettingsAdded(
+            msg.sender,
+            _notifOptions,
+            notifSetting,
+            _notifDescription
+        );
+    }
 
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
@@ -737,66 +670,6 @@ contract EPNSCoreV2 is
         emit ChannelBlocked(_channelAddress);
     }
 
-    /**
-     * @notice    Function designed to allow transfer of channel ownership
-     * @dev       Can be triggered only by a channel owner. Transfers all channel date to a new owner and deletes the old channel owner details.
-     *
-     * @param    _channelAddress Address of the channel that needs to change its ownership
-     * @param    _newChannelAddress Address of the new channel owner
-     * @param    _amountDeposited Fee amount deposited for ownership transfer
-     * @return   success returns true after a successful execution of the function.
-     **/
-    // function transferChannelOwnership( 
-    //     address _channelAddress,
-    //     address _newChannelAddress,
-    //     uint256 _amountDeposited
-    // ) external whenNotPaused onlyActivatedChannels(msg.sender) returns (bool) {
-    //     require(
-    //         _newChannelAddress != address(0) &&
-    //             channels[_newChannelAddress].channelState == 0,
-    //         "EPNSCoreV1_5::transferChannelOwnership: Invalid address for new channel owner"
-    //     );
-    //     require(
-    //         _amountDeposited >= ADD_CHANNEL_MIN_FEES,
-    //         "EPNSCoreV1_5::transferChannelOwnership: Insufficient Funds Passed for Ownership Transfer Reactivation"
-    //     );
-    //     IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-    //         _channelAddress,
-    //         address(this),
-    //         _amountDeposited
-    //     );
-
-    //     PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
-    //     Channel memory channelData = channels[_channelAddress];
-    //     channels[_newChannelAddress] = channelData;
-
-    //     // Subscribe newChannelOwner address to important channels
-    //     address _epnsCommunicator = epnsCommunicator;
-    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-    //         _newChannelAddress,
-    //         _newChannelAddress
-    //     );
-
-    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-    //         address(0x0),
-    //         _newChannelAddress
-    //     );
-    //     IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-    //         _newChannelAddress,
-    //         pushChannelAdmin
-    //     );
-
-    //     // Unsubscribing pushChannelAdmin from old Channel
-    //     IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-    //         _channelAddress,
-    //         pushChannelAdmin
-    //     );
-
-    //     delete channels[_channelAddress];
-    //     emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
-    //     return true;
-    // }
-
     /* **************
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
     *************** */
@@ -847,17 +720,6 @@ contract EPNSCoreV2 is
     ) external onlyPushChannelAdmin returns (bool) {
         for (uint256 i = _startIndex; i < _endIndex; i++) {
             verifyChannel(_channelList[i]);
-        }
-        return true;
-    }
-
-    function batchRevokeVerification(
-        uint256 _startIndex,
-        uint256 _endIndex,
-        address[] calldata _channelList
-    ) external onlyPushChannelAdmin returns (bool) {
-        for (uint256 i = _startIndex; i < _endIndex; i++) {
-            unverifyChannel(_channelList[i]);
         }
         return true;
     }
