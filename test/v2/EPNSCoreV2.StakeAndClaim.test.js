@@ -1226,7 +1226,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(1,2);
           
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV1_5::onlyGovernance: Invalid Caller"
+            "EPNSCoreV2::onlyGovernance: Invalid Caller"
           );
 
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,2);
