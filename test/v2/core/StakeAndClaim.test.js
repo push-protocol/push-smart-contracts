@@ -1,9 +1,9 @@
 const { ethers, waffle } = require("hardhat");
 
-const { tokensBN, bn } = require("../../helpers/utils");
+const { tokensBN, bn } = require("../../../helpers/utils");
 
-const { epnsContractFixture, tokenFixture } = require("../common/fixturesV2");
-const { expect } = require("../common/expect");
+const { epnsContractFixture, tokenFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const { parseEther } = require("ethers/lib/utils");
 const createFixtureLoader = waffle.createFixtureLoader;
 
