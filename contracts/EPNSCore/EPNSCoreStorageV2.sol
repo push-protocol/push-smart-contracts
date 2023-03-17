@@ -39,4 +39,9 @@ contract EPNSCoreStorageV2 {
     mapping(address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
+
+    /** Handling bridged information **/
+    address public bridgeAddress;
+    address public relayerAddress;
+    mapping(address => uint256) public celebUserFunds;
 }

@@ -1,9 +1,9 @@
 const { ethers, waffle } = require("hardhat");
 
-const { tokensBN, bn } = require("../../helpers/utils");
+const { tokensBN, bn } = require("../../../helpers/utils");
 
-const { epnsContractFixture, tokenFixture } = require("../common/fixturesV2");
-const { expect } = require("../common/expect");
+const { epnsContractFixture, tokenFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const { parseEther } = require("ethers/lib/utils");
 const createFixtureLoader = waffle.createFixtureLoader;
 
@@ -546,7 +546,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::unstake: Caller is not a staker"
+            "EPNSCoreV2::unstake: Invalid Caller"
           );
         });
 
@@ -1017,7 +1017,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 10);
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::cannot harvest future or current epoch"
+            "EPNSCoreV2::harvestPaginated::Invalid _endEpoch w.r.t currentEpoch"
           );
         });
 
@@ -1034,7 +1034,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::epoch should be sequential without repetation"
+            "EPNSCoreV2::harvestPaginated::Nonsequential epoch"
           );
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4, 5);
         });
@@ -1226,7 +1226,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(1,2);
           
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV1_5::onlyGovernance: Caller not Governance"
+            "EPNSCoreV2::onlyGovernance: Invalid Caller"
           );
 
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,2);
