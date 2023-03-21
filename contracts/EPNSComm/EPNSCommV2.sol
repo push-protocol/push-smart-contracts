@@ -24,7 +24,7 @@ import "../interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
+contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -63,7 +63,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     modifier onlyPushChannelAdmin() {
         require(
             msg.sender == pushChannelAdmin,
-            "EPNSCommV1_5::onlyPushChannelAdmin: user not pushChannelAdmin"
+            "PushCommV2::onlyPushChannelAdmin: user not pushChannelAdmin"
         );
         _;
     }
@@ -71,7 +71,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     modifier onlyEPNSCore() {
         require(
             msg.sender == EPNSCoreAddress,
-            "EPNSCommV1_5::onlyEPNSCore: Caller NOT EPNSCore"
+            "PushCommV2::onlyEPNSCore: Caller NOT EPNSCore"
         );
         _;
     }
@@ -126,11 +126,11 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     {
         require(
             _newAdmin != address(0),
-            "EPNSCommV1_5::transferPushChannelAdminControl: Invalid Address"
+            "PushCommV2::transferPushChannelAdminControl: Invalid Address"
         );
         require(
             _newAdmin != pushChannelAdmin,
-            "EPNSCommV1_5::transferPushChannelAdminControl: Admin address is same"
+            "PushCommV2::transferPushChannelAdminControl: Admin address is same"
         );
         pushChannelAdmin = _newAdmin;
     }
@@ -205,11 +205,11 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     ) external onlyPushChannelAdmin returns (bool) {
         require(
             !isMigrationComplete,
-            "EPNSCommV1_5::migrateSubscribeData: Migration of Subscribe Data is Complete Already"
+            "PushCommV2::migrateSubscribeData: Migration of Subscribe Data is Complete Already"
         );
         require(
             _channelList.length == _usersList.length,
-            "EPNSCommV1_5::migrateSubscribeData: Unequal Arrays passed as Argument"
+            "PushCommV2::migrateSubscribeData: Unequal Arrays passed as Argument"
         );
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
@@ -266,7 +266,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         // EIP-712
         require(
             subscriber != address(0),
-            "EPNSCommV1_5::subscribeBySig: Invalid signature"
+            "PushCommV2::subscribeBySig: Invalid signature"
         );
         bytes32 domainSeparator = keccak256(
             abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
@@ -292,11 +292,11 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         }
         require(
             nonce == nonces[subscriber]++,
-            "EPNSCommV1_5::subscribeBySig: Invalid nonce"
+            "PushCommV2::subscribeBySig: Invalid nonce"
         );
         require(
             now <= expiry,
-            "EPNSCommV1_5::subscribeBySig: Signature expired"
+            "PushCommV2::subscribeBySig: Signature expired"
         );
 
         _subscribe(channel, subscriber);
@@ -401,7 +401,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     ) external {
         require(
             subscriber != address(0),
-            "EPNSCommV1_5::unsubscribeBySig: Invalid signature"
+            "PushCommV2::unsubscribeBySig: Invalid signature"
         );
         // EIP-712
         bytes32 domainSeparator = keccak256(
@@ -428,11 +428,11 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
         }
         require(
             nonce == nonces[subscriber]++,
-            "EPNSCommV1_5::unsubscribeBySig: Invalid nonce"
+            "PushCommV2::unsubscribeBySig: Invalid nonce"
         );
         require(
             now <= expiry,
-            "EPNSCommV1_5::unsubscribeBySig: Signature expired"
+            "PushCommV2::unsubscribeBySig: Signature expired"
         );
         _unsubscribe(channel, subscriber);
     }
@@ -747,7 +747,7 @@ contract EPNSCommV2 is Initializable, EPNSCommStorageV1_5 {
     ) external {
         require(
             isUserSubscribed(_channel, msg.sender),
-            "EPNSCommV1_5::changeUserChannelSettings: User not Subscribed to Channel"
+            "PushCommV2::changeUserChannelSettings: User not Subscribed to Channel"
         );
         string memory notifSetting = string(
             abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings)
