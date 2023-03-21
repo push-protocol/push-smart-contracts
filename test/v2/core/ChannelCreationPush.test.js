@@ -137,7 +137,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV2::onlyInactiveChannels: Channel already Activated"
+          "PushCoreV2::onlyInactiveChannels: Channel already Activated"
         );
       });
 
@@ -153,7 +153,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx1).to.be.revertedWith(
-          "EPNSCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
+          "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
         );
 
         const CHANNEL_TYPE_SECOND = 1;
@@ -171,7 +171,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx2).to.be.revertedWith(
-          "EPNSCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
+          "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
         );
       });
 
@@ -189,7 +189,7 @@ describe("EPNS CoreV2 Protocol", function () {
         ).createChannelWithPUSH(CHANNEL_TYPE, testChannel, tokensBN(10), 0);
 
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
+          "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
         );
       });
 

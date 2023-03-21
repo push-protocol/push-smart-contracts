@@ -289,7 +289,7 @@ describe("EPNS CoreV2 Protocol", function () {
           genesisBlock.number
         );
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV2:lastEpochRelative:: Relative Block Number Overflow"
+          "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow"
         );
       });
 
@@ -546,7 +546,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::unstake: Invalid Caller"
+            "PushCoreV2::unstake: Invalid Caller"
           );
         });
 
@@ -1017,7 +1017,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 10);
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::Invalid _endEpoch w.r.t currentEpoch"
+            "PushCoreV2::harvestPaginated::Invalid _endEpoch w.r.t currentEpoch"
           );
         });
 
@@ -1034,7 +1034,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::Nonsequential epoch"
+            "PushCoreV2::harvestPaginated::Nonsequential epoch"
           );
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4, 5);
         });
@@ -1226,7 +1226,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(1,2);
           
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::onlyGovernance: Invalid Caller"
+            "PushCoreV2::onlyGovernance: Invalid Caller"
           );
 
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,2);
