@@ -37,6 +37,13 @@ function mnemonic() {
 }
 
 module.exports = {
+  contractSizer: {
+    alphaSort: false,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: [],
+  },
   defaultNetwork,
 
   // don't forget to set your provider like:
