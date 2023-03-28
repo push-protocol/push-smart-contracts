@@ -847,7 +847,6 @@ contract PushCoreV2 is
         );
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
-        lastTotalStakedBlock = genesisEpoch;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
@@ -927,20 +926,15 @@ contract PushCoreV2 is
 
     /**
      * @notice Allows users to harvest/claim their earned rewards from the protocol
-     * @dev    Computes lastClaimedEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
+     * @dev    Computes nextFromEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
      *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
-     *         Once calculated, user's total claimed rewards and lastClaimedEpoch details is updated.
+     *         Once calculated, user's total claimed rewards and nextFromEpoch details is updated.
      **/
     function harvestAll() public {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 lastClaimedEpoch = lastEpochRelative(
-            genesisEpoch,
-            userFeesInfo[msg.sender].lastClaimedBlock
-        );
 
         uint256 rewards = harvest(
             msg.sender,
-            lastClaimedEpoch,
             currentEpoch - 1
         );
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
@@ -950,93 +944,80 @@ contract PushCoreV2 is
 
     /**
      * @notice Allows paginated harvests for users between a particular number of epochs.
-     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
-     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
-     * @dev    _endEpoch should never be equal to currentEpoch.
+     * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
+     * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
      **/
-    function harvestPaginated(uint256 _startEpoch, uint256 _endEpoch) external {
-        uint256 rewards = harvest(msg.sender, _startEpoch, _endEpoch);
+    function harvestPaginated(uint256 _tillEpoch) external {
+        uint256 rewards = harvest(msg.sender, _tillEpoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
 
-        emit RewardsHarvestedPaginated(
-            msg.sender,
-            rewards,
-            _startEpoch,
-            _endEpoch
-        );
     }
 
     /**
      * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
-     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
-     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
+     * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    only accessible by Push Admin
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      **/
-    function daoHarvestPaginated(uint256 _startEpoch, uint256 _endEpoch)
+    function daoHarvestPaginated(uint256 _tillEpoch)
         external
     {
         onlyGovernance();
-        uint256 rewards = harvest(address(this), _startEpoch, _endEpoch);
+        uint256 rewards = harvest(address(this), _tillEpoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(governance, rewards);
 
-        emit RewardsHarvestedPaginated(
-            msg.sender,
-            rewards,
-            _startEpoch,
-            _endEpoch
-        );
     }
 
     /**
      * @notice Internal harvest function that is called for all types of harvest procedure.
      * @param  _user       - The user address for which the rewards will be calculated.
-     * @param  _startEpoch - the start epoch from which we start counts claimable rewards
-     * @param  _endEpoch   - the end epoch number till which rewards shall be counted.
-     * @dev    _endEpoch should never be equal to currentEpoch.
+     * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
+     * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
      **/
     function harvest(
         address _user,
-        uint256 _startEpoch,
-        uint256 _endEpoch
+        uint256 _tillEpoch
     ) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 lastClaimedEpoch = lastEpochRelative(
+        uint256 nextFromEpoch = lastEpochRelative(
             genesisEpoch,
             userFeesInfo[_user].lastClaimedBlock
         );
 
         require(
-            _startEpoch == lastClaimedEpoch,
-            "PushCoreV2::harvestPaginated::Nonsequential epoch"
+            currentEpoch > _tillEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
         );
         require(
-            currentEpoch > _endEpoch,
-            "PushCoreV2::harvestPaginated::Invalid _endEpoch w.r.t currentEpoch"
-        );
-        require(
-            _endEpoch > lastClaimedEpoch,
-            "PushCoreV2::harvestPaginated::Invalid _endEpoch w.r.t lastClaimedEpoch"
+            _tillEpoch >= nextFromEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
         );
         // For stakers staked at Epoch 1, the rewards will be stored in epoch 0. Therefore we iterate from epoch 0.
-        uint256 startEpoch = lastClaimedEpoch == 1 ? 0 : _startEpoch;
+        uint256 startEpoch = nextFromEpoch == 1 ? 0 : nextFromEpoch;
 
-        for (uint256 i = startEpoch; i <= _endEpoch; i++) {
+        for (uint256 i = startEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards.add(claimableReward);
         }
 
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
-        // set the lastClaimedBlock to blocknumer at the end of `_endEpoch`
+        // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch +
-            _endEpoch *
+            _tillEpoch *
             epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
+
+        emit RewardsHarvestedPaginated(
+            msg.sender,
+            rewards,
+            nextFromEpoch,
+            _tillEpoch
+        );
     }
 
     /**
@@ -1100,7 +1081,6 @@ contract PushCoreV2 is
 
         if (_userWeight != 0) {
             userFeesInfo[_user].lastStakedBlock = block.number;
-            lastTotalStakedBlock = block.number;
         }
     }
 
