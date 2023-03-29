@@ -998,9 +998,10 @@ contract PushCoreV2 is
             "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
         );
         // For stakers staked at Epoch 1, the rewards will be stored in epoch 0. Therefore we iterate from epoch 0.
-        uint256 startEpoch = nextFromEpoch == 1 ? 0 : nextFromEpoch;
+        // uint256 startEpoch = nextFromEpoch == 1 ? 0 : nextFromEpoch; //@audit - this can be removed - No need to start from 0, we can start from 1 itself
 
-        for (uint256 i = startEpoch; i <= _tillEpoch; i++) {
+        // for (uint256 i = startEpoch; i <= _tillEpoch; i++) {      // Old version
+        for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {    // New version
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards.add(claimableReward);
         }
@@ -1061,9 +1062,27 @@ contract PushCoreV2 is
                     userStakedWeight +
                     _userWeight;
             } else {
-                // Initiating 2.2 Case: User stakes again but in Different Epoch
-                for (uint256 i = lastStakedEpoch - 1; i < currentEpoch; i++) {
-                    if (i != currentEpoch - 1) {
+                // Initiating 2.2 Case: User stakes again but in Different Epoch  
+                // OLD VERSION
+
+                // for (uint256 i = lastStakedEpoch - 1; i < currentEpoch; i++) {  //@audit - Changes to for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++)
+                //     if (i != currentEpoch - 1) {                                //@audit - Changes to if (i != currentEpoch) {
+                //         userFeesInfo[_user].epochToUserStakedWeight[
+                //                 i
+                //             ] = userStakedWeight;
+                //     } else {
+                //         userFeesInfo[_user].stakedWeight =
+                //             userStakedWeight +
+                //             _userWeight;
+                //         userFeesInfo[_user].epochToUserStakedWeight[
+                //                 i
+                //             ] = userFeesInfo[_user].stakedWeight;
+                //     }
+                // }
+
+                 // NEW VERSION //@audit - For Some reason - New Version has no effect on Test Cases
+                for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {  //@audit - Changes to for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++)
+                    if (i != currentEpoch) {                                 //@audit - Changes to if (i != currentEpoch) {
                         userFeesInfo[_user].epochToUserStakedWeight[
                                 i
                             ] = userStakedWeight;
@@ -1105,7 +1124,10 @@ contract PushCoreV2 is
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
 
-            epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
+            // OLD VERSION
+            // epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch; //@audit - This will change from currentEpoch - 1 to currentEpoch
+            // NEW VERSION
+            epochRewards[_currentEpoch] += availableRewardsPerEpoch;  // New Version
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES;
@@ -1116,13 +1138,23 @@ contract PushCoreV2 is
             lastTotalStakeEpochInitialized == _currentEpoch
         ) {
             epochToTotalStakedWeight[_currentEpoch] += _userWeight;
-            epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight;
+
+            // OLD VERSION
+            // epochToTotalStakedWeight[_currentEpoch - 1] += _userWeight; //@audit - this can be removed - No need to Store weights in currentEpoch - 1
+           
         } else {
-            for (
+
+            // for (  // OLD VERSION
+            //     uint256 i = lastTotalStakeEpochInitialized + 1;
+            //     i < _currentEpoch - 1;
+            //     i++
+            // ) 
+            for (   // New VERSION
                 uint256 i = lastTotalStakeEpochInitialized + 1;
-                i < _currentEpoch - 1;
+                i <= _currentEpoch - 1;
                 i++
-            ) {
+            )
+            {
                 if (epochToTotalStakedWeight[i] == 0) {
                     epochToTotalStakedWeight[i] = epochToTotalStakedWeight[
                         lastTotalStakeEpochInitialized
@@ -1132,9 +1164,11 @@ contract PushCoreV2 is
             epochToTotalStakedWeight[_currentEpoch] =
                 epochToTotalStakedWeight[lastTotalStakeEpochInitialized] +
                 _userWeight;
-            epochToTotalStakedWeight[_currentEpoch - 1] =
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] +
-                _userWeight;
+
+            // OLD VERSION
+            // epochToTotalStakedWeight[_currentEpoch - 1] =                   //@audit - this can be removed - No need to Store weights in currentEpoch - 1
+            //     epochToTotalStakedWeight[lastTotalStakeEpochInitialized] +
+            //     _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
