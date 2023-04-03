@@ -1127,7 +1127,12 @@ contract PushCoreV2 is
             // OLD VERSION
             // epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch; //@audit - This will change from currentEpoch - 1 to currentEpoch
             // NEW VERSION
-            epochRewards[_currentEpoch] += availableRewardsPerEpoch;  // New Version
+            if(_userWeight == 0 && availableRewardsPerEpoch > 0){
+                epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
+            }else{
+                epochRewards[_currentEpoch] += availableRewardsPerEpoch;  // New Version
+            }
+            
 
             lastEpochInitialized = block.number;
             previouslySetEpochRewards = PROTOCOL_POOL_FEES;
