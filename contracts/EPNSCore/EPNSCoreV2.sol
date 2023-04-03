@@ -77,11 +77,6 @@ contract PushCoreV2 is
     event RewardsHarvested(
         address indexed user,
         uint256 indexed rewardAmount,
-        uint256 tillBlockNumber
-    );
-    event RewardsHarvestedPaginated(
-        address indexed user,
-        uint256 indexed rewardAmount,
         uint256 fromEpoch,
         uint256 tillEpoch
     );
@@ -909,8 +904,6 @@ contract PushCoreV2 is
 
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
-
-        emit RewardsHarvested(msg.sender, rewards, block.number);
     }
 
     /**
@@ -976,8 +969,8 @@ contract PushCoreV2 is
             epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
 
-        emit RewardsHarvestedPaginated(
-            msg.sender,
+        emit RewardsHarvested(
+            _user,
             rewards,
             nextFromEpoch,
             _tillEpoch
