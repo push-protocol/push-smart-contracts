@@ -1631,15 +1631,22 @@ describe("EPNS CoreV2 Protocol", function () {
           const userWeight = await bobDetails.stakedWeight;
           expect(userWeight).to.be.equal(0);
           const fourEpochs = 4;
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           // Bob Stakes at EPOCH 1 first
           await stakePushTokens(BOBSIGNER, stakeAmount);
+          
           // At epoch 5, BOB stakes again and tries to unstake all his stake.
           await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           await stakePushTokens(BOBSIGNER, stakeAmount);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
+          const expected_rewards = tokensBN(100);
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-          console.log("Rewards Bob", rewards_bob.toString());
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            expected_rewards,
+            ethers.utils.parseEther("100")
+          );
         });
 
         it("TEST CHECKS-11: Auditor's Failing Test - Reward Storage Fix)✅", async function () {
@@ -1655,7 +1662,7 @@ describe("EPNS CoreV2 Protocol", function () {
           // 3. Time progresses to epoch 2.
           await passBlockNumers(oneEpoch * EPOCH_DURATION);
           // 10 new rewards are added.     
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(10));
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(10)); 
 
           // Bob harvests
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
