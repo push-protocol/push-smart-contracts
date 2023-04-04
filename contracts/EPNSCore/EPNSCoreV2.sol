@@ -969,12 +969,7 @@ contract PushCoreV2 is
             epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
 
-        emit RewardsHarvested(
-            _user,
-            rewards,
-            nextFromEpoch,
-            _tillEpoch
-        );
+        emit RewardsHarvested(_user, rewards, nextFromEpoch, _tillEpoch);
     }
 
     /**
@@ -1057,6 +1052,7 @@ contract PushCoreV2 is
             genesisEpoch,
             lastEpochInitialized
         );
+
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
@@ -1065,7 +1061,7 @@ contract PushCoreV2 is
             if (_userWeight == 0) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
             } else {
-                epochRewards[_currentEpoch] += availableRewardsPerEpoch;
+                epochRewards[_currentEpoch + 1] += availableRewardsPerEpoch;
             }
 
             lastEpochInitialized = block.number;
