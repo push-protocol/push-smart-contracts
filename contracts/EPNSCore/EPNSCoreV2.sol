@@ -1052,7 +1052,6 @@ contract PushCoreV2 is
             genesisEpoch,
             lastEpochInitialized
         );
-
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
