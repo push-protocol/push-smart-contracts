@@ -1660,7 +1660,7 @@ describe("EPNS CoreV2 Protocol", function () {
           //2. Alice stakes 50 in epoch 1.
           await stakePushTokens(ALICESIGNER, tokensBN(50));
           // 3. Time progresses to epoch 2.
-          await passBlockNumers(oneEpoch * EPOCH_DURATION);
+          await passBlockNumers(2 * EPOCH_DURATION);
           // 10 new rewards are added.     
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(10)); 
 
@@ -1684,6 +1684,7 @@ describe("EPNS CoreV2 Protocol", function () {
             ethers.utils.parseEther("0.000001")
           );
         });
+
       });
       /**Test Cases Ends Here **/
     });
