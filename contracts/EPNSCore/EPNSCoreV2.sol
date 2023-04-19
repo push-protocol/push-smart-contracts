@@ -902,7 +902,7 @@ contract PushCoreV2 is
     function harvestAll() public {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
-        uint256 rewards = harvest(msg.sender, currentEpoch - 1);
+        uint256 rewards = harvest(msg.sender, currentEpoch - 2);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
     }
 
@@ -950,7 +950,7 @@ contract PushCoreV2 is
         );
 
         require(
-            currentEpoch > _tillEpoch,
+            currentEpoch > _tillEpoch+1,
             "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
         );
         require(
