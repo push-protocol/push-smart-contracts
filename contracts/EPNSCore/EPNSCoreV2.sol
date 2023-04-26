@@ -1056,11 +1056,12 @@ contract PushCoreV2 is
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
-
-            if (_userWeight == 0) {
-                epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
+            uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
+            
+            if (_epochGap > 1) {
+                 epochRewards[_currentEpoch - 2] += availableRewardsPerEpoch;
             } else {
-                epochRewards[_currentEpoch + 1] += availableRewardsPerEpoch;
+                epochRewards[_currentEpoch] += availableRewardsPerEpoch;
             }
 
             lastEpochInitialized = block.number;
