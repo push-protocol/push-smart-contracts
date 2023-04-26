@@ -806,10 +806,10 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 2;
-          const fiveEpochs = 10;
+          const oneEpochs = 1;
+          const fiveEpochs = 5;
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200)); // At epoch 3
 
           await stakePushTokens(BOBSIGNER, tokensBN(100));
           await stakePushTokens(ALICESIGNER, tokensBN(200));
@@ -818,7 +818,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
           await passBlockNumers(fiveEpochs * EPOCH_DURATION);
           // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll(); // at Epoch 13
           await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
           await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
@@ -833,6 +833,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const rewards_channelCreator =
             await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
+          console.log(rewards_channelCreator.toString())
           await expect(rewards_alice).to.be.gt(rewards_bob);
           await expect(rewards_charlie).to.be.gt(rewards_alice);
           await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
@@ -840,8 +841,8 @@ describe("EPNS CoreV2 Protocol", function () {
         // Expected Result = BOB_REWARDS > Alice > Charlie > Channel_CREATOR
         it("TEST CHECKS-5.1: 4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More(First Staker stakes the MOST) ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 2;
-          const fiveEpochs = 10;
+          const oneEpochs = 1;
+          const fiveEpochs = 5;
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
 
