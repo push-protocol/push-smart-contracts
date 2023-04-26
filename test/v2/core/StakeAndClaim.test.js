@@ -833,7 +833,6 @@ describe("EPNS CoreV2 Protocol", function () {
           const rewards_channelCreator =
             await EPNSCoreV1Proxy.usersRewardsClaimed(CHANNEL_CREATOR);
 
-          console.log(rewards_channelCreator.toString())
           await expect(rewards_alice).to.be.gt(rewards_bob);
           await expect(rewards_charlie).to.be.gt(rewards_alice);
           await expect(rewards_channelCreator).to.be.gt(rewards_charlie);
@@ -1686,7 +1685,44 @@ describe("EPNS CoreV2 Protocol", function () {
           );
         });
 
-        it("TEST CHECKS-12: Auditor's Failing Test regarding additional IF Statement) ✅", async function () {
+        it("TEST CHECKS-12: Unskating should release correct claimable rewards even in case idle epochs) ✅", async function () {
+          // Rewards are added for Epoch 1 
+          // Alice stakes in epoch 1.
+          // Bob Stakes in Epoch 1
+          // Jump to epoch 2
+          // Rewards added in Epoch 2
+          // Jump to epoch 5 - No Activity till Epoch 5
+          // Alice unskakes at Epoch 6
+          // Bob Harvests at Epoch 6
+          // Should get equal Rewards
+
+           // Rewards are added for Epoch 1 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          // Alice stakes in epoch 1.
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          // Bob stakes at epoch 1.
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch - 2
+          // Rewards are added for Epoch 2
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+
+          await passBlockNumers(4 * EPOCH_DURATION); // Jump to next Epoch - 6
+          // Alice unskakes at Epoch 6
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+          // Bob Harvests at Epoch 6
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+                   
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+          
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.000001")
+          );
+        });
+
+        it("TEST CHECKS-13: Auditor's Failing Test regarding additional IF Statement) ✅", async function () {
           // Alice stakes in epoch 2.
           await passBlockNumers(1 * EPOCH_DURATION);
           await stakePushTokens(ALICESIGNER, tokensBN(50));
@@ -1698,7 +1734,6 @@ describe("EPNS CoreV2 Protocol", function () {
           // Reward tokens are transferred to the contract, still epoch 3.
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           
-
           await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
 
           // Alice Harvests at epoch 4 - {Delayed withdrawals}
