@@ -874,7 +874,7 @@ contract PushCoreV2 is
         require(
             block.number >
                 userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
-            "PushCoreV2::unstake: Unstaking before 1 complete EPOCH"
+            "PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH"
         );
         require(
             userFeesInfo[msg.sender].stakedAmount > 0,
