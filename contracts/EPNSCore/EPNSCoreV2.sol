@@ -872,6 +872,11 @@ contract PushCoreV2 is
      **/
     function unstake() external {
         require(
+            block.number >
+                userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
+            "PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH"
+        );
+        require(
             userFeesInfo[msg.sender].stakedAmount > 0,
             "PushCoreV2::unstake: Invalid Caller"
         );
@@ -890,7 +895,6 @@ contract PushCoreV2 is
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
-        userFeesInfo[msg.sender].lastClaimedBlock = block.number;
     }
 
     /**
@@ -1056,11 +1060,12 @@ contract PushCoreV2 is
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
+            uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
 
-            if (_userWeight == 0) {
+            if (_epochGap > 1) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
             } else {
-                epochRewards[_currentEpoch + 1] += availableRewardsPerEpoch;
+                epochRewards[_currentEpoch] += availableRewardsPerEpoch;
             }
 
             lastEpochInitialized = block.number;
