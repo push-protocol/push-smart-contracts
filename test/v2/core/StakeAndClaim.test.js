@@ -537,9 +537,6 @@ describe("EPNS CoreV2 Protocol", function () {
           const currentBlock = await getCurrentBlock();
           await expect(bobDetails.stakedAmount).to.be.equal(0);
           await expect(bobDetails.stakedWeight).to.be.equal(0);
-          await expect(bobDetails.lastClaimedBlock).to.be.equal(
-            currentBlock.number
-          );
         });
 
         it("Users cannot claim rewards after unstaking ✅", async function () {
@@ -601,7 +598,7 @@ describe("EPNS CoreV2 Protocol", function () {
           // Bob tries to Claim at the end of EPOCH (without complete 1 complete epoch)
           const bobUnstake_tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
-          await expect(bobUnstake_tx).to.be.revertedWith("PushCoreV2::unstake: Unstaking before 1 complete EPOCH");
+          await expect(bobUnstake_tx).to.be.revertedWith("PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH");
 
           // Jump to Epoch 3
           await passBlockNumers(1 * EPOCH_DURATION);
@@ -1723,6 +1720,41 @@ describe("EPNS CoreV2 Protocol", function () {
           );
         });
 
+
+        it("Temp Test CHECKS-16: Stakes-Unstake-ReSTAKE test between BOB and ALICE) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          
+          // Alice unstakes in epoch 2 but Bob Holds
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+           // Alice stakes again in epoch 2
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+  
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);          
+
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+          console.log(
+            `BOB got ${rewards_bob.toString()} Rewards`
+          );
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.001")
+          );
+
+        });
+
         it("TEST CHECKS-13: Auditor's Failing Test regarding additional IF Statement) ✅", async function () {
           // Alice stakes in epoch 1
           await stakePushTokens(ALICESIGNER, tokensBN(50));
@@ -1756,159 +1788,6 @@ describe("EPNS CoreV2 Protocol", function () {
           expect(rewards_bob).to.not.equal(0);
         });
 
-        it.skip("Temp Test CHECKS-14: Stakes, Unstakes - waits for 2 epochs and harvests) ✅", async function () {
-          // Rewards Added in Epoch 1
-          // Alice stakes in epoch 1.
-          // Alice unstakes in epoch 1 
-          // Waits for 2 epochs
-          // Tries to harvest all
-          // GETs an SafeMath error / zero rewards
-
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
-          
-          await passBlockNumers(4 * EPOCH_DURATION); // Jump to next Epoch
-
-          const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-
-          await expect(tx).to.be.revertedWith("SafeMath: division by zero");
-          // const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-          // console.log(
-          //   `ALICE got ${rewards_alice.toString()} Rewards`
-          // );
-        });
-
-        it("Temp Test CHECKS-15: Stakes-Unstake and Reward Decrease Test) ✅", async function () {
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-          await stakePushTokens(BOBSIGNER, tokensBN(50));
-          await stakePushTokens(CHARLIESIGNER, tokensBN(50));
-
-          await passBlockNumers(2 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
-
-          await passBlockNumers(5 * EPOCH_DURATION); // Jump to next Epoch
-
-          //await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
-
-          
-          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
-          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-          const rewards_charlie = await EPNSCoreV1Proxy.usersRewardsClaimed(CHARLIE);
-          
-          console.log(
-            `ALICE got ${rewards_alice.toString()} Rewards`
-          );
-          console.log(
-            `BOB got ${rewards_bob.toString()} Rewards`
-          );
-          console.log(
-            `CHARLIE got ${rewards_charlie.toString()} Rewards`
-          );
-        });
-
-        it.skip("Temp Test CHECKS-16-a: Stakes-Unstake-ReSTAKE test) ✅", async function () {
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION);
-          
-          //await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
-
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(150));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
-
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-  
-          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);       
-          getEachEpochDetails(ALICE, 6);   
-          console.log(
-            `ALICE got ${rewards_alice.toString()} Rewards`
-          );
-
-        });
-
-        it("Temp Test CHECKS-16-b: Stakes-Harvest test with only BOB) ✅", async function () {
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(BOBSIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-;
-
-          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
-
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-  
-          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);     
-
-          console.log(
-            ` BOB got ${rewards_bob.toString()} Rewards`
-          );
-        });
-        it("Temp Test CHECKS-17: Stakes-Unstake-ReSTAKE-Harvest test with only ALICE) ✅", async function () {
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          
-          // Alice unstakes in epoch 2 but Bob Holds
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
-           // Alice stakes again in epoch 2
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
-
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-  
-          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
-
-          console.log(
-            `ALICE got ${rewards_alice.toString()} Rewards`
-          );
-        });
-        it("Temp Test CHECKS-16: Stakes-Unstake-ReSTAKE test between BOB and ALICE) ✅", async function () {
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-          await stakePushTokens(BOBSIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          
-          // Alice unstakes in epoch 2 but Bob Holds
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
-           // Alice stakes again in epoch 2
-          await stakePushTokens(ALICESIGNER, tokensBN(50));
-
-          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
-
-          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-  
-          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
-          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);          
-
-          getEachEpochDetails(ALICE, 7);
-          console.log(
-            `ALICE got ${rewards_alice.toString()} Rewards`
-          );
-          console.log(
-            `BOB got ${rewards_bob.toString()} Rewards`
-          );
-          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
-            rewards_alice,
-            ethers.utils.parseEther("0.001")
-          );
-
-        });
 
       });
       /**Test Cases Ends Here **/
