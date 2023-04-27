@@ -1811,7 +1811,104 @@ describe("EPNS CoreV2 Protocol", function () {
           );
         });
 
+        it.skip("Temp Test CHECKS-16-a: Stakes-Unstake-ReSTAKE test) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
 
+          await passBlockNumers(1 * EPOCH_DURATION);
+          
+          //await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(150));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+  
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);       
+          getEachEpochDetails(ALICE, 6);   
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+
+        });
+
+        it("Temp Test CHECKS-16-b: Stakes-Harvest test with only BOB) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+;
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+  
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);     
+
+          console.log(
+            ` BOB got ${rewards_bob.toString()} Rewards`
+          );
+        });
+        it("Temp Test CHECKS-17: Stakes-Unstake-ReSTAKE-Harvest test with only ALICE) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          
+          // Alice unstakes in epoch 2 but Bob Holds
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+           // Alice stakes again in epoch 2
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+  
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
+
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+        });
+        it("Temp Test CHECKS-16: Stakes-Unstake-ReSTAKE test between BOB and ALICE) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          
+          // Alice unstakes in epoch 2 but Bob Holds
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+           // Alice stakes again in epoch 2
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+  
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);          
+
+          getEachEpochDetails(ALICE, 7);
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+          console.log(
+            `BOB got ${rewards_bob.toString()} Rewards`
+          );
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.001")
+          );
+
+        });
 
       });
       /**Test Cases Ends Here **/
