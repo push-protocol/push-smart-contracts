@@ -895,7 +895,6 @@ contract PushCoreV2 is
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
-        userFeesInfo[msg.sender].lastClaimedBlock = block.number;
     }
 
     /**
