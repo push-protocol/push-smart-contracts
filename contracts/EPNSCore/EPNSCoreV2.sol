@@ -871,6 +871,7 @@ contract PushCoreV2 is
      *         Allows users to unstake all amount at once
      **/
     function unstake() external {
+        require(block.number > userFeesInfo[msg.sender].lastStakedBlock + epochDuration, "PushCoreV2::unstake: Unstaking before 1 complete EPOCH");
         require(
             userFeesInfo[msg.sender].stakedAmount > 0,
             "PushCoreV2::unstake: Invalid Caller"
@@ -902,7 +903,7 @@ contract PushCoreV2 is
     function harvestAll() public {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
-        uint256 rewards = harvest(msg.sender, currentEpoch - 2);
+        uint256 rewards = harvest(msg.sender, currentEpoch - 1);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
     }
 
@@ -950,7 +951,7 @@ contract PushCoreV2 is
         );
 
         require(
-            currentEpoch > _tillEpoch+1,
+            currentEpoch > _tillEpoch,
             "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
         );
         require(
@@ -1059,7 +1060,7 @@ contract PushCoreV2 is
             uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
             
             if (_epochGap > 1) {
-                 epochRewards[_currentEpoch - 2] += availableRewardsPerEpoch;
+                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
             } else {
                 epochRewards[_currentEpoch] += availableRewardsPerEpoch;
             }
