@@ -13,7 +13,7 @@ pragma experimental ABIEncoderV2;
 import "./EPNSCoreStorageV1_5.sol";
 import "./EPNSCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IUniswapV2Router.sol";
+// import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
 import "../interfaces/ITokenBridge.sol";
 
@@ -117,19 +117,19 @@ contract PushCoreV2 is
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
-        daiAddress = _daiAddress;
-        aDaiAddress = _aDaiAddress;
-        WETH_ADDRESS = _wethAddress;
-        REFERRAL_CODE = _referralCode;
+        // daiAddress = _daiAddress;
+        // aDaiAddress = _aDaiAddress;
+        // WETH_ADDRESS = _wethAddress;
+        // REFERRAL_CODE = _referralCode;
         PUSH_TOKEN_ADDRESS = _pushTokenAddress;
-        UNISWAP_V2_ROUTER = _uniswapRouterAddress;
-        lendingPoolProviderAddress = _lendingPoolProviderAddress;
+        // UNISWAP_V2_ROUTER = _uniswapRouterAddress;
+        // lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // PUSH Amount that will be charged as Protocol Pool Fees
         MIN_POOL_CONTRIBUTION = 50 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
-        ADJUST_FOR_FLOAT = 10**7;
+        ADJUST_FOR_FLOAT = 10 ** 7;
         groupLastUpdate = block.number;
         groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
 
@@ -142,28 +142,28 @@ contract PushCoreV2 is
     SETTER & HELPER FUNCTIONS
 
     *************** */
-    function onlyPushChannelAdmin() private {
+    function onlyPushChannelAdmin() private view {
         require(
             msg.sender == pushChannelAdmin,
             "PushCoreV2::onlyPushChannelAdmin: Invalid Caller"
         );
     }
 
-    function onlyGovernance() private {
+    function onlyGovernance() private view {
         require(
             msg.sender == governance,
             "PushCoreV2::onlyGovernance: Invalid Caller"
         );
     }
 
-    function onlyActivatedChannels(address _channel) private {
+    function onlyActivatedChannels(address _channel) private view {
         require(
             channels[_channel].channelState == 1,
             "PushCoreV2::onlyActivatedChannels: Invalid Channel"
         );
     }
 
-    function onlyChannelOwner(address _channel) private {
+    function onlyChannelOwner(address _channel) private view {
         require(
             ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
                 (msg.sender == pushChannelAdmin && _channel == address(0x0))),
@@ -190,7 +190,7 @@ contract PushCoreV2 is
         onlyGovernance();
         require(
             _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::setFeeAmount: Invalid Fee"
+            "PushCoreV2::setFeeAmount: Invalid Fees"
         );
         FEE_AMOUNT = _newFees;
     }
@@ -232,6 +232,7 @@ contract PushCoreV2 is
 
     function transferPushChannelAdminControl(address _newAdmin) external {
         onlyPushChannelAdmin();
+
         require(
             _newAdmin != address(0),
             "PushCoreV2::transferPushChannelAdminControl: Invalid Address"
@@ -280,7 +281,7 @@ contract PushCoreV2 is
 
         require(
             _amount >= requiredFees,
-            "PushCoreV2::updateChannelMeta: Insufficient Deposit Amount"
+            "PushCoreV2::updateChannelMeta: Insufficient Amount"
         );
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amount);
         channelUpdateCounter[_channel] = updateCounter;
@@ -313,18 +314,18 @@ contract PushCoreV2 is
     ) external whenNotPaused {
         require(
             _amount >= ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
+            "PushCoreV2::_createChannelWithPUSH: Insufficient Amount"
         );
         require(
             channels[msg.sender].channelState == 0,
-            "PushCoreV2::onlyInactiveChannels: Channel already Activated"
+            "PushCoreV2::onlyInactiveChannels: Channel is Active"
         );
         require(
             (_channelType == ChannelType.InterestBearingOpen ||
                 _channelType == ChannelType.InterestBearingMutual ||
                 _channelType == ChannelType.TimeBound ||
                 _channelType == ChannelType.TokenGaited),
-            "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
+            "PushCoreV2::onlyUserAllowedChannelType: Invalid Type"
         );
 
         emit AddChannel(msg.sender, _channelType, _identity);
@@ -379,7 +380,7 @@ contract PushCoreV2 is
         if (_channelType == ChannelType.TimeBound) {
             require(
                 _channelExpiryTime > block.timestamp,
-                "PushCoreV2::createChannel: Invalid channelExpiryTime"
+                "PushCoreV2::createChannel: Invalid ExpiryTime"
             );
             channels[_channel].expiryTime = _channelExpiryTime;
         }
@@ -415,10 +416,9 @@ contract PushCoreV2 is
      *         - It transfers back refundable tokenAmount back to the USER.
      **/
 
-    function destroyTimeBoundChannel(address _channelAddress)
-        external
-        whenNotPaused
-    {
+    function destroyTimeBoundChannel(
+        address _channelAddress
+    ) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
         Channel memory channelData = channels[_channelAddress];
 
@@ -492,7 +492,7 @@ contract PushCoreV2 is
         onlyActivatedChannels(msg.sender);
         require(
             _amountDeposited >= ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::createChannelSettings: Insufficient Funds Passed"
+            "PushCoreV2::createChannelSettings: Insufficient Funds"
         );
 
         string memory notifSetting = string(
@@ -654,11 +654,9 @@ contract PushCoreV2 is
      * @param    _channel Address of the channel to be Verified
      * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary verification
      **/
-    function getChannelVerfication(address _channel)
-        public
-        view
-        returns (uint8 verificationStatus)
-    {
+    function getChannelVerfication(
+        address _channel
+    ) public view returns (uint8 verificationStatus) {
         address verifiedBy = channels[_channel].verifiedBy;
         bool logicComplete = false;
 
@@ -710,7 +708,7 @@ contract PushCoreV2 is
         uint8 callerVerified = getChannelVerfication(msg.sender);
         require(
             callerVerified > 0,
-            "PushCoreV2::verifyChannel: Caller is not verified"
+            "PushCoreV2::verifyChannel: Unverified Caller"
         );
 
         // Check if channel is verified
@@ -732,7 +730,7 @@ contract PushCoreV2 is
      * @dev       Channel who verified this channel or Push Channel Admin can only revoke
      * @param    _channel Address of the channel to be unverified
      **/
-    function unverifyChannel(address _channel) public {
+    function unverifyChannel(address _channel) external {
         require(
             channels[_channel].verifiedBy == msg.sender ||
                 msg.sender == pushChannelAdmin,
@@ -777,11 +775,10 @@ contract PushCoreV2 is
     /**
      * @notice Returns the epoch ID based on the start and end block numbers passed as input
      **/
-    function lastEpochRelative(uint256 _from, uint256 _to)
-        public
-        view
-        returns (uint256)
-    {
+    function lastEpochRelative(
+        uint256 _from,
+        uint256 _to
+    ) public pure returns (uint256) {
         require(
             _to >= _from,
             "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow"
@@ -794,11 +791,10 @@ contract PushCoreV2 is
      * @dev    Formulae for reward calculation:
      *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at EPOCH(n)
      **/
-    function calculateEpochRewards(address _user, uint256 _epochId)
-        public
-        view
-        returns (uint256 rewards)
-    {
+    function calculateEpochRewards(
+        address _user,
+        uint256 _epochId
+    ) public view returns (uint256 rewards) {
         rewards = userFeesInfo[_user]
             .epochToUserStakedWeight[_epochId]
             .mul(epochRewards[_epochId])
@@ -936,10 +932,10 @@ contract PushCoreV2 is
      * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
      **/
-    function harvest(address _user, uint256 _tillEpoch)
-        internal
-        returns (uint256 rewards)
-    {
+    function harvest(
+        address _user,
+        uint256 _tillEpoch
+    ) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
 
@@ -969,12 +965,7 @@ contract PushCoreV2 is
             epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
 
-        emit RewardsHarvested(
-            _user,
-            rewards,
-            nextFromEpoch,
-            _tillEpoch
-        );
+        emit RewardsHarvested(_user, rewards, nextFromEpoch, _tillEpoch);
     }
 
     /**
@@ -997,9 +988,10 @@ contract PushCoreV2 is
      *                  - While updating epochs between lastStaked & current Epochs, if any epoch has zero value for totalStakedWeight, update it with current totalStakedWeight value of the protocol
      *                  - For currentEpoch, initialize the epoch id with updated weight values for epochToUserStakedWeight & epochToTotalStakedWeight
      */
-    function _adjustUserAndTotalStake(address _user, uint256 _userWeight)
-        internal
-    {
+    function _adjustUserAndTotalStake(
+        address _user,
+        uint256 _userWeight
+    ) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
         uint256 userStakedWeight = userFeesInfo[_user].stakedWeight;
