@@ -117,13 +117,13 @@ contract PushCoreV2 is
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
-        // daiAddress = _daiAddress;
-        // aDaiAddress = _aDaiAddress;
-        // WETH_ADDRESS = _wethAddress;
-        // REFERRAL_CODE = _referralCode;
+        daiAddress = _daiAddress;
+        aDaiAddress = _aDaiAddress;
+        WETH_ADDRESS = _wethAddress;
+        REFERRAL_CODE = _referralCode;
         PUSH_TOKEN_ADDRESS = _pushTokenAddress;
-        // UNISWAP_V2_ROUTER = _uniswapRouterAddress;
-        // lendingPoolProviderAddress = _lendingPoolProviderAddress;
+        UNISWAP_V2_ROUTER = _uniswapRouterAddress;
+        lendingPoolProviderAddress = _lendingPoolProviderAddress;
 
         FEE_AMOUNT = 10 ether; // PUSH Amount that will be charged as Protocol Pool Fees
         MIN_POOL_CONTRIBUTION = 50 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
