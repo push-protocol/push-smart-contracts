@@ -92,7 +92,7 @@ module.exports = {
       },
     },
     polygonMumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: ` https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },

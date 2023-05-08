@@ -20,7 +20,11 @@ const deploy = {
     },
     localhost: {
       version: 1
+    },
+    polygonMumbai: {
+      version: 1
     }
+    
   },
   args: {
     epnsProxyAddress: null,
