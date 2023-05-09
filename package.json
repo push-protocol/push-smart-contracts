@@ -41,6 +41,7 @@
     "solidity-bytes-utils": "^0.0.9"
   },
   "devDependencies": {
+    "hardhat-contract-sizer": "^2.8.0",
     "moment": "^2.29.1",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.17"

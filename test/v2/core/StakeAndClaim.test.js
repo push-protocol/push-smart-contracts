@@ -1,9 +1,9 @@
 const { ethers, waffle } = require("hardhat");
 
-const { tokensBN, bn } = require("../../helpers/utils");
+const { tokensBN, bn } = require("../../../helpers/utils");
 
-const { epnsContractFixture, tokenFixture } = require("../common/fixturesV2");
-const { expect } = require("../common/expect");
+const { epnsContractFixture, tokenFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const { parseEther } = require("ethers/lib/utils");
 const createFixtureLoader = waffle.createFixtureLoader;
 
@@ -62,7 +62,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
   describe("EPNS CORE V2: Stake and Claim Tests", () => {
     const CHANNEL_TYPE = 2;
-    const EPOCH_DURATION = 21* 7160; // number of blocks = 143200
+    const EPOCH_DURATION =  21 * 7156;
     const TEST_CHANNEL_CTX = ethers.utils.toUtf8Bytes(
       "test-channel-hello-world"
     );
@@ -261,6 +261,18 @@ describe("EPNS CoreV2 Protocol", function () {
       }
     };
 
+    const getCurrentEpoch = async() => {
+      const genesisBlock = await EPNSCoreV1Proxy.genesisEpoch()
+      const currentBlock = await getCurrentBlock();
+      
+      const currentEpochNumber = await EPNSCoreV1Proxy.lastEpochRelative(
+        genesisBlock,  
+        currentBlock.number
+      );
+
+      return currentEpochNumber;
+    }
+
     const getAdminRewards = async()=>{
       const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
         EPNSCoreV1Proxy.address
@@ -289,7 +301,7 @@ describe("EPNS CoreV2 Protocol", function () {
           genesisBlock.number
         );
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV2:lastEpochRelative:: Relative Blocnumber Overflow"
+          "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow"
         );
       });
 
@@ -345,6 +357,7 @@ describe("EPNS CoreV2 Protocol", function () {
         const tenBlocks = 10;
 
         await passBlockNumers(fiveBlocks * EPOCH_DURATION);
+        const stakeEpoch = getCurrentEpoch();
         // Stakes Push Tokens after 5 blocks, at 6th EPOCH
         await stakePushTokens(BOBSIGNER, tokensBN(10));
         const bobDetails_afterStake = await EPNSCoreV1Proxy.userFeesInfo(BOB);
@@ -354,6 +367,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await passBlockNumers(tenBlocks * EPOCH_DURATION);
+        const harvestEpoch = getCurrentEpoch();
         // Harvests Push Tokens after 15 blocks, at 16th EPOCH
         await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
         const bobDetails_afterClaim = await EPNSCoreV1Proxy.userFeesInfo(BOB);
@@ -523,9 +537,6 @@ describe("EPNS CoreV2 Protocol", function () {
           const currentBlock = await getCurrentBlock();
           await expect(bobDetails.stakedAmount).to.be.equal(0);
           await expect(bobDetails.stakedWeight).to.be.equal(0);
-          await expect(bobDetails.lastClaimedBlock).to.be.equal(
-            currentBlock.number
-          );
         });
 
         it("Users cannot claim rewards after unstaking ✅", async function () {
@@ -546,28 +557,8 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::unstake: Caller is not a staker"
+            "PushCoreV2::unstake: Invalid Caller"
           );
-        });
-
-        it("BOB Stakes and Unstakes in same Epoch- Should get ZERO rewards ✅", async function () {
-          const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 1;
-          const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
-
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await stakePushTokens(BOBSIGNER, tokensBN(100));
-          // Fast Forward 1/2 epoch, lands in same EPOCH more epochs
-          await passBlockNumers(EPOCH_DURATION / 2);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
-
-          const bobLastStakedEpoch = await getLastStakedEpoch(BOB);
-          const bobLastClaimedEpochId = await getLastRewardClaimedEpoch(BOB);
-          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-
-          await expect(rewards_bob).to.be.equal(0);
-          await expect(bobLastStakedEpoch).to.be.equal(oneEpochs + 1);
-          await expect(bobLastClaimedEpochId).to.be.equal(oneEpochs + 1);
         });
 
         it("Unstaking function should transfer accurate amount of PUSH tokens to User ✅", async function () {
@@ -591,6 +582,37 @@ describe("EPNS CoreV2 Protocol", function () {
 
           await expect(bobBalanceIncrease).to.be.equal(totalClaimableAmount);
         });
+
+        it("Unstaking should only work after 1 complete EPOCH", async function () {
+
+          await passBlockNumers(1 * EPOCH_DURATION); 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          // BOB Alice STAKE at EPOCH 2
+          await stakePushTokens(BOBSIGNER, tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(100));
+          
+          // Jump to end blocks of EPOCH 2 - Still Epoch 2
+          const EPOCH_DURATION_EndBlocks =  EPOCH_DURATION - 100;
+          await passBlockNumers(1 * EPOCH_DURATION_EndBlocks);
+
+          // Bob tries to Claim at the end of EPOCH (without complete 1 complete epoch)
+          const bobUnstake_tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
+
+          await expect(bobUnstake_tx).to.be.revertedWith("PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH");
+
+          // Jump to Epoch 3
+          await passBlockNumers(1 * EPOCH_DURATION);
+          // Alice Unstakes at EPOCH 3
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          
+          expect(rewards_alice).to.not.equal(0);
+          expect(rewards_bob).to.be.equal(0);
+        });
+
+
       });
 
       describe("🟢 calcEpochRewards Tests: Calculating the accuracy of claimable rewards", function () {
@@ -631,7 +653,7 @@ describe("EPNS CoreV2 Protocol", function () {
           // Fast Forward 5 more epochs
           await passBlockNumers(fiveEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,6);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(6);
           const reward_admin = await getAdminRewards();
 
           const bobLastStakedEpoch = await getLastStakedEpoch(BOB);
@@ -675,7 +697,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(
             ALICE
           );
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,6);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(6);
           const adinRew = await getAdminRewards();
 
           await expect(bobLastStakedEpoch).to.be.equal(oneEpochs + 1);
@@ -719,7 +741,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,6);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(6);
           const adinRew = await getAdminRewards();
 
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -791,10 +813,10 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 2;
-          const fiveEpochs = 10;
+          const oneEpochs = 1;
+          const fiveEpochs = 5;
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200)); // At epoch 3
 
           await stakePushTokens(BOBSIGNER, tokensBN(100));
           await stakePushTokens(ALICESIGNER, tokensBN(200));
@@ -803,7 +825,7 @@ describe("EPNS CoreV2 Protocol", function () {
 
           await passBlockNumers(fiveEpochs * EPOCH_DURATION);
           // // Harvests Push Tokens after 15 blocks, at 16th EPOCH
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll(); // at Epoch 13
           await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
           await EPNSCoreV1Proxy.connect(CHARLIESIGNER).harvestAll();
           await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).harvestAll();
@@ -825,8 +847,8 @@ describe("EPNS CoreV2 Protocol", function () {
         // Expected Result = BOB_REWARDS > Alice > Charlie > Channel_CREATOR
         it("TEST CHECKS-5.1: 4 Users Stakes different amount and Harvests together- Last Claimer & Major Staker Gets More(First Staker stakes the MOST) ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 2;
-          const fiveEpochs = 10;
+          const oneEpochs = 1;
+          const fiveEpochs = 5;
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
 
@@ -899,10 +921,10 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("BOB Stakes and Harvests alone in same Epoch- Should get ZERO rewards ✅", async function () {
           const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
-          const oneEpochs = 1;
+          const twoEpochs = 2;
           const totalPoolFee = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();
 
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(twoEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(200));
 
           await stakePushTokens(BOBSIGNER, tokensBN(100));
@@ -915,8 +937,8 @@ describe("EPNS CoreV2 Protocol", function () {
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
 
           await expect(rewards_bob).to.be.equal(0);
-          await expect(bobLastStakedEpoch).to.be.equal(oneEpochs + 1);
-          await expect(bobLastClaimedEpochId).to.be.equal(oneEpochs + 1);
+          await expect(bobLastStakedEpoch).to.be.equal(twoEpochs + 1);
+          await expect(bobLastClaimedEpochId).to.be.equal(twoEpochs + 1);
         });
       });
 
@@ -937,7 +959,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await passBlockNumers(3 * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
           
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,5);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(4);
           const rewards_admin = await getAdminRewards();
           
 
@@ -966,7 +988,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await passBlockNumers(3 * EPOCH_DURATION);
           await passBlockNumers(6 * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,11);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(10);
 
           //console rewards of bob
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -991,8 +1013,8 @@ describe("EPNS CoreV2 Protocol", function () {
           await stakePushTokens(BOBSIGNER, tokensBN(100));
 
           await passBlockNumers(3 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 5);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,5);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(4);
           const rewards_admin = await getAdminRewards();
 
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
@@ -1013,10 +1035,10 @@ describe("EPNS CoreV2 Protocol", function () {
           await stakePushTokens(BOBSIGNER, tokensBN(100));
 
           await passBlockNumers(3 * EPOCH_DURATION);
-          const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 10);
+          const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(10);
 
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::cannot harvest future epoch"
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
           );
         });
 
@@ -1030,39 +1052,37 @@ describe("EPNS CoreV2 Protocol", function () {
           await stakePushTokens(BOBSIGNER, tokensBN(100));
 
           await passBlockNumers(3 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 4);
-          const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 4);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);
+          const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV2::harvestPaginated::epoch should be sequential without repetation"
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
           );
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4, 5);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4);
         });
 
-        it("allows harvesting with for epoch ranges", async function () {
+        it("allows harvesting for epoch ranges for a Single Staker", async function () {
           // Epoch passes
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(1 * EPOCH_DURATION);
 
           // Fees gets added & BOB stakes
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           await stakePushTokens(BOBSIGNER, tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(1 * EPOCH_DURATION);
 
           // More fees added
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(1 * EPOCH_DURATION);
 
           // More fees added
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 5);
+          await passBlockNumers(3 * EPOCH_DURATION);
 
           // harvesting time
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(6);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(6);
+
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,5);
-          const rewards_admin = await getAdminRewards();
-
+          const rewards_admin = await getAdminRewards(); 
 
           expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
             ethers.utils.parseEther("300").sub(rewards_admin),
@@ -1070,42 +1090,37 @@ describe("EPNS CoreV2 Protocol", function () {
           );
         });
 
-        it("allows cummulative harvesting with epoch ranges", async function () {
-          // Epoch passes
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          // Fees gets added & BOB stakes
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await stakePushTokens(BOBSIGNER, tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          // More fees added
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          // More fees added
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          // More fees added
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3, 5);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5, 6);
-
-          // harvesting time
-          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,6);
-          const rewards_admin = await getAdminRewards();
-
-
-          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
-            ethers.utils.parseEther("400").sub(rewards_admin),
-            ethers.utils.parseEther("0.0000001")
-          );
+        it("allows cummulative harvesting with epoch ranges", async function () {	
+          // Epoch passes	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          // Fees gets added & BOB stakes	
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));	
+          await stakePushTokens(BOBSIGNER, tokensBN(100));	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          // More fees added	
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          // More fees added	
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          // More fees added	
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);	
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);	
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5);	
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(7);	
+          	
+          // harvesting time	
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);	
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(7);	
+          const rewards_admin = await getAdminRewards();	
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(	
+            ethers.utils.parseEther("400").sub(rewards_admin),	
+            ethers.utils.parseEther("0.0000001")	
+          );	
         });
-
         it("yields same reward with `harvestInPeriod` & `harvestAll`", async function () {
           // Epoch passes
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
@@ -1119,27 +1134,30 @@ describe("EPNS CoreV2 Protocol", function () {
           // More fees added
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
-
-          // More fees added
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
 
           // More fees added
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+
+          // More fees added
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
 
           // harvesting time
           await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 3);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3, 5);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5, 6);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(8);
 
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
           const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(
             ALICE
           );
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,6);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(8);
           const rewards_admin = await getAdminRewards();
 
           // TODO: fix with the constant block number
@@ -1165,11 +1183,11 @@ describe("EPNS CoreV2 Protocol", function () {
           await stakePushTokens(BOBSIGNER, tokensBN(100));
 
           await passBlockNumers(3 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 5);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4);
 
           const rewards_bob_1 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
           await passBlockNumers(3 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5, 8);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(7);
           const rewards_bob_2 = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
 
           expect(rewards_bob_2).to.equal(rewards_bob_1);
@@ -1180,10 +1198,11 @@ describe("EPNS CoreV2 Protocol", function () {
         const oneEpochs = 1;
         it("allows admin to harvest", async function () {
           //pass 1 epoch add pool fees
+          await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,3);
+          await passBlockNumers(3 * EPOCH_DURATION);
+
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(4);
 
           const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
             EPNSCoreV1Proxy.address
@@ -1196,8 +1215,9 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("yields `0` if no pool funds added", async function () {
           //pass 1 epoch add pool fees
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,2);
+          await passBlockNumers(2 * EPOCH_DURATION);
+          
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(2);
           const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
             EPNSCoreV1Proxy.address
           );
@@ -1209,16 +1229,17 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("allows only admin to harvest", async function () {
           //pass 1 epoch add pool fees
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
+          await passBlockNumers(2 * EPOCH_DURATION);
+          
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
 
-          const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(1,2);
+          const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(2);
           
           await expect(tx).to.be.revertedWith(
-            "EPNSCoreV1_5::onlyGovernance: Caller not Governance"
+            "PushCoreV2::onlyGovernance: Invalid Caller"
           );
 
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,2);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(2);
           const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
             EPNSCoreV1Proxy.address
           );
@@ -1236,9 +1257,9 @@ describe("EPNS CoreV2 Protocol", function () {
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await stakePushTokens(BOBSIGNER, tokensBN(100));
 
-          await passBlockNumers(3 * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(1, 5);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,5);
+          await passBlockNumers(4 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(5);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(5);
 
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
           const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
@@ -1255,6 +1276,12 @@ describe("EPNS CoreV2 Protocol", function () {
 
         it("dao gets all rewards if no one stakes", async function () {
           //pass 1 epoch add pool fees
+          // Admin stakes ---> intializeStake ---> Admin stakes 1 PSUH
+          // 300 PUSH is added to the pool funds
+          // 4 epoch passess --- funds collected 300 PUSH
+          // Not admin dao harvest ---> 1 to 4 epoch
+          // Admin/DAO should get 300 PUSH
+          // But getting `0`
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
 
@@ -1264,8 +1291,8 @@ describe("EPNS CoreV2 Protocol", function () {
           await passBlockNumers(oneEpochs * EPOCH_DURATION);
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
 
-          await passBlockNumers(oneEpochs * EPOCH_DURATION);
-          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(1,5);
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(4);
 
           const rewards_admin = await EPNSCoreV1Proxy.usersRewardsClaimed(
             EPNSCoreV1Proxy.address
@@ -1597,23 +1624,171 @@ describe("EPNS CoreV2 Protocol", function () {
           );
         });
 
-        it("TEST CHECKS-10: Staking and Unstaking at Same Epoch should not lead to increase in rewards-(for previously staked users)✅", async function () {
+        // UNSTAKING IN SAME EPOCH IS NO MORE ALLOWED - No need of this test case
+        it.skip("TEST CHECKS-10: Staking and Unstaking at Same Epoch should not lead to increase in rewards-(for previously staked users)✅", async function () {
           // const genesisEpoch = await EPNSCoreV1Proxy.genesisEpoch();
           const stakeAmount = tokensBN(100);
           const bobDetails = await EPNSCoreV1Proxy.userFeesInfo(BOB);
           const userWeight = await bobDetails.stakedWeight;
           expect(userWeight).to.be.equal(0);
           const fourEpochs = 4;
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           // Bob Stakes at EPOCH 1 first
           await stakePushTokens(BOBSIGNER, stakeAmount);
+          
           // At epoch 5, BOB stakes again and tries to unstake all his stake.
           await passBlockNumers(fourEpochs * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
           await stakePushTokens(BOBSIGNER, stakeAmount);
           await EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
+          const expected_rewards = tokensBN(100);
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-          console.log("Rewards Bob", rewards_bob.toString());
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            expected_rewards,
+            ethers.utils.parseEther("100")
+          );
         });
+
+        it("TEST CHECKS-11: Auditor's Failing Test - Reward Storage Fix)✅", async function () {
+          // 100 rewards are added.
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+
+          //Bob stakes 50 in epoch 1. 100 rewards are recorded in epoch 0.
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+          //2. Alice stakes 50 in epoch 1.
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          // 3. Time progresses to epoch 3
+          await passBlockNumers(2 * EPOCH_DURATION);
+          // 10 new rewards are added.     
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(10)); 
+          // Bob harvests - Newly added rewards get assigned to EPOCH 1 (currentEpoch - 2)
+
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+          // Alice harvests
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          console.log(
+            `BOB got ${rewards_bob.toString()} Rewards`
+          );
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+          console.log(
+            `Alice got ${rewards_alice.toString()} Rewards`
+          );
+
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.000001")
+          );
+        });
+
+        it("TEST CHECKS-12: Unskating should release correct claimable rewards even in case idle epochs) ✅", async function () {
+          // Rewards are added for Epoch 1 
+          // Alice stakes in epoch 1.
+          // Bob Stakes in Epoch 1
+          // Jump to epoch 2
+          // Rewards added in Epoch 2
+          // Jump to epoch 5 - No Activity till Epoch 5
+          // Alice unskakes at Epoch 6
+          // Bob Harvests at Epoch 6
+          // Should get equal Rewards
+
+           // Rewards are added for Epoch 1 
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          // Alice stakes in epoch 1.
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          // Bob stakes at epoch 1.
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch - 2
+          // Rewards are added for Epoch 2
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+
+          await passBlockNumers(4 * EPOCH_DURATION); // Jump to next Epoch - 6
+          // Alice unskakes at Epoch 6
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+          // Bob Harvests at Epoch 6
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+                   
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+          
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.000001")
+          );
+        });
+
+
+        it("Temp Test CHECKS-16: Stakes-Unstake-ReSTAKE test between BOB and ALICE) ✅", async function () {
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION);
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+          
+          // Alice unstakes in epoch 2 but Bob Holds
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).unstake();
+           // Alice stakes again in epoch 2
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+  
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);     
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);          
+
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+          console.log(
+            `BOB got ${rewards_bob.toString()} Rewards`
+          );
+          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
+            rewards_alice,
+            ethers.utils.parseEther("0.001")
+          );
+
+        });
+
+        it("TEST CHECKS-13: Auditor's Failing Test regarding additional IF Statement) ✅", async function () {
+          // Alice stakes in epoch 1
+          await stakePushTokens(ALICESIGNER, tokensBN(50));
+          
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          // Bob stakes at epoch 2.
+          await stakePushTokens(BOBSIGNER, tokensBN(50));
+          // Reward tokens are transferred to the contract, still epoch 2.
+          await EPNSCoreV1Proxy.connect(ADMINSIGNER).addPoolFees(tokensBN(100));
+
+          // Alice Harvests at epoch 4 - {Delayed withdrawals}
+          await EPNSCoreV1Proxy.connect(ALICESIGNER).harvestAll();
+
+          await passBlockNumers(1 * EPOCH_DURATION); // Jump to next Epoch
+
+          // BOB Harvests at epoch 5 - {Delayed withdrawals}
+          await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestAll();
+                   
+          const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
+          const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
+          
+          console.log(
+            `ALICE got ${rewards_alice.toString()} Rewards`
+          );
+          console.log(
+            `BOB got ${rewards_bob.toString()} Rewards`
+          );
+          
+          // Alice takes all REWARDS in this case. BOB Should get some rewards
+          expect(rewards_bob).to.not.equal(0);
+        });
+
+
       });
       /**Test Cases Ends Here **/
     });
