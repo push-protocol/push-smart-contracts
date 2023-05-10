@@ -36,7 +36,7 @@ async function setupAllContracts(versionDetails) {
   // custom deploy (to use deployed addresses dynamically for example:)
   const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
 
-  const EPNSCommV3 = await deployContract("EPNSCommV3", [], "EPNSCommV3");
+  const EPNSCommV3 = await deployContract("PushCommV3", [], "EPNSCommV3");
   deployedContracts.push(EPNSCommV3)
 
   const EPNSCommAdmin = await ethers.getContractFactory("EPNSCommAdmin")
