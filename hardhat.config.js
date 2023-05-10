@@ -67,38 +67,28 @@ module.exports = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      accounts: [process.env.PRIVATE2],
     },
     polygonMumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      url: `https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts: [process.env.PRIVATE],
+    },
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      accounts: [process.env.PRIVATE]
+    },
+    zkEVMTestnet: {
+      url: "https://rpc.public.zkevm-test.net	",
+      accounts: [process.env.PRIVATE]
+    },
+    optimismGoerli: {
+      url: "https://goerli.optimism.io",
+      accounts: [process.env.PRIVATE]
     },
     polygon: {
-      url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://polygon-rpc.com/`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
@@ -108,6 +98,20 @@ module.exports = {
       aaccounts: {
         mnemonic: mnemonic(),
       },
+    },
+    bscMainnet: {
+      url: "https://bsc-dataseed1.binance.org/",
+      accounts: [process.env.PRIVATE]
+    },
+
+    zkEVMMainnet: {
+      url: "https://zkevm-rpc.com	",
+      accounts: [process.env.PRIVATE]
+    },
+    optimismMainnet: {
+      url: "https://mainnet.optimism.io",
+      accounts: [process.env.PRIVATE]
+
     },
 
     xdai: {
@@ -119,10 +123,10 @@ module.exports = {
     },
   },
   etherscan: {
-   // Your API key for Etherscan and Polygonscan
-   apiKey: process.env.ETHERSCAN_API,
-   //apiKey: process.env.POLYGONSCAN_API
- },
+    // Your API key for Etherscan and Polygonscan
+    apiKey: process.env.ETHERSCAN_API,
+    //apiKey: process.env.POLYGONSCAN_API
+  },
   solidity: {
     version: "0.6.11",
     settings: {
@@ -202,8 +206,8 @@ task(
 
       console.log(
         "🔐 Account Generated as " +
-          address +
-          ".txt and set as mnemonic in packages/buidler"
+        address +
+        ".txt and set as mnemonic in packages/buidler"
       );
       console.log(
         "💬 Use 'npx hardhat account' to get more information about the deployment account."
@@ -272,7 +276,7 @@ task(
           console.log(" -- " + n + " --  -- -- 📡 ");
           console.log("   balance: " + ethers.utils.formatEther(balance));
           console.log(
-              // eslint-disable-next-line no-await-in-loop
+            // eslint-disable-next-line no-await-in-loop
             "   nonce: " + (await provider.getTransactionCount(address))
           );
         } catch (e) {
@@ -319,7 +323,7 @@ task("balance", "Prints an account's balance")
     );
     console.log(formatUnits(balance, "ether"), "ETH");
   }
-);
+  );
 
 function send(signer, txparams) {
   return signer.sendTransaction(txparams, (error, transactionHash) => {
@@ -375,4 +379,4 @@ task("send", "Send ETH")
 
     return send(fromSigner, txRequest);
   }
-);
+  );
