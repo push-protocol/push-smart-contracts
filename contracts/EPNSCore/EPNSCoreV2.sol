@@ -73,7 +73,7 @@ contract PushCoreV2 is
         address indexed newOwner
     );
     event Staked(address indexed user, uint256 indexed amountStaked);
-    event UnStaked(address indexed user, uint256 indexed amountUnstaked);
+    event Unstaked(address indexed user, uint256 indexed amountUnstaked);
     event RewardsHarvested(
         address indexed user,
         uint256 indexed rewardAmount,
@@ -896,8 +896,8 @@ contract PushCoreV2 is
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
-        
-        emit UnStaked(msg.sender, stakedAmount);
+
+        emit Unstaked(msg.sender, stakedAmount);
     }
 
     /**
