@@ -7,6 +7,7 @@ require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 require('hardhat-contract-sizer');
+require('hardhat-storage-layout');
 
 
 const { ethers } = require("ethers");
@@ -69,7 +70,11 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: [process.env.PRIVATE2],
+      accounts: [process.env.PRIVATE],
+    },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+      accounts: [process.env.PRIVATE]
     },
     polygonMumbai: {
       url: `https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
@@ -85,6 +90,10 @@ module.exports = {
     },
     optimismGoerli: {
       url: "https://goerli.optimism.io",
+      accounts: [process.env.PRIVATE]
+    },
+    linea: {
+      url: `https://rpc.goerli.linea.build/`,
       accounts: [process.env.PRIVATE]
     },
     polygon: {
@@ -123,10 +132,23 @@ module.exports = {
     },
   },
   etherscan: {
-    // Your API key for Etherscan and Polygonscan
-    apiKey: process.env.ETHERSCAN_API,
-    //apiKey: process.env.POLYGONSCAN_API
+    apiKey: {
+      linea: process.env.ETHERSCAN_API,
+      mainnet: process.env.ETHERSCAN_API,
+      polygon: process.env.ETHERSCAN_API
+    },
+    customChains: [
+      {
+        network: "linea",
+        chainId: 59140,
+        urls: {
+          apiURL: "https://explorer.goerli.linea.build/api",
+          browserURL: "https://explorer.goerli.linea.build/"
+        }
+      }
+    ]
   },
+
   solidity: {
     version: "0.6.11",
     settings: {
