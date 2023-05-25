@@ -26,7 +26,21 @@ const deploy = {
     },
     optimismMainnet: {
       version: 1
+    },
+    polygon: {
+      version: 1
+    },
+    linea: {
+      version: 1
+    },
+    bscMainnet: {
+      version: 1
+    },
+    xdai: {
+      version: 1
     }
+
+
   },
   args: {
     daiAddress: null,
