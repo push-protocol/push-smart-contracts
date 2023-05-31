@@ -70,31 +70,45 @@ module.exports = {
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: [process.env.PRIVATE],
+      accounts: {
+        mnemonic: mnemonic(),
+      },
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     polygonMumbai: {
       url: `https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: [process.env.PRIVATE],
+      accounts: {
+        mnemonic: mnemonic(),
+      },
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     zkEVMTestnet: {
       url: "https://rpc.public.zkevm-test.net	",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     optimismGoerli: {
       url: "https://goerli.optimism.io",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     linea: {
       url: `https://rpc.goerli.linea.build/`,
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     polygon: {
       url: `https://polygon-rpc.com/`, // <---- YOUR INFURA ID! (or it won't work)
@@ -110,16 +124,22 @@ module.exports = {
     },
     bscMainnet: {
       url: "https://bsc-dataseed1.binance.org/",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
 
     zkEVMMainnet: {
       url: "https://zkevm-rpc.com	",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
     },
     optimismMainnet: {
       url: "https://mainnet.optimism.io",
-      accounts: [process.env.PRIVATE]
+      accounts: {
+        mnemonic: mnemonic(),
+      }
 
     },
 
@@ -135,7 +155,9 @@ module.exports = {
     apiKey: {
       linea: process.env.ETHERSCAN_API,
       mainnet: process.env.ETHERSCAN_API,
-      polygon: process.env.ETHERSCAN_API
+      polygon: process.env.POLYGONSCAN_API,
+      sepolia:process.env.ETHERSCAN_API,
+      goerli:process.env.ETHERSCAN_API
     },
     customChains: [
       {
