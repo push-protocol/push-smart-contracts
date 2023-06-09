@@ -860,7 +860,7 @@ contract PushCoreV2 is
             .lastClaimedBlock == 0
             ? genesisEpoch
             : userFeesInfo[_staker].lastClaimedBlock;
-
+        totalStakedAmount += _amount;
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(_staker, userWeight);
     }
@@ -896,6 +896,7 @@ contract PushCoreV2 is
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
+        totalStakedAmount -= stakedAmount;
 
         emit Unstaked(msg.sender, stakedAmount);
     }
