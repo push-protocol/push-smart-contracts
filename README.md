@@ -1,147 +1,49 @@
-# push-smart-contracts
+<h1 align="center">
+    <a href="https://push.org/#gh-light-mode-only">
+    <img width='20%' height='10%' src="https://res.cloudinary.com/drdjegqln/image/upload/v1686227557/Push-Logo-Standard-Dark_xap7z5.png">
+    </a>
+    <a href="https://push.org/#gh-dark-mode-only">
+    <img width='20%' height='10%' src="https://res.cloudinary.com/drdjegqln/image/upload/v1686227558/Push-Logo-Standard-White_dlvapc.png">
+    </a>
+</h1>
+
+<p align="center">
+  <i align="center">Push Protocol is a web3 communication network, enabling cross-chain notifications and messaging for dapps, wallets, and services.🚀</i>
+</p>
+
+<h4 align="center">
+
+  <a href="https://discord.gg/pushprotocol">
+    <img src="https://img.shields.io/badge/discord-7289da.svg?style=flat-square" alt="discord">
+  </a>
+  <a href="https://twitter.com/pushprotocol">
+    <img src="https://img.shields.io/badge/twitter-18a1d6.svg?style=flat-square" alt="twitter">
+  </a>
+  <a href="https://www.youtube.com/@pushprotocol">
+    <img src="https://img.shields.io/badge/youtube-d95652.svg?style=flat-square&" alt="youtube">
+  </a>
+</h4>
+
+# Push Protocol Smart Contracts
+
+Welcome to the repository for the smart contracts of the Push Protocol. This repository contains the core code that powers our decentralized communication network. The Push Protocol is a web3 communication protocol that enables cross-chain notifications and messaging for decentralized applications (dApps), wallets, and services.
+
+Our smart contracts are the backbone of the Push Protocol, enabling the functionality that allows for on-chain and off-chain communication via user wallet addresses. This is done in an open, gasless, multichain, and platform-agnostic fashion.
+
+In this repository, you will find the contracts that handle various aspects of the Push Protocol, from channel creation and verification to notification sending and subscription handling. We also provide a suite of tests to ensure the robustness and security of our contracts.
+
+We invite you to explore, contribute, and help us build the future of web3 communication.
 
 
 
 ---
 
 ## 📚 Table of Contents
-- [📚 Table of Contents](#-table-of-contents)
-- [📂 Project Structure](#-project-structure)
-- [🧩 Modules](#-modules)
-- [🚀 Getting Started](#-getting-started)
-- [🗺 Roadmap](#-roadmap)
-- [🤝 Contributing](#-contributing)
+- [Modules](#-modules)
+- [Getting Started/Installation](#getting-started)
+- [Resources](#resources)
+- [Contributing](#contributing)
 
----
-
-
-
----
-
-
-<img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-github-open.svg" width="80" />
-
-## 📂 Project Structure
-
-
-```bash
-repo
-├── app.js
-├── contracts
-│   ├── EPNSComm
-│   │   ├── EPNSCommAdmin.sol
-│   │   ├── EPNSCommProxy.sol
-│   │   ├── EPNSCommStorageV1_5.sol
-│   │   ├── EPNSCommV1.sol
-│   │   └── EPNSCommV1_5.sol
-│   ├── EPNSCore
-│   │   ├── EPNSCoreAdmin.sol
-│   │   ├── EPNSCoreProxy.sol
-│   │   ├── EPNSCoreStorageV1_5.sol
-│   │   ├── EPNSCoreStorageV2.sol
-│   │   ├── EPNSCoreV1.sol
-│   │   ├── EPNSCoreV1_5.sol
-│   │   ├── EPNSCoreV1_Temp.sol
-│   │   └── TempStorage.sol
-│   ├── governance
-│   │   ├── EPNSBravoProxy.sol
-│   │   ├── GovernorBravo.sol
-│   │   ├── GovernorBravoInterfaces.sol
-│   │   ├── Timelock.sol
-│   │   └── VerzionedInitializable.sol
-│   ├── interfaces
-│   │   ├── IADai.sol
-│   │   ├── IEPNSCommV1.sol
-│   │   ├── IEPNSCore.sol
-│   │   ├── IERC1271.sol
-│   │   ├── ILendingPool.sol
-│   │   ├── ILendingPoolAddressesProvider.sol
-│   │   ├── IPUSH.sol
-│   │   ├── ITempStorage.sol
-│   │   └── IUniswapV2Router.sol
-│   ├── mocks
-│   │   ├── IUniswapV2RouterMock.sol
-│   │   ├── MockDai.sol
-│   │   └── MockERC1271.sol
-│   └── token
-│       ├── EPNS.args
-│       └── EPNS.sol
-├── hardhat.config.js
-├── helpers
-│   └── utils.js
-├── license-v1
-├── loaders
-│   ├── envVerifier.js
-│   ├── tokenAmountVerifier.js
-│   └── versionVerifier.js
-├── package-lock.json
-├── package.json
-├── scripts
-│   ├── 0_deploySample.js
-│   ├── 1_5_deployEPNSCoreV1_5.js
-│   ├── 1_deployEPNSCoreV1.js
-│   ├── 2_5_deployEPNSCommV1_5.js
-│   ├── 2_deployEPNSCommV1.js
-│   ├── 3_deployEPNSCoreV2.js
-│   ├── 4_deployEPNSCommV2.js
-│   ├── 5_deployEPNSCoreV3.js
-│   ├── 6_deployEPNSCommV3.js
-│   ├── 7_polygonDeployEPNSCommV1.js
-│   ├── 8_polygonDeployEPNSCommV2.js
-│   ├── temp_deployEPNSCoreV1_5.js
-│   └── versioncontrol
-│       ├── 0_deploySample.config.js
-│       ├── 1_5_deployEPNSCoreV1_5.config.js
-│       ├── 1_deployEPNSCoreV1.config.js
-│       ├── 2_5_deployEPNSCommV1_5.config.js
-│       ├── 2_deployEPNSCommV1.config.js
-│       ├── 3_deployEPNSCoreV2.config.js
-│       ├── 4_deployEPNSCommV2.config.js
-│       ├── 5_deployEPNSCoreV3.config.js
-│       ├── 6_deployEPNSCommV3.config.js
-│       ├── 7_polygonDeployEPNSCommV1.config.js
-│       ├── 8_polygonDeployEPNSCommV2.config.js
-│       └── temp_deployEPNSCoreV1_5.config.js
-├── test
-│   ├── benchmarks
-│   │   └── EPNSCoreV1.Benchmark.test.js
-│   ├── common
-│   │   ├── expect.js
-│   │   ├── fixtures.js
-│   │   └── fixtures_temp.js
-│   ├── time.js
-│   ├── v1
-│   │   ├── EPNSCommV1.MigrateSubscribers.js
-│   │   ├── EPNSCommV1.SendNotifs.js
-│   │   ├── EPNSCommV1.Subscribers.js
-│   │   ├── EPNSCoreV1.Basic.js
-│   │   ├── EPNSCoreV1.ChannelActivationCycles.js
-│   │   ├── EPNSCoreV1.ChannelCreation.js
-│   │   ├── EPNSCoreV1.ChannelCreationForAdmin.js
-│   │   ├── EPNSCoreV1.ChannelVerification.js
-│   │   ├── EPNSCoreV1.MigrateChannels.js
-│   │   └── EPNSCoreV1.readjustFSFunction.js
-│   └── v1_5
-│       ├── EPNSCommV1_5_SendNotification.test.js
-│       ├── EPNSCommV1_5_SendNotificationFromSig.test.js
-│       ├── EPNSCommV1_5_SubscribeBySig.test.js
-│       ├── EPNSCoreV1_5.ChannelCreationPush.test.js
-│       ├── EPNSCoreV1_5.ChannelStateCycle.test.js
-│       ├── EPNSCoreV1_5.OwnershipTransfer.test.js
-│       ├── EPNSCoreV1_5.Pausability.test.js
-│       ├── EPNSCoreV1_5.TimeBoundChannel.test.js
-│       ├── EPNSCoreV1_5.UpdateChannelMeta.test.js
-│       ├── EPNSCoreV1_Temp.AdjustPoolContribution.test.js
-│       └── EPNSCoreV1_Temp.Swap.test.js
-└── wallets
-    └── !noremove
-
-18 directories, 92 files
-```
-
----
-
-<img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-src-open.svg" width="80" />
 
 ## 🧩 Modules
 
@@ -374,7 +276,7 @@ repo
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 
 ### 🖥 Installation
@@ -391,42 +293,49 @@ cd push-smart-contracts
 
 3. Install the dependencies:
 ```sh
+npm install
 ```
 
 ### 🤖 Using push-smart-contracts
 
 ```sh
+cd contracts
 ```
 
 ### 🧪 Running Tests
 ```sh
+npx hardhat test
 ```
 
 ---
 
-## 🤝 Contributing
+## Resources
+- **[Website](https://push.org)** To checkout our Product.
+- **[Docs](https://docs.push.org/developers/)** For comprehensive documentation.
+- **[Blog](https://medium.com/push-protocol)** To learn more about our partners, new launches, etc.
+- **[Discord](discord.gg/pushprotocol)** for support and discussions with the community and the team.
+- **[GitHub](https://github.com/ethereum-push-notification-service)** for source code, project board, issues, and pull requests.
+- **[Twitter](https://twitter.com/pushprotocol)** for the latest updates on the product and published blogs.
 
-Contributions are always welcome! Please follow these steps:
-1. Fork the project repository. This creates a copy of the project on your account that you can modify without affecting the original project.
-2. Clone the forked repository to your local machine using a Git client like Git or GitHub Desktop.
-3. Create a new branch with a descriptive name (e.g., `new-feature-branch` or `bugfix-issue-123`).
-```sh
-git checkout -b new-feature-branch
-```
-4. Make changes to the project's codebase.
-5. Commit your changes to your local branch with a clear commit message that explains the changes you've made.
-```sh
-git commit -m 'Implemented new feature.'
-```
-6. Push your changes to your forked repository on GitHub using the following command
-```sh
-git push origin new-feature-branch
-```
-7. Create a pull request to the original repository.
-Open a new pull request to the original project repository. In the pull request, describe the changes you've made and why they're necessary.
-The project maintainers will review your changes and provide feedback or merge them into the main branch.
 
----
+## Contributing
+
+Push Protocol is an open source Project. We firmly believe in a completely transparent development process and value any contributions. We would love to have you as a member of the community, whether you are assisting us in bug fixes, suggesting new features, enhancing our documentation, or simply spreading the word. 
+
+- Bug Report: Please create a bug report if you encounter any errors or problems while utilising the Push Protocol.
+- Feature Request: Please submit a feature request if you have an idea or discover a capability that would make development simpler and more reliable.
+- Documentation Request: If you're reading the Push documentation and believe that we're missing something, please create a docs request.
+
+
+Read how you can contribute <a href="https://github.com/ethereum-push-notification-service/push-sdk/blob/main/contributing.md">HERE</a>
+
+<br />
+Not sure where to start? Join our discord and we will help you get started!
+
+<a href="discord.gg/pushprotocol" title="Join Our Community"><img src="https://www.freepnglogos.com/uploads/discord-logo-png/playerunknown-battlegrounds-bgparty-15.png" width="200" alt="Discord" /></a>
+
+## License
+Check out our License <a href='https://github.com/ethereum-push-notification-service/push-sdk/blob/main/license-v1.md'>HERE </a>
 
 
 
