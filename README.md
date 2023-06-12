@@ -329,8 +329,8 @@ Push Protocol is an open source Project. We firmly believe in a completely trans
 
 Read how you can contribute <a href="https://github.com/ethereum-push-notification-service/push-sdk/blob/main/contributing.md">HERE</a>
 
+<br />
 Not sure where to start? Join our discord and we will help you get started!
-
 
 <a href="discord.gg/pushprotocol" title="Join Our Community"><img src="https://www.freepnglogos.com/uploads/discord-logo-png/playerunknown-battlegrounds-bgparty-15.png" width="200" alt="Discord" /></a>
 
