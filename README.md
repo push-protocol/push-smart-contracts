@@ -13,7 +13,7 @@
 
 <h4 align="center">
 
-  <a href="discord.gg/pushprotocol">
+  <a href="https://discord.gg/pushprotocol">
     <img src="https://img.shields.io/badge/discord-7289da.svg?style=flat-square" alt="discord">
   </a>
   <a href="https://twitter.com/pushprotocol">
