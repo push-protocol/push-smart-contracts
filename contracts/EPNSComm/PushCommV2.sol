@@ -294,10 +294,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             nonce == nonces[subscriber]++,
             "PushCommV2::subscribeBySig: Invalid nonce"
         );
-        require(
-            now <= expiry,
-            "PushCommV2::subscribeBySig: Signature expired"
-        );
+        require(now <= expiry, "PushCommV2::subscribeBySig: Signature expired");
 
         _subscribe(channel, subscriber);
     }
