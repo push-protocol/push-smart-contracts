@@ -39,11 +39,22 @@ We invite you to explore, contribute, and help us build the future of web3 commu
 ---
 
 ## 📚 Table of Contents
+- [Smart Contract Address](#smart-contract-addresses)
 - [Modules](#-modules)
 - [Getting Started/Installation](#getting-started)
 - [Resources](#resources)
 - [Contributing](#contributing)
 
+
+## Smart Contract Addresses 
+
+Here is Contract addresses for Eth Mainnet. You can find addresses for other networks over at our <a href="https://docs.push.org/developers/developer-tooling/push-smart-contracts/epns-contract-addresses">Docs</a>  
+
+| Contract Name | Contract Address |
+| ------------- | ---------------- |
+| Push Token | 0xf418588522d5dd018b425E472991E52EBBeEEEEE |
+| EPNS CoreV1.5 | 0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE |
+| EPNS CommV1.5 | 0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa |
 
 ## 🧩 Modules
 
