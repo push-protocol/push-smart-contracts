@@ -48,13 +48,23 @@ We invite you to explore, contribute, and help us build the future of web3 commu
 
 ## Smart Contract Addresses 
 
-Here is Contract addresses for Eth Mainnet. You can find addresses for other networks over at our <a href="https://docs.push.org/developers/developer-tooling/push-smart-contracts/epns-contract-addresses">Docs</a>  
+Contract addresses for Ethereum Mainnet. 
 
 | Contract Name | Contract Address |
 | ------------- | ---------------- |
 | Push Token | 0xf418588522d5dd018b425E472991E52EBBeEEEEE |
 | EPNS CoreV1.5 | 0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE |
 | EPNS CommV1.5 | 0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa |
+
+Contract addresses for Ethereum Goerli Testnet.
+
+| Contract Name | Contract Address |
+| ------------- | ---------------- |
+| Push Token | 0x2b9bE9259a4F5Ba6344c1b1c07911539642a2D33 |
+| EPNS CoreV1.5 | 0xd4E3ceC407cD36d9e3767cD189ccCaFBF549202C |
+| EPNS CommV1.5 | 0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa |
+
+You can find addresses for other networks over at our <a href="https://docs.push.org/developers/developer-tooling/push-smart-contracts/epns-contract-addresses">Docs</a>  
 
 ## 🧩 Modules
 
