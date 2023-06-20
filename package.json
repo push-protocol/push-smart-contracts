@@ -25,7 +25,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.5",
     "@nomiclabs/hardhat-waffle": "^2.0.5",
     "@openzeppelin/contracts": "3.4.0",
-    "@openzeppelin/contracts-upgradeable": "4.7.3",
+    "@openzeppelin/contracts-upgradeable": "3.4.0",
     "bip39": "3.0.3",
     "chai": "^4.3.4",
     "chalk": "^4.1.1",
@@ -41,6 +41,7 @@
     "solidity-bytes-utils": "^0.0.9"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.0.1",
     "moment": "^2.29.1",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.17"
