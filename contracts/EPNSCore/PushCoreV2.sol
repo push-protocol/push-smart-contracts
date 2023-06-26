@@ -817,11 +817,6 @@ contract PushCoreV2 is
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            1e18
-        );
         _stake(address(this), 1e18);
     }
 
