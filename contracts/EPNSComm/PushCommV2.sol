@@ -585,8 +585,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             (_channel == 0x0000000000000000000000000000000000000000 &&
                 msg.sender == pushChannelAdmin) ||
             (_channel == msg.sender) ||
-            (delegatedNotificationSenders[_channel][msg.sender]) ||
-            (_recipient == msg.sender)
+            (delegatedNotificationSenders[_channel][msg.sender])
         ) {
             return true;
         }
