@@ -158,7 +158,7 @@ Not sure where to start? Join our discord and we will help you get started!
 <a href="https://discord.gg/pushprotocol" title="Join Our Community"><img src="https://www.freepnglogos.com/uploads/discord-logo-png/playerunknown-battlegrounds-bgparty-15.png" width="200" alt="Discord" /></a>
 
 ## License
-Check out our License <a href='https://github.com/ethereum-push-notification-service/push-smart-contracts/blob/master/license-v1'>HERE </a>
+Check out our License <a href='https://github.com/ethereum-push-notification-service/push-smart-contracts/blob/master/license-v1.md'>HERE </a>
 
 
 
