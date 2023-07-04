@@ -81,11 +81,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         INITIALIZER
 
     *************** */
-    function initialize(address _pushChannelAdmin, string memory _chainName)
-        public
-        initializer
-        returns (bool)
-    {
+    function initialize(
+        address _pushChannelAdmin,
+        string memory _chainName
+    ) public initializer returns (bool) {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
@@ -106,24 +105,21 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         isMigrationComplete = true;
     }
 
-    function setEPNSCoreAddress(address _coreAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setEPNSCoreAddress(
+        address _coreAddress
+    ) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
     }
 
-    function setGovernanceAddress(address _governanceAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setGovernanceAddress(
+        address _governanceAddress
+    ) external onlyPushChannelAdmin {
         governance = _governanceAddress;
     }
 
-    function transferPushChannelAdminControl(address _newAdmin)
-        external
-        onlyPushChannelAdmin
-    {
+    function transferPushChannelAdminControl(
+        address _newAdmin
+    ) external onlyPushChannelAdmin {
         require(
             _newAdmin != address(0),
             "PushCommV2::transferPushChannelAdminControl: Invalid Address"
@@ -147,11 +143,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      * @param _user address of the Subscriber
      * @return True if User is actually a subscriber of a Channel
      **/
-    function isUserSubscribed(address _channel, address _user)
-        public
-        view
-        returns (bool)
-    {
+    function isUserSubscribed(
+        address _channel,
+        address _user
+    ) public view returns (bool) {
         User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
             return true;
@@ -174,10 +169,9 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      *
      * @param _channelList array of addresses of the channels that the user wishes to Subscribe
      **/
-    function batchSubscribe(address[] calldata _channelList)
-        external
-        returns (bool)
-    {
+    function batchSubscribe(
+        address[] calldata _channelList
+    ) external returns (bool) {
         for (uint256 i = 0; i < _channelList.length; i++) {
             _subscribe(_channelList[i], msg.sender);
         }
@@ -309,11 +303,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber of a Channel
      **/
-    function subscribeViaCore(address _channel, address _user)
-        external
-        onlyEPNSCore
-        returns (bool)
-    {
+    function subscribeViaCore(
+        address _channel,
+        address _user
+    ) external onlyEPNSCore returns (bool) {
         _subscribe(_channel, _user);
         return true;
     }
@@ -343,10 +336,9 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      *
      * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
      **/
-    function batchUnsubscribe(address[] calldata _channelList)
-        external
-        returns (bool)
-    {
+    function batchUnsubscribe(
+        address[] calldata _channelList
+    ) external returns (bool) {
         for (uint256 i = 0; i < _channelList.length; i++) {
             _unsubscribe(_channelList[i], msg.sender);
         }
@@ -363,7 +355,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         if (isUserSubscribed(_channel, _user)) {
             User storage user = users[_user];
 
-            uint256 _subscribedCount = user.subscribedCount;
+            uint256 _subscribedCount = user.subscribedCount - 1; // new
 
             user.isSubscribed[_channel] = 0;
 
@@ -375,7 +367,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             // delete the last one and substract
             delete (user.subscribed[_channel]);
             delete (user.mapAddressSubscribed[_subscribedCount]);
-            user.subscribedCount = _subscribedCount.sub(1);
+            user.subscribedCount = user.subscribedCount - 1; // new
 
             // Emit it
             emit Unsubscribe(_channel, _user);
@@ -443,11 +435,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      * @param _channel address of the channel being unsubscribed
      * @param _user address of the UnSubscriber of a Channel
      **/
-    function unSubscribeViaCore(address _channel, address _user)
-        external
-        onlyEPNSCore
-        returns (bool)
-    {
+    function unSubscribeViaCore(
+        address _channel,
+        address _user
+    ) external onlyEPNSCore returns (bool) {
         _unsubscribe(_channel, _user);
         return true;
     }
@@ -483,9 +474,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     /* @dev Internal system to handle broadcasting of public key,
      *     A entry point for subscribe, or create channel but is optional
      */
-    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey)
-        private
-    {
+    function _broadcastPublicKey(
+        address _userAddr,
+        bytes memory _publicKey
+    ) private {
         // Add the user, will do nothing if added already, but is needed before broadcast
         _addUser(_userAddr);
 
@@ -504,11 +496,9 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     }
 
     /// @dev Don't forget to add 0x into it
-    function getWalletFromPublicKey(bytes memory _publicKey)
-        public
-        pure
-        returns (address wallet)
-    {
+    function getWalletFromPublicKey(
+        bytes memory _publicKey
+    ) public pure returns (address wallet) {
         if (_publicKey.length == 64) {
             wallet = address(uint160(uint256(keccak256(_publicKey))));
         } else {
@@ -576,11 +566,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      *  ->  We ensure "Caller of the Function is the Recipient of the Notification"
     **/
 
-    function _checkNotifReq(address _channel, address _recipient)
-        private
-        view
-        returns (bool)
-    {
+    function _checkNotifReq(
+        address _channel,
+        address _recipient
+    ) private view returns (bool) {
         if (
             (_channel == 0x0000000000000000000000000000000000000000 &&
                 msg.sender == pushChannelAdmin) ||
@@ -765,10 +754,9 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         return chainId;
     }
 
-    function setPushTokenAddress(address _tokenAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setPushTokenAddress(
+        address _tokenAddress
+    ) external onlyPushChannelAdmin {
         PUSH_TOKEN_ADDRESS = _tokenAddress;
     }
 
