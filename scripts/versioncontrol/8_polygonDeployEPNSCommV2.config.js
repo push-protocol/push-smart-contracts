@@ -6,25 +6,40 @@ const deploy = {
     goerli: {
       version: 1
     },
-    kovan: {
-      version: 1
-    },
-    ropsten: {
-      version: 1
-    },
-    rinkeby: {
-      version: 1
-    },
     hardhat: {
       version: 1
     },
-    polygon: {
+    localhost: {
       version: 1
     },
     polygonMumbai: {
       version: 1
     },
-    localhost: {
+    bscTestnet: {
+      version: 1
+    },
+    zkEVMTestnet: {
+      version: 1
+    },
+    optimismGoerli: {
+      version: 1
+    },
+    optimismMainnet: {
+      version: 1
+    },
+    polygon: {
+      version: 1
+    },
+    linea: {
+      version: 1
+    },
+    bscMainnet: {
+      version: 1
+    },
+    xdai: {
+      version: 1
+    },
+    sepolia: {
       version: 1
     }
   },
