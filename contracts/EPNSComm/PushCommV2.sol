@@ -363,10 +363,9 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         if (isUserSubscribed(_channel, _user)) {
             User storage user = users[_user];
 
-            uint256 _subscribedCount = user.subscribedCount;
+            uint256 _subscribedCount = user.subscribedCount - 1;
 
             user.isSubscribed[_channel] = 0;
-
             user.subscribed[user.mapAddressSubscribed[_subscribedCount]] = user
                 .subscribed[_channel];
             user.mapAddressSubscribed[user.subscribed[_channel]] = user
@@ -375,7 +374,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             // delete the last one and substract
             delete (user.subscribed[_channel]);
             delete (user.mapAddressSubscribed[_subscribedCount]);
-            user.subscribedCount = _subscribedCount.sub(1);
+            user.subscribedCount = user.subscribedCount - 1;
 
             // Emit it
             emit Unsubscribe(_channel, _user);
@@ -777,6 +776,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
+        // Push toknen comes to COMM 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             address(this),
@@ -789,6 +789,11 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         }
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
+
+
+        // COMM Contract needs to APPROVE Wormhole contract first - 0x377D55a7928c046E18eEbb61977e714d2a76472a(TESTNET)
+        // Include Settter function to update receipientChainId, recipient(in bytes format), nonce(include nonce as a global state variable)
+        // Using interface TokenBridge, call token_bridge.transferTokens(TKN_address, amt, receipientChainId, recipient, 0, nonce);
 
         emit IncentivizeChatReqInitiated(
             msg.sender,
