@@ -23,6 +23,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "../interfaces/IPushCore.sol";
 
 contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
@@ -53,7 +54,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     );
     event IncentivizeChatReqInitiated(
         address requestSender,
-        string requestReceiver,
+        address requestReceiver,
         uint256 amountDeposited,
         uint256 timestamp
     );
@@ -772,34 +773,39 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     }
 
     function createIncentivizeChatRequest(
-        string calldata requestReceiver,
+        address requestReceiver,
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
-        // Push toknen comes to COMM 
+
+        address requestSender = msg.sender;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
+            requestSender,
             address(this),
             amount
         );
 
-        ChatDetails storage chatData = userChatData[msg.sender];
+        ChatDetails storage chatData = userChatData[requestSender];
         if (chatData.amountDeposited == 0) {
-            chatData.requestSender = msg.sender;
+            chatData.requestSender = requestSender;
         }
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
 
-
-        // COMM Contract needs to APPROVE Wormhole contract first - 0x377D55a7928c046E18eEbb61977e714d2a76472a(TESTNET)
-        // Include Settter function to update receipientChainId, recipient(in bytes format), nonce(include nonce as a global state variable)
-        // Using interface TokenBridge, call token_bridge.transferTokens(TKN_address, amt, receipientChainId, recipient, 0, nonce);
-
+        // Transfer incoming PUSH Token to core contract
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(
+            EPNSCoreAddress,
+            amount
+        );
+        // Trigger handleChatRequestData() on core directly from comm
+        IPushCore(EPNSCoreAddress).handleChatRequestData(requestSender, requestReceiver, amount);
+        
         emit IncentivizeChatReqInitiated(
-            msg.sender,
+            requestSender,
             requestReceiver,
             amount,
             block.timestamp
         );
     }
 }
+

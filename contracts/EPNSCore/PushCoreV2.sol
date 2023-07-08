@@ -1092,26 +1092,13 @@ contract PushCoreV2 is
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
 
-    function setRelayerAddress(address _relayer) external {
-        onlyPushChannelAdmin();
-        emit RelayerAddressUpdated(relayerAddress, _relayer);
-        relayerAddress = _relayer;
-    }
-
-    function setBridgeAddress(address _bridge) external {
-        onlyPushChannelAdmin();
-        emit BridgeAddressUpdated(bridgeAddress, _bridge);
-        bridgeAddress = _bridge;
-    }
-
     function handleChatRequestData(
         address requestSender,
         address requestReceiver,
-        uint256 amount,
-        bytes calldata vaa
+        uint256 amount
     ) external {
         require(
-            msg.sender == relayerAddress,
+            msg.sender == epnsCommunicator,
             "PushCoreV2:handleChatRequestData::Unauthorized caller"
         );
         uint256 poolFeeAmount = FEE_AMOUNT;
@@ -1120,7 +1107,6 @@ contract PushCoreV2 is
         celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
-        ITokenBridge(bridgeAddress).completeTransferWithPayload(vaa);
         emit IncentivizeChatReqReceived(
             requestSender,
             requestReceiver,
