@@ -776,7 +776,6 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
-        // Push toknen comes to COMM 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             address(this),
@@ -789,11 +788,6 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         }
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
-
-
-        // COMM Contract needs to APPROVE Wormhole contract first - 0x377D55a7928c046E18eEbb61977e714d2a76472a(TESTNET)
-        // Include Settter function to update receipientChainId, recipient(in bytes format), nonce(include nonce as a global state variable)
-        // Using interface TokenBridge, call token_bridge.transferTokens(TKN_address, amt, receipientChainId, recipient, 0, nonce);
 
         emit IncentivizeChatReqInitiated(
             msg.sender,
