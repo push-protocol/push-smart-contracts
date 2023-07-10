@@ -22,6 +22,8 @@ build
 # misc
 .DS_Store
 .env
+cache_forge
+out
 
 # debug
 npm-debug.log*
