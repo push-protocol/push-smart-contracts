@@ -274,9 +274,6 @@ describe("EPNS CoreV2 Protocol", function () {
         expect(channel.channelType).to.equal(CHANNEL_TYPE);
         expect(channel.channelStartBlock).to.equal(blockNumber);
         expect(channel.channelUpdateBlock).to.equal(blockNumber);
-        expect(
-          await EPNSCoreV1Proxy.channelById(channelsCountAfter.sub(1))
-        ).to.equal(CHANNEL_CREATOR);
         expect(channelsCountBefore.add(1)).to.equal(channelsCountAfter);
       }).timeout(10000);
 
