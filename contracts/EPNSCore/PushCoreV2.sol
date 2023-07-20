@@ -373,7 +373,6 @@ contract PushCoreV2 is
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         uint256 _channelsCount = channelsCount;
-        channelById[_channelsCount] = _channel;
         channelsCount = _channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
