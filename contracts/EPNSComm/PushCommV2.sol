@@ -23,6 +23,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "../interfaces/IPushCore.sol";
 
 contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     using SafeMath for uint256;
@@ -53,7 +54,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     );
     event IncentivizeChatReqInitiated(
         address requestSender,
-        string requestReceiver,
+        address requestReceiver,
         uint256 amountDeposited,
         uint256 timestamp
     );
@@ -772,28 +773,39 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     }
 
     function createIncentivizeChatRequest(
-        string calldata requestReceiver,
+        address requestReceiver,
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
+        
+        address requestSender = msg.sender;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
+            requestSender,
             address(this),
             amount
         );
 
-        ChatDetails storage chatData = userChatData[msg.sender];
+        ChatDetails storage chatData = userChatData[requestSender];
         if (chatData.amountDeposited == 0) {
-            chatData.requestSender = msg.sender;
+            chatData.requestSender = requestSender;
         }
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
 
+       // Transfer incoming PUSH Token to core contract
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(
+            EPNSCoreAddress,
+            amount
+        );
+        // Trigger handleChatRequestData() on core directly from comm
+        IPushCore(EPNSCoreAddress).handleChatRequestData(requestSender, requestReceiver, amount);
+        
         emit IncentivizeChatReqInitiated(
-            msg.sender,
+            requestSender,
             requestReceiver,
             amount,
             block.timestamp
         );
     }
 }
+
