@@ -777,7 +777,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
-
+        
         address requestSender = msg.sender;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             requestSender,
@@ -792,7 +792,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
 
-        // Transfer incoming PUSH Token to core contract
+       // Transfer incoming PUSH Token to core contract
         IERC20(PUSH_TOKEN_ADDRESS).transfer(
             EPNSCoreAddress,
             amount

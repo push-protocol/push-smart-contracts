@@ -8,7 +8,7 @@ const {
 } = require("../../../helpers/utils");
 
 
-const {epnsContractFixture,} = require("../../common/fixtures")
+const {epnsContractFixture,} = require("../../common/fixturesV2")
 const {expect} = require("../../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 

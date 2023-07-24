@@ -36,14 +36,14 @@ async function setupAllContracts(versionDetails) {
   // custom deploy (to use deployed addresses dynamically for example:)
   const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
 
-  const EPNSCommV3 = await deployContract("EPNSCommV3", [], "EPNSCommV3");
-  deployedContracts.push(EPNSCommV3)
+  const PushCommV3 = await deployContract("PushCommV3", [], "PushCommV3");
+  deployedContracts.push(PushCommV3)
 
   const EPNSCommAdmin = await ethers.getContractFactory("EPNSCommAdmin")
   const epnsAdminInstance = EPNSCommAdmin.attach(versionDetails.deploy.args.epnsCommAdmin)
 
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${EPNSCoreV3.address} \n\t\t\t\n`))
-  await epnsAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, EPNSCommV3.address);
+  await epnsAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, PushCommV3.address);
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Contracts Upgraded  \n\t\t\t\n`))
 
   return deployedContracts
