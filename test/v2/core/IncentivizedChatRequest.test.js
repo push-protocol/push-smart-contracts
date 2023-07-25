@@ -18,6 +18,7 @@ describe("Incentivized chats", function () {
   let ADMINSIGNER;
   let ALICESIGNER;
   let BOBSIGNER;
+  let CHARLIESIGNER;
   let CHANNEL_CREATORSIGNER;
 
   let loadFixture;
@@ -95,7 +96,7 @@ describe("Incentivized chats", function () {
     expect(BobBalanceAfter).to.be.equal(ethers.utils.parseEther("9900"));
     expect(CoreBalanceAfter).to.be.equal(ethers.utils.parseEther("100"));
   });
-  it("should update the struct and emit event", async () => {
+  it("should update the struct", async () => {
     await EPNSCommV1Proxy.connect(BOBSIGNER).createIncentivizeChatRequest(
       ALICE,
       ethers.utils.parseEther("100")
@@ -176,11 +177,55 @@ describe("Incentivized chats", function () {
     const beforeBalance = await PushToken.balanceOf(ALICE);
     const avaialbleToClaim = await EPNSCoreV1Proxy.celebUserFunds(ALICE);
     const claim = avaialbleToClaim.toString();
-    console.log(claim);
     await EPNSCoreV1Proxy.connect(ALICESIGNER).claimChatIncentives(claim);
-    console.log(claim);
 
     const expectedBalance = beforeBalance.add(avaialbleToClaim);
     expect(await PushToken.balanceOf(ALICE)).to.be.equal(expectedBalance);
+  });
+
+  describe("Multiple celebs", async () => {
+
+    beforeEach(async()=>{
+      await EPNSCommV1Proxy.connect(BOBSIGNER).createIncentivizeChatRequest(
+        ALICE,
+        ethers.utils.parseEther("100")
+      );
+      await EPNSCommV1Proxy.connect(BOBSIGNER).createIncentivizeChatRequest(
+        CHARLIE,
+        ethers.utils.parseEther("100")
+      );
+    })
+    it("Should update the struct", async () => {
+      
+      blockTimestamp = (await ethers.provider.getBlock("latest")).timestamp;
+
+      const chatData = await EPNSCommV1Proxy.userChatData(BOB);
+
+      expect(chatData.requestSender).to.be.equal(BOB);
+      expect(chatData.timestamp).to.be.equal(blockTimestamp);
+      expect(chatData.amountDeposited).to.be.equal(
+        ethers.utils.parseEther("200")
+      );
+    });
+    it("ALICE should be able to withdraw funds",async()=>{
+      const beforeBalance = await PushToken.balanceOf(ALICE);
+    const avaialbleToClaim = await EPNSCoreV1Proxy.celebUserFunds(ALICE);
+    const claim = avaialbleToClaim.toString();
+    expect(claim).to.be.equal(ethers.utils.parseEther("90"))
+    await EPNSCoreV1Proxy.connect(ALICESIGNER).claimChatIncentives(claim);
+
+    const expectedBalance = beforeBalance.add(avaialbleToClaim);
+    expect(await PushToken.balanceOf(ALICE)).to.be.equal(expectedBalance);
+    })
+    it("CHARLIE should be able to withdraw funds",async()=>{
+      const beforeBalance = await PushToken.balanceOf(CHARLIE);
+    const avaialbleToClaim = await EPNSCoreV1Proxy.celebUserFunds(CHARLIE);
+    const claim = avaialbleToClaim.toString();
+    expect(claim).to.be.equal(ethers.utils.parseEther("90"))
+    await EPNSCoreV1Proxy.connect(CHARLIESIGNER).claimChatIncentives(claim);
+
+    const expectedBalance = beforeBalance.add(avaialbleToClaim);
+    expect(await PushToken.balanceOf(CHARLIE)).to.be.equal(expectedBalance);
+    })
   });
 });
