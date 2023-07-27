@@ -35,7 +35,7 @@ contract PushCoreV2 is
     /* ***************
         EVENTS
      *************** */
-    event UpdateChannel(address indexed channel, bytes identity);
+    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
     event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(
@@ -79,14 +79,6 @@ contract PushCoreV2 is
         uint256 indexed rewardAmount,
         uint256 fromEpoch,
         uint256 tillEpoch
-    );
-    event RelayerAddressUpdated(
-        address indexed oldRelayer,
-        address indexed newRelayer
-    );
-    event BridgeAddressUpdated(
-        address indexed oldBridge,
-        address indexed newBridge
     );
     event IncentivizeChatReqReceived(
         address requestSender,
@@ -291,7 +283,7 @@ contract PushCoreV2 is
             address(this),
             _amount
         );
-        emit UpdateChannel(_channel, _newIdentity);
+        emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
     /**
