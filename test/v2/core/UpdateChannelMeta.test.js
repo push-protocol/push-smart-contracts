@@ -210,14 +210,14 @@ describe("EPNS CoreV2 Protocol", function () {
             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx)
               .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
-              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
+              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity), ADD_CHANNEL_MIN_FEES);
           });
 
           it("Should Emit right args for Update Channel Meta correctly for right Amount -> 50 PUSH Tokens", async function(){
             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
             await expect(tx)
               .to.emit(EPNSCoreV1Proxy, 'UpdateChannel')
-              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity));
+              .withArgs(BOB, ethers.utils.hexlify(channelNewIdentity), ADD_CHANNEL_MIN_FEES);
           });
 
           it("Only allows activate channel to be updated", async function(){
