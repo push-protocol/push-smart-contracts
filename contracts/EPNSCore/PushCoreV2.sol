@@ -1082,7 +1082,17 @@ contract PushCoreV2 is
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
-
+    /**
+     * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.
+     * @dev    This function currently handles the PUSH tokens that enters the contract due to any 
+     *         activation of incentivizied chat request from Communicator contract.
+     *          - Can only be called by Communicator contract
+     *          - Records and keeps track of Pool Funds and Pool Fees
+     *          - Stores the PUSH tokens for the Celeb User, which can be claimed later only by that specific user.
+     * @param  requestSender    Address that initiates the incentivized chat request
+     * @param  requestReceiver  Address of the target user for whom the request is activated.
+     * @param  amount           Amount of PUSH tokens deposited for activating the chat request 
+     */
     function handleChatRequestData(
         address requestSender,
         address requestReceiver,
@@ -1106,7 +1116,11 @@ contract PushCoreV2 is
             block.timestamp
         );
     }
-
+    /**
+     * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
+     * @dev    Only accessible if a particular user has a non-zero PUSH token earnings in contract.
+     * @param  amount Amount of PUSH tokens to be claimed 
+     */
     function claimChatIncentives(uint256 _amount) external {
         require(
             celebUserFunds[msg.sender] >= _amount,
