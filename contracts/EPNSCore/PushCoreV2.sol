@@ -1125,7 +1125,7 @@ contract PushCoreV2 is
     /**
      * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
      * @dev    Only accessible if a particular user has a non-zero PUSH token earnings in contract.
-     * @param  amount Amount of PUSH tokens to be claimed
+     * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external {
         require(
