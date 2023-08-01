@@ -357,8 +357,8 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     /**
      * @notice Base Usubscribe Function that allows users to UNSUBSCRIBE from a Particular Channel
      * @dev Modifies the User Struct with crucial details about the Channel Unsubscription
-     * @param _channel address of the channel that the user is subscribing to
-     * @param _user address of the Subscriber
+     * @param _channel address of the channel that the user is unsubscribing from
+     * @param _user address of the unsubscriber
      **/
     function _unsubscribe(address _channel, address _user) private {
         if (isUserSubscribed(_channel, _user)) {
@@ -376,7 +376,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             delete (user.subscribed[_channel]);
             delete (user.mapAddressSubscribed[_subscribedCount]);
             user.subscribedCount = _subscribedCount;
-            
+
             // Emit it
             emit Unsubscribe(_channel, _user);
         }
