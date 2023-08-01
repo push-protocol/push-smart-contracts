@@ -3,12 +3,12 @@ pragma experimental ABIEncoderV2;
 // SPDX-License-Identifier: MIT
 
 /**
- * EPNS Communicator, as the name suggests, is more of a Communictation Layer
- * between END USERS and EPNS Core Protocol.
+ * Push Communicator, as the name suggests, is more of a Communictation Layer
+ * between END USERS and Push Core Protocol.
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols
 
- * Some imperative functionalities that the EPNS Communicator Protocol allows
+ * Some imperative functionalities that the Push Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
  * Notifications to a particular recipient or all subscribers of a Channel etc.
 **/
@@ -69,10 +69,10 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         _;
     }
 
-    modifier onlyEPNSCore() {
+    modifier onlyPushCore() {
         require(
             msg.sender == EPNSCoreAddress,
-            "PushCommV2::onlyEPNSCore: Caller NOT EPNSCore"
+            "PushCommV2::onlyPushCore: Caller NOT PushCore"
         );
         _;
     }
@@ -301,18 +301,18 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     }
 
     /**
-     * @notice Allows EPNSCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
-     *         This ensures that the Channel Owner is subscribed to imperative EPNS Channels as well as his/her own Channel.
+     * @notice Allows PushCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
+     *         This ensures that the Channel Owner is subscribed to imperative Push Channels as well as his/her own Channel.
      *
-     * @dev    Only Callable by the EPNSCore. This is to ensure that Users should only able to Subscribe for their own addresses.
-     *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the EPNSCore contract
+     * @dev    Only Callable by the PushCore. This is to ensure that Users should only able to Subscribe for their own addresses.
+     *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the PushCore contract
      *
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber of a Channel
      **/
     function subscribeViaCore(address _channel, address _user)
         external
-        onlyEPNSCore
+        onlyPushCore
         returns (bool)
     {
         _subscribe(_channel, _user);
@@ -331,7 +331,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      * @dev UnSubscribes the caller of the function from the particular Channel.
      *      Takes into Consideration the "msg.sender"
      *
-     * @param _channel address of the channel that the user is subscribing to
+     * @param _channel address of the channel that the user is unsubscribing to
      **/
     function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
@@ -375,8 +375,8 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
             // delete the last one and substract
             delete (user.subscribed[_channel]);
             delete (user.mapAddressSubscribed[_subscribedCount]);
-            user.subscribedCount = user.subscribedCount - 1;
-
+            user.subscribedCount = _subscribedCount;
+            
             // Emit it
             emit Unsubscribe(_channel, _user);
         }
@@ -435,17 +435,17 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     }
 
     /**
-     * @notice Allows EPNSCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
-     *         This ensures that the Channel Owner is unSubscribed from the imperative EPNS Channels as well as his/her own Channel.
+     * @notice Allows PushCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
+     *         This ensures that the Channel Owner is unSubscribed from the imperative Push Channels as well as his/her own Channel.
      *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their Channel again using the same Wallet Address.
      *
-     * @dev    Only Callable by the EPNSCore.
+     * @dev    Only Callable by the PushCore.
      * @param _channel address of the channel being unsubscribed
      * @param _user address of the UnSubscriber of a Channel
      **/
     function unSubscribeViaCore(address _channel, address _user)
         external
-        onlyEPNSCore
+        onlyPushCore
         returns (bool)
     {
         _unsubscribe(_channel, _user);
@@ -537,7 +537,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
     /**
      * @notice Allows a Channel Owner to ADD a Delegate for sending Notifications
      *         Delegate shall be able to send Notification on the Channel's Behalf
-     * @dev    This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
      * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
      *
      * @param _delegate address of the delegate who is allowed to Send Notifications
@@ -549,7 +549,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
 
     /**
      * @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
-     * @dev    This function will be only be callable by the Channel Owner from the EPNSCore contract.
+     * @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
      * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
      * @param _delegate address of the delegate who is allowed to Send Notifications
      **/
@@ -562,8 +562,7 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
       THREE main CALLERS for this function-
         1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
         2. Delegatee of Channel sends Notif to Recipients
-        3. User sends Notifs to Themselvs via a Channel
-           NOTE: A user can only send notification to their own address
+
     <---------------------------------------------------------------------------------------------->
      * When a CHANNEL OWNER Calls the Function and sends a Notif:
      *    -> We ensure -> "Channel Owner Must be Valid" && "Channel Owner is the Caller"
@@ -571,9 +570,6 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
      *
      * When a Delegatee wants to send Notif to Recipient:
      *   -> We ensure "Delegate is the Caller" && "Delegatee is Approved by Chnnel Owner"
-     *
-     * When User wants to Send a Notif to themselves:
-     *  ->  We ensure "Caller of the Function is the Recipient of the Notification"
     **/
 
     function _checkNotifReq(address _channel, address _recipient)
@@ -777,11 +773,12 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         uint256 amount
     ) external {
         require(amount > 0, "Request cannot be initiated without deposit");
-
         address requestSender = msg.sender;
+        address coreContract = EPNSCoreAddress;
+        // Transfer incoming PUSH Token to core contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             requestSender,
-            address(this),
+            coreContract,
             amount
         );
 
@@ -792,10 +789,8 @@ contract PushCommV2 is Initializable, EPNSCommStorageV1_5 {
         chatData.timestamp = block.timestamp;
         chatData.amountDeposited += amount;
 
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).transfer(EPNSCoreAddress, amount);
         // Trigger handleChatRequestData() on core directly from comm
-        IPushCore(EPNSCoreAddress).handleChatRequestData(
+        IPushCore(coreContract).handleChatRequestData(
             requestSender,
             requestReceiver,
             amount
