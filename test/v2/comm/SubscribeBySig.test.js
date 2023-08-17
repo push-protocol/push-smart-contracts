@@ -5,11 +5,11 @@ const {
   tokensBN,
   ChannelAction,
   readjustFairShareOfChannels,
-} = require("../../helpers/utils");
+} = require("../../../helpers/utils");
 
 
-const {epnsContractFixture,} = require("../common/fixtures")
-const {expect} = require("../common/expect")
+const {epnsContractFixture,} = require("../../common/fixturesV2")
+const {expect} = require("../../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
 describe("EPNS Comm V1_5 Protocol", function () {
@@ -210,7 +210,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx2).to.be.revertedWith("EPNSCommV1_5::subscribeBySig: Invalid nonce")
+        await expect(tx2).to.be.revertedWith("PushCommV2::subscribeBySig: Invalid nonce")
 
       }); 
 
@@ -240,7 +240,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx).to.be.revertedWith("EPNSCommV1_5::subscribeBySig: Signature expired")
+        await expect(tx).to.be.revertedWith("PushCommV2::subscribeBySig: Signature expired")
 
       }); 
     });
@@ -437,7 +437,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx2).to.be.revertedWith("EPNSCommV1_5::unsubscribeBySig: Invalid nonce")
+        await expect(tx2).to.be.revertedWith("PushCommV2::unsubscribeBySig: Invalid nonce")
 
       }); 
 
@@ -467,7 +467,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx).to.be.revertedWith("EPNSCommV1_5::unsubscribeBySig: Signature expired")
+        await expect(tx).to.be.revertedWith("PushCommV2::unsubscribeBySig: Signature expired")
 
       }); 
     });

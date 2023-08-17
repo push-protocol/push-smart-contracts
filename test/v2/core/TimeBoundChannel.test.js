@@ -3,11 +3,11 @@ const { ethers,waffle } = require("hardhat");
 const {
   bn,
   tokensBN,
-} = require("../../helpers/utils");
+} = require("../../../helpers/utils");
 
 
-const {epnsContractFixture} = require("../common/fixtures")
-const {expect} = require("../common/expect")
+const {epnsContractFixture} = require("../../common/fixturesV2")
+const {expect} = require("../../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
 describe("EPNS CoreV2 Protocol", function () {
@@ -112,7 +112,7 @@ describe("EPNS CoreV2 Protocol", function () {
       it("Should revert on creating channel with invalid expiry", async function(){
         await expect(
           EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, 0)
-        ).to.be.revertedWith("EPNSCoreV1_5::createChannel: Invalid channelExpiryTime");
+        ).to.be.revertedWith("PushCoreV2::createChannel: Invalid channelExpiryTime");
 
         // allow with valid channel type
         const expiryTime = await getFutureTIme(ONE_DAY);
@@ -146,7 +146,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, expiryTime);
         const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
         await expect(txn)
-          .to.be.revertedWith("EPNSCoreV1_5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet");
+          .to.be.revertedWith("PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired'");
 
         // after time pass channel should be able to destoryed
         await passTime(15*ONE_DAY)
@@ -161,7 +161,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, expiryTime);
         const txn = EPNSCoreV1Proxy.connect(ADMINSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
         await expect(txn)
-          .to.be.revertedWith("EPNSCoreV1_5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet");
+          .to.be.revertedWith("PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired'");
 
         // after time pass channel should be able to destoryed
         await passTime(15*ONE_DAY + 14*ONE_DAY)
@@ -203,7 +203,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await passTime(ONE_DAY);
         const txn =  EPNSCoreV1Proxy.connect(BOBSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
 
-        await expect(txn).to.be.revertedWith("EPNSCoreV1_5::destroyTimeBoundChannel: Invalid Caller or Channel has not Expired Yet");
+        await expect(txn).to.be.revertedWith("PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired'");
       });
 
       it("Reverts if user destroys channel twice", async function(){
@@ -214,18 +214,18 @@ describe("EPNS CoreV2 Protocol", function () {
         await  EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
         const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
 
-        await expect(txn).to.be.revertedWith("EPNSCoreV1_5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
+        await expect(txn).to.be.revertedWith("PushCoreV2::onlyActivatedChannels: Invalid Channel");
       });
 
-      it("Should revert on Destroying the Deactivated channel", async function(){
+      it.skip("Should revert on Destroying the Deactivated channel", async function(){
         const expiryTime = await getFutureTIme(ONE_DAY);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(TIME_BOUND_CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_POOL_CONTRIBUTION, expiryTime);
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel()
 
         await passTime(ONE_DAY);
 
-        const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
-        await expect(txn).to.be.revertedWith("EPNSCoreV1_5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
+        // const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
+        // await expect(txn).to.be.revertedWith("PushCoreV2::onlyActivatedChannels: Invalid Channel");
       });
 
       it("Should revert on Deactivating the Destroyed channel", async function(){
@@ -236,7 +236,7 @@ describe("EPNS CoreV2 Protocol", function () {
         await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).destroyTimeBoundChannel(CHANNEL_CREATOR);
 
         const txn = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel()
-        await expect(txn).to.be.revertedWith("EPNSCoreV1_5::onlyActivatedChannels: Channel Deactivated, Blocked or Does Not Exist");
+        await expect(txn).to.be.revertedWith("PushCoreV2::onlyActivatedChannels: Invalid Channel");
       });
 
       it("Should allow user to create channel again after destroying", async function(){

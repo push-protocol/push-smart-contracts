@@ -1,11 +1,11 @@
 const { ethers,waffle } = require("hardhat");
-const {epnsContractFixture} = require("../common/fixtures")
-const {expect} = require("../common/expect")
+const {epnsContractFixture} = require("../../common/fixturesV2")
+const {expect} = require("../../common/expect")
 const createFixtureLoader = waffle.createFixtureLoader;
 
 const {
   tokensBN,
-} = require("../../helpers/utils");
+} = require("../../../helpers/utils");
 
 describe("EPNS Core Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50)
@@ -94,20 +94,20 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
             await expect(
               EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
-            ).to.be.revertedWith("EPNSCoreV1_5::onlyInactiveChannels: Channel already Activated")
+            ).to.be.revertedWith("PushCoreV2::onlyInactiveChannels: Channel already Activated")
           });
 
           // Pauseable Tests
           it("Contract should only be Paused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).pauseContract();
 
-            await expect(tx).to.be.revertedWith('EPNSCoreV1_5::onlyGovernance: Caller not Governance')
+            await expect(tx).to.be.revertedWith('PushCoreV2::onlyGovernance: Invalid Caller')
           });
 
           it("Contract should only be UnPaused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).unPauseContract();
 
-            await expect(tx).to.be.revertedWith('EPNSCoreV1_5::onlyGovernance: Caller not Governance')
+            await expect(tx).to.be.revertedWith('PushCoreV2::onlyGovernance: Invalid Caller')
           });
 
           it("Channel Creation Should not be executed if Contract is Paused", async function(){

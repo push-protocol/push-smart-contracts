@@ -6,7 +6,8 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
-require("@nomicfoundation/hardhat-foundry");
+require('hardhat-contract-sizer');
+
 
 const { ethers } = require("ethers");
 const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
@@ -36,6 +37,13 @@ function mnemonic() {
 }
 
 module.exports = {
+  contractSizer: {
+    alphaSort: false,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
+    only: [],
+  },
   defaultNetwork,
 
   // don't forget to set your provider like:
@@ -45,11 +53,12 @@ module.exports = {
 
   networks: {
     hardhat: {
-      forking: {
-        url:
-          `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API}`,
-          blockNumber: 15917401
-      },
+      allowUnlimitedContractSize: true,
+      // forking: {
+      //   url:
+      //     `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API}`,
+      //     blockNumber: 15917401
+      // },
     },
     localhost: {
       url: "http://localhost:8545",
@@ -58,79 +67,113 @@ module.exports = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
-    mainnet: {
-      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      aaccounts: {
-        mnemonic: mnemonic(),
-      },
-    },
+
+  // ETH Network
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
     },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+      accounts: {
+        mnemonic: mnemonic(),
+      }
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      aaccounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+
+    // Polygon Chain
     polygonMumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
     },
     polygon: {
-      url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://polygon-rpc.com/`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {
         mnemonic: mnemonic(),
       },
     },
-    bnbTestnet: {  
-      url: `https://data-seed-prebsc-1-s1.binance.org:8545`,  // Bnb Testnet - Chain Id = 97
+
+    // BSC Chain
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
-    bnbMainnet: {
-      url: `https://bsc-dataseed1.binance.org`,               // Bnb Mainnet - Chain Id = 56
+    bscMainnet: {
+      url: "https://bsc-dataseed1.binance.org/",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
-    arbitrumTestnet: {
-      url: `https://endpoints.omniatech.io/v1/arbitrum/goerli/public`, // Arbitrum Goerli testnet -> Chain id = 421613
+
+    // Polygon zkEVM Chain
+    zkEVMTestnet: {
+      url: "https://rpc.public.zkevm-test.net	",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
-    arbitrumMainnet: {
-      url: `https://endpoints.omniatech.io/v1/arbitrum/one/public`,   // Arbitrum Goerli testnet -> Chain id = 42161
+    zkEVMMainnet: {
+      url: "https://zkevm-rpc.com	",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
+
+    // Optimisim Chain
     optimismGoerli: {
-      url: `https://goerli.optimism.io`,   // Optimism Goerli testnet -> Chain id = 420
+      url: "https://goerli.optimism.io",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
     optimismMainnet: {
-      url: `https://mainnet.optimism.io`,   // Optimism -> Chain id = 10
+      url: "https://mainnet.optimism.io",
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
+
     },
-    xdai: {
-      url: "https://dai.poa.network",
-      gasPrice: 1000000000,
+
+    // Linea Chain
+    linea: {
+      url: `https://rpc.goerli.linea.build/`,
       accounts: {
         mnemonic: mnemonic(),
-      },
+      }
     },
+    
   },
   etherscan: {
-   // Your API key for Etherscan and Polygonscan
-   apiKey: process.env.ETHERSCAN_API,
-   //apiKey: process.env.POLYGONSCAN_API
- },
+    apiKey: {
+      linea: process.env.ETHERSCAN_API,
+      mainnet: process.env.ETHERSCAN_API,
+      polygon: process.env.POLYGONSCAN_API,
+      sepolia:process.env.ETHERSCAN_API,
+      goerli:process.env.ETHERSCAN_API
+    },
+    customChains: [
+      {
+        network: "linea",
+        chainId: 59140,
+        urls: {
+          apiURL: "https://explorer.goerli.linea.build/api",
+          browserURL: "https://explorer.goerli.linea.build/"
+        }
+      }
+    ]
+  },
+
   solidity: {
     version: "0.6.11",
     settings: {

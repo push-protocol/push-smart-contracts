@@ -1,12 +1,12 @@
 const { ethers, waffle } = require("hardhat");
 
-const { bn, tokensBN } = require("../../helpers/utils");
+const { bn, tokensBN } = require("../../../helpers/utils");
 
-const { epnsContractFixture } = require("../common/fixtures");
-const { expect } = require("../common/expect");
+const { epnsContractFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const createFixtureLoader = waffle.createFixtureLoader;
 
-describe("EPNS Comm V1_5 Protocol", function () {
+describe("EPNS Comm V2 Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50);
 
   let PushToken;

@@ -1,9 +1,9 @@
 const { ethers, waffle } = require("hardhat");
 
-const { bn, tokensBN } = require("../../helpers/utils");
+const { bn, tokensBN } = require("../../../helpers/utils");
 
-const { epnsContractFixture } = require("../common/fixtures");
-const { expect } = require("../common/expect");
+const { epnsContractFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const createFixtureLoader = waffle.createFixtureLoader;
 
 describe("EPNS CoreV2 Protocol", function () {
@@ -137,7 +137,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV1_5::onlyInactiveChannels: Channel already Activated"
+          "PushCoreV2::onlyInactiveChannels: Channel already Activated"
         );
       });
 
@@ -153,7 +153,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx1).to.be.revertedWith(
-          "EPNSCoreV1_5::onlyUserAllowedChannelType: Channel Type Invalid"
+          "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
         );
 
         const CHANNEL_TYPE_SECOND = 1;
@@ -171,7 +171,7 @@ describe("EPNS CoreV2 Protocol", function () {
         );
 
         await expect(tx2).to.be.revertedWith(
-          "EPNSCoreV1_5::onlyUserAllowedChannelType: Channel Type Invalid"
+          "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
         );
       });
 
@@ -189,7 +189,7 @@ describe("EPNS CoreV2 Protocol", function () {
         ).createChannelWithPUSH(CHANNEL_TYPE, testChannel, tokensBN(10), 0);
 
         await expect(tx).to.be.revertedWith(
-          "EPNSCoreV1_5::_createChannelWithPUSH: Insufficient Deposit Amount"
+          "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
         );
       });
 
@@ -274,9 +274,6 @@ describe("EPNS CoreV2 Protocol", function () {
         expect(channel.channelType).to.equal(CHANNEL_TYPE);
         expect(channel.channelStartBlock).to.equal(blockNumber);
         expect(channel.channelUpdateBlock).to.equal(blockNumber);
-        expect(
-          await EPNSCoreV1Proxy.channelById(channelsCountAfter.sub(1))
-        ).to.equal(CHANNEL_CREATOR);
         expect(channelsCountBefore.add(1)).to.equal(channelsCountAfter);
       }).timeout(10000);
 

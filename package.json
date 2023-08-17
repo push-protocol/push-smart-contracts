@@ -22,8 +22,7 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^3.1.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.0",
     "bip39": "3.0.3",
@@ -36,12 +35,14 @@
     "ethereumjs-wallet": "1.0.1",
     "ethers": "^5.1.4",
     "hardhat": "^2.12.6",
+    "hardhat": "^2.12.6",
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1",
     "solidity-bytes-utils": "^0.0.9"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-foundry": "^1.0.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "hardhat-contract-sizer": "^2.8.0",
     "moment": "^2.29.1",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.17"
