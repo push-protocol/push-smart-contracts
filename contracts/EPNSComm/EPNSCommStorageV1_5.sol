@@ -48,11 +48,25 @@ contract EPNSCommStorageV1_5 {
             "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
         );
     bytes32 public constant SUBSCRIBE_TYPEHASH =
-        keccak256("Subscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
+        keccak256(
+            "Subscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)"
+        );
     bytes32 public constant UNSUBSCRIBE_TYPEHASH =
-        keccak256("Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
+        keccak256(
+            "Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)"
+        );
     bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
         keccak256(
             "SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
         );
+    // New State Variables
+    address public PUSH_TOKEN_ADDRESS;
+
+    struct ChatDetails {
+        address requestSender;
+        uint256 timestamp;
+        uint256 amountDeposited;
+    }
+
+    mapping(address => ChatDetails) public userChatData;
 }

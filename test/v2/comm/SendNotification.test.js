@@ -1,12 +1,12 @@
 const { ethers, waffle } = require("hardhat");
 
-const { bn, tokensBN } = require("../../helpers/utils");
+const { bn, tokensBN } = require("../../../helpers/utils");
 
-const { epnsContractFixture, tokenFixture } = require("../common/fixtures");
-const { expect } = require("../common/expect");
+const { epnsContractFixture, tokenFixture } = require("../../common/fixturesV2");
+const { expect } = require("../../common/expect");
 const createFixtureLoader = waffle.createFixtureLoader;
 
-describe("EPNS Comm V1_5 Protocol", function () {
+describe("EPNS Comm V2 Protocol", function () {
   const ADD_CHANNEL_MIN_POOL_CONTRIBUTION = tokensBN(50);
 
   let PushToken;
@@ -58,7 +58,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
     } = await loadFixture(epnsContractFixture));
   });
 
-  describe("EPNS COMM: EIP 1271 & 712 Support", function () {
+  describe("Send Notification", function () {
     const CHANNEL_TYPE = 2;
     const msg = ethers.utils.toUtf8Bytes("test-channel-hello-world");
 
@@ -119,19 +119,21 @@ describe("EPNS Comm V1_5 Protocol", function () {
         var tx = await EPNSCommV1Proxy.connect(
           BOBSIGNER
         ).callStatic.sendNotification(CHANNEL_CREATOR, BOB, msg);
-        expect(tx).to.be.true;
+        expect(tx).to.be.false;
 
-        var tx = await EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(
-          CHANNEL_CREATOR,
-          BOB,
-          msg
-        );
-        await expect(tx)
-          .to.emit(EPNSCommV1Proxy, "SendNotification")
-          .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
+        //User can no more send notification to themselves.
+        
+        // var tx = await EPNSCommV1Proxy.connect(BOBSIGNER).sendNotification(
+        //   CHANNEL_CREATOR,
+        //   BOB,
+        //   msg
+        // );
+        // await expect(tx)
+        //   .to.emit(EPNSCommV1Proxy, "SendNotification")
+        //   .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
       });
 
-      it("Should return false if Channel is 0x00.. But Caller is any address other than Admin/Governance", async function(){
+      it("Should return false if Channel is 0x00.. But Caller is any address other than Admin/Governance", async function () {
         const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
         var tx = await EPNSCommV1Proxy.connect(BOBSIGNER).callStatic.sendNotification(EPNS_ALERTER_CHANNEL, CHARLIE, msg);
         expect(tx).to.be.false;
@@ -140,18 +142,18 @@ describe("EPNS Comm V1_5 Protocol", function () {
         await expect(tx).to.not.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
-      it("Should Emit Event if Channel is 0x00.. and Caller is Admin/Governance", async function(){
+      it("Should Emit Event if Channel is 0x00.. and Caller is Admin/Governance", async function () {
         const EPNS_ALERTER_CHANNEL = '0x0000000000000000000000000000000000000000';
         var txn = await EPNSCommV1Proxy.connect(ADMINSIGNER).callStatic.sendNotification(EPNS_ALERTER_CHANNEL, CHARLIE, msg);
         expect(txn).to.be.true;
 
         var txn = await EPNSCommV1Proxy.connect(ADMINSIGNER).sendNotification(EPNS_ALERTER_CHANNEL, CHARLIE, msg);
         await expect(txn)
-             .to.emit(EPNSCommV1Proxy, 'SendNotification')
-             .withArgs(EPNS_ALERTER_CHANNEL, CHARLIE, ethers.utils.hexlify(msg));
+          .to.emit(EPNSCommV1Proxy, 'SendNotification')
+          .withArgs(EPNS_ALERTER_CHANNEL, CHARLIE, ethers.utils.hexlify(msg));
       });
 
-      it("Should return false if Delegate without send notification without Approval", async function(){
+      it("Should return false if Delegate without send notification without Approval", async function () {
         var tx = await EPNSCommV1Proxy.connect(CHARLIESIGNER).callStatic.sendNotification(CHANNEL_CREATOR, BOB, msg);
         expect(tx).to.be.false;
 
@@ -159,7 +161,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
         await expect(tx).to.not.emit(EPNSCommV1Proxy, "SendNotification");
       });
 
-      it("Should Emit Event Allowed Delagtes Sends Notification to any Recipient", async function(){
+      it("Should Emit Event Allowed Delagtes Sends Notification to any Recipient", async function () {
         const isCharlieAllowed_before = await EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).delegatedNotificationSenders(CHANNEL_CREATOR, CHARLIE);
         await EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).addDelegate(CHARLIE);
         const isCharlieAllowed_after = await EPNSCommV1Proxy.connect(CHANNEL_CREATORSIGNER).delegatedNotificationSenders(CHANNEL_CREATOR, CHARLIE);
@@ -169,8 +171,8 @@ describe("EPNS Comm V1_5 Protocol", function () {
         await expect(isCharlieAllowed_before).to.equal(false);
         await expect(isCharlieAllowed_after).to.equal(true);
         await expect(tx_sendNotif)
-             .to.emit(EPNSCommV1Proxy, 'SendNotification')
-             .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
+          .to.emit(EPNSCommV1Proxy, 'SendNotification')
+          .withArgs(CHANNEL_CREATOR, BOB, ethers.utils.hexlify(msg));
       });
     });
   });
