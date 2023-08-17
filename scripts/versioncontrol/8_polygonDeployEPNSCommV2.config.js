@@ -1,10 +1,19 @@
 const deploy = {
   network: {
     mainnet: {
-      version: 1
+      version: 1,
     },
     goerli: {
-      version: 1
+      version: 1,
+    },
+    polygon: {
+      version: 1,
+    },
+    polygonMumbai: {
+      version: 1,
+    },
+    bnbTestnet: {
+      version: 1,
     },
     hardhat: {
       version: 1
@@ -27,8 +36,8 @@ const deploy = {
     optimismMainnet: {
       version: 1
     },
-    polygon: {
-      version: 1
+    optimismMainnet: {
+      version: 1,
     },
     linea: {
       version: 1
