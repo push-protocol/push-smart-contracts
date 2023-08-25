@@ -1,6 +1,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-contract EPNSCoreStorageV2 {
+contract PushFeePoolStorage {
     /* *** V2 State variables *** */
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(
@@ -10,9 +10,6 @@ contract EPNSCoreStorageV2 {
         keccak256(
             "CreateChannel(ChannelType channelType, bytes identity, uint256 amount, uint256 channelExpiryTime, uint256 nonce, uint256 expiry)"
         );
-
-    mapping(address => uint256) public nonces;
-    mapping(address => uint256) public channelUpdateCounter;
     /** Staking V2 state variables **/
     mapping(address => uint256) public usersRewardsClaimed;
 
@@ -32,6 +29,12 @@ contract EPNSCoreStorageV2 {
     uint256 public previouslySetEpochRewards; // Amount of rewards set in last initialized epoch
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
+    address public PUSH_TOKEN_ADDRESS;
+    address public governance;
+    address public core;
+
+
+
     // @notice: Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
     // @notice: Stores User's Fees Details
@@ -39,8 +42,4 @@ contract EPNSCoreStorageV2 {
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
 
-    /** Handling bridged information **/
-    mapping(address => uint256) public celebUserFunds;
-
-    address public staking;
 }

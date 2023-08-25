@@ -6,4 +6,5 @@ interface IPUSH {
   function resetHolderWeight(address holder) external;
   function holderWeight(address) external view returns (uint);
   function returnHolderUnits(address account, uint atBlock) external view returns (uint);
+    function setHolderDelegation(address delegate, bool value) external;
 }

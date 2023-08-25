@@ -33,6 +33,9 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   const EPNSCommunicator = await ethers.getContractFactory("PushCommV2");
   COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
 
+  const PushFeePool = await ethers.getContractFactory("PushFeePool");
+  PUSH_STAKING_LOGIC = await PushFeePool.deploy();
+
   const EPNSCoreProxyContract = await ethers.getContractFactory(
     "EPNSCoreProxy"
   );
@@ -59,10 +62,25 @@ const epnsContractFixture = async ([adminSigner, others]) => {
     CHAIN_NAME
   );
 
+  const PushFeePoolProxyContract = await ethers.getContractFactory(
+    "PushFeePoolProxy"
+  );
+
+  const PushFeePoolProxy = await PushFeePoolProxyContract.deploy(
+    PUSH_STAKING_LOGIC.address,
+    PROXYADMIN.address,
+        ADMIN,
+        EPNSCoreProxy.address,
+        PushToken.address
+  )
+
   EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address);
   EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address);
+  PushFeePoolV1Proxy = PushFeePool.attach(PushFeePoolProxy.address)
   await EPNSCommV1Proxy.setEPNSCoreAddress(EPNSCoreV1Proxy.address);
   await EPNSCoreV1Proxy.setEpnsCommunicatorAddress(EPNSCommV1Proxy.address);
+  await EPNSCoreV1Proxy.updateStakingAddress(PushFeePoolProxy.address);
+  
 
   return {
     CORE_LOGIC,
@@ -74,6 +92,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
     ROUTER,
     PushToken,
     EPNS_TOKEN_ADDRS,
+    PushFeePoolV1Proxy,
   };
 };
 
