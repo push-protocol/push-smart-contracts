@@ -29,11 +29,10 @@ contract PushFeePoolStorage {
     uint256 public previouslySetEpochRewards; // Amount of rewards set in last initialized epoch
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
+    address public pushChannelAdmin;
     address public PUSH_TOKEN_ADDRESS;
     address public governance;
     address public core;
-
-
 
     // @notice: Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
@@ -41,5 +40,5 @@ contract PushFeePoolStorage {
     mapping(address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-
+    bool migrated;
 }

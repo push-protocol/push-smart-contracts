@@ -25,20 +25,111 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
     );
 
     function initialize(
-        address _governance,
+        address _pushChannelAdmin,
         address _core,
-        address _pushToken
+        address _pushToken,
+        uint _genesisEpoch,
+        uint _lastEpochInitialized,
+        uint _lastTotalStakeEpochInitialized,
+        uint _totalStakedAmount,
+        uint _previouslySetEpochRewards
     ) public initializer {
-        governance = _governance;
+        console.log(genesisEpoch);
+        console.log(epochDuration);
+        pushChannelAdmin = _pushChannelAdmin;
+        governance = _pushChannelAdmin;
         core = _core;
         PUSH_TOKEN_ADDRESS = _pushToken;
+        genesisEpoch = _genesisEpoch;
+        lastEpochInitialized = _lastEpochInitialized;
+        lastTotalStakeEpochInitialized = _lastTotalStakeEpochInitialized;
+        totalStakedAmount = _totalStakedAmount;
+        previouslySetEpochRewards = _previouslySetEpochRewards;
     }
 
-    function onlyGovernance() private view {
+    modifier onlyGovernance() {
         require(
             msg.sender == governance,
             "PushFeePool::onlyGovernance: Invalid Caller"
         );
+        _;
+    }
+    modifier onlyPushChannelAdmin() {
+        require(
+            msg.sender == pushChannelAdmin,
+            "PushFeePool::onlyPushChannelAdmin: Invalid Caller"
+        );
+        _;
+    }
+
+    modifier isMigrated() {
+        require(!migrated, "already migrated");
+        _;
+    }
+
+    function setGovernanceAddress(
+        address _governanceAddress
+    ) external onlyPushChannelAdmin {
+        governance = _governanceAddress;
+    }
+
+    function migrateEpochDetails(
+        uint _currentEpoch,
+        uint[] calldata _epochRewards,
+        uint[] calldata _epochToTotalStakedWeight
+    ) external onlyPushChannelAdmin isMigrated {
+        if (
+            _currentEpoch != _epochRewards.length &&
+            _currentEpoch != _epochToTotalStakedWeight.length
+        ) {
+            revert("Invalid Length");
+        }
+        for (uint i; i < _currentEpoch; ++i) {
+            epochRewards[i] = _epochRewards[i];
+            epochToTotalStakedWeight[i] = _epochToTotalStakedWeight[i];
+        }
+    }
+
+    function migrateUserData(
+        uint256 _startIndex,
+        uint256 _endIndex,
+        address[] calldata _user,
+        uint256[] calldata _stakedAmount,
+        uint256[] calldata _stakedWeight,
+        uint256[] calldata _lastStakedBlock,
+        uint256[] calldata _lastClaimedBlock
+    ) external onlyPushChannelAdmin isMigrated {
+        for (uint i = _startIndex; i <= _endIndex; ++i) {
+            UserFessInfo memory _userFeesInfo = UserFessInfo(
+                _stakedAmount[i],
+                _stakedWeight[i],
+                _lastStakedBlock[i],
+                _lastClaimedBlock[i]
+            );
+            {
+                userFeesInfo[_user[i]] = _userFeesInfo;
+            }
+        }
+    }
+
+    function migrateUserMappings(
+        address[] calldata _user,
+        uint[] calldata _epochToUserStakedWeight,
+        uint256[] calldata _userRewardClaimed
+    ) external onlyPushChannelAdmin isMigrated {
+        if (_user.length != _epochToUserStakedWeight.length) {
+            revert("Invalid Length");
+        }
+        for (uint i; i < _user.length; ++i) {
+            userFeesInfo[_user[i]].epochToUserStakedWeight[
+                    i + 1
+                ] = _epochToUserStakedWeight[i];
+            usersRewardsClaimed[_user[i]] = _userRewardClaimed[i];
+        }
+    }
+
+    function migrationComplete() external onlyPushChannelAdmin {
+        migrated = false;
     }
 
     /**
@@ -90,28 +181,13 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         address _user,
         uint256 _epochId
     ) public view returns (uint256 rewards) {
-        console.log(userFeesInfo[_user]
-            .epochToUserStakedWeight[_epochId]
-            ,(epochRewards[_epochId])
-            ,(epochToTotalStakedWeight[_epochId]));
         rewards = userFeesInfo[_user]
             .epochToUserStakedWeight[_epochId]
             .mul(epochRewards[_epochId])
             .div(epochToTotalStakedWeight[_epochId]);
     }
 
-    /**
-     * @notice Function to initialize the staking procedure in Core contract
-     * @dev    Requires caller to deposit/stake 1 PUSH token to ensure staking pool is never zero.
-     **/
     function initializeStake() external {
-        require(
-            genesisEpoch == 0,
-            "PushFeePool::initializeStake: Already Initialized"
-        );
-        genesisEpoch = block.number;
-        lastEpochInitialized = genesisEpoch;
-
         _stake(core, 1e18);
     }
 
@@ -222,8 +298,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
      * @dev    only accessible by Push Admin
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      **/
-    function daoHarvestPaginated(uint256 _tillEpoch) external {
-        onlyGovernance();
+    function daoHarvestPaginated(uint256 _tillEpoch) external onlyGovernance {
         uint256 rewards = harvest(core, _tillEpoch);
         IPushCore(core).approveStaker(rewards);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, governance, rewards);
@@ -345,7 +420,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
                 - Records the Pool_Fees value used as rewards.
                 - Records the last epoch id whose rewards were set.
      */
-function _setupEpochsRewardAndWeights(
+    function _setupEpochsRewardAndWeights(
         uint256 _userWeight,
         uint256 _currentEpoch
     ) private {
@@ -355,7 +430,7 @@ function _setupEpochsRewardAndWeights(
         );
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
-           uint PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
+            uint PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
@@ -393,5 +468,4 @@ function _setupEpochsRewardAndWeights(
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
-
 }

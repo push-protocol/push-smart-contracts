@@ -10,7 +10,12 @@ contract PushFeePoolProxy is TransparentUpgradeableProxy {
         address _governance,
         address _pushChannelAdmin,
         address _core,
-        address _pushTokenAddress
+        address _pushTokenAddress,
+        uint _genesisEpoch,
+        uint _lastEpochInitialized,
+        uint _lastTotalStakeEpochInitialized,
+        uint _totalStakedAmount,
+        uint _previouslySetEpochRewards
     )
         public
         payable
@@ -18,10 +23,15 @@ contract PushFeePoolProxy is TransparentUpgradeableProxy {
             _logic,
             _governance,
             abi.encodeWithSignature(
-                "initialize(address,address,address)",
+                "initialize(address,address,address,uint256,uint256,uint256,uint256,uint256)",
                 _pushChannelAdmin,
                 _core,
-                _pushTokenAddress
+                _pushTokenAddress,
+                _genesisEpoch,
+                _lastEpochInitialized,
+                _lastTotalStakeEpochInitialized,
+                _totalStakedAmount,
+                _previouslySetEpochRewards
             )
         )
     {}
