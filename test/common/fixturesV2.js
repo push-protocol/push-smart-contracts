@@ -69,18 +69,23 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   const PushFeePoolProxy = await PushFeePoolProxyContract.deploy(
     PUSH_STAKING_LOGIC.address,
     PROXYADMIN.address,
-        ADMIN,
-        EPNSCoreProxy.address,
-        PushToken.address
-  )
+    ADMIN,
+    EPNSCoreProxy.address,
+    PushToken.address,
+    30,
+    30,
+    0,
+    0,
+    0
+  );
 
   EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address);
   EPNSCommV1Proxy = EPNSCommunicator.attach(EPNSCommProxy.address);
-  PushFeePoolV1Proxy = PushFeePool.attach(PushFeePoolProxy.address)
+  PushFeePoolV1Proxy = PushFeePool.attach(PushFeePoolProxy.address);
   await EPNSCommV1Proxy.setEPNSCoreAddress(EPNSCoreV1Proxy.address);
   await EPNSCoreV1Proxy.setEpnsCommunicatorAddress(EPNSCommV1Proxy.address);
   await EPNSCoreV1Proxy.updateStakingAddress(PushFeePoolProxy.address);
-  
+
 
   return {
     CORE_LOGIC,
