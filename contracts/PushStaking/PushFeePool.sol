@@ -34,7 +34,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         uint _totalStakedAmount,
         uint _previouslySetEpochRewards
     ) public initializer {
-        console.log(genesisEpoch);
+        console.log(genesisEpoch); //@audit - Remove Console logs from final version of contract
         console.log(epochDuration);
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
@@ -73,7 +73,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         governance = _governanceAddress;
     }
 
-    function migrateEpochDetails(
+    function migrateEpochDetails( // @audit Invalid logic - Rewards will be assigend in wrong epochs.
         uint _currentEpoch,
         uint[] calldata _epochRewards,
         uint[] calldata _epochToTotalStakedWeight
@@ -84,13 +84,13 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         ) {
             revert("Invalid Length");
         }
-        for (uint i; i < _currentEpoch; ++i) {
+        for (uint i; i < _currentEpoch; ++i) { //@audit - Incorrect Implementation: EPOCH reward and epochToTotalStakedWeight will be set to ZERO EPOCH here . however, in reality epcoh rewards starts from epoch.
             epochRewards[i] = _epochRewards[i];
             epochToTotalStakedWeight[i] = _epochToTotalStakedWeight[i];
         }
     }
 
-    function migrateUserData(
+    function migrateUserData( //@audit - Missing Array length mismatch check.
         uint256 _startIndex,
         uint256 _endIndex,
         address[] calldata _user,
@@ -112,7 +112,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         }
     }
 
-    function migrateUserMappings(
+    function migrateUserMappings( //@audit Missing array length mismatch check for _userRewardClaimed array
         address[] calldata _user,
         uint[] calldata _epochToUserStakedWeight,
         uint256[] calldata _userRewardClaimed
