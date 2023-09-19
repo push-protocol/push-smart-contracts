@@ -81,9 +81,9 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         ) {
             revert("Invalid Length");
         }
-        for (uint i = 1; i <= _currentEpoch; ++i) {
-            epochRewards[i] = _epochRewards[i];
-            epochToTotalStakedWeight[i] = _epochToTotalStakedWeight[i];
+        for (uint i; i <= _currentEpoch; ++i) {
+            epochRewards[i+1] = _epochRewards[i];
+            epochToTotalStakedWeight[i+1] = _epochToTotalStakedWeight[i];
         }
     }
 
