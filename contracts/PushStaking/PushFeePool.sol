@@ -4,7 +4,6 @@ pragma solidity ^0.6.0;
 import "./PushFeePoolStorage.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IPushCore.sol";
-import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -34,8 +33,6 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         uint _totalStakedAmount,
         uint _previouslySetEpochRewards
     ) public initializer {
-        console.log(genesisEpoch); //@audit - Remove Console logs from final version of contract
-        console.log(epochDuration);
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         core = _core;
@@ -73,7 +70,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         governance = _governanceAddress;
     }
 
-    function migrateEpochDetails( // @audit Invalid logic - Rewards will be assigend in wrong epochs.
+    function migrateEpochDetails(
         uint _currentEpoch,
         uint[] calldata _epochRewards,
         uint[] calldata _epochToTotalStakedWeight
@@ -84,13 +81,13 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         ) {
             revert("Invalid Length");
         }
-        for (uint i; i < _currentEpoch; ++i) { //@audit - Incorrect Implementation: EPOCH reward and epochToTotalStakedWeight will be set to ZERO EPOCH here . however, in reality epcoh rewards starts from epoch.
+        for (uint i = 1; i <= _currentEpoch; ++i) {
             epochRewards[i] = _epochRewards[i];
             epochToTotalStakedWeight[i] = _epochToTotalStakedWeight[i];
         }
     }
 
-    function migrateUserData( //@audit - Missing Array length mismatch check.
+    function migrateUserData(
         uint256 _startIndex,
         uint256 _endIndex,
         address[] calldata _user,
@@ -99,6 +96,14 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         uint256[] calldata _lastStakedBlock,
         uint256[] calldata _lastClaimedBlock
     ) external onlyPushChannelAdmin isMigrated {
+        if (
+            _user.length != _stakedAmount.length ||
+            _stakedWeight.length != _lastStakedBlock.length ||
+            _stakedWeight.length != _lastClaimedBlock.length ||
+            _lastClaimedBlock.length != _user.length
+        ) {
+            revert("Invalid Length");
+        }
         for (uint i = _startIndex; i <= _endIndex; ++i) {
             UserFessInfo memory _userFeesInfo = UserFessInfo(
                 _stakedAmount[i],
@@ -112,12 +117,15 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         }
     }
 
-    function migrateUserMappings( //@audit Missing array length mismatch check for _userRewardClaimed array
+    function migrateUserMappings(
         address[] calldata _user,
         uint[] calldata _epochToUserStakedWeight,
         uint256[] calldata _userRewardClaimed
     ) external onlyPushChannelAdmin isMigrated {
-        if (_user.length != _epochToUserStakedWeight.length) {
+        if (
+            _user.length != _epochToUserStakedWeight.length ||
+            _user.length != _userRewardClaimed.length
+        ) {
             revert("Invalid Length");
         }
         for (uint i; i < _user.length; ++i) {
@@ -276,7 +284,6 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
 
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
         IPushCore(core).approveStaker(rewards);
-        console.log(rewards);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, msg.sender, rewards);
     }
 
