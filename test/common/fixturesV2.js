@@ -72,8 +72,8 @@ const epnsContractFixture = async ([adminSigner, others]) => {
     ADMIN,
     EPNSCoreProxy.address,
     PushToken.address,
-    30,
-    30,
+    0,
+    0,
     0,
     0,
     0

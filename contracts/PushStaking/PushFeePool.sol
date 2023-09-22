@@ -76,20 +76,18 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         uint[] calldata _epochToTotalStakedWeight
     ) external onlyPushChannelAdmin isMigrated {
         if (
-            _currentEpoch != _epochRewards.length &&
+            _currentEpoch != _epochRewards.length ||
             _currentEpoch != _epochToTotalStakedWeight.length
         ) {
             revert("Invalid Length");
         }
-        for (uint i; i <= _currentEpoch; ++i) {
+        for (uint i; i < _currentEpoch; ++i) {
             epochRewards[i+1] = _epochRewards[i];
             epochToTotalStakedWeight[i+1] = _epochToTotalStakedWeight[i];
         }
     }
 
     function migrateUserData(
-        uint256 _startIndex,
-        uint256 _endIndex,
         address[] calldata _user,
         uint256[] calldata _stakedAmount,
         uint256[] calldata _stakedWeight,
@@ -104,35 +102,37 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         ) {
             revert("Invalid Length");
         }
-        for (uint i = _startIndex; i <= _endIndex; ++i) {
+        for (uint i; i < _user.length; ++i) {
             UserFessInfo memory _userFeesInfo = UserFessInfo(
                 _stakedAmount[i],
                 _stakedWeight[i],
                 _lastStakedBlock[i],
                 _lastClaimedBlock[i]
             );
-            {
+            
                 userFeesInfo[_user[i]] = _userFeesInfo;
             }
         }
-    }
 
     function migrateUserMappings(
+        uint _epoch,
         address[] calldata _user,
-        uint[] calldata _epochToUserStakedWeight,
-        uint256[] calldata _userRewardClaimed
+        uint256[] calldata _epochToUserStakedWeight,
+        uint256[] calldata _userRewardsClaimed
     ) external onlyPushChannelAdmin isMigrated {
         if (
             _user.length != _epochToUserStakedWeight.length ||
-            _user.length != _userRewardClaimed.length
+            _user.length != _userRewardsClaimed.length
         ) {
             revert("Invalid Length");
         }
         for (uint i; i < _user.length; ++i) {
             userFeesInfo[_user[i]].epochToUserStakedWeight[
-                    i + 1
+                    _epoch
                 ] = _epochToUserStakedWeight[i];
-            usersRewardsClaimed[_user[i]] = _userRewardClaimed[i];
+            if (_userRewardsClaimed.length > 0) {
+                usersRewardsClaimed[_user[i]] = _userRewardsClaimed[i];
+            }
         }
     }
 
@@ -474,5 +474,12 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
                 _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
+    }
+
+    function getEpochToUserStakedWeight(
+        address _user,
+        uint _epoch
+    ) external view returns (uint) {
+        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
     }
 }
