@@ -73,10 +73,10 @@ const epnsContractFixture = async ([adminSigner, others]) => {
     EPNSCoreProxy.address,
     PushToken.address,
     0,
-    0,
-    0,
-    0,
-    0
+    450877,
+    4,
+    BigInt("3300000000000000000000"),
+    BigInt("60000000000000000000000")
   );
 
   EPNSCoreV1Proxy = EPNSCore.attach(EPNSCoreProxy.address);
@@ -86,7 +86,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   await EPNSCoreV1Proxy.setEpnsCommunicatorAddress(EPNSCommV1Proxy.address);
   await EPNSCoreV1Proxy.updateStakingAddress(PushFeePoolProxy.address);
 
-
+  
   return {
     CORE_LOGIC,
     PROXYADMIN,
