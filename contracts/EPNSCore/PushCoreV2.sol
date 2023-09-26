@@ -410,7 +410,7 @@ contract PushCoreV2 is
      *         - It transfers back refundable tokenAmount back to the USER.
      **/
 
-    function destroyTimeBoundChannel(address _channelAddress)
+function destroyTimeBoundChannel(address _channelAddress)
         external
         whenNotPaused
     {
@@ -747,7 +747,7 @@ contract PushCoreV2 is
         onlyPushChannelAdmin();
         staking = _staking;
         IPUSH(PUSH_TOKEN_ADDRESS).setHolderDelegation(_staking,true);
-
+        
     }
 
     function updateProtocolPoolFee(uint _amount) external {
@@ -755,9 +755,9 @@ contract PushCoreV2 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amount);
     }
 
-    function approveStaker(uint _amount) external {
-        require(msg.sender == staking,"invalid caller");
-        IERC20(PUSH_TOKEN_ADDRESS).approve(staking, _amount);
+    function sendFunds(address _user, uint _amount) external {
+        require(msg.sender == staking);
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 
     /**
@@ -911,7 +911,7 @@ contract PushCoreV2 is
      **/
     function harvestAll() public {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-
+       
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
     }
@@ -1156,7 +1156,7 @@ contract PushCoreV2 is
         emit ChatIncentiveClaimed(msg.sender, _amount);
     }
 
-    function getEpochToUserStakedWeight(address _user, uint _epoch)external view returns(uint){
+   function getEpochToUserStakedWeight(address _user, uint _epoch)external view returns(uint){
        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
     }
 }

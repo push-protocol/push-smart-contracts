@@ -109,10 +109,10 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
                 _lastStakedBlock[i],
                 _lastClaimedBlock[i]
             );
-            
-                userFeesInfo[_user[i]] = _userFeesInfo;
-            }
+
+            userFeesInfo[_user[i]] = _userFeesInfo;
         }
+    }
 
     function migrateUserMappings(
         uint _epoch,
@@ -172,7 +172,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
     function lastEpochRelative(
         uint256 _from,
         uint256 _to
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         require(
             _to >= _from,
             "PushFeePool::lastEpochRelative: Relative Block Number Overflow"
@@ -253,12 +253,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         );
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
-        IPushCore(core).approveStaker(stakedAmount);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            core,
-            msg.sender,
-            stakedAmount
-        );
+        IPushCore(core).sendFunds(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(
@@ -283,8 +278,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
-        IPushCore(core).approveStaker(rewards);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, msg.sender, rewards);
+        IPushCore(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -295,8 +289,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
      **/
     function harvestPaginated(uint256 _tillEpoch) external {
         uint256 rewards = harvest(msg.sender, _tillEpoch);
-        IPushCore(core).approveStaker(rewards);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, msg.sender, rewards);
+        IPushCore(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -307,8 +300,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
      **/
     function daoHarvestPaginated(uint256 _tillEpoch) external onlyGovernance {
         uint256 rewards = harvest(core, _tillEpoch);
-        IPushCore(core).approveStaker(rewards);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, governance, rewards);
+        IPushCore(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -408,7 +400,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
                             _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[
                                 i
-                            ] = userFeesInfo[_user].stakedWeight;
+                            ] = userFeesInfo[_user].stakedWeight;        
                     }
                 }
             }
@@ -441,7 +433,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
                 previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
-
+            
             if (_epochGap > 1) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
             } else {
