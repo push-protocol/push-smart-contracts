@@ -46,8 +46,8 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
 
     modifier onlyPushChannelAdmin() {
         require(
-            msg.sender == pushChannelAdmin,
-            "PushFeePool::onlyPushChannelAdmin: Invalid Caller"
+            msg.sFeePool::onlyPushChannelAdmin: Invalid Callerender == pushChannelAdmin,
+            "Push"
         );
         _;
     }
@@ -64,12 +64,12 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
     }
 
     // *************** MIGRATION FUNCTIONS BEGINS ********************* //
-    function migrateEpochDetails(
+    function migrateEpochDetails( //@audit : Pagination is missing from all migration function. No start and End Indexes found
         uint _currentEpoch,
         uint[] calldata _epochRewards,
         uint[] calldata _epochToTotalStakedWeight
     ) external onlyPushChannelAdmin isMigrated {
-        if (
+        if (    //@audit - || opertor should be replaced with && + require() might be better instead of IF-REVERT
             _currentEpoch != _epochRewards.length ||
             _currentEpoch != _epochToTotalStakedWeight.length
         ) {
@@ -81,14 +81,14 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         }
     }
 
-    function migrateUserData(
+    function migrateUserData( //@audit : Pagination is missing from all migration function. No start and End Indexes found
         address[] calldata _user,
         uint256[] calldata _stakedAmount,
         uint256[] calldata _stakedWeight,
         uint256[] calldata _lastStakedBlock,
         uint256[] calldata _lastClaimedBlock
     ) external onlyPushChannelAdmin isMigrated {
-        if (
+        if (  //@audit - || opertor should be replaced with && + require() might be better instead of IF-REVERT
             _user.length != _stakedAmount.length ||
             _stakedWeight.length != _lastStakedBlock.length ||
             _stakedWeight.length != _lastClaimedBlock.length ||
@@ -107,14 +107,14 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
             userFeesInfo[_user[i]] = _userFeesInfo;
         }
     }
-
-    function migrateUserMappings(
+    //@audit : migrateUserMappings() can be modified to pass array of epochs as well instead of passing individual epoch 1 by 1.
+    function migrateUserMappings( //@audit : Pagination is missing from all migration function. No start and End Indexes found
         uint _epoch,
         address[] calldata _user,
         uint256[] calldata _epochToUserStakedWeight,
         uint256[] calldata _userRewardsClaimed
     ) external onlyPushChannelAdmin isMigrated {
-        if (
+        if (  //@audit - || opertor should be replaced with && + require() might be better instead of IF-REVERT
             _user.length != _epochToUserStakedWeight.length ||
             _user.length != _userRewardsClaimed.length
         ) {
