@@ -44,13 +44,6 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         previouslySetEpochRewards = _previouslySetEpochRewards;
     }
 
-    modifier onlyGovernance() {
-        require(
-            msg.sender == governance,
-            "PushFeePool::onlyGovernance: Invalid Caller"
-        );
-        _;
-    }
     modifier onlyPushChannelAdmin() {
         require(
             msg.sender == pushChannelAdmin,
@@ -60,7 +53,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
     }
 
     modifier isMigrated() {
-        require(!migrated, "already migrated");
+        require(!migrated, "PushFeePool::isMigrated: Migration Completed");
         _;
     }
 
@@ -70,6 +63,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         governance = _governanceAddress;
     }
 
+    // *************** MIGRATION FUNCTIONS BEGINS ********************* //
     function migrateEpochDetails(
         uint _currentEpoch,
         uint[] calldata _epochRewards,
@@ -140,10 +134,13 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         migrated = false;
     }
 
+    // *************** MIGRATION FUNCTIONS BEGINS ********************* //
+
+
     /**
      * Allows caller to add pool_fees at any given epoch
      **/
-    function addPoolFees(uint256 _rewardAmount) external {
+    function addPoolFees(uint256 _rewardAmount) external { //@audit-info : updateProtocolPoolFee can be removed from CoreV2 - addPoolFees can simply be part of CoreV2 as it has always been.
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             msg.sender,
             core,
@@ -151,7 +148,15 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
         );
         IPushCore(core).updateProtocolPoolFee(_rewardAmount);
     }
-
+    /**
+     * @notice Function to return User's Staked Weight for any given EPOCH ID
+     **/
+    function getEpochToUserStakedWeight(
+        address _user,
+        uint _epoch
+    ) external view returns (uint) {
+        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
+    }
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
      **/
@@ -195,7 +200,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
             .div(epochToTotalStakedWeight[_epochId]);
     }
 
-    function initializeStake() external {
+    function initializeStake() external { //@audit : No references, need to be removed.
         _stake(core, 1e18);
     }
 
@@ -298,7 +303,11 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
      * @dev    only accessible by Push Admin
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      **/
-    function daoHarvestPaginated(uint256 _tillEpoch) external onlyGovernance {
+    function daoHarvestPaginated(uint256 _tillEpoch) external{
+        require(
+            msg.sender == governance,
+            "PushFeePool::onlyGovernance: Invalid Caller"
+        );
         uint256 rewards = harvest(core, _tillEpoch);
         IPushCore(core).sendFunds(msg.sender, rewards);
     }
@@ -466,12 +475,5 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
                 _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
-    }
-
-    function getEpochToUserStakedWeight(
-        address _user,
-        uint _epoch
-    ) external view returns (uint) {
-        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
     }
 }

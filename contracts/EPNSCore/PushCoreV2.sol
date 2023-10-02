@@ -756,7 +756,7 @@ function destroyTimeBoundChannel(address _channelAddress)
     }
 
     function sendFunds(address _user, uint _amount) external {
-        require(msg.sender == staking);
+        require(msg.sender == staking, "PushCoreV2::sendFunds: Invalid Caller");
         IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 
