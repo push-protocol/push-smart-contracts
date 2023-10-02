@@ -46,8 +46,8 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
 
     modifier onlyPushChannelAdmin() {
         require(
-            msg.sFeePool::onlyPushChannelAdmin: Invalid Callerender == pushChannelAdmin,
-            "Push"
+            msg.sender == pushChannelAdmin,
+            "PushFeePool::onlyPushChannelAdmin: Invalid Caller"
         );
         _;
     }
