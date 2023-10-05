@@ -1,0 +1,45 @@
+name: "🚀 Feature Request"
+description: Suggest a new feature for this project.
+title: "🚀 [New Feature] - <title>"
+labels: [
+  "New feature"
+]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Feature"
+      description: Please describe the feature in detail that you're expecting
+      placeholder: Detailed description of your desired feature...
+    validations:
+      required: true
+  - type: input
+    id: figma-url
+    attributes:
+      label: "Figma Design if available"
+      description: Please enter figma designs url, if available
+      placeholder: Figma Link
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Screenshots"
+      description: If applicable, add screenshots to help explain your feature.
+      value: |
+        ![DESCRIPTION](LINK.png)
+      render: bash
+    validations:
+      required: false
+  - type: dropdown
+    id: dapp-env
+    attributes:
+      label: "Dapp Env"
+      description: Any specific ENV for this feature ?
+      multiple: true
+      options:
+        - Prod (app.push.org)
+        - Staging (staging.push.org)
+        - Dev (dev.push.org)
+    validations:
+      required: false

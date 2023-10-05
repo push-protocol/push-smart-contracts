@@ -1,0 +1,53 @@
+name: "😈 Feature Enhancement"
+description: Suggest enhancement for an existing feature.
+title: "😈 [Feature Enhancement] - <title>"
+labels: [
+  "feature enhancement"
+]
+body:
+  - type: input
+    id: feature-name
+    attributes:
+      label: "Feature name"
+      description: Current feature behaviour
+      placeholder: Current Feature
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Enhancement"
+      description: Please describe the feature in detail that you're expecting
+      placeholder: Detailed description of your desired feature...
+    validations:
+      required: true
+  - type: input
+    id: figma-url
+    attributes:
+      label: "Figma Design if available"
+      description: Please enter figma designs url, if available
+      placeholder: Figma Link
+    validations:
+      required: false
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Screenshots"
+      description: If applicable, add screenshots to help explain the enhancement.
+      value: |
+        ![DESCRIPTION](LINK.png)
+      render: bash
+    validations:
+      required: false
+  - type: dropdown
+    id: dapp-env
+    attributes:
+      label: "Dapp Env"
+      description: Any specific ENV for this feature ?
+      multiple: true
+      options:
+        - Prod (app.push.org)
+        - Staging (staging.push.org)
+        - Dev (dev.push.org)
+    validations:
+      required: false
