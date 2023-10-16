@@ -32,14 +32,16 @@ body:
     validations:
       required: false
   - type: dropdown
-    id: dapp-env
+       id: contracts
     attributes:
-      label: "Dapp Env"
-      description: Any specific ENV for this feature ?
+      label: "Contract Name"
+      description: Which contract will be enhanced?
       multiple: true
       options:
-        - Prod (app.push.org)
-        - Staging (staging.push.org)
-        - Dev (dev.push.org)
+        - Core Contract
+        - Comm Contract
+        - Push Token
     validations:
       required: false
+
+ 

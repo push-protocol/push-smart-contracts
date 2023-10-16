@@ -1,9 +1,7 @@
 name: "😈 Feature Enhancement"
 description: Suggest enhancement for an existing feature.
 title: "😈 [Feature Enhancement] - <title>"
-labels: [
-  "feature enhancement"
-]
+labels: ["feature enhancement"]
 body:
   - type: input
     id: feature-name
@@ -22,32 +20,22 @@ body:
     validations:
       required: true
   - type: input
-    id: figma-url
+    id: POC-url
     attributes:
-      label: "Figma Design if available"
-      description: Please enter figma designs url, if available
-      placeholder: Figma Link
-    validations:
-      required: false
-  - type: textarea
-    id: screenshot
-    attributes:
-      label: "Screenshots"
-      description: If applicable, add screenshots to help explain the enhancement.
-      value: |
-        ![DESCRIPTION](LINK.png)
-      render: bash
+      label: "POC if available"
+      description: Please enter POC url, if available
+      placeholder: POC Link
     validations:
       required: false
   - type: dropdown
-    id: dapp-env
+    id: contracts
     attributes:
-      label: "Dapp Env"
-      description: Any specific ENV for this feature ?
+      label: "Contract Name"
+      description: Which contract will be enhanced?
       multiple: true
       options:
-        - Prod (app.push.org)
-        - Staging (staging.push.org)
-        - Dev (dev.push.org)
+        - Core Contract
+        - Comm Contract
+        - Push Token
     validations:
-      required: false
+      required: true
