@@ -1,6 +1,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-contract EPNSCommStorageV1_5 {
+contract PushCommStorageV2 {
     /**
      * @notice User Struct that involves imperative details about
      * a specific User.

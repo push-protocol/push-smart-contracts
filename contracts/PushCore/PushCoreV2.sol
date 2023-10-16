@@ -10,8 +10,8 @@ pragma experimental ABIEncoderV2;
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
  **/
-import "./EPNSCoreStorageV1_5.sol";
-import "./EPNSCoreStorageV2.sol";
+import "./PushCoreStorageV1_5.sol";
+import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
@@ -25,9 +25,9 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract PushCoreV2 is
     Initializable,
-    EPNSCoreStorageV1_5,
+    PushCoreStorageV1_5,
     PausableUpgradeable,
-    EPNSCoreStorageV2
+    PushCoreStorageV2
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

@@ -1,6 +1,7 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-contract EPNSCoreStorageV2 {
+contract PushCoreStorageV2{
+    
     /* *** V2 State variables *** */
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256(

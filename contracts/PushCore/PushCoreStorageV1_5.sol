@@ -1,6 +1,6 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-contract EPNSCoreStorageV1_5 {
+contract PushCoreStorageV1_5 {
     /* ***************
 
   DEFINE ENUMS AND CONSTANTS

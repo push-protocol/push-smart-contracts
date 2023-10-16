@@ -4,7 +4,7 @@ pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/proxy/TransparentUpgradeableProxy.sol";
 
-contract EPNSBravoProxy is TransparentUpgradeableProxy {
+contract PushBravoProxy is TransparentUpgradeableProxy {
 
     constructor(
         address _logic,
