@@ -35,7 +35,7 @@ contract EPNSCoreV1 is Initializable{
 
      *************** */
 
-    // For Message Type
+    //For Message Type
     enum ChannelType {
         ProtocolNonInterest,
         ProtocolPromotion,
