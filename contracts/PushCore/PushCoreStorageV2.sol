@@ -42,4 +42,7 @@ contract PushCoreStorageV2{
 
     /** Handling bridged information **/
     mapping(address => uint256) public celebUserFunds;
+
+     /* *** v2.5 State variables *** */
+     address public feePoolStakingContract;
 }
