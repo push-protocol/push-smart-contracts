@@ -1,6 +1,42 @@
+# General Configs
 [profile.default]
 src = 'contracts'
 out = 'out'
-libs = ['node_modules', 'lib']
-test = 'test'
+libs = ['node_modules', 'lib'] # Includes node_modules too for any previous imports with npm
+test = 'testFoundry'           # "testFoundry" -> foundry test only while "test" -> js test files
 cache_path  = 'cache_forge'
+
+# Solidity & EVM Specific Configs
+solc = "0.6.11"
+optimizer = true
+optimizer_runs = 99999
+auto_detect_solc = false
+emv_version = "paris"
+  
+
+# Test Specific Configs
+verbosity = 2
+gas_reports = [" "]
+sender = "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38"
+
+
+# Formatter Specific Configs
+[fmt]
+  bracket_spacing = true
+  int_types = "long"
+  line_length = 120
+  multiline_func_header = "all"
+  number_underscore = "thousands"
+  quote_style = "double"
+  tab_width = 4
+  wrap_comments = true
+
+# Etherscan Config Keys
+[etherscan]
+  arbitrum_one = { key = "${process.env.ARBISCAN_API}" }
+  bnb_smart_chain = { key = "${process.env.BNBSCAN_API}" }
+  goerli = { key = "${process.env.ETHERSCAN_API}" }
+  mainnet = { key = "${process.env.ETHERSCAN_API}" }
+  optimism = { key = "${process.env.OPTIMISM_API}" }
+  polygon = { key = "${process.env.POLYGONSCAN_API}" }
+  sepolia = { key = "${process.env.ETHERSCAN_API}" }
