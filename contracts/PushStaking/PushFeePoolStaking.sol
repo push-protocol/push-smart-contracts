@@ -131,7 +131,7 @@ contract PushFeePool is Initializable, PushFeePoolStorage {
     }
 
     function migrationComplete() external onlyPushChannelAdmin {
-        migrated = false;
+        migrated = true;
     }
 
     // *************** MIGRATION FUNCTIONS BEGINS ********************* //
