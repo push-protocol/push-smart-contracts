@@ -3,15 +3,11 @@ pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
 import "contracts/token/EPNS.sol";
-import "contracts/PushCore/PushCoreV2.sol";
-import "contracts/PushCore/PushCoreStorageV1_5.sol";
 import "contracts/PushCore/PushCoreStorageV2.sol";
-//import "contracts/PushComm/PushCommV2.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
-
-// import "forge-std/Console.sol";
-
- // For Message Type
+import "contracts/PushCore/PushCoreStorageV1_5.sol";
+import {PushCoreV2} from "contracts/PushCore/PushCoreV2.sol";
+import {PushCommV2} from "contracts/PushComm/PushCommV2.sol";
 
 
 contract PushTest is Test {
@@ -55,7 +51,7 @@ contract PushTest is Test {
         
         pushToken = new EPNS(admin);
         core = new PushCoreV2();
-        //comm = new PushCommV2();
+        comm = new PushCommV2();
         uniV2Router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         // Initialize Core Contract
         core.initialize(
