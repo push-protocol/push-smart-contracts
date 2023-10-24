@@ -36,7 +36,7 @@ abstract contract BaseTest is Test, Constants{
        Initializing Set-Up for Push Contracts
      *************** */
 
-    function setUp() external {
+    function setUp() public virtual {
         tokenDistributor = makeAddr("tokenDistributor");
 
         pushToken = new EPNS(tokenDistributor);
