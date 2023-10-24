@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 import { BaseTest } from "../BaseTest.t.sol";
-import {PushFeePoolStaking} from "contracts/PushStaking/PushFeePoolStaking.sol";
+import { PushFeePoolStaking } from "contracts/PushStaking/PushFeePoolStaking.sol";
 
 
 contract BasePushFeePoolStaking is BaseTest{
