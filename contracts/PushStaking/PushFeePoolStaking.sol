@@ -65,10 +65,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
 
     // *************** MIGRATION FUNCTIONS BEGINS ********************* //
     function migrateEpochDetails(
-        uint _currentEpoch,
-        uint[] calldata _epochRewards,
-        uint[] calldata _epochToTotalStakedWeight
-    ) external onlyPushChannelAdmin isMigrated {
+        uint256 _currentEpoch,
+        uint256[] memory _epochRewards,
+        uint256[] memory _epochToTotalStakedWeight
+    ) public onlyPushChannelAdmin isMigrated {
         require(
             _currentEpoch == _epochRewards.length &&
                 _currentEpoch == _epochToTotalStakedWeight.length,
@@ -130,7 +130,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
     }
 
-    function migrationComplete() external onlyPushChannelAdmin {
+    function setMigrationComplete() external onlyPushChannelAdmin {
         migrated = true;
     }
 
