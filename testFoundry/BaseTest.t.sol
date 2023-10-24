@@ -18,7 +18,7 @@ import {Actors} from "./utils/Actors.sol";
 import {Constants} from "./utils/Constants.sol";
 
 
-contract PushTest is Test, Constants{
+abstract contract BaseTest is Test, Constants{
 
     EPNS public pushToken;
     PushCoreV2 public core;
