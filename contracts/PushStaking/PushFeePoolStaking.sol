@@ -47,13 +47,13 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     modifier onlyPushChannelAdmin() {
         require(
             msg.sender == pushChannelAdmin,
-            "PushFeePool::onlyPushChannelAdmin: Invalid Caller"
+            "PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller"
         );
         _;
     }
 
     modifier isMigrated() {
-        require(!migrated, "PushFeePool::isMigrated: Migration Completed");
+        require(!migrated, "PushFeePoolStaking::isMigrated: Migration Completed");
         _;
     }
 
@@ -91,9 +91,9 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     ) external onlyPushChannelAdmin isMigrated {
         require(
             _user.length == _stakedAmount.length &&
-                _stakedWeight.length == _lastStakedBlock.length &&
-                _stakedWeight.length == _lastClaimedBlock.length &&
-                _lastClaimedBlock.length == _user.length,
+            _user.length == _stakedWeight.length &&
+            _user.length == _lastStakedBlock.length &&
+            _user.length == _lastClaimedBlock.length,
             "Invalid Length"
         );
         for (uint i = start; i < end; ++i) {
@@ -169,7 +169,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     ) public pure returns (uint256) {
         require(
             _to >= _from,
-            "PushFeePool::lastEpochRelative: Relative Block Number Overflow"
+            "PushFeePoolStaking::lastEpochRelative: Relative Block Number Overflow"
         );
         return uint256((_to - _from) / epochDuration + 1);
     }
@@ -235,11 +235,11 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         require(
             block.number >
                 userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
-            "PushFeePool::unstake: Can't Unstake before 1 complete EPOCH"
+            "PushFeePoolStaking::unstake: Can't Unstake before 1 complete EPOCH"
         );
         require(
             userFeesInfo[msg.sender].stakedAmount > 0,
-            "PushFeePool::unstake: Invalid Caller"
+            "PushFeePoolStaking::unstake: Invalid Caller"
         );
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
@@ -291,7 +291,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     function daoHarvestPaginated(uint256 _tillEpoch) external {
         require(
             msg.sender == governance,
-            "PushFeePool::onlyGovernance: Invalid Caller"
+            "PushFeePoolStaking::onlyGovernance: Invalid Caller"
         );
         uint256 rewards = harvest(core, _tillEpoch);
         IPushCore(core).sendFunds(msg.sender, rewards);
@@ -319,11 +319,11 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
 
         require(
             currentEpoch > _tillEpoch,
-            "PushFeePool::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
+            "PushFeePoolStaking::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
         );
         require(
             _tillEpoch >= nextFromEpoch,
-            "PushFeePool::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
+            "PushFeePoolStaking::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
         );
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
