@@ -1,0 +1,39 @@
+name: "🚀 Feature Request"
+description: Suggest a new feature for this project.
+title: "🚀 [New Feature] - <title>"
+labels: [
+  "New feature"
+]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Feature"
+      description: Please describe the feature in detail that you're expecting and how it helps the overall protocol
+      placeholder: Detailed description of your desired feature...
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: "Does this break any existing part of the contract?"
+      description: Explain (in brief) if this feature will have any effect on existing contracts...
+      placeholder: Brief explanation 
+    validations:
+      required: false
+  - type: dropdown
+       id: contracts
+    attributes:
+      label: "Contract Name"
+      description: Which contract is this feature suggested for?
+      multiple: true
+      options:
+        - Core Contract
+        - Comm Contract
+        - Push Token
+        - Push Governance Contracts
+        - Push Staking V2
+    validations:
+      required: false
+
+ 

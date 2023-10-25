@@ -1,0 +1,43 @@
+name: "😈 Feature Enhancement"
+description: Suggest enhancement for an existing feature.
+title: "😈 [Feature Enhancement] - <title>"
+labels: ["feature enhancement"]
+body:
+  - type: input
+    id: feature-name
+    attributes:
+      label: "Feature name"
+      description: Current feature behaviour
+      placeholder: Current Feature
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Enhancement"
+      description: Please describe the feature in detail that you're expecting
+      placeholder: Detailed description of your desired feature...
+    validations:
+      required: true
+  - type: input
+    id: POC-url
+    attributes:
+      label: "POC if available"
+      description: Please enter POC url, if available
+      placeholder: POC Link
+    validations:
+      required: false
+  - type: dropdown
+    id: contracts
+    attributes:
+      label: "Contract Name"
+      description: Which contract will be enhanced?
+      multiple: true
+      options:
+        - Core Contract
+        - Comm Contract
+        - Push Token
+        - Push Governance Contracts
+        - Push Staking V2
+    validations:
+      required: true
