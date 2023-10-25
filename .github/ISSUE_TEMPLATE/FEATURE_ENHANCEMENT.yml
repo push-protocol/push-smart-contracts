@@ -37,5 +37,7 @@ body:
         - Core Contract
         - Comm Contract
         - Push Token
+        - Push Governance Contracts
+        - Push Staking V2
     validations:
       required: true

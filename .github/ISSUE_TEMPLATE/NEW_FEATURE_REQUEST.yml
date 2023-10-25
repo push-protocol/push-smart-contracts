@@ -9,38 +9,30 @@ body:
     id: description
     attributes:
       label: "Describe the Feature"
-      description: Please describe the feature in detail that you're expecting
+      description: Please describe the feature in detail that you're expecting and how it helps the overall protocol
       placeholder: Detailed description of your desired feature...
     validations:
       required: true
-  - type: input
-    id: figma-url
-    attributes:
-      label: "Figma Design if available"
-      description: Please enter figma designs url, if available
-      placeholder: Figma Link
-    validations:
-      required: false
   - type: textarea
-    id: screenshot
+    id: description
     attributes:
-      label: "Screenshots"
-      description: If applicable, add screenshots to help explain your feature.
-      value: |
-        ![DESCRIPTION](LINK.png)
-      render: bash
+      label: "Does this break any existing part of the contract?"
+      description: Explain (in brief) if this feature will have any effect on existing contracts...
+      placeholder: Brief explanation 
     validations:
       required: false
   - type: dropdown
        id: contracts
     attributes:
       label: "Contract Name"
-      description: Which contract will be enhanced?
+      description: Which contract is this feature suggested for?
       multiple: true
       options:
         - Core Contract
         - Comm Contract
         - Push Token
+        - Push Governance Contracts
+        - Push Staking V2
     validations:
       required: false
 
