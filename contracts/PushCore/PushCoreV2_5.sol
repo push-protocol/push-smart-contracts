@@ -9,7 +9,8 @@ pragma experimental ABIEncoderV2;
  * protocols can be deployed on Multiple Chains.
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
- **/
+ *
+ */
 import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
@@ -23,67 +24,31 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract PushCoreV2_5 is
-    Initializable,
-    PushCoreStorageV1_5,
-    PausableUpgradeable,
-    PushCoreStorageV2
-{
+contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     /* ***************
         EVENTS
      *************** */
-    event UpdateChannel(
-        address indexed channel,
-        bytes identity,
-        uint256 indexed amountDeposited
-    );
+    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
     event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(
-        address indexed channel,
-        address indexed revoker
-    );
+    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
 
-    event DeactivateChannel(
-        address indexed channel,
-        uint256 indexed amountRefunded
-    );
-    event ReactivateChannel(
-        address indexed channel,
-        uint256 indexed amountDeposited
-    );
+    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
+    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event ChannelBlocked(address indexed channel);
-    event AddChannel(
-        address indexed channel,
-        ChannelType indexed channelType,
-        bytes identity
-    );
+    event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
     event ChannelNotifcationSettingsAdded(
-        address _channel,
-        uint256 totalNotifOptions,
-        string _notifSettings,
-        string _notifDescription
+        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     event AddSubGraph(address indexed channel, bytes _subGraphData);
-    event TimeBoundChannelDestroyed(
-        address indexed channel,
-        uint256 indexed amountRefunded
-    );
-    event ChannelOwnershipTransfer(
-        address indexed channel,
-        address indexed newOwner
-    );
+    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
+    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
-    event RewardsHarvested(
-        address indexed user,
-        uint256 indexed rewardAmount,
-        uint256 fromEpoch,
-        uint256 tillEpoch
-    );
+    event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     event IncentivizeChatReqReceived(
         address requestSender,
         address requestReceiver,
@@ -91,10 +56,7 @@ contract PushCoreV2_5 is
         uint256 feePoolAmount,
         uint256 timestamp
     );
-    event ChatIncentiveClaimed(
-        address indexed user,
-        uint256 indexed amountClaimed
-    );
+    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* ***************
         INITIALIZER
@@ -109,7 +71,11 @@ contract PushCoreV2_5 is
         address _daiAddress,
         address _aDaiAddress,
         uint256 _referralCode
-    ) public initializer returns (bool success) {
+    )
+        public
+        initializer
+        returns (bool success)
+    {
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
@@ -125,7 +91,7 @@ contract PushCoreV2_5 is
         MIN_POOL_CONTRIBUTION = 50 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
-        ADJUST_FOR_FLOAT = 10**7;
+        ADJUST_FOR_FLOAT = 10 ** 7;
         groupLastUpdate = block.number;
         groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
 
@@ -139,30 +105,23 @@ contract PushCoreV2_5 is
 
     *************** */
     function onlyPushChannelAdmin() private {
-        require(
-            msg.sender == pushChannelAdmin,
-            "PushCoreV2::onlyPushChannelAdmin: Invalid Caller"
-        );
+        require(msg.sender == pushChannelAdmin, "PushCoreV2::onlyPushChannelAdmin: Invalid Caller");
     }
 
     function onlyGovernance() private {
-        require(
-            msg.sender == governance,
-            "PushCoreV2::onlyGovernance: Invalid Caller"
-        );
+        require(msg.sender == governance, "PushCoreV2::onlyGovernance: Invalid Caller");
     }
 
     function onlyActivatedChannels(address _channel) private {
-        require(
-            channels[_channel].channelState == 1,
-            "PushCoreV2::onlyActivatedChannels: Invalid Channel"
-        );
+        require(channels[_channel].channelState == 1, "PushCoreV2::onlyActivatedChannels: Invalid Channel");
     }
 
     function onlyChannelOwner(address _channel) private {
         require(
-            ((channels[_channel].channelState == 1 && msg.sender == _channel) ||
-                (msg.sender == pushChannelAdmin && _channel == address(0x0))),
+            (
+                (channels[_channel].channelState == 1 && msg.sender == _channel)
+                    || (msg.sender == pushChannelAdmin && _channel == address(0x0))
+            ),
             "PushCoreV2::onlyChannelOwner: Invalid Channel Owner"
         );
     }
@@ -184,19 +143,13 @@ contract PushCoreV2_5 is
 
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
-        require(
-            _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::setFeeAmount: Invalid Fee"
-        );
+        require(_newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES, "PushCoreV2::setFeeAmount: Invalid Fee");
         FEE_AMOUNT = _newFees;
     }
 
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
-        require(
-            _newAmount > 0,
-            "PushCoreV2::setMinPoolContribution: Invalid Amount"
-        );
+        require(_newAmount > 0, "PushCoreV2::setMinPoolContribution: Invalid Amount");
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
 
@@ -216,26 +169,18 @@ contract PushCoreV2_5 is
      * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
      *
      * @param _newFees new minimum fees required for Channel Creation
-     **/
+     *
+     */
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
-        require(
-            _newFees >= MIN_POOL_CONTRIBUTION,
-            "PushCoreV2::setMinChannelCreationFees: Invalid Fees"
-        );
+        require(_newFees >= MIN_POOL_CONTRIBUTION, "PushCoreV2::setMinChannelCreationFees: Invalid Fees");
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external {
         onlyPushChannelAdmin();
-        require(
-            _newAdmin != address(0),
-            "PushCoreV2::transferPushChannelAdminControl: Invalid Address"
-        );
-        require(
-            _newAdmin != pushChannelAdmin,
-            "PushCoreV2::transferPushChannelAdminControl: Similar Admnin Address"
-        );
+        require(_newAdmin != address(0), "PushCoreV2::transferPushChannelAdminControl: Invalid Address");
+        require(_newAdmin != pushChannelAdmin, "PushCoreV2::transferPushChannelAdminControl: Similar Admnin Address");
         pushChannelAdmin = _newAdmin;
     }
 
@@ -245,7 +190,8 @@ contract PushCoreV2_5 is
 
     **************************************/
     /**
-     * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a new identity bytes hash
+     * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a
+     * new identity bytes hash
      *
      * @dev  Only accessible when contract is NOT Paused
      *       Only accessible when Caller is the Channel Owner itself
@@ -264,29 +210,19 @@ contract PushCoreV2_5 is
      * @param _channel     address of the Channel
      * @param _newIdentity bytes Value for the New Identity of the Channel
      * @param _amount amount of PUSH Token required for updating channel details.
-     **/
-    function updateChannelMeta(
-        address _channel,
-        bytes calldata _newIdentity,
-        uint256 _amount
-    ) external whenNotPaused {
+     *
+     */
+    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyChannelOwner(_channel);
         uint256 updateCounter = channelUpdateCounter[_channel].add(1);
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES.mul(updateCounter);
 
-        require(
-            _amount >= requiredFees,
-            "PushCoreV2::updateChannelMeta: Insufficient Deposit Amount"
-        );
+        require(_amount >= requiredFees, "PushCoreV2::updateChannelMeta: Insufficient Deposit Amount");
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amount);
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            _channel,
-            address(this),
-            _amount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
@@ -300,41 +236,36 @@ contract PushCoreV2_5 is
      * @param  _identity the bytes value of the identity of the Channel
      * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
      * @param  _channelExpiryTime the expiry time for time bound channels
-     **/
+     *
+     */
     function createChannelWithPUSH(
         ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount,
         uint256 _channelExpiryTime
-    ) external whenNotPaused {
+    )
+        external
+        whenNotPaused
+    {
+        require(_amount >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount");
+        require(channels[msg.sender].channelState == 0, "PushCoreV2::onlyInactiveChannels: Channel already Activated");
         require(
-            _amount >= ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
-        );
-        require(
-            channels[msg.sender].channelState == 0,
-            "PushCoreV2::onlyInactiveChannels: Channel already Activated"
-        );
-        require(
-            (_channelType == ChannelType.InterestBearingOpen ||
-                _channelType == ChannelType.InterestBearingMutual ||
-                _channelType == ChannelType.TimeBound ||
-                _channelType == ChannelType.TokenGaited),
+            (
+                _channelType == ChannelType.InterestBearingOpen || _channelType == ChannelType.InterestBearingMutual
+                    || _channelType == ChannelType.TimeBound || _channelType == ChannelType.TokenGaited
+            ),
             "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
         );
 
         emit AddChannel(msg.sender, _channelType, _identity);
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
-     * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details about the Channel being created
+     * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details
+     * about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
      *         - Updates the CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
@@ -343,13 +274,16 @@ contract PushCoreV2_5 is
      * @param _channelType     The type of the Channel
      * @param _amountDeposited The total amount being deposited while Channel Creation
      * @param _channelExpiryTime the expiry time for time bound channels
-     **/
+     *
+     */
     function _createChannel(
         address _channel,
         ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
-    ) private {
+    )
+        private
+    {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited.sub(poolFeeAmount);
         //store funds in pool_funds & pool_fees
@@ -357,9 +291,7 @@ contract PushCoreV2_5 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         // Calculate channel weight
-        uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(
-            MIN_POOL_CONTRIBUTION
-        );
+        uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
         channels[_channel].poolContribution = poolFundAmount;
@@ -372,10 +304,7 @@ contract PushCoreV2_5 is
         channelsCount = _channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
-            require(
-                _channelExpiryTime > block.timestamp,
-                "PushCoreV2::createChannel: Invalid channelExpiryTime"
-            );
+            require(_channelExpiryTime > block.timestamp, "PushCoreV2::createChannel: Invalid channelExpiryTime");
             channels[_channel].expiryTime = _channelExpiryTime;
         }
 
@@ -387,14 +316,8 @@ contract PushCoreV2_5 is
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
         if (_channel != address(0x0)) {
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-                address(0x0),
-                _channel
-            );
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(
-                _channel,
-                pushChannelAdmin
-            );
+            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
+            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
         }
     }
 
@@ -404,16 +327,16 @@ contract PushCoreV2_5 is
      *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
-     *         - If Channel Owner destroys the channel after expiration, he/she recieves back refundable amount & CHANNEL_POOL_FUNDS decreases.
-     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens are added to PROTOCOL_POOL_FEES.
+     *         - If Channel Owner destroys the channel after expiration, he/she recieves back refundable amount &
+     * CHANNEL_POOL_FUNDS decreases.
+     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens
+     * are added to PROTOCOL_POOL_FEES.
      *         - Deletes the Channel completely
      *         - It transfers back refundable tokenAmount back to the USER.
-     **/
+     *
+     */
 
-function destroyTimeBoundChannel(address _channelAddress)
-        external
-        whenNotPaused
-    {
+    function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
         Channel memory channelData = channels[_channelAddress];
 
@@ -422,38 +345,24 @@ function destroyTimeBoundChannel(address _channelAddress)
             "PushCoreV2::destroyTimeBoundChannel: Channel not TIME BOUND"
         );
         require(
-            (msg.sender == _channelAddress &&
-                channelData.expiryTime < block.timestamp) ||
-                (msg.sender == pushChannelAdmin &&
-                    channelData.expiryTime.add(14 days) < block.timestamp),
+            (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
+                || (msg.sender == pushChannelAdmin && channelData.expiryTime.add(14 days) < block.timestamp),
             "PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired"
         );
         uint256 totalRefundableAmount = channelData.poolContribution;
 
         if (msg.sender != pushChannelAdmin) {
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
-                msg.sender,
-                totalRefundableAmount
-            );
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
         } else {
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-            address(0x0),
-            _channelAddress
-        );
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-            _channelAddress,
-            _channelAddress
-        );
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(
-            _channelAddress,
-            pushChannelAdmin
-        );
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount.sub(1);
         delete channels[_channelAddress];
@@ -461,89 +370,78 @@ function destroyTimeBoundChannel(address _channelAddress)
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
-    /** @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
+    /**
+     * @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
      * For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
      *  5 -> Total Notification Options provided by a Channel owner
      *
      *  For Boolean Type Notif Options
-     *  1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case FALSE.
-     *  1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In this case TRUE.
+     *  1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner),
+     * In this case FALSE.
+     *  1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In
+     * this case TRUE.
      *
      *  For SLIDER TYPE Notif Options
-     *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range of that SLIDER - 100 is the END Range of that SLIDER Option
-     *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of that SLIDER - 150 is the END Range of that SLIDER Option
+     *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range
+     * of that SLIDER - 100 is the END Range of that SLIDER Option
+     *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of
+     * that SLIDER - 150 is the END Range of that SLIDER Option
      *
      *  @param _notifOptions - Total Notification options provided by the Channel Owner
      *  @param _notifSettings- Deliminated String of Notification Settings
      *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
      *  @param _amountDeposited - Fees required for setting up channel notification settings
-     **/
+     *
+     */
     function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
         string calldata _notifDescription,
         uint256 _amountDeposited
-    ) external {
+    )
+        external
+    {
         onlyActivatedChannels(msg.sender);
         require(
-            _amountDeposited >= ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::createChannelSettings: Insufficient Funds Passed"
+            _amountDeposited >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::createChannelSettings: Insufficient Funds Passed"
         );
 
-        string memory notifSetting = string(
-            abi.encodePacked(
-                Strings.toString(_notifOptions),
-                "+",
-                _notifSettings
-            )
-        );
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amountDeposited
-        );
-        emit ChannelNotifcationSettingsAdded(
-            msg.sender,
-            _notifOptions,
-            notifSetting,
-            _notifDescription
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
+        emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
     }
 
     /**
-     * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be Activated again.
+     * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be
+     * Activated again.
      * @dev    - Function can only be Called by Already Activated Channels
      *         - Calculates the totalRefundableAmount for the Channel Owner.
-     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight & poolContribution never becomes ZERO.
+     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight &
+     * poolContribution never becomes ZERO.
      *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
-     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the Minimum required PUSH  while reactivating.
-     **/
+     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the
+     * Minimum required PUSH  while reactivating.
+     *
+     */
 
     function deactivateChannel() external whenNotPaused {
         onlyActivatedChannels(msg.sender);
         Channel storage channelData = channels[msg.sender];
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        uint256 totalRefundableAmount = channelData.poolContribution.sub(
-            minPoolContribution
-        );
+        uint256 totalRefundableAmount = channelData.poolContribution.sub(minPoolContribution);
 
-        uint256 _newChannelWeight = minPoolContribution
-            .mul(ADJUST_FOR_FLOAT)
-            .div(minPoolContribution);
+        uint256 _newChannelWeight = minPoolContribution.mul(ADJUST_FOR_FLOAT).div(minPoolContribution);
 
         channelData.channelState = 2;
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = minPoolContribution;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(
-            msg.sender,
-            totalRefundableAmount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
 
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
@@ -556,23 +454,14 @@ function destroyTimeBoundChannel(address _channelAddress)
      *         - Calculation of the new Channel Weight and poolContribution is performed and stored
      *         - Updates the State of the Channel(channelState) in the Channel's Struct.
      * @param _amount Amount of PUSH to be deposited
-     **/
+     *
+     */
 
     function reactivateChannel(uint256 _amount) external whenNotPaused {
-        require(
-            _amount >= ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::reactivateChannel: Insufficient Funds"
-        );
-        require(
-            channels[msg.sender].channelState == 2,
-            "PushCoreV2::onlyDeactivatedChannels: Channel is Active"
-        );
+        require(_amount >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::reactivateChannel: Insufficient Funds");
+        require(channels[msg.sender].channelState == 2, "PushCoreV2::onlyDeactivatedChannels: Channel is Active");
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amount.sub(poolFeeAmount);
         //store funds in pool_funds & pool_fees
@@ -581,12 +470,8 @@ function destroyTimeBoundChannel(address _channelAddress)
 
         Channel storage channelData = channels[msg.sender];
 
-        uint256 _newPoolContribution = channelData.poolContribution.add(
-            poolFundAmount
-        );
-        uint256 _newChannelWeight = _newPoolContribution
-            .mul(ADJUST_FOR_FLOAT)
-            .div(MIN_POOL_CONTRIBUTION);
+        uint256 _newPoolContribution = channelData.poolContribution.add(poolFundAmount);
+        uint256 _newChannelWeight = _newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
 
         channelData.channelState = 1;
         channelData.poolContribution = _newPoolContribution;
@@ -604,31 +489,28 @@ function destroyTimeBoundChannel(address _channelAddress)
      *
      *         - Updates channel's state to BLOCKED ('3')
      *         - Decreases the Channel Count
-     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed from CHANNEL_POOL_FUNDS
+     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed
+     * from CHANNEL_POOL_FUNDS
      *         - Emit 'ChannelBlocked' Event
      * @param _channelAddress Address of the Channel to be blocked
-     **/
+     *
+     */
 
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
         require(
-            ((channels[_channelAddress].channelState != 3) &&
-                (channels[_channelAddress].channelState != 0)),
+            ((channels[_channelAddress].channelState != 3) && (channels[_channelAddress].channelState != 0)),
             "PushCoreV2::onlyUnblockedChannels: Invalid Channel"
         );
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
-        uint256 currentPoolContribution = channelData.poolContribution.sub(
-            minPoolContribution
-        );
+        uint256 currentPoolContribution = channelData.poolContribution.sub(minPoolContribution);
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(currentPoolContribution);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(currentPoolContribution);
 
-        uint256 _newChannelWeight = minPoolContribution
-            .mul(ADJUST_FOR_FLOAT)
-            .div(minPoolContribution);
+        uint256 _newChannelWeight = minPoolContribution.mul(ADJUST_FOR_FLOAT).div(minPoolContribution);
 
         channelsCount = channelsCount.sub(1);
         channelData.channelState = 3;
@@ -647,22 +529,16 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @notice    Function is designed to tell if a channel is verified or not
      * @dev       Get if channel is verified or not
      * @param    _channel Address of the channel to be Verified
-     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary verification
-     **/
-    function getChannelVerfication(address _channel)
-        public
-        view
-        returns (uint8 verificationStatus)
-    {
+     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
+     * verification
+     *
+     */
+    function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
         address verifiedBy = channels[_channel].verifiedBy;
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (
-            verifiedBy == pushChannelAdmin ||
-            _channel == address(0x0) ||
-            _channel == pushChannelAdmin
-        ) {
+        if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {
@@ -686,7 +562,10 @@ function destroyTimeBoundChannel(address _channelAddress)
         uint256 _startIndex,
         uint256 _endIndex,
         address[] calldata _channelList
-    ) external returns (bool) {
+    )
+        external
+        returns (bool)
+    {
         onlyPushChannelAdmin();
         for (uint256 i = _startIndex; i < _endIndex; i++) {
             verifyChannel(_channelList[i]);
@@ -696,17 +575,16 @@ function destroyTimeBoundChannel(address _channelAddress)
 
     /**
      * @notice    Function is designed to verify a channel
-     * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already verified
+     * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already
+     * verified
      * @param    _channel Address of the channel to be Verified
-     **/
+     *
+     */
     function verifyChannel(address _channel) public {
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
-        require(
-            callerVerified > 0,
-            "PushCoreV2::verifyChannel: Caller is not verified"
-        );
+        require(callerVerified > 0, "PushCoreV2::verifyChannel: Caller is not verified");
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
@@ -726,11 +604,11 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @notice    Function is designed to unverify a channel
      * @dev       Channel who verified this channel or Push Channel Admin can only revoke
      * @param    _channel Address of the channel to be unverified
-     **/
+     *
+     */
     function unverifyChannel(address _channel) public {
         require(
-            channels[_channel].verifiedBy == msg.sender ||
-                msg.sender == pushChannelAdmin,
+            channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
             "PushCoreV2::unverifyChannel: Invalid Caller"
         );
 
@@ -741,83 +619,74 @@ function destroyTimeBoundChannel(address _channelAddress)
         emit ChannelVerificationRevoked(_channel, msg.sender);
     }
 
-    /*** Core-V2: Stake and Claim Functions ***/
+    /**
+     * Core-V2: Stake and Claim Functions **
+     */
 
     function updateStakingAddress(address _stakingAddress) external {
         onlyPushChannelAdmin();
         feePoolStakingContract = _stakingAddress;
-        
     }
 
-    function sendFunds(address _user, uint _amount) external {
+    function sendFunds(address _user, uint256 _amount) external {
         require(msg.sender == feePoolStakingContract, "PushCoreV2::sendFunds: Invalid Caller");
         IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 
     /**
      * Allows caller to add pool_fees at any given epoch
-     **/
+     *
+     */
     function addPoolFees(uint256 _rewardAmount) external {
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _rewardAmount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
     }
 
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
-     **/
+     *
+     */
     function _returnPushTokenWeight(
         address _account,
         uint256 _amount,
         uint256 _atBlock
-    ) internal view returns (uint256) {
-        return
-            _amount.mul(
-                _atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account))
-            );
+    )
+        internal
+        view
+        returns (uint256)
+    {
+        return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
     }
 
     /**
      * @notice Returns the epoch ID based on the start and end block numbers passed as input
-     **/
-    function lastEpochRelative(
-        uint256 _from,
-        uint256 _to
-    ) public view returns (uint256) {
-        require(
-            _to >= _from,
-            "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow"
-        );
+     *
+     */
+    function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
+        require(_to >= _from, "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow");
         return uint256((_to - _from) / epochDuration + 1);
     }
 
     /**
      * @notice Calculates and returns the claimable reward amount for a user at a given EPOCH ID.
      * @dev    Formulae for reward calculation:
-     *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at EPOCH(n)
-     **/
-    function calculateEpochRewards(
-        address _user,
-        uint256 _epochId
-    ) public view returns (uint256 rewards) {
-        rewards = userFeesInfo[_user]
-            .epochToUserStakedWeight[_epochId]
-            .mul(epochRewards[_epochId])
-            .div(epochToTotalStakedWeight[_epochId]);
+     *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at
+     * EPOCH(n)
+     *
+     */
+    function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
+        rewards = userFeesInfo[_user].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(
+            epochToTotalStakedWeight[_epochId]
+        );
     }
 
     /**
      * @notice Function to initialize the staking procedure in Core contract
      * @dev    Requires caller to deposit/stake 1 PUSH token to ensure staking pool is never zero.
-     **/
+     *
+     */
     function initializeStake() external {
-        require(
-            genesisEpoch == 0,
-            "PushCoreV2::initializeStake: Already Initialized"
-        );
+        require(genesisEpoch == 0, "PushCoreV2::initializeStake: Already Initialized");
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
@@ -829,7 +698,8 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @dev    Records total Amount staked so far by a particular user
      *         Triggers weight adjustents functions
      * @param  _amount represents amount of tokens to be staked
-     **/
+     *
+     */
     function stake(uint256 _amount) external {
         _stake(msg.sender, _amount);
         emit Staked(msg.sender, _amount);
@@ -837,28 +707,14 @@ function destroyTimeBoundChannel(address _channelAddress)
 
     function _stake(address _staker, uint256 _amount) private {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 blockNumberToConsider = genesisEpoch.add(
-            epochDuration.mul(currentEpoch)
-        );
-        uint256 userWeight = _returnPushTokenWeight(
-            _staker,
-            _amount,
-            blockNumberToConsider
-        );
+        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
-        userFeesInfo[_staker].stakedAmount =
-            userFeesInfo[_staker].stakedAmount +
-            _amount;
-        userFeesInfo[_staker].lastClaimedBlock = userFeesInfo[_staker]
-            .lastClaimedBlock == 0
-            ? genesisEpoch
-            : userFeesInfo[_staker].lastClaimedBlock;
+        userFeesInfo[_staker].stakedAmount = userFeesInfo[_staker].stakedAmount + _amount;
+        userFeesInfo[_staker].lastClaimedBlock =
+            userFeesInfo[_staker].lastClaimedBlock == 0 ? genesisEpoch : userFeesInfo[_staker].lastClaimedBlock;
         totalStakedAmount += _amount;
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(_staker, userWeight);
@@ -869,26 +725,20 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @dev    Allows stakers to claim rewards before unstaking their tokens
      *         Triggers weight adjustents functions
      *         Allows users to unstake all amount at once
-     **/
+     *
+     */
     function unstake() external {
         require(
-            block.number >
-                userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
+            block.number > userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
             "PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH"
         );
-        require(
-            userFeesInfo[msg.sender].stakedAmount > 0,
-            "PushCoreV2::unstake: Invalid Caller"
-        );
+        require(userFeesInfo[msg.sender].stakedAmount > 0, "PushCoreV2::unstake: Invalid Caller");
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
-        _adjustUserAndTotalStake(
-            msg.sender,
-            -userFeesInfo[msg.sender].stakedWeight
-        );
+        _adjustUserAndTotalStake(msg.sender, -userFeesInfo[msg.sender].stakedWeight);
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
@@ -902,10 +752,11 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @dev    Computes nextFromEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
      *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
      *         Once calculated, user's total claimed rewards and nextFromEpoch details is updated.
-     **/
+     *
+     */
     function harvestAll() public {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-       
+
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
     }
@@ -915,7 +766,8 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
-     **/
+     *
+     */
     function harvestPaginated(uint256 _tillEpoch) external {
         uint256 rewards = harvest(msg.sender, _tillEpoch);
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
@@ -926,7 +778,8 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    only accessible by Push Admin
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
-     **/
+     *
+     */
     function daoHarvestPaginated(uint256 _tillEpoch) external {
         onlyGovernance();
         uint256 rewards = harvest(address(this), _tillEpoch);
@@ -939,28 +792,17 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
-     **/
-    function harvest(
-        address _user,
-        uint256 _tillEpoch
-    ) internal returns (uint256 rewards) {
+     *
+     */
+    function harvest(address _user, uint256 _tillEpoch) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 nextFromEpoch = lastEpochRelative(
-            genesisEpoch,
-            userFeesInfo[_user].lastClaimedBlock
-        );
+        uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
-        require(
-            currentEpoch > _tillEpoch,
-            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
-        );
-        require(
-            _tillEpoch >= nextFromEpoch,
-            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
-        );
+        require(currentEpoch > _tillEpoch, "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch");
+        require(_tillEpoch >= nextFromEpoch, "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch");
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards.add(claimableReward);
@@ -968,17 +810,17 @@ function destroyTimeBoundChannel(address _channelAddress)
 
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
-        uint256 _epoch_to_block_number = genesisEpoch +
-            _tillEpoch *
-            epochDuration;
+        uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
 
         emit RewardsHarvested(_user, rewards, nextFromEpoch, _tillEpoch);
     }
 
     /**
-     * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for reward calculation at a particular epoch.
-     * @dev     Enables adjustments of user's stakedWeight, totalStakedWeight, epochToTotalStakedWeight as well as epochToTotalStakedWeight.
+     * @notice  This functions helps in adjustment of user's as well as totalWeigts, both of which are imperative for
+     * reward calculation at a particular epoch.
+     * @dev     Enables adjustments of user's stakedWeight, totalStakedWeight, epochToTotalStakedWeight as well as
+     * epochToTotalStakedWeight.
      *          triggers _setupEpochsReward() to adjust rewards for every epoch till the current epoch
      *
      *          Includes 2 main cases of weight adjustments
@@ -992,14 +834,14 @@ function destroyTimeBoundChannel(address _channelAddress)
      *                  - Record the epochToTotalStakedWeight of that epoch
      *
      *              2.2 Case: - User stakes again but in different Epoch
-     *                  - Update the epochs between lastStakedEpoch & (currentEpoch - 1) with the old staked weight amounts
-     *                  - While updating epochs between lastStaked & current Epochs, if any epoch has zero value for totalStakedWeight, update it with current totalStakedWeight value of the protocol
-     *                  - For currentEpoch, initialize the epoch id with updated weight values for epochToUserStakedWeight & epochToTotalStakedWeight
+     *                  - Update the epochs between lastStakedEpoch & (currentEpoch - 1) with the old staked weight
+     * amounts
+     *                  - While updating epochs between lastStaked & current Epochs, if any epoch has zero value for
+     * totalStakedWeight, update it with current totalStakedWeight value of the protocol
+     *                  - For currentEpoch, initialize the epoch id with updated weight values for
+     * epochToUserStakedWeight & epochToTotalStakedWeight
      */
-    function _adjustUserAndTotalStake(
-        address _user,
-        uint256 _userWeight
-    ) internal {
+    function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
         uint256 userStakedWeight = userFeesInfo[_user].stakedWeight;
@@ -1009,28 +851,17 @@ function destroyTimeBoundChannel(address _channelAddress)
             userFeesInfo[_user].stakedWeight = _userWeight;
         } else {
             // Initiating 2.1 Case: User stakes again but in Same Epoch
-            uint256 lastStakedEpoch = lastEpochRelative(
-                genesisEpoch,
-                userFeesInfo[_user].lastStakedBlock
-            );
+            uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if (currentEpoch == lastStakedEpoch) {
-                userFeesInfo[_user].stakedWeight =
-                    userStakedWeight +
-                    _userWeight;
+                userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
                 for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
                     if (i != currentEpoch) {
-                        userFeesInfo[_user].epochToUserStakedWeight[
-                                i
-                            ] = userStakedWeight;
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userStakedWeight;
                     } else {
-                        userFeesInfo[_user].stakedWeight =
-                            userStakedWeight +
-                            _userWeight;
-                        userFeesInfo[_user].epochToUserStakedWeight[
-                                i
-                            ] = userFeesInfo[_user].stakedWeight;
+                        userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
+                        userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
             }
@@ -1044,24 +875,17 @@ function destroyTimeBoundChannel(address _channelAddress)
     /**
      * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
      * @dev    Initializes (sets reward) for every epoch ID that falls between the lastEpochInitialized and currentEpoch
-     *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees. 
-                - If no new fees was accumulated, rewards for particular epoch ids can be zero
-                - Records the Pool_Fees value used as rewards.
-                - Records the last epoch id whose rewards were set.
+     *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees.
+     *             - If no new fees was accumulated, rewards for particular epoch ids can be zero
+     *             - Records the Pool_Fees value used as rewards.
+     *             - Records the last epoch id whose rewards were set.
      */
-    function _setupEpochsRewardAndWeights(
-        uint256 _userWeight,
-        uint256 _currentEpoch
-    ) private {
-        uint256 _lastEpochInitiliazed = lastEpochRelative(
-            genesisEpoch,
-            lastEpochInitialized
-        );
+    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private {
+        uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
 
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
-            uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES -
-                previouslySetEpochRewards);
+            uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
 
             if (_epochGap > 1) {
@@ -1074,26 +898,16 @@ function destroyTimeBoundChannel(address _channelAddress)
             previouslySetEpochRewards = PROTOCOL_POOL_FEES;
         }
         // Setting up Epoch Based TotalWeight
-        if (
-            lastTotalStakeEpochInitialized == 0 ||
-            lastTotalStakeEpochInitialized == _currentEpoch
-        ) {
+        if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
             epochToTotalStakedWeight[_currentEpoch] += _userWeight;
         } else {
-            for (
-                uint256 i = lastTotalStakeEpochInitialized + 1;
-                i <= _currentEpoch - 1;
-                i++
-            ) {
+            for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalStakedWeight[i] == 0) {
-                    epochToTotalStakedWeight[i] = epochToTotalStakedWeight[
-                        lastTotalStakeEpochInitialized
-                    ];
+                    epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                 }
             }
             epochToTotalStakedWeight[_currentEpoch] =
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] +
-                _userWeight;
+                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
@@ -1109,15 +923,8 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @param  requestReceiver  Address of the target user for whom the request is activated.
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
-    function handleChatRequestData(
-        address requestSender,
-        address requestReceiver,
-        uint256 amount
-    ) external {
-        require(
-            msg.sender == epnsCommunicator,
-            "PushCoreV2:handleChatRequestData::Unauthorized caller"
-        );
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
+        require(msg.sender == epnsCommunicator, "PushCoreV2:handleChatRequestData::Unauthorized caller");
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
 
@@ -1125,11 +932,7 @@ function destroyTimeBoundChannel(address _channelAddress)
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
         emit IncentivizeChatReqReceived(
-            requestSender,
-            requestReceiver,
-            requestReceiverAmount,
-            poolFeeAmount,
-            block.timestamp
+            requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
 
@@ -1139,10 +942,7 @@ function destroyTimeBoundChannel(address _channelAddress)
      * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external {
-        require(
-            celebUserFunds[msg.sender] >= _amount,
-            "PushCoreV2:claimChatIncentives::Invalid Amount"
-        );
+        require(celebUserFunds[msg.sender] >= _amount, "PushCoreV2:claimChatIncentives::Invalid Amount");
 
         celebUserFunds[msg.sender] -= _amount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
@@ -1150,7 +950,7 @@ function destroyTimeBoundChannel(address _channelAddress)
         emit ChatIncentiveClaimed(msg.sender, _amount);
     }
 
-   function getEpochToUserStakedWeight(address _user, uint _epoch)external view returns(uint){
-       return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
+    function getEpochToUserStakedWeight(address _user, uint256 _epoch) external view returns (uint256) {
+        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
     }
 }

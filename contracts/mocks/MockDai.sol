@@ -1,16 +1,18 @@
 /**
- *Submitted for verification at Etherscan.io on 2020-02-28
-*/
+ * Submitted for verification at Etherscan.io on 2020-02-28
+ */
 
 // File: openzeppelin-solidity/contracts/token/ERC20/IERC20.sol
 
 pragma solidity ^0.6.11;
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /**
  * @title ERC20Mintable
  * @dev ERC20 minting logic
  */
+
 abstract contract MintableERC20 is ERC20 {
     /**
      * @dev Function to mint tokens
@@ -24,5 +26,5 @@ abstract contract MintableERC20 is ERC20 {
 }
 
 contract MockDAI is MintableERC20 {
-    constructor () ERC20("DAI", "DAI") public {}
+    constructor() public ERC20("DAI", "DAI") { }
 }

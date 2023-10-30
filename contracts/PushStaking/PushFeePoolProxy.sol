@@ -11,11 +11,11 @@ contract PushFeePoolProxy is TransparentUpgradeableProxy {
         address _pushChannelAdmin,
         address _core,
         address _pushTokenAddress,
-        uint _genesisEpoch,
-        uint _lastEpochInitialized,
-        uint _lastTotalStakeEpochInitialized,
-        uint _totalStakedAmount,
-        uint _previouslySetEpochRewards
+        uint256 _genesisEpoch,
+        uint256 _lastEpochInitialized,
+        uint256 _lastTotalStakeEpochInitialized,
+        uint256 _totalStakedAmount,
+        uint256 _previouslySetEpochRewards
     )
         public
         payable
@@ -34,5 +34,5 @@ contract PushFeePoolProxy is TransparentUpgradeableProxy {
                 _previouslySetEpochRewards
             )
         )
-    {}
+    { }
 }

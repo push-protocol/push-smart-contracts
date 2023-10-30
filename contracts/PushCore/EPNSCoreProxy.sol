@@ -34,5 +34,5 @@ contract EPNSCoreProxy is TransparentUpgradeableProxy {
                 _referralCode
             )
         )
-    {}
+    { }
 }

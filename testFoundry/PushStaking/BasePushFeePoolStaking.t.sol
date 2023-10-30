@@ -7,8 +7,7 @@ import "forge-std/console.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 import { PushFeePoolStaking } from "contracts/PushStaking/PushFeePoolStaking.sol";
 
-
-contract BasePushFeePoolStaking is BaseTest{
+contract BasePushFeePoolStaking is BaseTest {
     PushFeePoolStaking public feePoolStaking;
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -33,5 +32,4 @@ contract BasePushFeePoolStaking is BaseTest{
 
         vm.startPrank({ msgSender: actor.admin });
     }
-
 }

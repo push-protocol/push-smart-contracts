@@ -1,8 +1,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 contract PushFeePoolStorage {
-
-    /** Staking V2 state variables **/
+    /**
+     * Staking V2 state variables *
+     */
     mapping(address => uint256) public usersRewardsClaimed;
 
     //@notice: Stores all user's staking details

@@ -11,15 +11,13 @@ import "contracts/token/EPNS.sol";
 import "contracts/PushCore/PushCoreStorageV2.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
 import "contracts/PushCore/PushCoreStorageV1_5.sol";
-import {PushCoreV2} from "contracts/PushCore/PushCoreV2.sol";
-import {PushCommV2} from "contracts/PushComm/PushCommV2.sol";
+import { PushCoreV2 } from "contracts/PushCore/PushCoreV2.sol";
+import { PushCommV2 } from "contracts/PushComm/PushCommV2.sol";
 
-import {Actors} from "./utils/Actors.sol";
-import {Constants} from "./utils/Constants.sol";
+import { Actors } from "./utils/Actors.sol";
+import { Constants } from "./utils/Constants.sol";
 
-
-abstract contract BaseTest is Test, Constants{
-
+abstract contract BaseTest is Test, Constants {
     EPNS public pushToken;
     PushCoreV2 public core;
     PushCommV2 public comm;
@@ -28,9 +26,8 @@ abstract contract BaseTest is Test, Constants{
     /* ***************
         Main Actors in Test
      *************** */
-     Actors internal actor;
-     address tokenDistributor;
-     
+    Actors internal actor;
+    address tokenDistributor;
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -67,10 +64,7 @@ abstract contract BaseTest is Test, Constants{
         );
 
         // Initialize Comm Contract
-        comm.initialize(
-            actor.admin,
-            "FOUNDRY_TEST_NETWORK"
-        );
+        comm.initialize(actor.admin, "FOUNDRY_TEST_NETWORK");
 
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
@@ -85,27 +79,26 @@ abstract contract BaseTest is Test, Constants{
        Core Contract Helper Functions
     *************** */
 
-    function roll(uint num) internal {
+    function roll(uint256 num) internal {
         vm.roll(num);
     }
 
-    function approveTokens(address from, address to, uint amount) internal {
+    function approveTokens(address from, address to, uint256 amount) internal {
         vm.startPrank(from);
         pushToken.approve(to, amount);
         pushToken.setHolderDelegation(to, true);
         vm.stopPrank();
     }
 
-    function createActor(string memory name) internal returns(address payable){
+    function createActor(string memory name) internal returns (address payable) {
         address payable actor = payable(makeAddr(name));
         // Transfer 50 eth to every actor
         vm.deal({ account: actor, newBalance: 50 ether });
         // Transfer 50K PUSH Tokens for every actor
         vm.prank(tokenDistributor);
         pushToken.transfer(actor, 50_000 ether);
-        // Approve tokens for Core Contract 
+        // Approve tokens for Core Contract
         approveTokens(actor, address(core), 50_000 ether);
         return actor;
     }
-
 }

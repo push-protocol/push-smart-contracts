@@ -16,11 +16,7 @@ contract EPNSCommProxy is TransparentUpgradeableProxy {
         TransparentUpgradeableProxy(
             _logic,
             _governance,
-            abi.encodeWithSignature(
-                "initialize(address,string)",
-                _pushChannelAdmin,
-                _chainName
-            )
+            abi.encodeWithSignature("initialize(address,string)", _pushChannelAdmin, _chainName)
         )
-    {}
+    { }
 }

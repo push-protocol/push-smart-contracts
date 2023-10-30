@@ -21,12 +21,14 @@ library Core {
     struct Channel {
         // @notice Denotes the Channel Type
         ChannelType channelType;
-        /** @notice Symbolizes Channel's State:
+        /**
+         * @notice Symbolizes Channel's State:
          * 0 -> INACTIVE,
          * 1 -> ACTIVATED
          * 2 -> DeActivated By Channel Owner,
          * 3 -> BLOCKED by pushChannelAdmin/Governance
-         **/
+         *
+         */
         uint8 channelState;
         // @notice denotes the address of the verifier of the Channel
         address verifiedBy;
@@ -51,10 +53,11 @@ library Core {
 
 /// @notice Namespace for the structs and enums used in {PushCommV2}.
 library Comm {
-     /**
+    /**
      * @notice User Struct that involves imperative details about
      * a specific User.
-     **/
+     *
+     */
     struct User {
         // @notice Depicts whether or not a user is ACTIVE
         bool userActivated;
@@ -68,7 +71,8 @@ library Comm {
          * Depicts if User subscribed to a Specific Channel Address
          * 1 -> User is Subscribed
          * 0 -> User is NOT SUBSCRIBED
-         **/
+         *
+         */
         mapping(address => uint8) isSubscribed;
         // Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;

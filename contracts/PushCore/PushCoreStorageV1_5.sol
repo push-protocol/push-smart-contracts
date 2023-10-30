@@ -3,9 +3,9 @@ pragma solidity >=0.6.0 <0.7.0;
 contract PushCoreStorageV1_5 {
     /* ***************
 
-  DEFINE ENUMS AND CONSTANTS
+    DEFINE ENUMS AND CONSTANTS
 
- *************** */
+    *************** */
 
     // For Message Type
     enum ChannelType {
@@ -24,16 +24,19 @@ contract PushCoreStorageV1_5 {
 
     /**
      * @notice Channel Struct that includes imperative details about a specific Channel.
-     **/
+     *
+     */
     struct Channel {
         // @notice Denotes the Channel Type
         ChannelType channelType;
-        /** @notice Symbolizes Channel's State:
+        /**
+         * @notice Symbolizes Channel's State:
          * 0 -> INACTIVE,
          * 1 -> ACTIVATED
          * 2 -> DeActivated By Channel Owner,
          * 3 -> BLOCKED by pushChannelAdmin/Governance
-         **/
+         *
+         */
         uint8 channelState;
         // @notice denotes the address of the verifier of the Channel
         address verifiedBy;
@@ -57,7 +60,7 @@ contract PushCoreStorageV1_5 {
 
     /* ***************
     MAPPINGS
- *************** */
+    *************** */
 
     mapping(address => Channel) public channels;
     mapping(uint256 => address) public channelById; // NOT IN USE
@@ -65,7 +68,7 @@ contract PushCoreStorageV1_5 {
 
     /* ***************
     STATE VARIABLES
- *************** */
+    *************** */
     string public constant name = "EPNS_CORE_V2";
     bool oneTimeCheck;
     bool public isMigrationComplete;

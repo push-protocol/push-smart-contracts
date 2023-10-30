@@ -10,7 +10,7 @@ struct Actors {
     address payable bob_channel_owner;
     // Channel Owner Named - Alice
     address payable alice_channel_owner;
-    // Channel Owner Named - Charlie 
+    // Channel Owner Named - Charlie
     address payable charlie_channel_owner;
     // Push Token Holder - Dan
     address payable dan_push_holder;
