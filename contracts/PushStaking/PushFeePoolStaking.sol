@@ -53,7 +53,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     }
 
     modifier isMigrated() {
-        require(!migrated, "PushFeePoolStaking::isMigrated: Migration Completed");
+        require(
+            !migrated,
+            "PushFeePoolStaking::isMigrated: Migration Completed"
+        );
         _;
     }
 
@@ -91,9 +94,9 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     ) external onlyPushChannelAdmin isMigrated {
         require(
             _user.length == _stakedAmount.length &&
-            _user.length == _stakedWeight.length &&
-            _user.length == _lastStakedBlock.length &&
-            _user.length == _lastClaimedBlock.length,
+                _user.length == _stakedWeight.length &&
+                _user.length == _lastStakedBlock.length &&
+                _user.length == _lastClaimedBlock.length,
             "Invalid Length"
         );
         for (uint i = start; i < end; ++i) {
@@ -108,9 +111,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
     }
 
-    //@audit : migrateUserMappings() can be modified to pass array of epochs as well instead of passing individual epoch 1 by 1.
     function migrateUserMappings(
         uint _epoch,
+        uint startIndex,
+        uint endIndex,
         address[] calldata _user,
         uint256[] calldata _epochToUserStakedWeight,
         uint256[] calldata _userRewardsClaimed
@@ -120,7 +124,8 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
                 _user.length == _userRewardsClaimed.length,
             "Invalid Length"
         );
-        for (uint i; i < _user.length; ++i) {
+
+        for (uint i = startIndex; i < endIndex; ++i) {
             userFeesInfo[_user[i]].epochToUserStakedWeight[
                     _epoch
                 ] = _epochToUserStakedWeight[i];
