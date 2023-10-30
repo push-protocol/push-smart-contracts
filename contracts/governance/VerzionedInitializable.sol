@@ -1,6 +1,5 @@
 pragma solidity >=0.6.0 <0.7.0;
 
-
 /**
  * @title VersionedInitializable
  *
@@ -17,21 +16,24 @@ pragma solidity >=0.6.0 <0.7.0;
  */
 abstract contract VersionedInitializable {
     /**
-   * @dev Indicates that the contract has been initialized.
-   */
+     * @dev Indicates that the contract has been initialized.
+     */
     uint256 private lastInitializedRevision = 0;
 
     /**
-   * @dev Indicates that the contract is in the process of being initialized.
-   */
+     * @dev Indicates that the contract is in the process of being initialized.
+     */
     bool private _initializing;
 
     /**
-   * @dev Modifier to use in the initializer function of a contract.
-   */
+     * @dev Modifier to use in the initializer function of a contract.
+     */
     modifier initializerV() {
         uint256 revision = getRevision();
-        require(_initializing || isConstructor() || revision > lastInitializedRevision, "Contract instance has already been initialized");
+        require(
+            _initializing || isConstructor() || revision > lastInitializedRevision,
+            "Contract instance has already been initialized"
+        );
 
         bool isTopLevelCall = !_initializing;
         if (isTopLevelCall) {
@@ -48,8 +50,7 @@ abstract contract VersionedInitializable {
 
     /// @dev returns the revision number of the contract.
     /// Needs to be defined in the inherited class as a constant.
-    function getRevision() virtual internal pure returns(uint256);
-
+    function getRevision() internal pure virtual returns (uint256);
 
     /// @dev Returns true if and only if the function is running in the constructor
     function isConstructor() private view returns (bool) {

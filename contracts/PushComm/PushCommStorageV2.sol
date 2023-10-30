@@ -4,7 +4,8 @@ contract PushCommStorageV2 {
     /**
      * @notice User Struct that involves imperative details about
      * a specific User.
-     **/
+     *
+     */
     struct User {
         // @notice Depicts whether or not a user is ACTIVE
         bool userActivated;
@@ -18,22 +19,26 @@ contract PushCommStorageV2 {
          * Depicts if User subscribed to a Specific Channel Address
          * 1 -> User is Subscribed
          * 0 -> User is NOT SUBSCRIBED
-         **/
+         *
+         */
         mapping(address => uint8) isSubscribed;
         // Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;
         mapping(uint256 => address) mapAddressSubscribed;
     }
 
-    /** MAPPINGS **/
+    /**
+     * MAPPINGS *
+     */
     mapping(address => User) public users;
     mapping(address => uint256) public nonces;
     mapping(uint256 => address) public mapAddressUsers;
     mapping(address => mapping(address => string)) public userToChannelNotifs;
-    mapping(address => mapping(address => bool))
-        public delegatedNotificationSenders;
+    mapping(address => mapping(address => bool)) public delegatedNotificationSenders;
 
-    /** STATE VARIABLES **/
+    /**
+     * STATE VARIABLES *
+     */
     address public governance;
     address public pushChannelAdmin;
     uint256 public chainID;
@@ -44,21 +49,13 @@ contract PushCommStorageV2 {
     string public constant name = "EPNS COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));
     bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256(
-            "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
-        );
+        keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
     bytes32 public constant SUBSCRIBE_TYPEHASH =
-        keccak256(
-            "Subscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)"
-        );
+        keccak256("Subscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
     bytes32 public constant UNSUBSCRIBE_TYPEHASH =
-        keccak256(
-            "Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)"
-        );
+        keccak256("Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
     bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
-        keccak256(
-            "SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
-        );
+        keccak256("SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)");
     // New State Variables
     address public PUSH_TOKEN_ADDRESS;
 

@@ -1,12 +1,8 @@
-pragma solidity >=0.6.0 <0.7.0;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity 0.6.11;
 
-contract PushCoreStorageV1_5 {
-    /* ***************
-
-    DEFINE ENUMS AND CONSTANTS
-
-    *************** */
-
+/// @notice Namespace for the structs and enums used in {PushCoreV2}
+library Core {
     // For Message Type
     enum ChannelType {
         ProtocolNonInterest,
@@ -22,10 +18,6 @@ contract PushCoreStorageV1_5 {
         ChannelUpdated
     }
 
-    /**
-     * @notice Channel Struct that includes imperative details about a specific Channel.
-     *
-     */
     struct Channel {
         // @notice Denotes the Channel Type
         ChannelType channelType;
@@ -57,46 +49,45 @@ contract PushCoreStorageV1_5 {
         // @notice The Expiry TimeStamp in case of TimeBound Channel Types
         uint256 expiryTime;
     }
+}
 
-    /* ***************
-    MAPPINGS
-    *************** */
+/// @notice Namespace for the structs and enums used in {PushCommV2}.
+library Comm {
+    /**
+     * @notice User Struct that involves imperative details about
+     * a specific User.
+     *
+     */
+    struct User {
+        // @notice Depicts whether or not a user is ACTIVE
+        bool userActivated;
+        // @notice Will be false until public key is emitted
+        bool publicKeyRegistered;
+        // @notice Events should not be polled before this block as user doesn't exist
+        uint256 userStartBlock;
+        // @notice Keep track of subscribers
+        uint256 subscribedCount;
+        /**
+         * Depicts if User subscribed to a Specific Channel Address
+         * 1 -> User is Subscribed
+         * 0 -> User is NOT SUBSCRIBED
+         *
+         */
+        mapping(address => uint8) isSubscribed;
+        // Keeps track of all subscribed channels
+        mapping(address => uint256) subscribed;
+        mapping(uint256 => address) mapAddressSubscribed;
+    }
+}
 
-    mapping(address => Channel) public channels;
-    mapping(uint256 => address) public channelById; // NOT IN USE
-    mapping(address => string) public channelNotifSettings;
-
-    /* ***************
-    STATE VARIABLES
-    *************** */
-    string public constant name = "EPNS_CORE_V2";
-    bool oneTimeCheck;
-    bool public isMigrationComplete;
-
-    address public pushChannelAdmin;
-    address public governance;
-    address public daiAddress;
-    address public aDaiAddress;
-    address public WETH_ADDRESS;
-    address public epnsCommunicator;
-    address public UNISWAP_V2_ROUTER;
-    address public PUSH_TOKEN_ADDRESS;
-    address public lendingPoolProviderAddress;
-
-    uint256 public REFERRAL_CODE;
-    uint256 ADJUST_FOR_FLOAT;
-    uint256 public channelsCount;
-
-    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
-    uint256 public groupNormalizedWeight;
-    uint256 public groupHistoricalZ;
-    uint256 public groupLastUpdate;
-    uint256 public groupFairShareCount;
-
-    // @notice Necessary variables for Keeping track of Funds and Fees
-    uint256 public CHANNEL_POOL_FUNDS;
-    uint256 public PROTOCOL_POOL_FEES;
-    uint256 public ADD_CHANNEL_MIN_FEES;
-    uint256 public FEE_AMOUNT;
-    uint256 public MIN_POOL_CONTRIBUTION;
+/// @notice Namespace for the structs used in both {PushFeePoolStaking}.
+library PushStaking {
+    //@notice: Stores all user's staking details
+    struct UserFessInfo {
+        uint256 stakedAmount;
+        uint256 stakedWeight;
+        uint256 lastStakedBlock;
+        uint256 lastClaimedBlock;
+        mapping(uint256 => uint256) epochToUserStakedWeight;
+    }
 }
