@@ -1,4 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity ^0.8.20;
 
 interface IUniswapV2RouterMock {
     function swapExactTokensForTokens(

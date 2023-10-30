@@ -1,5 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 contract GovernorBravoEvents {
     /// @notice An event emitted when a new proposal is created

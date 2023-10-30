@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity 0.6.11;
+pragma solidity ^0.8.20;
+
 
 /// @notice Namespace for the structs and enums used in {PushCoreV2}
 library Core {

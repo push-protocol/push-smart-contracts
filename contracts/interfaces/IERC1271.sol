@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.7.0;
+pragma solidity ^0.8.20;
 
 /**
  * @dev Interface of the ERC1271 standard signature validation method for
