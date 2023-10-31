@@ -7,12 +7,10 @@ import "../interfaces/IPushCore.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
@@ -94,10 +92,11 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             "Invalid Length"
         );
         for (uint256 i = start; i < end; ++i) {
-            UserFessInfo memory _userFeesInfo =
-                UserFessInfo(_stakedAmount[i], _stakedWeight[i], _lastStakedBlock[i], _lastClaimedBlock[i]);
+            userFeesInfo[_user[i]].stakedAmount = _stakedAmount[i];
+            userFeesInfo[_user[i]].stakedWeight = _stakedWeight[i];
+            userFeesInfo[_user[i]].lastStakedBlock = _lastStakedBlock[i];
+            userFeesInfo[_user[i]].lastClaimedBlock = _lastClaimedBlock[i];
 
-            userFeesInfo[_user[i]] = _userFeesInfo;
         }
     }
 
@@ -153,7 +152,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         view
         returns (uint256)
     {
-        return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
+        return _amount * (_atBlock - IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account));
     }
 
     /**
@@ -173,9 +172,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = userFeesInfo[_user].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(
-            epochToTotalStakedWeight[_epochId]
-        );
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId]) / epochToTotalStakedWeight[_epochId];
     }
 
     /**
@@ -192,7 +189,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
 
     function _stake(address _staker, uint256 _amount) private {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        uint256 blockNumberToConsider = genesisEpoch + (epochDuration * currentEpoch);
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, core, _amount);
@@ -294,10 +291,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         );
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
-            rewards = rewards.add(claimableReward);
+            rewards = rewards + claimableReward;
         }
 
-        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user] + rewards;
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
@@ -375,7 +372,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
+            uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 
             if (_epochGap > 1) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
