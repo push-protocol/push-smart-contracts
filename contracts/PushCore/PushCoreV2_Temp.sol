@@ -18,13 +18,11 @@ import "../interfaces/IEPNSCommV1.sol";
 import "../interfaces/ITokenBridge.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-// import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -213,11 +211,11 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyChannelOwner(_channel);
-        uint256 updateCounter = channelUpdateCounter[_channel].add(1);
-        uint256 requiredFees = ADD_CHANNEL_MIN_FEES.mul(updateCounter);
+        uint256 updateCounter = channelUpdateCounter[_channel] + 1;
+        uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
         require(_amount >= requiredFees, "PushCoreV2::updateChannelMeta: Insufficient Deposit Amount");
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
@@ -284,13 +282,13 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         private
     {
         uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amountDeposited.sub(poolFeeAmount);
+        uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(poolFundAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         // Calculate channel weight
-        uint256 _channelWeight = poolFundAmount.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
+        uint256 _channelWeight = ( poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
         channels[_channel].poolContribution = poolFundAmount;
@@ -300,7 +298,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         uint256 _channelsCount = channelsCount;
-        channelsCount = _channelsCount.add(1);
+        channelsCount = _channelsCount + 1;
 
         if (_channelType == ChannelType.TimeBound) {
             require(_channelExpiryTime > block.timestamp, "PushCoreV2::createChannel: Invalid channelExpiryTime");
@@ -345,17 +343,17 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         );
         require(
             (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
-                || (msg.sender == pushChannelAdmin && channelData.expiryTime.add(14 days) < block.timestamp),
+                || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp),
             "PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired"
         );
         uint256 totalRefundableAmount = channelData.poolContribution;
 
         if (msg.sender != pushChannelAdmin) {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
         } else {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
-            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(totalRefundableAmount);
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
@@ -363,7 +361,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
         IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
         // Decrement Channel Count and Delete Channel Completely
-        channelsCount = channelsCount.sub(1);
+        channelsCount = channelsCount - 1;
         delete channels[_channelAddress];
 
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
@@ -408,7 +406,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
 
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_amountDeposited);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
         emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
     }
@@ -431,12 +429,12 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         Channel storage channelData = channels[msg.sender];
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        uint256 totalRefundableAmount = channelData.poolContribution.sub(minPoolContribution);
+        uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
 
-        uint256 _newChannelWeight = minPoolContribution.mul(ADJUST_FOR_FLOAT).div(minPoolContribution);
+        uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
 
         channelData.channelState = 2;
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(totalRefundableAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
         channelData.channelWeight = _newChannelWeight;
         channelData.poolContribution = minPoolContribution;
 
@@ -462,15 +460,15 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amount.sub(poolFeeAmount);
+        uint256 poolFundAmount = _amount - poolFeeAmount;
         //store funds in pool_funds & pool_fees
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.add(poolFundAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         Channel storage channelData = channels[msg.sender];
 
-        uint256 _newPoolContribution = channelData.poolContribution.add(poolFundAmount);
-        uint256 _newChannelWeight = _newPoolContribution.mul(ADJUST_FOR_FLOAT).div(MIN_POOL_CONTRIBUTION);
+        uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
+        uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
 
         channelData.channelState = 1;
         channelData.poolContribution = _newPoolContribution;
@@ -505,13 +503,13 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
-        uint256 currentPoolContribution = channelData.poolContribution.sub(minPoolContribution);
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS.sub(currentPoolContribution);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(currentPoolContribution);
+        uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - currentPoolContribution;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + currentPoolContribution;
 
-        uint256 _newChannelWeight = minPoolContribution.mul(ADJUST_FOR_FLOAT).div(minPoolContribution);
+        uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
 
-        channelsCount = channelsCount.sub(1);
+        channelsCount = channelsCount - 1;
         channelData.channelState = 3;
         channelData.channelWeight = _newChannelWeight;
         channelData.channelUpdateBlock = block.number;
@@ -627,7 +625,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function addPoolFees(uint256 _rewardAmount) external {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(_rewardAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;
     }
 
     /**
@@ -643,7 +641,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         view
         returns (uint256)
     {
-        return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
+        return _amount * (_atBlock - IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account));
     }
 
     /**
@@ -663,9 +661,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = userFeesInfo[_user].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(
-            epochToTotalStakedWeight[_epochId]
-        );
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId]) / epochToTotalStakedWeight[_epochId];
+
     }
 
     /**
@@ -695,7 +692,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function _stake(address _staker, uint256 _amount) private {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        uint256 blockNumberToConsider = genesisEpoch + (epochDuration * currentEpoch);
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
@@ -793,10 +790,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         require(_tillEpoch >= nextFromEpoch, "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch");
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
-            rewards = rewards.add(claimableReward);
+            rewards = rewards + claimableReward;
         }
 
-        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user] + rewards;
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
@@ -874,7 +871,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
+            uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 
             if (_epochGap > 1) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
@@ -914,10 +911,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         require(msg.sender == epnsCommunicator, "PushCoreV2:handleChatRequestData::Unauthorized caller");
         uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 requestReceiverAmount = amount.sub(poolFeeAmount);
+        uint256 requestReceiverAmount = amount - poolFeeAmount;
 
         celebUserFunds[requestReceiver] += requestReceiverAmount;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         emit IncentivizeChatReqReceived(
             requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
@@ -936,10 +933,5 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
-    }
-    // Additional Getter function to enable migration
-
-    function getEpochToUserStakedWeight(address _user, uint256 _epoch) external view returns (uint256) {
-        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
     }
 }
