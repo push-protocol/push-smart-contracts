@@ -52,6 +52,12 @@ contract MigrateEpochDetails_Test is BasePushFeePoolStaking {
         feePoolStaking.migrateEpochDetails(_currentEpoch, _epochRewardss, _epochToTotalStakedWeights);
     }
 
+    function test_Revertwhen_UnequalArrayLengthBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
+        uint256 _testEpoch = _currentEpoch - 1;
+        vm.expectRevert(bytes("Invalid Length"));
+        feePoolStaking.migrateEpochDetails(_testEpoch, _epochRewardss, _epochToTotalStakedWeights);
+    }
+
     function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
         feePoolStaking.migrateEpochDetails(_currentEpoch, _epochRewardss, _epochToTotalStakedWeights);
 
