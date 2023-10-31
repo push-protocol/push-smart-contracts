@@ -79,7 +79,7 @@ contract EPNS {
      * @notice Construct a new PUSH token
      * @param account The initial account to grant all the tokens
      */
-    constructor(address account) public {
+    constructor(address account) {
         balances[account] = uint96(totalSupply);
         emit Transfer(address(0), account, totalSupply);
 
@@ -106,16 +106,17 @@ contract EPNS {
      * @param rawAmount The number of tokens that are approved (2^256-1 means infinite)
      * @return Whether or not the approval succeeded
      */
-    function approve(address spender, uint rawAmount) external returns (bool) {
+
+    function approve(address spender, uint256 rawAmount) external returns (bool) {
         uint96 amount;
-        if (rawAmount >= uint(uint96(-1))) {
-            amount = uint96(-1);
+        if (rawAmount >= type(uint96).max) {
+            amount = type(uint96).max;
         } else {
-            amount = safe96(rawAmount, "Push::approve: amount exceeds 96 bits");
+            amount = uint96(rawAmount);
+            require(amount == rawAmount, "Push::approve: amount exceeds 96 bits");
         }
 
         allowances[msg.sender][spender] = amount;
-
         emit Approval(msg.sender, spender, amount);
         return true;
     }
@@ -132,11 +133,13 @@ contract EPNS {
      */
     function permit(address owner, address spender, uint rawAmount, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
         uint96 amount;
-        if (rawAmount == uint(-1)) {
-            amount = uint96(-1);
+        if (rawAmount == type(uint256).max) {
+            amount = type(uint96).max;
         } else {
-            amount = safe96(rawAmount, "Push::permit: amount exceeds 96 bits");
+            require(rawAmount < type(uint96).max, "Push::permit: amount exceeds 96 bits");
+            amount = uint96(rawAmount);
         }
+
 
         bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, rawAmount, nonces[owner]++, deadline));
@@ -145,7 +148,7 @@ contract EPNS {
 
         require(signatory != address(0), "Push::permit: invalid signature");
         require(signatory == owner, "Push::permit: unauthorized");
-        require(now <= deadline, "Push::permit: signature expired");
+        require(block.timestamp <= deadline, "Push::permit: signature expired");
 
         allowances[owner][spender] = amount;
 
@@ -185,7 +188,7 @@ contract EPNS {
         uint96 spenderAllowance = allowances[src][spender];
         uint96 amount = safe96(rawAmount, "Push::approve: amount exceeds 96 bits");
 
-        if (spender != src && spenderAllowance != uint96(-1)) {
+        if (spender != src && spenderAllowance != type(uint96).max) {
             uint96 newAllowance = sub96(spenderAllowance, amount, "Push::transferFrom: transfer amount exceeds spender allowance");
             allowances[src][spender] = newAllowance;
 
@@ -266,7 +269,7 @@ contract EPNS {
         address signatory = ecrecover(digest, v, r, s);
         require(signatory != address(0), "Push::delegateBySig: invalid signature");
         require(nonce == nonces[signatory]++, "Push::delegateBySig: invalid nonce");
-        require(now <= expiry, "Push::delegateBySig: signature expired");
+        require(block.timestamp <= expiry, "Push::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
