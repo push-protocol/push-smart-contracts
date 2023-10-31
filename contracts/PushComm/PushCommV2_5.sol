@@ -16,7 +16,7 @@ pragma solidity ^0.8.20;
 import "./PushCommStorageV2.sol";
 import "../interfaces/IERC1271.sol";
 import "../interfaces/IPushCore.sol";
-import { CommHelper } from "../libraries/CommHelper.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -69,7 +69,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
-        chainID = CommHelper.getChainId();
+        chainID = BaseHelper.getChainId();
         return true;
     }
 
@@ -239,11 +239,11 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         // EIP-712
         require(subscriber != address(0), "PushCommV2::subscribeBySig: Invalid signature");
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, CommHelper.getChainId(), address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (CommHelper.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
@@ -359,11 +359,11 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         require(subscriber != address(0), "PushCommV2::unsubscribeBySig: Invalid signature");
         // EIP-712
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, CommHelper.getChainId(), address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (CommHelper.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
@@ -601,12 +601,12 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
             return false;
         }
 
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, CommHelper.getChainId(), address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash =
             keccak256(abi.encode(SEND_NOTIFICATION_TYPEHASH, _channel, _recipient, keccak256(_identity), nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (CommHelper.isContract(_signer)) {
+        if (BaseHelper.isContract(_signer)) {
             // use EIP-1271 signature check
             bytes4 result = IERC1271(_signer).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) return false;
