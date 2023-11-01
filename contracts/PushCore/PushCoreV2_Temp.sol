@@ -15,7 +15,6 @@ import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
-import "../interfaces/ITokenBridge.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -702,7 +701,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             userFeesInfo[_staker].lastClaimedBlock == 0 ? genesisEpoch : userFeesInfo[_staker].lastClaimedBlock;
         totalStakedAmount += _amount;
         // Adjust user and total rewards, piggyback method
-        _adjustUserAndTotalStake(_staker, userWeight);
+        _adjustUserAndTotalStake(_staker, userWeight, false);
     }
 
     /**
@@ -723,7 +722,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
-        _adjustUserAndTotalStake(msg.sender, -userFeesInfo[msg.sender].stakedWeight);
+        _adjustUserAndTotalStake(msg.sender, userFeesInfo[msg.sender].stakedWeight, true);
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
@@ -781,7 +780,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function harvest(address _user, uint256 _tillEpoch) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-        _adjustUserAndTotalStake(_user, 0);
+        _adjustUserAndTotalStake(_user, 0, false);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
@@ -826,9 +825,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *                  - For currentEpoch, initialize the epoch id with updated weight values for
      * epochToUserStakedWeight & epochToTotalStakedWeight
      */
-    function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
+    function _adjustUserAndTotalStake(address _user, uint256 _userWeight, bool isUnstake) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
+        _setupEpochsRewardAndWeights(_userWeight, currentEpoch, isUnstake);
         uint256 userStakedWeight = userFeesInfo[_user].stakedWeight;
 
         // Initiating 1st Case: User stakes for first time
@@ -838,14 +837,15 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if (currentEpoch == lastStakedEpoch) {
-                userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
+                userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
+
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
                 for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
                     if (i != currentEpoch) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userStakedWeight;
                     } else {
-                        userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
+                        userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -865,7 +865,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *             - Records the Pool_Fees value used as rewards.
      *             - Records the last epoch id whose rewards were set.
      */
-    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private {
+    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch, bool isUnstake) private {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
 
         // Setting up Epoch Based Rewards
@@ -884,15 +884,23 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         }
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
-            epochToTotalStakedWeight[_currentEpoch] += _userWeight;
+
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake ? 
+                epochToTotalStakedWeight[_currentEpoch] - _userWeight : 
+                epochToTotalStakedWeight[_currentEpoch] + _userWeight;
+
+
         } else {
             for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalStakedWeight[i] == 0) {
                     epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                 }
             }
-            epochToTotalStakedWeight[_currentEpoch] =
+
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake?
+                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight:
                 epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
