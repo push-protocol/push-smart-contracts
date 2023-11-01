@@ -287,7 +287,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         // Calculate channel weight
-        uint256 _channelWeight = ( poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
+        uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
         channels[_channel].poolContribution = poolFundAmount;
@@ -660,8 +660,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId]) / epochToTotalStakedWeight[_epochId];
-
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId])
+            / epochToTotalStakedWeight[_epochId];
     }
 
     /**
@@ -837,15 +837,16 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if (currentEpoch == lastStakedEpoch) {
-                userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
-
+                userFeesInfo[_user].stakedWeight =
+                    isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
                 for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
                     if (i != currentEpoch) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userStakedWeight;
                     } else {
-                        userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
+                        userFeesInfo[_user].stakedWeight =
+                            isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -884,12 +885,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         }
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
-
-            epochToTotalStakedWeight[_currentEpoch] = isUnstake ? 
-                epochToTotalStakedWeight[_currentEpoch] - _userWeight : 
-                epochToTotalStakedWeight[_currentEpoch] + _userWeight;
-
-
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[_currentEpoch] - _userWeight
+                : epochToTotalStakedWeight[_currentEpoch] + _userWeight;
         } else {
             for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalStakedWeight[i] == 0) {
@@ -897,10 +895,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
                 }
             }
 
-            epochToTotalStakedWeight[_currentEpoch] = isUnstake?
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight:
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
-
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight
+                : epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }

@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
  * between END USERS and Push Core Protocol.
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols
- * 
+ *
  * Some imperative functionalities that the Push Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
  * Notifications to a particular recipient or all subscribers of a Channel etc.
@@ -75,9 +75,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     /**
      *
-     * 
+     *
      * => SETTER FUNCTIONS <=
-     * 
+     *
      *
      */
     function verifyChannelAlias(string memory _channelAddress) external {
@@ -104,9 +104,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     /**
      *
-     * 
+     *
      * => SUBSCRIBE FUNCTIOANLTIES <=
-     * 
+     *
      *
      */
 
@@ -239,7 +239,8 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         // EIP-712
         require(subscriber != address(0), "PushCommV2::subscribeBySig: Invalid signature");
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -279,9 +280,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     /**
      *
-     * 
+     *
      * => USUBSCRIBE FUNCTIOANLTIES <=
-     * 
+     *
      *
      */
 
@@ -359,7 +360,8 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         require(subscriber != address(0), "PushCommV2::unsubscribeBySig: Invalid signature");
         // EIP-712
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -505,7 +507,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
      *   THREE main CALLERS for this function-
      *     1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
      *     2. Delegatee of Channel sends Notif to Recipients
-     * 
+     *
      * <---------------------------------------------------------------------------------------------->
      * When a CHANNEL OWNER Calls the Function and sends a Notif:
      *    -> We ensure -> "Channel Owner Must be Valid" && "Channel Owner is the Caller"
@@ -601,7 +603,8 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
             return false;
         }
 
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash =
             keccak256(abi.encode(SEND_NOTIFICATION_TYPEHASH, _channel, _recipient, keccak256(_identity), nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));

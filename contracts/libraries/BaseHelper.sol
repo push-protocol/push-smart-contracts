@@ -1,12 +1,10 @@
 pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
-
 /// @title CommHelper
 /// @notice Library with helper functions needed for the Push Communicator Contract
 library BaseHelper {
-
-   function getChainId() internal view returns (uint256) {
+    function getChainId() internal view returns (uint256) {
         uint256 chainId;
         assembly {
             chainId := chainid()
@@ -21,7 +19,9 @@ library BaseHelper {
 
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 }

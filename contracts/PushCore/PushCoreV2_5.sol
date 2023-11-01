@@ -287,7 +287,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         // Calculate channel weight
-        uint256 _channelWeight = ( poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
+        uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
         // Next create the channel and mark user as channellized
         channels[_channel].channelState = 1;
         channels[_channel].poolContribution = poolFundAmount;
@@ -636,8 +636,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     function addPoolFees(uint256 _rewardAmount) external {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;
-     }
-      /**
+    }
+    /**
      * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.
      * @dev    This function currently handles the PUSH tokens that enters the contract due to any
      *         activation of incentivizied chat request from Communicator contract.
@@ -648,6 +648,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
      * @param  requestReceiver  Address of the target user for whom the request is activated.
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
+
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         require(msg.sender == epnsCommunicator, "PushCoreV2:handleChatRequestData::Unauthorized caller");
         uint256 poolFeeAmount = FEE_AMOUNT;

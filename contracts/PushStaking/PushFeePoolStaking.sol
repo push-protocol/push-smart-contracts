@@ -96,7 +96,6 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             userFeesInfo[_user[i]].stakedWeight = _stakedWeight[i];
             userFeesInfo[_user[i]].lastStakedBlock = _lastStakedBlock[i];
             userFeesInfo[_user[i]].lastClaimedBlock = _lastClaimedBlock[i];
-
         }
     }
 
@@ -172,7 +171,8 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId]) / epochToTotalStakedWeight[_epochId];
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId])
+            / epochToTotalStakedWeight[_epochId];
     }
 
     /**
@@ -339,14 +339,16 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if (currentEpoch == lastStakedEpoch) {
-                userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
+                userFeesInfo[_user].stakedWeight =
+                    isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
                 for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
                     if (i != currentEpoch) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userStakedWeight;
                     } else {
-                        userFeesInfo[_user].stakedWeight = isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
+                        userFeesInfo[_user].stakedWeight =
+                            isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -385,20 +387,19 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
-            epochToTotalStakedWeight[_currentEpoch] = isUnstake ? 
-                epochToTotalStakedWeight[_currentEpoch] - _userWeight : 
-                epochToTotalStakedWeight[_currentEpoch] + _userWeight;
-
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[_currentEpoch] - _userWeight
+                : epochToTotalStakedWeight[_currentEpoch] + _userWeight;
         } else {
             for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalStakedWeight[i] == 0) {
                     epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                 }
             }
-            
-            epochToTotalStakedWeight[_currentEpoch] = isUnstake?
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight:
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight
+                : epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
