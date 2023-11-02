@@ -1,5 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
@@ -7,27 +6,24 @@ pragma experimental ABIEncoderV2;
  * between END USERS and Push Core Protocol.
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols
- * 
+ *
  * Some imperative functionalities that the Push Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
  * Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
 
-// Essential Imports
-// import "hardhat/console.sol";
 import "./PushCommStorageV2.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IERC1271.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/IPushCore.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 
-contract PushCommV2 is Initializable, PushCommStorageV2 {
-    using SafeMath for uint256;
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     using SafeERC20 for IERC20;
 
     /**
@@ -73,15 +69,15 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
-        chainID = getChainId();
+        chainID = BaseHelper.getChainId();
         return true;
     }
 
     /**
      *
-     * 
+     *
      * => SETTER FUNCTIONS <=
-     * 
+     *
      *
      */
     function verifyChannelAlias(string memory _channelAddress) external {
@@ -108,9 +104,9 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
 
     /**
      *
-     * 
+     *
      * => SUBSCRIBE FUNCTIOANLTIES <=
-     * 
+     *
      *
      */
 
@@ -218,7 +214,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             // treat the count as index and update user struct
             user.subscribed[_channel] = _subscribedCount;
             user.mapAddressSubscribed[_subscribedCount] = _channel;
-            user.subscribedCount = _subscribedCount.add(1); // Finally increment the subscribed count
+            user.subscribedCount = _subscribedCount + 1; // Finally increment the subscribed count
             // Emit it
             emit Subscribe(_channel, _user);
         }
@@ -243,11 +239,12 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
     {
         // EIP-712
         require(subscriber != address(0), "PushCommV2::subscribeBySig: Invalid signature");
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (Address.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
@@ -257,7 +254,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
         }
         require(nonce == nonces[subscriber]++, "PushCommV2::subscribeBySig: Invalid nonce");
-        require(now <= expiry, "PushCommV2::subscribeBySig: Signature expired");
+        require(block.timestamp <= expiry, "PushCommV2::subscribeBySig: Signature expired");
 
         _subscribe(channel, subscriber);
     }
@@ -283,9 +280,9 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
 
     /**
      *
-     * 
+     *
      * => USUBSCRIBE FUNCTIOANLTIES <=
-     * 
+     *
      *
      */
 
@@ -363,11 +360,12 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
     {
         require(subscriber != address(0), "PushCommV2::unsubscribeBySig: Invalid signature");
         // EIP-712
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (Address.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
@@ -377,7 +375,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
         }
         require(nonce == nonces[subscriber]++, "PushCommV2::unsubscribeBySig: Invalid nonce");
-        require(now <= expiry, "PushCommV2::unsubscribeBySig: Signature expired");
+        require(block.timestamp <= expiry, "PushCommV2::unsubscribeBySig: Signature expired");
         _unsubscribe(channel, subscriber);
     }
 
@@ -424,7 +422,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             users[_user].userActivated = true;
             mapAddressUsers[usersCount] = _user;
 
-            usersCount = usersCount.add(1);
+            usersCount = usersCount + 1;
         }
     }
 
@@ -509,7 +507,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      *   THREE main CALLERS for this function-
      *     1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
      *     2. Delegatee of Channel sends Notif to Recipients
-     * 
+     *
      * <---------------------------------------------------------------------------------------------->
      * When a CHANNEL OWNER Calls the Function and sends a Notif:
      *    -> We ensure -> "Channel Owner Must be Valid" && "Channel Owner is the Caller"
@@ -601,16 +599,17 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         external
         returns (bool)
     {
-        if (_signer == address(0) || nonce != nonces[_signer] || now > expiry) {
+        if (_signer == address(0) || nonce != nonces[_signer] || block.timestamp > expiry) {
             return false;
         }
 
-        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this)));
+        bytes32 domainSeparator =
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash =
             keccak256(abi.encode(SEND_NOTIFICATION_TYPEHASH, _channel, _recipient, keccak256(_identity), nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
-        if (Address.isContract(_signer)) {
+        if (BaseHelper.isContract(_signer)) {
             // use EIP-1271 signature check
             bytes4 result = IERC1271(_signer).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) return false;
@@ -623,7 +622,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         bool success = _sendNotification(_channel, _recipient, _signer, _identity);
 
         // update nonce if signature valid
-        nonces[_signer] = nonce.add(1);
+        nonces[_signer] = nonce + 1;
 
         return success;
     }
@@ -666,14 +665,6 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function getChainId() internal pure returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
     }
 
     function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {

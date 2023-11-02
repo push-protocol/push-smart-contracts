@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.20;
 
 import "./PushFeePoolStorage.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IPushCore.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
@@ -94,10 +92,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             "Invalid Length"
         );
         for (uint256 i = start; i < end; ++i) {
-            UserFessInfo memory _userFeesInfo =
-                UserFessInfo(_stakedAmount[i], _stakedWeight[i], _lastStakedBlock[i], _lastClaimedBlock[i]);
-
-            userFeesInfo[_user[i]] = _userFeesInfo;
+            userFeesInfo[_user[i]].stakedAmount = _stakedAmount[i];
+            userFeesInfo[_user[i]].stakedWeight = _stakedWeight[i];
+            userFeesInfo[_user[i]].lastStakedBlock = _lastStakedBlock[i];
+            userFeesInfo[_user[i]].lastClaimedBlock = _lastClaimedBlock[i];
         }
     }
 
@@ -153,7 +151,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         view
         returns (uint256)
     {
-        return _amount.mul(_atBlock.sub(IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account)));
+        return _amount * (_atBlock - IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_account));
     }
 
     /**
@@ -173,9 +171,8 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = userFeesInfo[_user].epochToUserStakedWeight[_epochId].mul(epochRewards[_epochId]).div(
-            epochToTotalStakedWeight[_epochId]
-        );
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId])
+            / epochToTotalStakedWeight[_epochId];
     }
 
     /**
@@ -192,7 +189,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
 
     function _stake(address _staker, uint256 _amount) private {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        uint256 blockNumberToConsider = genesisEpoch.add(epochDuration.mul(currentEpoch));
+        uint256 blockNumberToConsider = genesisEpoch + (epochDuration * currentEpoch);
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, core, _amount);
@@ -202,7 +199,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             userFeesInfo[_staker].lastClaimedBlock == 0 ? genesisEpoch : userFeesInfo[_staker].lastClaimedBlock;
         totalStakedAmount += _amount;
         // Adjust user and total rewards, piggyback method
-        _adjustUserAndTotalStake(_staker, userWeight);
+        _adjustUserAndTotalStake(_staker, userWeight, false);
     }
 
     /**
@@ -223,7 +220,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         IPushCore(core).sendFunds(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
-        _adjustUserAndTotalStake(msg.sender, -userFeesInfo[msg.sender].stakedWeight);
+        _adjustUserAndTotalStake(msg.sender, userFeesInfo[msg.sender].stakedWeight, true);
 
         userFeesInfo[msg.sender].stakedAmount = 0;
         userFeesInfo[msg.sender].stakedWeight = 0;
@@ -281,7 +278,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      */
     function harvest(address _user, uint256 _tillEpoch) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
-        _adjustUserAndTotalStake(_user, 0);
+        _adjustUserAndTotalStake(_user, 0, false);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
@@ -294,10 +291,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         );
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
-            rewards = rewards.add(claimableReward);
+            rewards = rewards + claimableReward;
         }
 
-        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user] + rewards;
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
@@ -330,9 +327,9 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *                  - For currentEpoch, initialize the epoch id with updated weight values for
      * epochToUserStakedWeight & epochToTotalStakedWeight
      */
-    function _adjustUserAndTotalStake(address _user, uint256 _userWeight) internal {
+    function _adjustUserAndTotalStake(address _user, uint256 _userWeight, bool isUnstake) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        _setupEpochsRewardAndWeights(_userWeight, currentEpoch);
+        _setupEpochsRewardAndWeights(_userWeight, currentEpoch, isUnstake);
         uint256 userStakedWeight = userFeesInfo[_user].stakedWeight;
 
         // Initiating 1st Case: User stakes for first time
@@ -342,14 +339,16 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             // Initiating 2.1 Case: User stakes again but in Same Epoch
             uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastStakedBlock);
             if (currentEpoch == lastStakedEpoch) {
-                userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
+                userFeesInfo[_user].stakedWeight =
+                    isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
             } else {
                 // Initiating 2.2 Case: User stakes again but in Different Epoch
                 for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
                     if (i != currentEpoch) {
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userStakedWeight;
                     } else {
-                        userFeesInfo[_user].stakedWeight = userStakedWeight + _userWeight;
+                        userFeesInfo[_user].stakedWeight =
+                            isUnstake ? userStakedWeight - _userWeight : userStakedWeight + _userWeight;
                         userFeesInfo[_user].epochToUserStakedWeight[i] = userFeesInfo[_user].stakedWeight;
                     }
                 }
@@ -369,13 +368,13 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *             - Records the Pool_Fees value used as rewards.
      *             - Records the last epoch id whose rewards were set.
      */
-    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch) private {
+    function _setupEpochsRewardAndWeights(uint256 _userWeight, uint256 _currentEpoch, bool isUnstake) private {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
-            uint256 _epochGap = _currentEpoch.sub(_lastEpochInitiliazed);
+            uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 
             if (_epochGap > 1) {
                 epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
@@ -388,15 +387,19 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
-            epochToTotalStakedWeight[_currentEpoch] += _userWeight;
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[_currentEpoch] - _userWeight
+                : epochToTotalStakedWeight[_currentEpoch] + _userWeight;
         } else {
             for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalStakedWeight[i] == 0) {
                     epochToTotalStakedWeight[i] = epochToTotalStakedWeight[lastTotalStakeEpochInitialized];
                 }
             }
-            epochToTotalStakedWeight[_currentEpoch] =
-                epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+
+            epochToTotalStakedWeight[_currentEpoch] = isUnstake
+                ? epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight
+                : epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
