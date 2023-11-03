@@ -7,7 +7,7 @@ test = 'testFoundry'           # "testFoundry" -> foundry test only while "test"
 cache_path  = 'cache_forge'
 
 # Solidity & EVM Specific Configs
-solc = "0.6.11"
+solc = "0.8.20"
 optimizer = true
 optimizer_runs = 99999
 auto_detect_solc = false
