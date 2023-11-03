@@ -1,5 +1,4 @@
-pragma solidity >=0.6.0 <0.7.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
@@ -7,29 +6,29 @@ pragma experimental ABIEncoderV2;
  * between END USERS and Push Core Protocol.
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols
-
+ *
  * Some imperative functionalities that the Push Communicator Protocol allows
  * are Subscribing to a particular channel, Unsubscribing a channel, Sending
  * Notifications to a particular recipient or all subscribers of a Channel etc.
-**/
+ *
+ */
 
-// Essential Imports
-// import "hardhat/console.sol";
 import "./PushCommStorageV2.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IERC1271.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/IPushCore.sol";
+import {BaseHelper} from "../libraries/BaseHelper.sol";
 
-contract PushCommV2 is Initializable, PushCommStorageV2 {
-    using SafeMath for uint256;
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     using SafeERC20 for IERC20;
 
-    /** EVENTS **/
+    /**
+     * EVENTS *
+     */
     event SendNotification(
         address indexed channel,
         address indexed recipient,
@@ -59,7 +58,9 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         uint256 timestamp
     );
 
-    /** MODIFIERS **/
+    /**
+     * MODIFIERS *
+     */
 
     modifier onlyPushChannelAdmin() {
         require(
@@ -82,23 +83,24 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         INITIALIZER
 
     *************** */
-    function initialize(address _pushChannelAdmin, string memory _chainName)
-        public
-        initializer
-        returns (bool)
-    {
+    function initialize(
+        address _pushChannelAdmin,
+        string memory _chainName
+    ) public initializer returns (bool) {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
-        chainID = getChainId();
+        chainID = BaseHelper.getChainId();
         return true;
     }
 
-    /****************
-
-    => SETTER FUNCTIONS <=
-
-    ****************/
+    /**
+     *
+     *
+     * => SETTER FUNCTIONS <=
+     *
+     *
+     */
     function verifyChannelAlias(string memory _channelAddress) external {
         emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
@@ -107,24 +109,21 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         isMigrationComplete = true;
     }
 
-    function setEPNSCoreAddress(address _coreAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setEPNSCoreAddress(
+        address _coreAddress
+    ) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
     }
 
-    function setGovernanceAddress(address _governanceAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setGovernanceAddress(
+        address _governanceAddress
+    ) external onlyPushChannelAdmin {
         governance = _governanceAddress;
     }
 
-    function transferPushChannelAdminControl(address _newAdmin)
-        external
-        onlyPushChannelAdmin
-    {
+    function transferPushChannelAdminControl(
+        address _newAdmin
+    ) external onlyPushChannelAdmin {
         require(
             _newAdmin != address(0),
             "PushCommV2::transferPushChannelAdminControl: Invalid Address"
@@ -136,23 +135,25 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         pushChannelAdmin = _newAdmin;
     }
 
-    /****************
-
-    => SUBSCRIBE FUNCTIOANLTIES <=
-
-    ****************/
+    /**
+     *
+     *
+     * => SUBSCRIBE FUNCTIOANLTIES <=
+     *
+     *
+     */
 
     /**
      * @notice Helper function to check if User is Subscribed to a Specific Address
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber
      * @return True if User is actually a subscriber of a Channel
-     **/
-    function isUserSubscribed(address _channel, address _user)
-        public
-        view
-        returns (bool)
-    {
+     *
+     */
+    function isUserSubscribed(
+        address _channel,
+        address _user
+    ) public view returns (bool) {
         User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
             return true;
@@ -164,7 +165,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @dev   Subscribes the caller of the function to a particular Channel
      *        Takes into Consideration the "msg.sender"
      * @param _channel address of the channel that the user is subscribing to
-     **/
+     *
+     */
     function subscribe(address _channel) external returns (bool) {
         _subscribe(_channel, msg.sender);
         return true;
@@ -174,11 +176,11 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice Allows users to subscribe a List of Channels at once
      *
      * @param _channelList array of addresses of the channels that the user wishes to Subscribe
-     **/
-    function batchSubscribe(address[] calldata _channelList)
-        external
-        returns (bool)
-    {
+     *
+     */
+    function batchSubscribe(
+        address[] calldata _channelList
+    ) external returns (bool) {
         for (uint256 i = 0; i < _channelList.length; i++) {
             _subscribe(_channelList[i], msg.sender);
         }
@@ -189,14 +191,16 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
      *
      * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be false
+     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
+     * false
      *          Subscribes the Users to the respective Channels as per the arguments passed to the function
      *
      * @param _startIndex  starting Index for the LOOP
      * @param _endIndex    Last Index for the LOOP
      * @param _channelList array of addresses of the channels
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     **/
+     *
+     */
 
     function migrateSubscribeData(
         uint256 _startIndex,
@@ -231,7 +235,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      *
      * @param _channel address of the channel that the user is subscribing to
      * @param _user    address of the Subscriber
-     **/
+     *
+     */
     function _subscribe(address _channel, address _user) private {
         if (!isUserSubscribed(_channel, _user)) {
             _addUser(_user);
@@ -244,7 +249,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             // treat the count as index and update user struct
             user.subscribed[_channel] = _subscribedCount;
             user.mapAddressSubscribed[_subscribedCount] = _channel;
-            user.subscribedCount = _subscribedCount.add(1); // Finally increment the subscribed count
+            user.subscribedCount = _subscribedCount + 1; // Finally increment the subscribed count
             // Emit it
             emit Subscribe(_channel, _user);
         }
@@ -254,7 +259,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice Subscribe Function through Meta TX
      * @dev Takes into Consideration the Sign of the User
      *      Inludes EIP1271 implementation: Standard Signature Validation Method for Contracts
-     **/
+     *
+     */
     function subscribeBySig(
         address channel,
         address subscriber,
@@ -270,7 +276,12 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             "PushCommV2::subscribeBySig: Invalid signature"
         );
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                NAME_HASH,
+                BaseHelper.getChainId(),
+                address(this)
+            )
         );
         bytes32 structHash = keccak256(
             abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry)
@@ -279,7 +290,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
 
-        if (Address.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(
                 digest,
@@ -295,35 +306,43 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             nonce == nonces[subscriber]++,
             "PushCommV2::subscribeBySig: Invalid nonce"
         );
-        require(now <= expiry, "PushCommV2::subscribeBySig: Signature expired");
+        require(
+            block.timestamp <= expiry,
+            "PushCommV2::subscribeBySig: Signature expired"
+        );
 
         _subscribe(channel, subscriber);
     }
 
     /**
      * @notice Allows PushCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
-     *         This ensures that the Channel Owner is subscribed to imperative Push Channels as well as his/her own Channel.
+     *         This ensures that the Channel Owner is subscribed to imperative Push Channels as well as his/her own
+     * Channel.
      *
-     * @dev    Only Callable by the PushCore. This is to ensure that Users should only able to Subscribe for their own addresses.
-     *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the PushCore contract
+     * @dev    Only Callable by the PushCore. This is to ensure that Users should only able to Subscribe for their own
+     * addresses.
+     *         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses)
+     * or the PushCore contract
      *
      * @param _channel address of the channel that the user is subscribing to
      * @param _user address of the Subscriber of a Channel
-     **/
-    function subscribeViaCore(address _channel, address _user)
-        external
-        onlyPushCore
-        returns (bool)
-    {
+     *
+     */
+    function subscribeViaCore(
+        address _channel,
+        address _user
+    ) external onlyPushCore returns (bool) {
         _subscribe(_channel, _user);
         return true;
     }
 
-    /****************
-
-    => USUBSCRIBE FUNCTIOANLTIES <=
-
-    ****************/
+    /**
+     *
+     *
+     * => USUBSCRIBE FUNCTIOANLTIES <=
+     *
+     *
+     */
 
     /**
      * @notice External Unsubcribe Function that allows users to directly unsubscribe from a particular channel
@@ -332,7 +351,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      *      Takes into Consideration the "msg.sender"
      *
      * @param _channel address of the channel that the user is unsubscribing to
-     **/
+     *
+     */
     function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
@@ -343,11 +363,11 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice Allows users to unsubscribe from a List of Channels at once
      *
      * @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
-     **/
-    function batchUnsubscribe(address[] calldata _channelList)
-        external
-        returns (bool)
-    {
+     *
+     */
+    function batchUnsubscribe(
+        address[] calldata _channelList
+    ) external returns (bool) {
         for (uint256 i = 0; i < _channelList.length; i++) {
             _unsubscribe(_channelList[i], msg.sender);
         }
@@ -359,7 +379,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @dev Modifies the User Struct with crucial details about the Channel Unsubscription
      * @param _channel address of the channel that the user is unsubscribing from
      * @param _user address of the unsubscriber
-     **/
+     *
+     */
     function _unsubscribe(address _channel, address _user) private {
         if (isUserSubscribed(_channel, _user)) {
             User storage user = users[_user];
@@ -386,7 +407,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice Unsubscribe Function through Meta TX
      * @dev Takes into Consideration the Signer of the transactioner
      *      Inludes EIP1271 implementation: Standard Signature Validation Method for Contracts
-     **/
+     *
+     */
     function unsubscribeBySig(
         address channel,
         address subscriber,
@@ -402,7 +424,12 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         );
         // EIP-712
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                NAME_HASH,
+                BaseHelper.getChainId(),
+                address(this)
+            )
         );
         bytes32 structHash = keccak256(
             abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry)
@@ -411,7 +438,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
 
-        if (Address.isContract(subscriber)) {
+        if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(
                 digest,
@@ -428,26 +455,29 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             "PushCommV2::unsubscribeBySig: Invalid nonce"
         );
         require(
-            now <= expiry,
+            block.timestamp <= expiry,
             "PushCommV2::unsubscribeBySig: Signature expired"
         );
         _unsubscribe(channel, subscriber);
     }
 
     /**
-     * @notice Allows PushCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
-     *         This ensures that the Channel Owner is unSubscribed from the imperative Push Channels as well as his/her own Channel.
-     *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their Channel again using the same Wallet Address.
+     * @notice Allows PushCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound
+     * Channel.
+     *         This ensures that the Channel Owner is unSubscribed from the imperative Push Channels as well as his/her
+     * own Channel.
+     *         NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create their
+     * Channel again using the same Wallet Address.
      *
      * @dev    Only Callable by the PushCore.
      * @param _channel address of the channel being unsubscribed
      * @param _user address of the UnSubscriber of a Channel
-     **/
-    function unSubscribeViaCore(address _channel, address _user)
-        external
-        onlyPushCore
-        returns (bool)
-    {
+     *
+     */
+    function unSubscribeViaCore(
+        address _channel,
+        address _user
+    ) external onlyPushCore returns (bool) {
         _unsubscribe(_channel, _user);
         return true;
     }
@@ -466,7 +496,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      *
      * @param _user address of the user
      * @return userAlreadyAdded returns whether or not a user is already added.
-     **/
+     *
+     */
     function _addUser(address _user) private returns (bool userAlreadyAdded) {
         if (users[_user].userActivated) {
             userAlreadyAdded = true;
@@ -476,16 +507,17 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             users[_user].userActivated = true;
             mapAddressUsers[usersCount] = _user;
 
-            usersCount = usersCount.add(1);
+            usersCount = usersCount + 1;
         }
     }
 
     /* @dev Internal system to handle broadcasting of public key,
      *     A entry point for subscribe, or create channel but is optional
      */
-    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey)
-        private
-    {
+    function _broadcastPublicKey(
+        address _userAddr,
+        bytes memory _publicKey
+    ) private {
         // Add the user, will do nothing if added already, but is needed before broadcast
         _addUser(_userAddr);
 
@@ -504,11 +536,9 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
     }
 
     /// @dev Don't forget to add 0x into it
-    function getWalletFromPublicKey(bytes memory _publicKey)
-        public
-        pure
-        returns (address wallet)
-    {
+    function getWalletFromPublicKey(
+        bytes memory _publicKey
+    ) public pure returns (address wallet) {
         if (_publicKey.length == 64) {
             wallet = address(uint160(uint256(keccak256(_publicKey))));
         } else {
@@ -538,10 +568,12 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @notice Allows a Channel Owner to ADD a Delegate for sending Notifications
      *         Delegate shall be able to send Notification on the Channel's Behalf
      * @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
-     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
+     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via
+     * the PUSH NODES.
      *
      * @param _delegate address of the delegate who is allowed to Send Notifications
-     **/
+     *
+     */
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
         emit AddDelegate(msg.sender, _delegate);
@@ -550,33 +582,36 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
     /**
      * @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
      * @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
-     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
+     * NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via
+     * the PUSH NODES.
      * @param _delegate address of the delegate who is allowed to Send Notifications
-     **/
+     *
+     */
     function removeDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = false;
         emit RemoveDelegate(msg.sender, _delegate);
     }
 
-    /***
-      THREE main CALLERS for this function-
-        1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
-        2. Delegatee of Channel sends Notif to Recipients
-
-    <---------------------------------------------------------------------------------------------->
+    /**
+     *
+     *   THREE main CALLERS for this function-
+     *     1. Channel Owner sends Notif to all Subscribers / Subset of Subscribers / Individual Subscriber
+     *     2. Delegatee of Channel sends Notif to Recipients
+     *
+     * <---------------------------------------------------------------------------------------------->
      * When a CHANNEL OWNER Calls the Function and sends a Notif:
      *    -> We ensure -> "Channel Owner Must be Valid" && "Channel Owner is the Caller"
      *    -> NOTE - Validation of wether or not an address is a CHANNEL, is done via PUSH NODES
      *
      * When a Delegatee wants to send Notif to Recipient:
      *   -> We ensure "Delegate is the Caller" && "Delegatee is Approved by Chnnel Owner"
-    **/
+     *
+     */
 
-    function _checkNotifReq(address _channel, address _recipient)
-        private
-        view
-        returns (bool)
-    {
+    function _checkNotifReq(
+        address _channel,
+        address _recipient
+    ) private view returns (bool) {
         if (
             (_channel == 0x0000000000000000000000000000000000000000 &&
                 msg.sender == pushChannelAdmin) ||
@@ -595,7 +630,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @param _channel address of the Channel
      * @param _recipient address of the reciever of the Notification
      * @param _identity Info about the Notification
-     **/
+     *
+     */
     function sendNotification(
         address _channel,
         address _recipient,
@@ -621,7 +657,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @param _recipient address of the reciever of the Notification
      * @param _signatory address of the SIGNER of the Send Notif Function call transaction
      * @param _identity Info about the Notification
-     **/
+     *
+     */
     function _sendNotification(
         address _channel,
         address _recipient,
@@ -646,7 +683,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
      *        Inludes EIP1271 implementation: Standard Signature Validation Method for Contracts
      * @return bool returns whether or not send notification credentials was successful.
-     **/
+     *
+     */
     function sendNotifBySig(
         address _channel,
         address _recipient,
@@ -658,12 +696,21 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         bytes32 r,
         bytes32 s
     ) external returns (bool) {
-        if (_signer == address(0) || nonce != nonces[_signer] || now > expiry) {
+        if (
+            _signer == address(0) ||
+            nonce != nonces[_signer] ||
+            block.timestamp > expiry
+        ) {
             return false;
         }
 
         bytes32 domainSeparator = keccak256(
-            abi.encode(DOMAIN_TYPEHASH, NAME_HASH, getChainId(), address(this))
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                NAME_HASH,
+                BaseHelper.getChainId(),
+                address(this)
+            )
         );
         bytes32 structHash = keccak256(
             abi.encode(
@@ -679,7 +726,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
 
-        if (Address.isContract(_signer)) {
+        if (BaseHelper.isContract(_signer)) {
             // use EIP-1271 signature check
             bytes4 result = IERC1271(_signer).isValidSignature(
                 digest,
@@ -700,7 +747,7 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         );
 
         // update nonce if signature valid
-        nonces[_signer] = nonce.add(1);
+        nonces[_signer] = nonce + 1;
 
         return success;
     }
@@ -712,9 +759,11 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
 
     /**
      * @notice  Allows Users to Create and Subscribe to a Specific Notication Setting for a Channel.
-     * @dev     Updates the userToChannelNotifs mapping to keep track of a User's Notification Settings for a Specific Channel
+     * @dev     Updates the userToChannelNotifs mapping to keep track of a User's Notification Settings for a Specific
+     * Channel
      *
-     *          Deliminated Notification Settings string contains -> Decimal Representation Notif Settings + Notification Settings
+     *          Deliminated Notification Settings string contains -> Decimal Representation Notif Settings +
+     * Notification Settings
      *          For instance, for a Notif Setting that looks like -> 3+1-0+2-0+3-1+4-98
      *          3 -> Decimal Representation of the Notification Options selected by the User
      *
@@ -730,7 +779,8 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
      * @param   _notifID- Decimal Representation of the Options selected by the user
      * @param   _notifSettings - Deliminated string that depicts the User's Notifcation Settings
      *
-     **/
+     *
+     */
 
     function changeUserChannelSettings(
         address _channel,
@@ -753,18 +803,9 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         );
     }
 
-    function getChainId() internal pure returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
-    }
-
-    function setPushTokenAddress(address _tokenAddress)
-        external
-        onlyPushChannelAdmin
-    {
+    function setPushTokenAddress(
+        address _tokenAddress
+    ) external onlyPushChannelAdmin {
         PUSH_TOKEN_ADDRESS = _tokenAddress;
     }
 
@@ -802,5 +843,16 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
             amount,
             block.timestamp
         );
+    }
+
+    function migrateDelegates(
+        address[] calldata _channel,
+        address[] calldata _delegate
+    ) external onlyPushChannelAdmin {
+        require(_channel.length == _delegate.length, "Array length mismatch");
+        for (uint i = 0; i < _channel.length; i++) {
+            delegatedNotificationSenders[_channel[i]][_delegate[i]] = true;
+            emit AddDelegate(_channel[i], _delegate[i]);
+        }
     }
 }

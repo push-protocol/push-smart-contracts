@@ -6,6 +6,9 @@ const deploy = {
     goerli: {
       version: 1,
     },
+    sepolia: {
+      version: 1,
+    },
     polygon: {
       version: 1,
     },
@@ -35,11 +38,11 @@ const deploy = {
     },
     localhost: {
       version: 1,
-    }
+    },
   },
   args: {
-    chainName: null
-  }
-}
+    chainName: "sepolia",
+  },
+};
 
-exports.deploy = deploy
+exports.deploy = deploy;

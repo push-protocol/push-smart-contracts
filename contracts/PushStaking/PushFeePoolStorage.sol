@@ -1,15 +1,6 @@
 pragma solidity ^0.8.20;
 
-contract PushCoreStorageV2 {
-    /* *** V2 State variables *** */
-    bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name, uint256 chainId, address verifyingContract)");
-    bytes32 public constant CREATE_CHANNEL_TYPEHASH = keccak256(
-        "CreateChannel(ChannelType channelType, bytes identity, uint256 amount, uint256 channelExpiryTime, uint256 nonce, uint256 expiry)"
-    );
-
-    mapping(address => uint256) public nonces;
-    mapping(address => uint256) public channelUpdateCounter;
+contract PushFeePoolStorage {
     /**
      * Staking V2 state variables *
      */
@@ -31,18 +22,16 @@ contract PushCoreStorageV2 {
     uint256 public previouslySetEpochRewards; // Amount of rewards set in last initialized epoch
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
+    address public pushChannelAdmin;
+    address public PUSH_TOKEN_ADDRESS;
+    address public governance;
+    address public core;
+
     // @notice: Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
     // @notice: Stores User's Fees Details
     mapping(address => UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
-
-    /**
-     * Handling bridged information *
-     */
-    mapping(address => uint256) public celebUserFunds;
-
-    /* *** v2.5 State variables *** */
-    address public feePoolStakingContract;
+    bool migrated;
 }

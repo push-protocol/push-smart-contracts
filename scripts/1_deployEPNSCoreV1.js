@@ -1,35 +1,79 @@
-require('dotenv').config()
+require("dotenv").config();
 
-const moment = require('moment')
-const hre = require("hardhat")
+const moment = require("moment");
+const hre = require("hardhat");
 
-const fs = require("fs")
-const chalk = require("chalk")
-const { config, ethers } = require("hardhat")
+const fs = require("fs");
+const chalk = require("chalk");
+const { config, ethers } = require("hardhat");
 
-const { bn, tokens, bnToInt, timeInDays, timeInDate, readArgumentsFile, deployContract, verifyAllContracts } = require('../helpers/utils')
-const { versionVerifier, upgradeVersion } = require('../loaders/versionVerifier')
+const {
+  bn,
+  tokens,
+  bnToInt,
+  timeInDays,
+  timeInDate,
+  readArgumentsFile,
+  deployContract,
+  verifyAllContracts,
+} = require("../helpers/utils");
+const {
+  versionVerifier,
+  upgradeVersion,
+} = require("../loaders/versionVerifier");
 
 async function main() {
   // Version Check
-  console.log(chalk.bgBlack.bold.green(`\n✌️  Running Version Checks \n-----------------------\n`))
-  const versionDetails = versionVerifier(["daiAddress", "aDaiAddress", "wethAddress", "pushAddress", "uniswapRouterAddress", "aaveLendingAddress", "referralCode"])
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`))
+  console.log(
+    chalk.bgBlack.bold.green(
+      `\n✌️  Running Version Checks \n-----------------------\n`
+    )
+  );
+  const versionDetails = versionVerifier([
+    "daiAddress",
+    "aDaiAddress",
+    "wethAddress",
+    "pushAddress",
+    "uniswapRouterAddress",
+    "aaveLendingAddress",
+    "referralCode",
+  ]);
+  console.log(
+    chalk.bgWhite.bold.black(`\n\t\t\t\n Version Control Passed \n\t\t\t\n`)
+  );
 
   // First deploy all contracts
-  console.log(chalk.bgBlack.bold.green(`\n📡 Deploying Contracts \n-----------------------\n`))
-  const deployedContracts = await setupAllContracts(versionDetails)
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n All Contracts Deployed \n\t\t\t\n`))
+  console.log(
+    chalk.bgBlack.bold.green(
+      `\n📡 Deploying Contracts \n-----------------------\n`
+    )
+  );
+  const deployedContracts = await setupAllContracts(versionDetails);
+  console.log(
+    chalk.bgWhite.bold.black(`\n\t\t\t\n All Contracts Deployed \n\t\t\t\n`)
+  );
 
   // Try to verify
-  console.log(chalk.bgBlack.bold.green(`\n📡 Verifying Contracts \n-----------------------\n`))
-  await verifyAllContracts(deployedContracts, versionDetails)
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n All Contracts Verified \n\t\t\t\n`))
+  console.log(
+    chalk.bgBlack.bold.green(
+      `\n📡 Verifying Contracts \n-----------------------\n`
+    )
+  );
+  await verifyAllContracts(deployedContracts, versionDetails);
+  console.log(
+    chalk.bgWhite.bold.black(`\n\t\t\t\n All Contracts Verified \n\t\t\t\n`)
+  );
 
   // Upgrade Version
-  console.log(chalk.bgBlack.bold.green(`\n📟 Upgrading Version   \n-----------------------\n`))
-  upgradeVersion()
-  console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Version upgraded    \n\t\t\t\n`))
+  console.log(
+    chalk.bgBlack.bold.green(
+      `\n📟 Upgrading Version   \n-----------------------\n`
+    )
+  );
+  upgradeVersion();
+  console.log(
+    chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Version upgraded    \n\t\t\t\n`)
+  );
 }
 
 // IMOORTANT: ADD THIS FROM CONFIG
@@ -42,14 +86,15 @@ async function main() {
 // const referralCode = "0";
 
 async function setupAllContracts(versionDetails) {
-  let deployedContracts = []
+  let deployedContracts = [];
   console.log("📡 Deploy \n");
 
   // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
   // await autoDeploy();
   // OR
   // custom deploy (to use deployed addresses dynamically for example:)
-  const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
+  const [adminSigner, aliceSigner, bobSigner, eventualAdmin] =
+    await ethers.getSigners();
 
   // const admin = '0xA1bFBd2062f298a46f3E4160C89BEDa0716a3F51'; //admin of timelock, gets handed over to the governor.
 
@@ -58,10 +103,10 @@ async function setupAllContracts(versionDetails) {
   // const epns = await deploy("EPNS");
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
-  const EPNSCoreV1 = await deployContract("EPNSCoreV1", [], "EPNSCoreV1");
+  const EPNSCoreV1 = await deployContract("PushCoreV2_Temp", [], "PushCoreV2_Temp");
   deployedContracts.push(EPNSCoreV1)
 
-  const EPNSCoreAdmin = await deployContract("EPNSCoreAdmin", [], "EPNSCoreAdmin");
+  const EPNSCoreAdmin = await deployContract("EPNSCoreAdmin", [adminSigner.address], "EPNSCoreAdmin");
   deployedContracts.push(EPNSCoreAdmin)
 
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
@@ -86,23 +131,36 @@ async function setupAllContracts(versionDetails) {
   // await ethers.provider.send('evm_mine');
   // await ethers.provider.send('evm_mine');
   // await timelock.functions.executeTransaction(timelock.address, '0', 'setPendingAdmin(address)', data, (eta + 1));
+  // console.log(
+  //   adminSigner.address,
+  //   versionDetails.deploy.args.pushAddress,
+  //   versionDetails.deploy.args.wethAddress,
+  //   versionDetails.deploy.args.uniswapRouterAddress,
+  //   versionDetails.deploy.args.aaveLendingAddress,
+  //   versionDetails.deploy.args.daiAddress,
+  //   versionDetails.deploy.args.aDaiAddress,
+  //   parseInt(versionDetails.deploy.args.referralCode)
+  // );
+  const EPNSCoreProxy = await deployContract(
+    "EPNSCoreProxy",
+    [
+      EPNSCoreV1.address,
+      EPNSCoreAdmin.address,
+      adminSigner.address,
+      versionDetails.deploy.args.pushAddress,
+      versionDetails.deploy.args.wethAddress,
+      versionDetails.deploy.args.uniswapRouterAddress,
+      versionDetails.deploy.args.aaveLendingAddress,
+      versionDetails.deploy.args.daiAddress,
+      versionDetails.deploy.args.aDaiAddress,
+      parseInt(versionDetails.deploy.args.referralCode),
+    ],
+    "EPNSCoreProxy"
+  );
 
-  const EPNSCoreProxy = await deployContract("EPNSCoreProxy", [
-    EPNSCoreV1.address,
-    EPNSCoreAdmin.address,
-    adminSigner.address,
-    versionDetails.deploy.args.pushAddress,
-    versionDetails.deploy.args.wethAddress,
-    versionDetails.deploy.args.uniswapRouterAddress,
-    versionDetails.deploy.args.aaveLendingAddress,
-    versionDetails.deploy.args.daiAddress,
-    versionDetails.deploy.args.aDaiAddress,
-    parseInt(versionDetails.deploy.args.referralCode),
-  ], "EPNSCoreProxy");
+  deployedContracts.push(EPNSCoreProxy);
 
-  deployedContracts.push(EPNSCoreProxy)
-
-  return deployedContracts
+  return deployedContracts;
 }
 
 main()
