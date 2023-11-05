@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.11;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
-//import "hardhat/console.sol";
-//import "@openzeppelin/contracts/math/SafeMath.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 
 contract EPNS {
     /// @notice EIP-20 token name for this token
@@ -83,7 +81,7 @@ contract EPNS {
      * @notice Construct a new PUSH token
      * @param account The initial account to grant all the tokens
      */
-    constructor(address account) public {
+    constructor(address account) {
         balances[account] = uint96(totalSupply);
         emit Transfer(address(0), account, totalSupply);
 
@@ -110,16 +108,17 @@ contract EPNS {
      * @param rawAmount The number of tokens that are approved (2^256-1 means infinite)
      * @return Whether or not the approval succeeded
      */
+
     function approve(address spender, uint256 rawAmount) external returns (bool) {
         uint96 amount;
-        if (rawAmount >= uint256(uint96(-1))) {
-            amount = uint96(-1);
+        if (rawAmount >= type(uint96).max) {
+            amount = type(uint96).max;
         } else {
-            amount = safe96(rawAmount, "Push::approve: amount exceeds 96 bits");
+            amount = uint96(rawAmount);
+            require(amount == rawAmount, "Push::approve: amount exceeds 96 bits");
         }
 
         allowances[msg.sender][spender] = amount;
-
         emit Approval(msg.sender, spender, amount);
         return true;
     }
@@ -146,14 +145,15 @@ contract EPNS {
         external
     {
         uint96 amount;
-        if (rawAmount == uint256(-1)) {
-            amount = uint96(-1);
+        if (rawAmount == type(uint256).max) {
+            amount = type(uint96).max;
         } else {
-            amount = safe96(rawAmount, "Push::permit: amount exceeds 96 bits");
+            require(rawAmount < type(uint96).max, "Push::permit: amount exceeds 96 bits");
+            amount = uint96(rawAmount);
         }
 
         bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+            keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), BaseHelper.getChainId(), address(this)));
         bytes32 structHash =
             keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, rawAmount, nonces[owner]++, deadline));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -161,7 +161,7 @@ contract EPNS {
 
         require(signatory != address(0), "Push::permit: invalid signature");
         require(signatory == owner, "Push::permit: unauthorized");
-        require(now <= deadline, "Push::permit: signature expired");
+        require(block.timestamp <= deadline, "Push::permit: signature expired");
 
         allowances[owner][spender] = amount;
 
@@ -201,7 +201,7 @@ contract EPNS {
         uint96 spenderAllowance = allowances[src][spender];
         uint96 amount = safe96(rawAmount, "Push::approve: amount exceeds 96 bits");
 
-        if (spender != src && spenderAllowance != uint96(-1)) {
+        if (spender != src && spenderAllowance != type(uint96).max) {
             uint96 newAllowance =
                 sub96(spenderAllowance, amount, "Push::transferFrom: transfer amount exceeds spender allowance");
             allowances[src][spender] = newAllowance;
@@ -287,13 +287,13 @@ contract EPNS {
      */
     function delegateBySig(address delegatee, uint256 nonce, uint256 expiry, uint8 v, bytes32 r, bytes32 s) public {
         bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this)));
+            keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signatory = ecrecover(digest, v, r, s);
         require(signatory != address(0), "Push::delegateBySig: invalid signature");
         require(nonce == nonces[signatory]++, "Push::delegateBySig: invalid nonce");
-        require(now <= expiry, "Push::delegateBySig: signature expired");
+        require(block.timestamp <= expiry, "Push::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -485,13 +485,5 @@ contract EPNS {
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
         return c;
-    }
-
-    function getChainId() internal pure returns (uint256) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return chainId;
     }
 }

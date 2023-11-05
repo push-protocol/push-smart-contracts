@@ -23,8 +23,8 @@
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "3.4.0",
-    "@openzeppelin/contracts-upgradeable": "3.4.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.0",
     "bip39": "3.0.3",
     "chai": "^4.3.4",
     "chalk": "^4.1.1",
@@ -34,7 +34,6 @@
     "ethereum-waffle": "^4.0.10",
     "ethereumjs-wallet": "1.0.1",
     "ethers": "^5.1.4",
-    "hardhat": "^2.12.6",
     "hardhat": "^2.12.6",
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1",

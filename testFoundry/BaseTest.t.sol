@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
@@ -11,16 +11,16 @@ import "contracts/token/EPNS.sol";
 import "contracts/PushCore/PushCoreStorageV2.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
 import "contracts/PushCore/PushCoreStorageV1_5.sol";
-import { PushCoreV2 } from "contracts/PushCore/PushCoreV2.sol";
-import { PushCommV2 } from "contracts/PushComm/PushCommV2.sol";
+import { PushCoreV2_5 } from "contracts/PushCore/PushCoreV2_5.sol";
+import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
 
 import { Actors } from "./utils/Actors.sol";
 import { Constants } from "./utils/Constants.sol";
 
 abstract contract BaseTest is Test, Constants {
     EPNS public pushToken;
-    PushCoreV2 public core;
-    PushCommV2 public comm;
+    PushCoreV2_5 public core;
+    PushCommV2_5 public comm;
     IUniswapV2Router public uniV2Router;
 
     /* ***************
@@ -37,8 +37,8 @@ abstract contract BaseTest is Test, Constants {
         tokenDistributor = makeAddr("tokenDistributor");
 
         pushToken = new EPNS(tokenDistributor);
-        core = new PushCoreV2();
-        comm = new PushCommV2();
+        core = new PushCoreV2_5();
+        comm = new PushCommV2_5();
         uniV2Router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         actor = Actors({
