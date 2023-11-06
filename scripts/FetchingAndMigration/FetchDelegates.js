@@ -48,7 +48,7 @@ async function main() {
     delegateAddress: _delegateAddress,
   };
   fs.writeFileSync(
-    "./DevDelegateData.json",
+    "./Data/DevDelegateData.json",
     JSON.stringify(obj),
     "utf-8",
     (err) => {

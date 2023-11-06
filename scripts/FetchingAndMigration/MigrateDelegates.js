@@ -2,7 +2,7 @@ require("@nomiclabs/hardhat-ethers");
 require("dotenv").config();
 var fs = require("fs");
 const fsPromises = fs.promises;
-let data = require("../../DevDelegateData.json");
+let data = require("../../Data/DevDelegateData.json");
 
 const _channelAddress = data.channelAddress;
 const _delegateAddress = data.delegateAddress;
