@@ -1,5 +1,4 @@
-pragma solidity ^0.6.0;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -76,7 +75,8 @@ contract MigrateUserData_Test is BasePushFeePoolStaking {
 
     function testRevertwhen_EndMoreThanLength() public whenCallerIsAdmin whenMigrationNotComplete() {
         vm.expectRevert();
-        feePoolStaking.migrateUserData(start, 5, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        uint256 _tempEndIndex = 5;
+        feePoolStaking.migrateUserData(start, _tempEndIndex, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
     }
 
     function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
