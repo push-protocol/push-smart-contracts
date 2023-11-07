@@ -72,27 +72,42 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
         feePoolStaking.migrateUserMappings(_epoch, startIndex, _tempEndIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
     }
 
-    // function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
-    //     feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
+    function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
+        feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
 
-    //     // Verifying user data
-    //     for (uint256 i = startIndex; i < endIndex; ++i) {
-    //         uint256 expectedEpochToUserStakedWeight = _epochToUserStakedWeight[i];
+        // Verifying user data
+        for (uint256 i = startIndex; i < endIndex; ++i) {
+            uint256 expectedEpochToUserStakedWeight = _epochToUserStakedWeight[i];
 
-    //         (, , , , mapping(uint256 => uint256) storage actualEpochToUserStakedWeightMapping) = feePoolStaking.userFeesInfo(_user[i]);
-    //         uint256 actualEpochToUserStakedWeight = actualEpochToUserStakedWeightMapping[_epoch];
+            uint256 actualEpochToUserStakedWeight = getActualEpochToUserStakedWeight(_user[i], _epoch);
 
-    //         assertEq(actualEpochToUserStakedWeight, expectedEpochToUserStakedWeight);
+            assertEq(actualEpochToUserStakedWeight, expectedEpochToUserStakedWeight);
 
-    //         if (_userRewardsClaimed.length > 0) {
-    //             uint256 expectedUserRewardsClaimed = _userRewardsClaimed[i];
-    //             uint256 actualUserRewardsClaimed = feePoolStaking.usersRewardsClaimed(_user[i]);
-    //             assertEq(actualUserRewardsClaimed, expectedUserRewardsClaimed);
-    //         } else {
-    //             uint256 expectedUserRewardsClaimed = 0;
-    //             uint256 actualUserRewardsClaimed = feePoolStaking.usersRewardsClaimed(_user[i]);
-    //             assertEq(actualUserRewardsClaimed, expectedUserRewardsClaimed);
-    //         }
-    //     }
-    // }
+            if (_userRewardsClaimed.length > 0) {
+                uint256 expectedUserRewardsClaimed = _userRewardsClaimed[i];
+                uint256 actualUserRewardsClaimed = feePoolStaking.usersRewardsClaimed(_user[i]);
+                assertEq(actualUserRewardsClaimed, expectedUserRewardsClaimed);
+            } else {
+                uint256 expectedUserRewardsClaimed = 0;
+                uint256 actualUserRewardsClaimed = feePoolStaking.usersRewardsClaimed(_user[i]);
+                assertEq(actualUserRewardsClaimed, expectedUserRewardsClaimed);
+            }
+        }
+    }
+
+    function getActualEpochToUserStakedWeight(address user, uint256 epoch) public returns (uint256 epochToWeightValue) {
+        uint256 userFeesInfoMappingSlot = 11;
+        bytes32 userFeesInfoSlotHash = keccak256(abi.encode(user, userFeesInfoMappingSlot));
+
+        // Convert bytes32 to uint256
+        uint256 convertedHash = uint256(userFeesInfoSlotHash);
+
+        // Add 4 to the converted value
+        uint256 epochToUserStakedWeightMappingSlot = convertedHash + 4; // added 4 to get to mapping slot
+
+        bytes32 epochToUserStakedWeightSlotHash = keccak256(abi.encode(epoch, epochToUserStakedWeightMappingSlot));
+
+        bytes32 value = vm.load(address(feePoolStaking), bytes32(epochToUserStakedWeightSlotHash));
+        epochToWeightValue = uint256(value);
+    }
 }
