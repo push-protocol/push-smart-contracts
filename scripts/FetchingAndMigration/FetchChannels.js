@@ -1,13 +1,13 @@
 require("@nomiclabs/hardhat-ethers");
 require("dotenv").config();
 var fs = require("fs");
-const { FetchChannels } = require("./EventFetching.js");
+const { FetchChannels, fetchUpdatedChannels } = require("./EventFetching.js");
 const fsPromises = fs.promises;
 const ABI_FILE_PATH_CORE =
   "artifacts/contracts/PushCore/PushCoreV2_Temp.sol/PushCoreV2_Temp.json";
 
+// const Address = "0xd4E3ceC407cD36d9e3767cD189ccCaFBF549202C";
 const Address = "0x23346B732d56d34EC4e890419fBFB8548216a799";
-
 BigInt.prototype.toJSON = function () {
   return this.toString();
 };
@@ -26,11 +26,9 @@ async function main() {
   let _identityList = [];
   let _amountList = [];
   let _channelExpiryTime = [];
-  let _updatedChannels = [];
-  let _filteredUpdatedChannels = [];
+  let _filteredUpdatedChannels = await fetchUpdatedChannels();
   let _updateCounter = [];
   let _newIdentity = [];
-  console.log(filteredArray);
 
   console.log("Fetching Channel Type and expiry time");
 
@@ -56,6 +54,27 @@ async function main() {
     _amountList.push(parseInt(ethers.utils.parseEther("50")).toString());
   }
 
+  console.log("fetching Updated identities");
+
+  for (let i = 0; i < _filteredUpdatedChannels.length; i++) {
+    let eventFilter = Core.filters.UpdateChannel(_filteredUpdatedChannels[i]);
+    let events = await Core.queryFilter(eventFilter);
+    let latest;
+    for (let i = 0; i < events.length; i++) {
+      latest = events[i];
+      if (events[i].blockNumber > latest.blockNumber) {
+        latest = events[i];
+      }
+    }
+    _newIdentity.push(latest.args[1]);
+  }
+  console.log("fetching update counter");
+
+  for (let i = 0; i < _filteredUpdatedChannels.length; i++) {
+    let count = await Core.channelUpdateCounter(_filteredUpdatedChannels[i]);
+    _updateCounter.push(parseInt(count));
+  }
+
   console.log("Fetching Completed");
 
   let obj = {
@@ -64,6 +83,9 @@ async function main() {
     identityList: _identityList,
     amountList: _amountList,
     channelExpiryTime: _channelExpiryTime,
+    filteredUpdatedChannels: _filteredUpdatedChannels,
+    newIdentity: _newIdentity,
+    updateCounter: _updateCounter,
   };
   fs.writeFileSync(
     "./Data/DevChannelData.json",

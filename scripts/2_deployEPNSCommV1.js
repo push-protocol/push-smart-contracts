@@ -93,12 +93,12 @@ async function setupAllContracts(versionDetails) {
   const EPNSCommV1 = await deployContract("PushCommV2_5", [], "PushCommV2_5");
   deployedContracts.push(EPNSCommV1);
 
-  const EPNSCommAdmin = await deployContract(
-    "EPNSCommAdmin",
-    [adminSigner.address],
-    "EPNSCommAdmin"
-  );
-  deployedContracts.push(EPNSCommAdmin);
+  // const EPNSCommAdmin = await deployContract(
+  //   "EPNSCommAdmin",
+  //   [adminSigner.address],
+  //   "EPNSCommAdmin"
+  // );
+  // deployedContracts.push(EPNSCommAdmin);
   // const timelock = await deployContract("Timelock", [adminSigner.address, delay], "Timelock"); // governor and a guardian,
   // deployedContracts.push(timelock)
 
@@ -126,7 +126,7 @@ async function setupAllContracts(versionDetails) {
     "EPNSCommProxy",
     [
       EPNSCommV1.address,
-      EPNSCommAdmin.address,
+      adminSigner.address,
       adminSigner.address,
       versionDetails.deploy.args.chainName,
     ],

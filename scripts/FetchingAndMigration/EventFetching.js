@@ -54,35 +54,40 @@ async function FetchChannels() {
 }
 
 async function fetchUpdatedChannels() {
+  const abi = await getAbi(ABI_FILE_PATH_CORE);
+  provider = await ethers.provider;
+  let Core = new ethers.Contract(Address, abi, provider);
+
   console.log("fetching update channel events");
   let Filter = Core.filters.UpdateChannel();
-  let eventss = await Core.queryFilter(Filter);
+  let updateEvents = await Core.queryFilter(Filter);
 
-  console.log(eventss);
-  console.log(`Total ${eventss} update events found`);
+  console.log(`Total ${updateEvents.length} update events found`);
+  let _updatedChannels = [];
+  let _filteredUpdatedChannels = [];
+  for (let i = 0; i < updateEvents.length; i++) {
+    let user = updateEvents[i].args[0];
+    _updatedChannels.push(user);
+  }
+  _updatedChannels = _updatedChannels.sort();
+  let checkDup;
+  for (let i = 0; i < _updatedChannels.length; ++i) {
+    if (_updatedChannels[i] == checkDup) {
+      continue;
+    } else {
+      let channel = await Core.channels(_updatedChannels[i]);
 
-  // for (let i = 0; i < updateEvents.length; i++) {
-  //   let user = updateEvents[i].args[0];
-  //   _updatedChannels.push(user);
-  // }
-  // _updatedChannels = _updatedChannels.sort();
-  // let checkDup;
-  // for (let i = 0; i < _updatedChannels.length; ++i) {
-  //   if (_updatedChannels[i] == checkDup) {
-  //     continue;
-  //   } else {
-  //     let channel = await Core.channels(_updatedChannels[i]);
+      let state = channel[1];
 
-  //     let state = channel[1];
-
-  //     if (state != 1) {
-  //       continue;
-  //     } else {
-  //       _filteredUpdatedChannels.push(_updatedChannels[i]);
-  //       checkDup = _updatedChannels[i];
-  //     }
-  //   }
-  // }
+      if (state != 1) {
+        continue;
+      } else {
+        _filteredUpdatedChannels.push(_updatedChannels[i]);
+        checkDup = _updatedChannels[i];
+      }
+    }
+  }
+  return _filteredUpdatedChannels;
 }
 
 module.exports = {

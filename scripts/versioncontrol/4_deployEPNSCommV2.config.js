@@ -59,8 +59,8 @@ const deploy = {
     }
   },
   args: {
-    epnsProxyAddress: "0x0000000000000000000000000000000000",
-    epnsCommAdmin: "0x0000000000000000000000000000000000"
+    epnsProxyAddress: "0x9dDCD7ed7151afab43044E4D694FA064742C428c",
+    epnsCommAdmin: "0xD477a9BCd4f1e9fCC26FBF50982e5158dC7D8807"
   }
 }
 

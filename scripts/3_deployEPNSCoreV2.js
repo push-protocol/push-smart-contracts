@@ -43,7 +43,7 @@ async function setupAllContracts(versionDetails) {
   const EPNSCoreAdminInstance = EPNSCoreAdmin.attach(versionDetails.deploy.args.epnsCoreAdmin)
 
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${PushCoreV2.address} \n\t\t\t\n`))
-  await EPNSCoreAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, PushCoreV2.address);
+  await EPNSCoreAdminInstance.upgradeAndCall(versionDetails.deploy.args.epnsProxyAddress, PushCoreV2.address,"0x");
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Contracts Upgraded  \n\t\t\t\n`))
 
   return deployedContracts

@@ -9,7 +9,7 @@ const _delegateAddress = data.delegateAddress;
 
 const ABI_FILE_PATH_COMM =
   "artifacts/contracts/PushComm/PushCommV2_5.sol/PushCommV2_5.json";
-const DEPLOYED_CONTRACT_ADDRESS = "0x88Fbd32053b4CDe8602668261736C3B3FfE5D683";
+const DEPLOYED_CONTRACT_ADDRESS = "0x9dDCD7ed7151afab43044E4D694FA064742C428c";
 
 async function getAbi(file) {
   const data = await fsPromises.readFile(file, "utf8");
@@ -23,7 +23,7 @@ async function main() {
   let Comm = new ethers.Contract(DEPLOYED_CONTRACT_ADDRESS, abi, signer[0]);
   console.log("Migrating");
   let tx = await Comm.migrateDelegates(_channelAddress, _delegateAddress);
-  // console.log(tx);
+  console.log(tx.hash);
 }
 
 main()
