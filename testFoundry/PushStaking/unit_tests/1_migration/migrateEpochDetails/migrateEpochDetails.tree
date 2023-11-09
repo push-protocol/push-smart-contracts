@@ -7,5 +7,5 @@
         │   └── REVERT - PushFeePool::isMigrated: Migration Completed
         └── if migration is not yet completed
             ├── if array lengths are not equal to _currentEpoch
-            │   └── REVERT - Ivalid Length
+            │   └── REVERT - Invalid Length
             └── Function should update epochRewards and epochToTotalStakedWeight accurately
