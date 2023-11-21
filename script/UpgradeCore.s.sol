@@ -13,9 +13,6 @@ import "forge-std/console.sol";
 
 import "contracts/PushCore/PushCoreV2_5.sol";
 import "contracts/PushCore/EPNSCoreAdmin.sol";
-interface ITransparentUpgradeableProxy is IERC1967 {
-    function upgradeToAndCall(address, bytes calldata) external payable;
-}
 
 contract DeployCore is Script {
     ITransparentUpgradeableProxy ProxyAddress =
