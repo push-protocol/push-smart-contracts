@@ -2,13 +2,8 @@ pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
-
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "contracts/token/EPNS.sol";
-import "contracts/PushCore/PushCoreStorageV2.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
 import "contracts/PushCore/PushCoreStorageV1_5.sol";
 import { PushCoreV2_5 } from "contracts/PushCore/PushCoreV2_5.sol";
@@ -17,7 +12,14 @@ import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
 import { Actors } from "./utils/Actors.sol";
 import { Constants } from "./utils/Constants.sol";
 
-abstract contract BaseTest is Test, Constants {
+interface PushEvents {
+    event AddChannel(address indexed channel, PushCoreStorageV1_5.ChannelType indexed channelType, bytes identity);
+    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
+    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
+    event ChannelBlocked(address indexed channel);
+}
+
+abstract contract BaseTest is Test, Constants, PushEvents {
     EPNS public pushToken;
     PushCoreV2_5 public core;
     PushCommV2_5 public comm;
@@ -28,6 +30,15 @@ abstract contract BaseTest is Test, Constants {
      *************** */
     Actors internal actor;
     address tokenDistributor;
+
+    /* ***************
+        State Variables
+     *************** */
+    uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
+    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
+    uint256 FEE_AMOUNT = 10 ether;
+    uint256 MIN_POOL_CONTRIBUTION = 50 ether; 
+    uint256 ADJUST_FOR_FLOAT = 10 ** 7;
 
     /* ***************
        Initializing Set-Up for Push Contracts
