@@ -1,0 +1,10 @@
+.
+└── deactivateChannel.t.sol
+    ├── if contract is Paused
+    │   └── REVERT - EnforcedPause()
+    └── if contract is not Paused
+        ├── if caller's channel is not active
+        │   └── REVERT - PushCoreV2::onlyActivatedChannels: Invalid Channel
+        └── if caller's channel is active
+            ├── Function should update relevant state
+            └── Caller should receive correct amount of push token as refund
