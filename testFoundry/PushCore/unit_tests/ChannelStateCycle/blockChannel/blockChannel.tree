@@ -1,0 +1,14 @@
+.
+└── blockChannel.t.sol
+    ├── if contract is Paused
+    │   └── REVERT - EnforcedPause()
+    └── if contract is not Paused
+        ├── if caller is not Push Admin
+        │   └── REVERT - PushCoreV2::onlyPushChannelAdmin: Invalid Caller
+        └── if caller is admin
+            ├── if channel's state is neither active nor deactive
+            │   └── REVERT - PushCoreV2::onlyUnblockedChannels: Invalid Channel
+            └── if channel is either activated or deactivated
+                ├── Admin should be able to block a channel
+                ├── Function should update required details
+                └── Function should update pool fees and pool funds correctly

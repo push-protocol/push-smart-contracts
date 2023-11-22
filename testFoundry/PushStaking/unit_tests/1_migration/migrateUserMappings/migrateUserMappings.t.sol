@@ -95,7 +95,7 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
         }
     }
 
-    function getActualEpochToUserStakedWeight(address user, uint256 epoch) public returns (uint256 epochToWeightValue) {
+    function getActualEpochToUserStakedWeight(address user, uint256 epoch) public view returns (uint256 epochToWeightValue) {
         uint256 userFeesInfoMappingSlot = 11;
         bytes32 userFeesInfoSlotHash = keccak256(abi.encode(user, userFeesInfoMappingSlot));
 
