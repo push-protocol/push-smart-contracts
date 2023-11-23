@@ -622,6 +622,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     function updateStakingAddress(address _stakingAddress) external {
         onlyPushChannelAdmin();
         feePoolStakingContract = _stakingAddress;
+        IPUSH(PUSH_TOKEN_ADDRESS).setHolderDelegation(_stakingAddress, true);
     }
 
     function sendFunds(address _user, uint256 _amount) external {
