@@ -41,6 +41,7 @@ abstract contract BaseTest is Test, Constants {
             bob_channel_owner: createActor("bob_channel_owner"),
             alice_channel_owner: createActor("alice_channel_owner"),
             charlie_channel_owner: createActor("charlie_channel_owner"),
+            tony_channel_owner: createActor("tony_channel_owner"),
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
@@ -60,6 +61,8 @@ abstract contract BaseTest is Test, Constants {
         // Initialize Comm Contract
         comm.initialize(actor.admin, "FOUNDRY_TEST_NETWORK");
 
+        vm.prank(tokenDistributor);
+        pushToken.transfer(address(core), 1 ether);
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
         comm.setEPNSCoreAddress(address(core));
@@ -85,14 +88,14 @@ abstract contract BaseTest is Test, Constants {
     }
 
     function createActor(string memory name) internal returns (address payable) {
-        address payable actor = payable(makeAddr(name));
+        address payable _actor = payable(makeAddr(name));
         // Transfer 50 eth to every actor
-        vm.deal({ account: actor, newBalance: 50 ether });
+        vm.deal({ account: _actor, newBalance: 50 ether });
         // Transfer 50K PUSH Tokens for every actor
         vm.prank(tokenDistributor);
-        pushToken.transfer(actor, 50_000 ether);
+        pushToken.transfer(_actor, 50_000 ether);
         // Approve tokens for Core Contract
-        approveTokens(actor, address(core), 50_000 ether);
-        return actor;
+        approveTokens(_actor, address(core), 50_000 ether);
+        return _actor;
     }
 }
