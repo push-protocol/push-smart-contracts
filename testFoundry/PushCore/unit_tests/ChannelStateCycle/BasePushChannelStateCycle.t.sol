@@ -17,17 +17,17 @@ contract BasePushChannelStateCycle is BaseTest {
         BaseTest.setUp();
 
         vm.prank(actor.admin);
-        core.setMinPoolContribution(1 ether);
+        coreProxy.setMinPoolContribution(1 ether);
         MIN_POOL_CONTRIBUTION = 1 ether;
 
         _createChannel(actor.bob_channel_owner);
     }
 
     function _createChannel(address from) internal {
-        approveTokens(from, address(core), ADD_CHANNEL_MIN_FEES);
+        approveTokens(from, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         vm.prank(from);
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -38,7 +38,7 @@ contract BasePushChannelStateCycle is BaseTest {
     function _getChannelState(
         address from
     ) internal view returns (uint8 channelState) {
-        (, uint8 actualChannelState, , , , , , , , , ) = core.channels(from);
+        (, uint8 actualChannelState, , , , , , , , , ) = coreProxy.channels(from);
 
         channelState = actualChannelState;
     }
@@ -46,7 +46,7 @@ contract BasePushChannelStateCycle is BaseTest {
     function _getChannelWeight(
         address from
     ) internal view returns (uint256 channelWeight) {
-        (, , , , , , , , , uint256 actualChannelWeight, ) = core.channels(from);
+        (, , , , , , , , , uint256 actualChannelWeight, ) = coreProxy.channels(from);
 
         channelWeight = actualChannelWeight;
     }
@@ -54,7 +54,7 @@ contract BasePushChannelStateCycle is BaseTest {
     function _getChannelPoolContribution(
         address from
     ) internal view returns (uint256 channelContribution) {
-        (, , , uint256 actualPoolContribution, , , , , , , ) = core.channels(
+        (, , , uint256 actualPoolContribution, , , , , , , ) = coreProxy.channels(
             from
         );
 

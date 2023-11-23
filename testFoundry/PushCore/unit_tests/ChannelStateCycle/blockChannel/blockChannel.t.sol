@@ -27,7 +27,7 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
             bytes("PushCoreV2::onlyPushChannelAdmin: Invalid Caller")
         );
 
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
     }
 
     function test_AdminCanBlockActivatedChannel()
@@ -35,11 +35,11 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenNotPaused
         whenCallerIsAdmin
     {
-        vm.expectEmit(true, false, false, false, address(core));
+        vm.expectEmit(true, false, false, false, address(coreProxy));
         emit ChannelBlocked(actor.bob_channel_owner);
 
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
     }
 
     function test_AdminCanBlockDeactivatedChannel()
@@ -48,13 +48,13 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenCallerIsAdmin
     {
         vm.prank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
-        vm.expectEmit(true, false, false, false, address(core));
+        vm.expectEmit(true, false, false, false, address(coreProxy));
         emit ChannelBlocked(actor.bob_channel_owner);
 
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
     }
 
     function test_Revertwhen_BlockInactiveChannel()
@@ -66,7 +66,7 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         vm.expectRevert(
             bytes("PushCoreV2::onlyUnblockedChannels: Invalid Channel")
         );
-        core.blockChannel(actor.charlie_channel_owner);
+        coreProxy.blockChannel(actor.charlie_channel_owner);
     }
 
     function test_Revertwhen_AlreadyBlockedChannel()
@@ -75,12 +75,12 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenCallerIsAdmin
     {
         vm.startPrank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
 
         vm.expectRevert(
             bytes("PushCoreV2::onlyUnblockedChannels: Invalid Channel")
         );
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
         vm.stopPrank();
     }
 
@@ -89,9 +89,9 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenNotPaused
         whenCallerIsAdmin
     {
-        uint256 channelsCountBeforeBlocked = core.channelsCount();
+        uint256 channelsCountBeforeBlocked = coreProxy.channelsCount();
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
 
         (
             ,
@@ -105,8 +105,8 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
             uint256 actualChannelUpdateBlock,
             uint256 actualChannelWeight,
 
-        ) = core.channels(actor.bob_channel_owner);
-        uint256 actualChannelsCount = core.channelsCount();
+        ) = coreProxy.channels(actor.bob_channel_owner);
+        uint256 actualChannelsCount = coreProxy.channelsCount();
 
         uint256 expectedPoolContribution = MIN_POOL_CONTRIBUTION;
         uint256 expectedChannelsCount = channelsCountBeforeBlocked - 1;
@@ -130,13 +130,13 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         uint256 poolContributionBeforeBlocked = _getChannelPoolContribution(
             actor.bob_channel_owner
         );
-        uint256 poolFeesBeforeBlocked = core.PROTOCOL_POOL_FEES();
-        uint256 poolFundsBeforeBlocked = core.CHANNEL_POOL_FUNDS();
+        uint256 poolFeesBeforeBlocked = coreProxy.PROTOCOL_POOL_FEES();
+        uint256 poolFundsBeforeBlocked = coreProxy.CHANNEL_POOL_FUNDS();
 
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
-        uint256 actualChannelFundsAfterBlocked = core.CHANNEL_POOL_FUNDS();
-        uint256 actualPoolFeesAfterBlocked = core.PROTOCOL_POOL_FEES();
+        coreProxy.blockChannel(actor.bob_channel_owner);
+        uint256 actualChannelFundsAfterBlocked = coreProxy.CHANNEL_POOL_FUNDS();
+        uint256 actualPoolFeesAfterBlocked = coreProxy.PROTOCOL_POOL_FEES();
 
         uint256 expectedPoolContributionAfterBlocked = poolContributionBeforeBlocked -
                 MIN_POOL_CONTRIBUTION;

@@ -18,7 +18,7 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
         uint256 _amountBeingTransferred = 10 ether;
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             _amountBeingTransferred
         );
 
@@ -26,14 +26,14 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
         vm.expectRevert(
             bytes("PushCoreV2::reactivateChannel: Insufficient Funds")
         );
-        core.reactivateChannel(_amountBeingTransferred);
+        coreProxy.reactivateChannel(_amountBeingTransferred);
         vm.stopPrank();
     }
 
     function test_Revertwhen_ChannelAlreadyActive() public whenNotPaused {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
@@ -41,40 +41,40 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
         vm.expectRevert(
             bytes("PushCoreV2::onlyDeactivatedChannels: Channel is Active")
         );
-        core.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
     }
 
     function test_Revertwhen_ReactivatingBlockedChannel() public whenNotPaused {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(
             bytes("PushCoreV2::onlyDeactivatedChannels: Channel is Active")
         );
-        core.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
     }
 
     function test_ReactivatingDeactivatedChannel() public whenNotPaused {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
         vm.startPrank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
-        vm.expectEmit(true, true, false, false, address(core));
+        vm.expectEmit(true, true, false, false, address(coreProxy));
         emit ReactivateChannel(actor.bob_channel_owner, ADD_CHANNEL_MIN_FEES);
 
-        core.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
 
         vm.stopPrank();
     }
@@ -82,7 +82,7 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
     function test_ChannelStateUpdation() public whenNotPaused {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
@@ -91,12 +91,12 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
         );
 
         vm.startPrank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
         uint8 actualChannelStateAfterDeactivation = _getChannelState(
             actor.bob_channel_owner
         );
 
-        core.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
         uint8 actualChannelStateAfterReactivation = _getChannelState(
             actor.bob_channel_owner
         );
@@ -124,16 +124,16 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
     function test_FundsVariablesUpdation() public whenNotPaused {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
         vm.startPrank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
-        core.reactivateChannel(ADD_CHANNEL_MIN_FEES);
-        uint256 actualChannelFundsAfterReactivation = core.CHANNEL_POOL_FUNDS();
-        uint256 actualPoolFeesAfterReactivation = core.PROTOCOL_POOL_FEES();
+        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        uint256 actualChannelFundsAfterReactivation = coreProxy.CHANNEL_POOL_FUNDS();
+        uint256 actualPoolFeesAfterReactivation = coreProxy.PROTOCOL_POOL_FEES();
         uint256 actualChannelWeightAfterReactivation = _getChannelWeight(
             actor.bob_channel_owner
         );

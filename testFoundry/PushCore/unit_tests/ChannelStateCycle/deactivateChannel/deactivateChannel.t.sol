@@ -16,24 +16,24 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
 
     function test_Revertwhen_ChannelAlreadyDeactive() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
         vm.expectRevert(
             bytes("PushCoreV2::onlyActivatedChannels: Invalid Channel")
         );
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
         vm.stopPrank();
     }
 
     function test_Revertwhen_DeactivatingBlockedChannel() public whenNotPaused {
         vm.prank(actor.admin);
-        core.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(actor.bob_channel_owner);
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(
             bytes("PushCoreV2::onlyActivatedChannels: Invalid Channel")
         );
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
     }
 
     function test_DeactivateChannel() public whenNotPaused {
@@ -42,10 +42,10 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
         uint256 expectedRefundAmount = ADD_CHANNEL_MIN_FEES -
             FEE_AMOUNT -
             MIN_POOL_CONTRIBUTION;
-        vm.expectEmit(true, true, false, false, address(core));
+        vm.expectEmit(true, true, false, false, address(coreProxy));
         emit DeactivateChannel(actor.bob_channel_owner, expectedRefundAmount);
 
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
         vm.stopPrank();
     }
@@ -60,7 +60,7 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
         uint256 expectedRefundAmount = ADD_CHANNEL_MIN_FEES -
             FEE_AMOUNT -
             MIN_POOL_CONTRIBUTION;
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
         uint256 userPushBalanceAfterDeactivation = pushToken.balanceOf(
             actor.bob_channel_owner
@@ -75,7 +75,7 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
 
     function test_ChannelStateUpdation() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
         uint8 actualChannelStateAfterDeactivation = _getChannelState(
             actor.bob_channel_owner
         );
@@ -91,15 +91,15 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
 
     function test_FundsVariablesUpdation() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
-        uint256 actualPoolFeesBeforeDeactivation = core.PROTOCOL_POOL_FEES();
+        uint256 actualPoolFeesBeforeDeactivation = coreProxy.PROTOCOL_POOL_FEES();
 
         uint256 expectedRefundAmount = ADD_CHANNEL_MIN_FEES -
             FEE_AMOUNT -
             MIN_POOL_CONTRIBUTION;
-        core.deactivateChannel();
+        coreProxy.deactivateChannel();
 
-        uint256 actualChannelFundsAfterDeactivation = core.CHANNEL_POOL_FUNDS();
-        uint256 actualPoolFeesAfterDeactivation = core.PROTOCOL_POOL_FEES();
+        uint256 actualChannelFundsAfterDeactivation = coreProxy.CHANNEL_POOL_FUNDS();
+        uint256 actualPoolFeesAfterDeactivation = coreProxy.PROTOCOL_POOL_FEES();
         uint256 actualChannelWeightAfterDeactivation = _getChannelWeight(
             actor.bob_channel_owner
         );

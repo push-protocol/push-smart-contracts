@@ -21,7 +21,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         uint256 _amountBeingTransferred = 10 ether;
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             _amountBeingTransferred
         );
 
@@ -31,7 +31,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
                 "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
             )
         );
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             _amountBeingTransferred,
@@ -41,7 +41,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
 
     function test_Revertwhen_AlreadyActivatedChannel() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -51,7 +51,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.expectRevert(
             bytes("PushCoreV2::onlyInactiveChannels: Channel already Activated")
         );
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -68,7 +68,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
                 "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
             )
         );
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.ProtocolPromotion,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -83,7 +83,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
     {
         approveTokens(
             actor.bob_channel_owner,
-            address(core),
+            address(coreProxy),
             ADD_CHANNEL_MIN_FEES
         );
 
@@ -93,7 +93,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
                 "Push::transferFrom: transfer amount exceeds spender allowance"
             )
         );
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MAX_POOL_CONTRIBUTION,
@@ -106,9 +106,9 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         uint256 pushBalanceBeforeUser = pushToken.balanceOf(
             actor.bob_channel_owner
         );
-        uint256 pushBalanceBeforeCore = pushToken.balanceOf(address(core));
+        uint256 pushBalanceBeforeCore = pushToken.balanceOf(address(coreProxy));
 
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -118,7 +118,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         uint256 pushBalanceAfterUser = pushToken.balanceOf(
             actor.bob_channel_owner
         );
-        uint256 pushBalanceAfterCore = pushToken.balanceOf(address(core));
+        uint256 pushBalanceAfterCore = pushToken.balanceOf(address(coreProxy));
 
         assertEq(
             pushBalanceBeforeUser - pushBalanceAfterUser,
@@ -133,9 +133,9 @@ contract CreateChannelWithPUSH_Test is BaseTest {
 
     function test_CreateChannel() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
-        uint256 channelsCountBefore = core.channelsCount();
+        uint256 channelsCountBefore = coreProxy.channelsCount();
 
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -163,24 +163,24 @@ contract CreateChannelWithPUSH_Test is BaseTest {
             uint256 actualChannelUpdateBlock,
             uint256 actualChannelWeight,
             uint256 actualExpiryTime
-        ) = core.channels(actor.bob_channel_owner);
+        ) = coreProxy.channels(actor.bob_channel_owner);
 
-        assertEq(expectedPoolContribution, core.CHANNEL_POOL_FUNDS());
-        assertEq(expectedChannelsCount, core.channelsCount());
+        assertEq(expectedPoolContribution, coreProxy.CHANNEL_POOL_FUNDS());
+        assertEq(expectedChannelsCount, coreProxy.channelsCount());
         assertEq(expectedChannelState, actualChannelState);
         assertEq(expectedPoolContribution, actualPoolContribution);
         assertEq(expectedBlockNumber, actualChannelStartBlock);
         assertEq(expectedBlockNumber, actualChannelUpdateBlock);
         assertEq(expectedChannelWeight, actualChannelWeight);
         assertEq(expectedChannelExpiryTime, actualExpiryTime);
-        assertEq(expectedProtocolPoolFees, core.PROTOCOL_POOL_FEES());
+        assertEq(expectedProtocolPoolFees, coreProxy.PROTOCOL_POOL_FEES());
 
         vm.stopPrank();
     }
 
     function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation() public {
         vm.prank(actor.bob_channel_owner);
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -188,7 +188,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         );
 
         vm.prank(actor.charlie_channel_owner);
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES * 2,
@@ -198,8 +198,8 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         uint256 expectedProtocolPoolFees = FEE_AMOUNT * 2;
         uint256 expectedChannelPoolFunds = (ADD_CHANNEL_MIN_FEES +
             (ADD_CHANNEL_MIN_FEES * 2)) - expectedProtocolPoolFees;
-        assertEq(expectedProtocolPoolFees, core.PROTOCOL_POOL_FEES());
-        assertEq(expectedChannelPoolFunds, core.CHANNEL_POOL_FUNDS());
+        assertEq(expectedProtocolPoolFees, coreProxy.PROTOCOL_POOL_FEES());
+        assertEq(expectedChannelPoolFunds, coreProxy.CHANNEL_POOL_FUNDS());
     }
 
     function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public {
@@ -208,7 +208,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.expectRevert(
             bytes("PushCoreV2::createChannel: Invalid channelExpiryTime")
         );
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.TimeBound,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
@@ -221,35 +221,35 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.startPrank(actor.bob_channel_owner);
         address EPNS_ALERTER = address(0);
 
-        bool isChannelSubscribedToOwn_Before = comm.isUserSubscribed(
+        bool isChannelSubscribedToOwn_Before = commProxy.isUserSubscribed(
             actor.bob_channel_owner,
             actor.bob_channel_owner
         );
-        bool isChannelSubscribedToEPNS_Before = comm.isUserSubscribed(
+        bool isChannelSubscribedToEPNS_Before = commProxy.isUserSubscribed(
             EPNS_ALERTER,
             actor.bob_channel_owner
         );
-        bool isAdminSubscribedToChannel_Before = comm.isUserSubscribed(
+        bool isAdminSubscribedToChannel_Before = commProxy.isUserSubscribed(
             actor.bob_channel_owner,
             actor.admin
         );
 
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
             0
         );
 
-        bool isChannelSubscribedToOwn_After = comm.isUserSubscribed(
+        bool isChannelSubscribedToOwn_After = commProxy.isUserSubscribed(
             actor.bob_channel_owner,
             actor.bob_channel_owner
         );
-        bool isChannelSubscribedToEPNS_After = comm.isUserSubscribed(
+        bool isChannelSubscribedToEPNS_After = commProxy.isUserSubscribed(
             EPNS_ALERTER,
             actor.bob_channel_owner
         );
-        bool isAdminSubscribedToChannel_After = comm.isUserSubscribed(
+        bool isAdminSubscribedToChannel_After = commProxy.isUserSubscribed(
             actor.bob_channel_owner,
             actor.admin
         );
@@ -266,7 +266,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
     }
 
     function test_EmitRelevantEvents() public {
-        vm.expectEmit(true, true, false, true, address(core));
+        vm.expectEmit(true, true, false, true, address(coreProxy));
         emit AddChannel(
             actor.bob_channel_owner,
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
@@ -274,7 +274,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         );
 
         vm.prank(actor.bob_channel_owner);
-        core.createChannelWithPUSH(
+        coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
