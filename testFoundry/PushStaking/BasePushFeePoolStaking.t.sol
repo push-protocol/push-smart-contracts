@@ -29,5 +29,6 @@ contract BasePushFeePoolStaking is BaseTest {
         );
 
         vm.startPrank({ msgSender: actor.admin });
+        core.updateStakingAddress(address(feePoolStaking));
     }
 }
