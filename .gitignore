@@ -24,6 +24,7 @@ build
 .env
 cache_forge
 out
+broadcast
 
 # debug
 npm-debug.log*
