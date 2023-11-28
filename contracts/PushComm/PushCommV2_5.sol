@@ -17,6 +17,7 @@ import "./PushCommStorageV2.sol";
 import "../interfaces/IERC1271.sol";
 import "../interfaces/IPushCore.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
+import "../libraries/Errors.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -51,12 +52,16 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
      */
 
     modifier onlyPushChannelAdmin() {
-        require(msg.sender == pushChannelAdmin, "PushCommV2::onlyPushChannelAdmin: user not pushChannelAdmin");
+        if (msg.sender != pushChannelAdmin) {
+            revert InvalidCaller();
+        }
         _;
     }
 
     modifier onlyPushCore() {
-        require(msg.sender == EPNSCoreAddress, "PushCommV2::onlyPushCore: Caller NOT PushCore");
+        if (msg.sender != EPNSCoreAddress) {
+            revert InvalidCaller();
+        }
         _;
     }
 
@@ -97,8 +102,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
-        require(_newAdmin != address(0), "PushCommV2::transferPushChannelAdminControl: Invalid Address");
-        require(_newAdmin != pushChannelAdmin, "PushCommV2::transferPushChannelAdminControl: Admin address is same");
+        if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
+            revert InvalidArgument("Invalid Argument");
+        }
         pushChannelAdmin = _newAdmin;
     }
 
@@ -174,13 +180,11 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         onlyPushChannelAdmin
         returns (bool)
     {
-        require(
-            !isMigrationComplete, "PushCommV2::migrateSubscribeData: Migration of Subscribe Data is Complete Already"
-        );
-        require(
-            _channelList.length == _usersList.length,
-            "PushCommV2::migrateSubscribeData: Unequal Arrays passed as Argument"
-        );
+        if (isMigrationComplete || _channelList.length != _usersList.length) {
+            revert InvalidLogic(
+                "_channelList != _usersList OR Migration Complete"
+            );
+        }
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
             if (isUserSubscribed(_channelList[i], _usersList[i])) {
@@ -238,7 +242,10 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         external
     {
         // EIP-712
-        require(subscriber != address(0), "PushCommV2::subscribeBySig: Invalid signature");
+        if (subscriber == address(0)) {
+            revert InvalidArgument("Zero address");
+        }
+
         bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
@@ -247,14 +254,23 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
-            require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
+            if (result != 0x1626ba7e) {
+                revert InvalidSignature("FROM CONTRACT");
+            }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
-            require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
+            if (signatory != subscriber) {
+                revert InvalidSignature("FROM EOA");
+            }
         }
-        require(nonce == nonces[subscriber]++, "PushCommV2::subscribeBySig: Invalid nonce");
-        require(block.timestamp <= expiry, "PushCommV2::subscribeBySig: Signature expired");
+        if (nonce != nonces[subscriber]++) {
+            revert InvalidSignature("Invalid nonce");
+        }
+
+        if (block.timestamp > expiry) {
+            revert InvalidSignature("Signature expired");
+        }
 
         _subscribe(channel, subscriber);
     }
@@ -355,12 +371,12 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    )
-        external
-    {
-        require(subscriber != address(0), "PushCommV2::unsubscribeBySig: Invalid signature");
+    ) external {
+        if (subscriber == address(0)) {
+            revert InvalidArgument("Zero address");
+        }
         // EIP-712
-        bytes32 domainSeparator =
+bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -368,14 +384,23 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         if (BaseHelper.isContract(subscriber)) {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
-            require(result == 0x1626ba7e, "INVALID SIGNATURE FROM CONTRACT");
+            if (result != 0x1626ba7e) {
+                revert InvalidSignature("FROM CONTRACT");
+            }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
-            require(signatory == subscriber, "INVALID SIGNATURE FROM EOA");
+            if (signatory != subscriber) {
+                revert InvalidSignature("FROM EOA");
+            }
         }
-        require(nonce == nonces[subscriber]++, "PushCommV2::unsubscribeBySig: Invalid nonce");
-        require(block.timestamp <= expiry, "PushCommV2::unsubscribeBySig: Signature expired");
+        if (nonce != nonces[subscriber]++) {
+            revert InvalidSignature("Invalid nonce");
+        }
+
+        if (block.timestamp > expiry) {
+            revert InvalidSignature("Signature expired");
+        }
         _unsubscribe(channel, subscriber);
     }
 
@@ -658,10 +683,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
      */
 
     function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external {
-        require(
-            isUserSubscribed(_channel, msg.sender),
-            "PushCommV2::changeUserChannelSettings: User not Subscribed to Channel"
-        );
+        if (!isUserSubscribed(_channel, msg.sender)) {
+            revert InvalidSubscriber("Not a subscriber");
+        }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
@@ -672,7 +696,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     }
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        require(amount > 0, "Request cannot be initiated without deposit");
+        if (amount <= 0) {
+            revert InvalidAmount();
+        }
         address requestSender = msg.sender;
         address coreContract = EPNSCoreAddress;
         // Transfer incoming PUSH Token to core contract
