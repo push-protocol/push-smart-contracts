@@ -1,12 +1,11 @@
-.
-└── reactivateChannel.t.sol
-    ├── if contract is Paused
-    │   └── REVERT - EnforcedPause()
-    └── if contract is not Paused
-        └── if amount sent is less than min fees required
-            ├── REVERT - PushCoreV2::reactivateChannel: Insufficient Funds
-            ├── if caller's channel is not deactivated
-            │   └── REVERT - PushCoreV2::onlyDeactivatedChannels: Channel is Active
-            └── if caller's channel is deactivated
-                ├── Function should update relevant state
-                └── Caller should receive correct amount of push token as refund
+reactivateChannel.t.sol
+    ├── when contract is Paused
+    │   └── it REVERT - EnforcedPause()
+    └── when contract is not Paused
+        └── when amount sent is less than min fees required
+            ├── it REVERT - PushCoreV2::reactivateChannel: Insufficient Funds
+            ├── when caller's channel is not deactivated
+            │   └── it REVERT - PushCoreV2::onlyDeactivatedChannels: Channel is Active
+            └── when caller's channel is deactivated
+                ├── it should update relevant state
+                └── it should receive correct amount of push tokens
