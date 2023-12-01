@@ -141,15 +141,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         migrated = true;
     }
 
-    // *************** MIGRATION FUNCTIONS BEGINS ********************* //
-
-    /**
-     * @notice Function to return User's Staked Weight for any given EPOCH ID
-     *
-     */
-    function getEpochToUserStakedWeight(address _user, uint256 _epoch) external view returns (uint256) {
-        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
-    }
+    // *************** MIGRATION FUNCTIONS ENDS ********************* //
 
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
