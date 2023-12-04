@@ -52,17 +52,26 @@ Contract addresses for Ethereum Mainnet.
 
 | Contract Name | Contract Address |
 | ------------- | ---------------- |
-| Push Token | 0xf418588522d5dd018b425E472991E52EBBeEEEEE |
-| EPNS CoreV1.5 | 0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE |
-| EPNS CommV1.5 | 0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa |
+| Push Token | [0xf418588522d5dd018b425E472991E52EBBeEEEEE](https://etherscan.io/address/0xf418588522d5dd018b425E472991E52EBBeEEEEE) |
+| EPNS CoreV1.5 | [0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE](https://etherscan.io/address/0x66329Fdd4042928BfCAB60b179e1538D56eeeeeE) |
+| EPNS CommV1.5 | [0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa](https://etherscan.io/address/0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa) |
 
 Contract addresses for Ethereum Goerli Testnet.
 
 | Contract Name | Contract Address |
 | ------------- | ---------------- |
-| Push Token | 0x2b9bE9259a4F5Ba6344c1b1c07911539642a2D33 |
-| EPNS CoreV1.5 | 0xd4E3ceC407cD36d9e3767cD189ccCaFBF549202C |
-| EPNS CommV1.5 | 0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa |
+| Push Token | [0x2b9bE9259a4F5Ba6344c1b1c07911539642a2D33](https://goerli.etherscan.io/address/0x2b9bE9259a4F5Ba6344c1b1c07911539642a2D33) |
+| EPNS CoreV1.5 | [0xd4E3ceC407cD36d9e3767cD189ccCaFBF549202C](https://goerli.etherscan.io/address/0xd4E3ceC407cD36d9e3767cD189ccCaFBF549202C) |
+| EPNS CommV1.5 | [0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa](https://goerli.etherscan.io/address/0xb3971BCef2D791bc4027BbfedFb47319A4AAaaAa) |
+
+
+Contract addresses for Ethereum Sepolia Testnet.
+
+| Contract Name | Contract Address |
+| ------------- | ---------------- |
+| Push Token | [0x37c779a1564DCc0e3914aB130e0e787d93e21804](https://sepolia.etherscan.io/address/0x37c779a1564DCc0e3914aB130e0e787d93e21804) |
+| EPNS CoreV1.5 | [0x9d65129223451fbd58fc299C635Cd919BaF2564C](https://sepolia.etherscan.io/address/0x9d65129223451fbd58fc299C635Cd919BaF2564C#code) |
+| EPNS CommV1.5 | [0x0C34d54a09CFe75BCcd878A469206Ae77E0fe6e7](https://sepolia.etherscan.io/address/0x0c34d54a09cfe75bccd878a469206ae77e0fe6e7) |
 
 You can find addresses for other networks over at our <a href="https://docs.push.org/developers/developer-tooling/push-smart-contracts/epns-contract-addresses">Docs</a>  
 
@@ -119,17 +128,14 @@ cd push-smart-contracts
 npm install
 ```
 
-### 🤖 Using push-smart-contracts
-
-```sh
-cd contracts
-```
-
 ### 🧪 Running Tests
 ```sh
-npx hardhat test
+npx hardhat test 
 ```
-
+OR
+```sh
+forge test 
+```
 ---
 
 ## Resources
