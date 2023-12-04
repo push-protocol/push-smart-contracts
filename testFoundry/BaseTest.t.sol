@@ -13,16 +13,10 @@ import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
+import { CoreEvents } from "./utils/CoreEvents.sol";
 import { Constants } from "./utils/Constants.sol";
 
-interface PushEvents {
-    event AddChannel(address indexed channel, PushCoreStorageV1_5.ChannelType indexed channelType, bytes identity);
-    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
-    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelBlocked(address indexed channel);
-}
-
-abstract contract BaseTest is Test, Constants, PushEvents {
+abstract contract BaseTest is Test, Constants, CoreEvents {
     EPNS public pushToken;
     PushCoreV2_5 public core;
     PushCoreV2_5 public coreProxy;

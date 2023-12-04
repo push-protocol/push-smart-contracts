@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import {BaseTest} from "../../../BaseTest.t.sol";
 import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
 
-contract BasePushChannelStateCycle is BaseTest {
+contract BasePushChannelStateCycle is BaseTest{
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     /* ***************
