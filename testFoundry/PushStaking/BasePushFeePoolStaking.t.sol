@@ -1,8 +1,6 @@
 pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 import { BaseTest } from "../BaseTest.t.sol";
 import { PushFeePoolStaking } from "contracts/PushStaking/PushFeePoolStaking.sol";
