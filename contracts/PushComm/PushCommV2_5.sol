@@ -53,14 +53,14 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     modifier onlyPushChannelAdmin() {
         if (msg.sender != pushChannelAdmin) {
-            revert Errors.InvalidCaller();
+            revert Errors.CallerNotAdmin();
         }
         _;
     }
 
     modifier onlyPushCore() {
         if (msg.sender != EPNSCoreAddress) {
-            revert Errors.InvalidCaller();
+            revert Errors.UnauthorizedCaller(msg.sender);
         }
         _;
     }
@@ -103,7 +103,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
         if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
-            revert Errors.InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument_WrongAddress(_newAdmin);
         }
         pushChannelAdmin = _newAdmin;
     }
@@ -181,9 +181,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         returns (bool)
     {
         if (isMigrationComplete || _channelList.length != _usersList.length) {
-            revert Errors.InvalidLogic(
-                "_channelList != _usersList OR Migration Complete"
-            );
+            revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
@@ -243,7 +241,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         // EIP-712
         if (subscriber == address(0)) {
-            revert Errors.InvalidArgument("Zero address");
+            revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
 
         bytes32 domainSeparator =
@@ -255,21 +253,21 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) {
-                revert Errors.InvalidSignature("FROM CONTRACT");
+                revert Errors.Comm_InvalidSignature_FromContract();
             }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
             if (signatory != subscriber) {
-                revert Errors.InvalidSignature("FROM EOA");
+                revert Errors.Comm_InvalidSignature_FromEOA();
             }
         }
         if (nonce != nonces[subscriber]++) {
-            revert Errors.InvalidSignature("Invalid nonce");
+            revert Errors.Comm_InvalidNonce();
         }
 
         if (block.timestamp > expiry) {
-            revert Errors.InvalidSignature("Signature expired");
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
 
         _subscribe(channel, subscriber);
@@ -373,7 +371,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         bytes32 s
     ) external {
         if (subscriber == address(0)) {
-            revert Errors.InvalidArgument("Zero address");
+            revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
         // EIP-712
 bytes32 domainSeparator =
@@ -385,21 +383,21 @@ bytes32 domainSeparator =
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) {
-                revert Errors.InvalidSignature("FROM CONTRACT");
+                revert Errors.Comm_InvalidSignature_FromContract();
             }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
             if (signatory != subscriber) {
-                revert Errors.InvalidSignature("FROM EOA");
+                revert Errors.Comm_InvalidSignature_FromEOA();
             }
         }
         if (nonce != nonces[subscriber]++) {
-            revert Errors.InvalidSignature("Invalid nonce");
+            revert Errors.Comm_InvalidNonce();
         }
 
         if (block.timestamp > expiry) {
-            revert Errors.InvalidSignature("Signature expired");
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
         _unsubscribe(channel, subscriber);
     }
@@ -684,7 +682,7 @@ bytes32 domainSeparator =
 
     function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external {
         if (!isUserSubscribed(_channel, msg.sender)) {
-            revert Errors.InvalidSubscriber("Not a subscriber");
+            revert Errors.Comm_InvalidSubscriber();
         }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
@@ -697,7 +695,7 @@ bytes32 domainSeparator =
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
         if (amount <= 0) {
-            revert Errors.InvalidAmount();
+            revert Errors.InvalidArg_LessThanExpected(0, amount);
         }
         address requestSender = msg.sender;
         address coreContract = EPNSCoreAddress;
