@@ -28,7 +28,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     /* ***************
         EVENTS
      *************** */
-event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
+    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
     event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
@@ -121,8 +121,10 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            ((channels[_channel].channelState != 1 && msg.sender != _channel) ||
-                (msg.sender != pushChannelAdmin && _channel != address(0x0)))
+            (
+                (channels[_channel].channelState != 1 && msg.sender != _channel)
+                    || (msg.sender != pushChannelAdmin && _channel != address(0x0))
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -258,17 +260,16 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     )
         external
         whenNotPaused
-    {        if (_amount < ADD_CHANNEL_MIN_FEES) {
+    {
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
         if (channels[msg.sender].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != ChannelType.InterestBearingOpen ||
-            _channelType != ChannelType.InterestBearingMutual ||
-            _channelType != ChannelType.TimeBound ||
-            _channelType != ChannelType.TokenGaited
+            _channelType != ChannelType.InterestBearingOpen || _channelType != ChannelType.InterestBearingMutual
+                || _channelType != ChannelType.TimeBound || _channelType != ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -297,7 +298,9 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
-    ) private {
+    )
+        private
+    {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
@@ -360,10 +363,8 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            (msg.sender != _channelAddress &&
-                channelData.expiryTime >= block.timestamp) ||
-            (msg.sender != pushChannelAdmin &&
-                channelData.expiryTime + 14 days >= block.timestamp)
+            (msg.sender != _channelAddress && channelData.expiryTime >= block.timestamp)
+                || (msg.sender != pushChannelAdmin && channelData.expiryTime + 14 days >= block.timestamp)
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -475,11 +476,11 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
      */
 
     function reactivateChannel(uint256 _amount) external whenNotPaused {
-        if(_amount < ADD_CHANNEL_MIN_FEES){
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
 
-        if(channels[msg.sender].channelState != 2){
+        if (channels[msg.sender].channelState != 2) {
             revert Errors.Core_InvalidChannel();
         }
 
@@ -520,10 +521,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
 
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
-        if (
-            ((channels[_channelAddress].channelState == 3) &&
-                (channels[_channelAddress].channelState == 0))
-        ) {
+        if (((channels[_channelAddress].channelState == 3) && (channels[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
@@ -562,11 +560,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (
-            verifiedBy == pushChannelAdmin ||
-            _channel == address(0x0) ||
-            _channel == pushChannelAdmin
-        ) {
+        if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {
@@ -636,10 +630,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
      *
      */
     function unverifyChannel(address _channel) public {
-        if (
-            channels[_channel].verifiedBy != msg.sender ||
-            msg.sender != pushChannelAdmin
-        ) {
+        if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
             revert Errors.CallerNotAdmin();
         }
 
@@ -687,7 +678,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
      */
 
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
-          if (msg.sender != epnsCommunicator) {
+        if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         uint256 poolFeeAmount = FEE_AMOUNT;

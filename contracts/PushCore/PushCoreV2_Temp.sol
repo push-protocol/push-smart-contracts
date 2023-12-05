@@ -121,8 +121,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            ((channels[_channel].channelState != 1 && msg.sender != _channel) ||
-                (msg.sender != pushChannelAdmin && _channel != address(0x0)))
+            (
+                (channels[_channel].channelState != 1 && msg.sender != _channel)
+                    || (msg.sender != pushChannelAdmin && _channel != address(0x0))
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -258,17 +260,16 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     )
         external
         whenNotPaused
-    {        if (_amount < ADD_CHANNEL_MIN_FEES) {
+    {
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
         if (channels[msg.sender].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != ChannelType.InterestBearingOpen ||
-            _channelType != ChannelType.InterestBearingMutual ||
-            _channelType != ChannelType.TimeBound ||
-            _channelType != ChannelType.TokenGaited
+            _channelType != ChannelType.InterestBearingOpen || _channelType != ChannelType.InterestBearingMutual
+                || _channelType != ChannelType.TimeBound || _channelType != ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -362,10 +363,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            (msg.sender != _channelAddress &&
-                channelData.expiryTime >= block.timestamp) ||
-            (msg.sender != pushChannelAdmin &&
-                channelData.expiryTime + 14 days >= block.timestamp)
+            (msg.sender != _channelAddress && channelData.expiryTime >= block.timestamp)
+                || (msg.sender != pushChannelAdmin && channelData.expiryTime + 14 days >= block.timestamp)
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -422,9 +421,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         external
     {
         onlyActivatedChannels(msg.sender);
-         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
+        if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
-            }
+        }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
 
@@ -477,11 +476,11 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
 
     function reactivateChannel(uint256 _amount) external whenNotPaused {
-        if(_amount < ADD_CHANNEL_MIN_FEES){
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
 
-        if(channels[msg.sender].channelState != 2){
+        if (channels[msg.sender].channelState != 2) {
             revert Errors.Core_InvalidChannel();
         }
 
@@ -522,10 +521,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
-        if (
-            ((channels[_channelAddress].channelState == 3) &&
-                (channels[_channelAddress].channelState == 0))
-        ) {
+        if (((channels[_channelAddress].channelState == 3) && (channels[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
@@ -564,11 +560,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (
-            verifiedBy == pushChannelAdmin ||
-            _channel == address(0x0) ||
-            _channel == pushChannelAdmin
-        ) {
+        if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {
@@ -638,10 +630,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function unverifyChannel(address _channel) public {
-        if (
-            channels[_channel].verifiedBy != msg.sender ||
-            msg.sender != pushChannelAdmin
-        ) {
+        if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
             revert Errors.CallerNotAdmin();
         }
 
@@ -711,7 +700,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function initializeStake() external {
         if (genesisEpoch != 0) {
-            revert ("Already Initialized");
+            revert("Already Initialized");
         }
 
         genesisEpoch = block.number;
@@ -755,10 +744,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function unstake() external whenNotPaused {
-        if (
-            block.number <=
-            userFeesInfo[msg.sender].lastStakedBlock + epochDuration
-        ) {
+        if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
         if (userFeesInfo[msg.sender].stakedAmount <= 0) {
@@ -833,7 +819,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
-           if (currentEpoch <= _tillEpoch) {
+        if (currentEpoch <= _tillEpoch) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
         if (_tillEpoch < nextFromEpoch) {

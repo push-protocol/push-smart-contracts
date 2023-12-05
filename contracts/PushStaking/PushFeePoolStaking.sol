@@ -44,11 +44,12 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     modifier onlyPushChannelAdmin() {
         if (msg.sender != pushChannelAdmin) {
             revert Errors.CallerNotAdmin();
-        }        _;
+        }
+        _;
     }
 
     modifier isMigrated() {
-        if(migrated){
+        if (migrated) {
             revert Errors.PushStaking_MigrationCompleted();
         }
         _;
@@ -68,10 +69,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         onlyPushChannelAdmin
         isMigrated
     {
-        if (
-            _currentEpoch != _epochRewards.length ||
-            _currentEpoch != _epochToTotalStakedWeight.length
-        ) {
+        if (_currentEpoch != _epochRewards.length || _currentEpoch != _epochToTotalStakedWeight.length) {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
@@ -95,10 +93,8 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         isMigrated
     {
         if (
-            _user.length != _stakedAmount.length ||
-            _user.length != _stakedWeight.length ||
-            _user.length != _lastStakedBlock.length ||
-            _user.length != _lastClaimedBlock.length
+            _user.length != _stakedAmount.length || _user.length != _stakedWeight.length
+                || _user.length != _lastStakedBlock.length || _user.length != _lastClaimedBlock.length
         ) {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
@@ -122,10 +118,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         onlyPushChannelAdmin
         isMigrated
     {
-        if (
-            _user.length != _epochToUserStakedWeight.length ||
-            _user.length != _userRewardsClaimed.length
-        ) {
+        if (_user.length != _epochToUserStakedWeight.length || _user.length != _userRewardsClaimed.length) {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
@@ -217,10 +210,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function unstake() external {
-        if (
-            block.number <=
-            userFeesInfo[msg.sender].lastStakedBlock + epochDuration
-        ) {
+        if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
         if (userFeesInfo[msg.sender].stakedAmount <= 0) {

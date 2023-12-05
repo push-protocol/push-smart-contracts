@@ -369,12 +369,14 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    )
+        external
+    {
         if (subscriber == address(0)) {
             revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
         // EIP-712
-bytes32 domainSeparator =
+        bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
