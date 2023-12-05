@@ -6,7 +6,6 @@ import "forge-std/console.sol";
 import { BasePushFeePoolStaking } from "../../../BasePushFeePoolStaking.t.sol";
 
 contract MigrateUserMappings_Test is BasePushFeePoolStaking {
-
     uint256 _epoch = 2;
     uint256 startIndex = 0;
     uint256 endIndex = 3;
@@ -48,32 +47,46 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
         vm.expectRevert(bytes("PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller"));
 
         changePrank(actor.bob_channel_owner);
-        feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
+        feePoolStaking.migrateUserMappings(
+            _epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed
+        );
     }
 
     function test_Revertwhen_MigratePostMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
         feePoolStaking.setMigrationComplete();
         vm.expectRevert(bytes("PushFeePoolStaking::isMigrated: Migration Completed"));
-        feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
+        feePoolStaking.migrateUserMappings(
+            _epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed
+        );
     }
 
-    function test_Revertwhen_UnequalArrayLengthBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
-        address[] memory  _testUserLength = new address[](2);
+    function test_Revertwhen_UnequalArrayLengthBeforeMigrationCompleted()
+        public
+        whenCallerIsAdmin
+        whenMigrationComplete
+    {
+        address[] memory _testUserLength = new address[](2);
         _testUserLength[0] = address(actor.dan_push_holder);
         _testUserLength[1] = address(actor.tim_push_holder);
 
         vm.expectRevert(bytes("Invalid Length"));
-        feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _testUserLength, _epochToUserStakedWeight, _userRewardsClaimed);
+        feePoolStaking.migrateUserMappings(
+            _epoch, startIndex, endIndex, _testUserLength, _epochToUserStakedWeight, _userRewardsClaimed
+        );
     }
 
-    function testRevertwhen_EndMoreThanLength() public whenCallerIsAdmin whenMigrationNotComplete() {
+    function testRevertwhen_EndMoreThanLength() public whenCallerIsAdmin whenMigrationNotComplete {
         vm.expectRevert();
         uint256 _tempEndIndex = 5;
-        feePoolStaking.migrateUserMappings(_epoch, startIndex, _tempEndIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
+        feePoolStaking.migrateUserMappings(
+            _epoch, startIndex, _tempEndIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed
+        );
     }
 
     function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
-        feePoolStaking.migrateUserMappings(_epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed);
+        feePoolStaking.migrateUserMappings(
+            _epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed
+        );
 
         // Verifying user data
         for (uint256 i = startIndex; i < endIndex; ++i) {
@@ -95,7 +108,13 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
         }
     }
 
-    function getActualEpochToUserStakedWeight(address user, uint256 epoch) public returns (uint256 epochToWeightValue) {
+    function getActualEpochToUserStakedWeight(
+        address user,
+        uint256 epoch
+    )
+        public
+        returns (uint256 epochToWeightValue)
+    {
         uint256 userFeesInfoMappingSlot = 11;
         bytes32 userFeesInfoSlotHash = keccak256(abi.encode(user, userFeesInfoMappingSlot));
 

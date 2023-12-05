@@ -17,7 +17,7 @@ import "./PushCommStorageV2.sol";
 import "../interfaces/IERC1271.sol";
 import "../interfaces/IPushCore.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
-import "../libraries/Errors.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -53,14 +53,14 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     modifier onlyPushChannelAdmin() {
         if (msg.sender != pushChannelAdmin) {
-            revert InvalidCaller();
+            revert Errors.CallerNotAdmin();
         }
         _;
     }
 
     modifier onlyPushCore() {
         if (msg.sender != EPNSCoreAddress) {
-            revert InvalidCaller();
+            revert Errors.UnauthorizedCaller(msg.sender);
         }
         _;
     }
@@ -103,7 +103,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
         if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument_WrongAddress(_newAdmin);
         }
         pushChannelAdmin = _newAdmin;
     }
@@ -181,9 +181,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         returns (bool)
     {
         if (isMigrationComplete || _channelList.length != _usersList.length) {
-            revert InvalidLogic(
-                "_channelList != _usersList OR Migration Complete"
-            );
+            revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
         for (uint256 i = _startIndex; i < _endIndex; i++) {
@@ -243,7 +241,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
     {
         // EIP-712
         if (subscriber == address(0)) {
-            revert InvalidArgument("Zero address");
+            revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
 
         bytes32 domainSeparator =
@@ -255,21 +253,21 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) {
-                revert InvalidSignature("FROM CONTRACT");
+                revert Errors.Comm_InvalidSignature_FromContract();
             }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
             if (signatory != subscriber) {
-                revert InvalidSignature("FROM EOA");
+                revert Errors.Comm_InvalidSignature_FromEOA();
             }
         }
         if (nonce != nonces[subscriber]++) {
-            revert InvalidSignature("Invalid nonce");
+            revert Errors.Comm_InvalidNonce();
         }
 
         if (block.timestamp > expiry) {
-            revert InvalidSignature("Signature expired");
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
 
         _subscribe(channel, subscriber);
@@ -371,12 +369,14 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    )
+        external
+    {
         if (subscriber == address(0)) {
-            revert InvalidArgument("Zero address");
+            revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
         // EIP-712
-bytes32 domainSeparator =
+        bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -385,21 +385,21 @@ bytes32 domainSeparator =
             // use EIP-1271
             bytes4 result = IERC1271(subscriber).isValidSignature(digest, abi.encodePacked(r, s, v));
             if (result != 0x1626ba7e) {
-                revert InvalidSignature("FROM CONTRACT");
+                revert Errors.Comm_InvalidSignature_FromContract();
             }
         } else {
             // validate with in contract
             address signatory = ecrecover(digest, v, r, s);
             if (signatory != subscriber) {
-                revert InvalidSignature("FROM EOA");
+                revert Errors.Comm_InvalidSignature_FromEOA();
             }
         }
         if (nonce != nonces[subscriber]++) {
-            revert InvalidSignature("Invalid nonce");
+            revert Errors.Comm_InvalidNonce();
         }
 
         if (block.timestamp > expiry) {
-            revert InvalidSignature("Signature expired");
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
         _unsubscribe(channel, subscriber);
     }
@@ -684,7 +684,7 @@ bytes32 domainSeparator =
 
     function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external {
         if (!isUserSubscribed(_channel, msg.sender)) {
-            revert InvalidSubscriber("Not a subscriber");
+            revert Errors.Comm_InvalidSubscriber();
         }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
@@ -697,7 +697,7 @@ bytes32 domainSeparator =
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
         if (amount <= 0) {
-            revert InvalidAmount();
+            revert Errors.InvalidArg_LessThanExpected(0, amount);
         }
         address requestSender = msg.sender;
         address coreContract = EPNSCoreAddress;
