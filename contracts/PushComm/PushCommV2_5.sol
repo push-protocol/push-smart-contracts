@@ -17,7 +17,7 @@ import "./PushCommStorageV2.sol";
 import "../interfaces/IERC1271.sol";
 import "../interfaces/IPushCore.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
-import "../libraries/Errors.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

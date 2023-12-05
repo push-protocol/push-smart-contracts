@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "./PushFeePoolStorage.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IPushCore.sol";
-import "../libraries/Errors.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";

@@ -15,7 +15,7 @@ import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
-import "../libraries/Errors.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
