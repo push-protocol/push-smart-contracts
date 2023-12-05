@@ -103,19 +103,19 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     *************** */
     function onlyPushChannelAdmin() private view {
         if (msg.sender != pushChannelAdmin) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
     function onlyGovernance() private view {
         if (msg.sender != governance) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
     function onlyActivatedChannels(address _channel) private view {
         if (channels[_channel].channelState != 1) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
     }
 
@@ -124,7 +124,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             ((channels[_channel].channelState != 1 && msg.sender != _channel) ||
                 (msg.sender != pushChannelAdmin && _channel != address(0x0)))
         ) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
@@ -146,7 +146,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees <= 0 && _newFees > ADD_CHANNEL_MIN_FEES) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         FEE_AMOUNT = _newFees;
     }
@@ -154,7 +154,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
         if (_newAmount <= 0) {
-            revert InvalidArgument("invalid Argument");
+            revert Errors.InvalidArgument("invalid Argument");
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
@@ -180,7 +180,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees < MIN_POOL_CONTRIBUTION) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -189,7 +189,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyPushChannelAdmin();
 
         if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         pushChannelAdmin = _newAdmin;
     }
@@ -228,7 +228,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
         if (_amount < requiredFees) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
@@ -260,10 +260,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         external
         whenNotPaused
     {        if (_amount < ADD_CHANNEL_MIN_FEES) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
         if (channels[msg.sender].channelState != 0) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         if (
             _channelType != ChannelType.InterestBearingOpen ||
@@ -271,7 +271,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             _channelType != ChannelType.TimeBound ||
             _channelType != ChannelType.TokenGaited
         ) {
-            revert InvalidArgument("Invalid Channel Type");
+            revert Errors.InvalidArgument("Invalid Channel Type");
         }
 
         emit AddChannel(msg.sender, _channelType, _identity);
@@ -322,7 +322,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
         if (_channelType == ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
-                revert InvalidArgument("Invalid channelExpiryTime");
+                revert Errors.InvalidArgument("Invalid channelExpiryTime");
             }
             channels[_channel].expiryTime = _channelExpiryTime;
         }
@@ -360,7 +360,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         Channel memory channelData = channels[_channelAddress];
 
         if (channelData.channelType != ChannelType.TimeBound) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         if (
             (msg.sender != _channelAddress &&
@@ -368,7 +368,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             (msg.sender != pushChannelAdmin &&
                 channelData.expiryTime + 14 days >= block.timestamp)
         ) {
-            revert InvalidArgument("Invalid Caller or Channel Not Expired");
+            revert Errors.InvalidArgument("Invalid Caller or Channel Not Expired");
         }
         uint256 totalRefundableAmount = channelData.poolContribution;
 
@@ -424,7 +424,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     {
         onlyActivatedChannels(msg.sender);
          if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
             }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
@@ -482,7 +482,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             _amount < ADD_CHANNEL_MIN_FEES ||
             channels[msg.sender].channelState != 2
         ) {
-            revert InvalidArgument("Invalid Amount Or Active Channel");
+            revert Errors.InvalidArgument("Invalid Amount Or Active Channel");
         }
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
@@ -526,7 +526,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             ((channels[_channelAddress].channelState == 3) &&
                 (channels[_channelAddress].channelState == 0))
         ) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         Channel storage channelData = channels[_channelAddress];
@@ -615,13 +615,13 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
         if (callerVerified <= 0) {
-            revert InvalidCallerParam("Unverified Caller");
+            revert Errors.InvalidCallerParam("Unverified Caller");
         }
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         if (channelVerified != 0 || msg.sender != pushChannelAdmin) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
 
         // Verify channel
@@ -642,7 +642,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             channels[_channel].verifiedBy != msg.sender ||
             msg.sender != pushChannelAdmin
         ) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
 
         // Unverify channel
@@ -686,7 +686,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
         if (_to < _from) {
-            revert InvalidArgument("To < from");
+            revert Errors.InvalidArgument("To < from");
         }
 
         return uint256((_to - _from) / epochDuration + 1);
@@ -711,7 +711,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function initializeStake() external {
         if (genesisEpoch != 0) {
-            revert InvalidLogic("Already Initialized");
+            revert Errors.InvalidLogic("Already Initialized");
         }
 
         genesisEpoch = block.number;
@@ -759,10 +759,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             block.number <=
             userFeesInfo[msg.sender].lastStakedBlock + epochDuration
         ) {
-            revert InvalidEpoch("incomplete epoch");
+            revert Errors.InvalidEpoch("incomplete epoch");
         }
         if (userFeesInfo[msg.sender].stakedAmount <= 0) {
-            revert InvalidCallerParam("not a staker");
+            revert Errors.InvalidCallerParam("not a staker");
         }
 
         harvestAll();
@@ -834,10 +834,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
         if (currentEpoch <= _tillEpoch) {
-            revert InvalidEpoch("currentEpoch <= _tillEpoch");
+            revert Errors.InvalidEpoch("currentEpoch <= _tillEpoch");
         }
         if (_tillEpoch < nextFromEpoch) {
-            revert InvalidEpoch("_tillEpoch < nextFromEpoch");
+            revert Errors.InvalidEpoch("_tillEpoch < nextFromEpoch");
         }
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
@@ -967,7 +967,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         if (msg.sender != epnsCommunicator) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
 
         uint256 poolFeeAmount = FEE_AMOUNT;
@@ -988,7 +988,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function claimChatIncentives(uint256 _amount) external {
         if (celebUserFunds[msg.sender] < _amount) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
 
         celebUserFunds[msg.sender] -= _amount;

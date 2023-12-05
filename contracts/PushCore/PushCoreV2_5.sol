@@ -15,7 +15,7 @@ import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
 import "../interfaces/IEPNSCommV1.sol";
-import "../libraries/Errors.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -103,19 +103,19 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     *************** */
     function onlyPushChannelAdmin() private view {
         if (msg.sender != pushChannelAdmin) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
     function onlyGovernance() private view {
         if (msg.sender != governance) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
     function onlyActivatedChannels(address _channel) private view {
         if (channels[_channel].channelState != 1) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
     }
 
@@ -124,7 +124,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             ((channels[_channel].channelState != 1 && msg.sender != _channel) ||
                 (msg.sender != pushChannelAdmin && _channel != address(0x0)))
         ) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
     }
 
@@ -146,7 +146,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees <= 0 && _newFees > ADD_CHANNEL_MIN_FEES) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         FEE_AMOUNT = _newFees;
     }
@@ -154,7 +154,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
         if (_newAmount <= 0) {
-            revert InvalidArgument("invalid Argument");
+            revert Errors.InvalidArgument("invalid Argument");
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
@@ -180,7 +180,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees < MIN_POOL_CONTRIBUTION) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
@@ -188,7 +188,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     function transferPushChannelAdminControl(address _newAdmin) external {
         onlyPushChannelAdmin();
         if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
-            revert InvalidArgument("Invalid Argument");
+            revert Errors.InvalidArgument("Invalid Argument");
         }
         pushChannelAdmin = _newAdmin;
     }
@@ -227,7 +227,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
         if (_amount < requiredFees) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
@@ -259,10 +259,10 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         external
         whenNotPaused
     {        if (_amount < ADD_CHANNEL_MIN_FEES) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
         if (channels[msg.sender].channelState != 0) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         if (
             _channelType != ChannelType.InterestBearingOpen ||
@@ -270,7 +270,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             _channelType != ChannelType.TimeBound ||
             _channelType != ChannelType.TokenGaited
         ) {
-            revert InvalidArgument("Invalid Channel Type");
+            revert Errors.InvalidArgument("Invalid Channel Type");
         }
 
         emit AddChannel(msg.sender, _channelType, _identity);
@@ -319,7 +319,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
 
         if (_channelType == ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
-                revert InvalidArgument("Invalid channelExpiryTime");
+                revert Errors.InvalidArgument("Invalid channelExpiryTime");
             }
             channels[_channel].expiryTime = _channelExpiryTime;
         }
@@ -357,7 +357,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         Channel memory channelData = channels[_channelAddress];
 
         if (channelData.channelType != ChannelType.TimeBound) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         if (
             (msg.sender != _channelAddress &&
@@ -365,7 +365,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             (msg.sender != pushChannelAdmin &&
                 channelData.expiryTime + 14 days >= block.timestamp)
         ) {
-            revert InvalidArgument("Invalid Caller or Channel Not Expired");
+            revert Errors.InvalidArgument("Invalid Caller or Channel Not Expired");
         }
         uint256 totalRefundableAmount = channelData.poolContribution;
 
@@ -421,7 +421,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
     {
         onlyActivatedChannels(msg.sender);
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
@@ -479,7 +479,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             _amount < ADD_CHANNEL_MIN_FEES ||
             channels[msg.sender].channelState != 2
         ) {
-            revert InvalidArgument("Invalid Amount Or Channel Is Active");
+            revert Errors.InvalidArgument("Invalid Amount Or Channel Is Active");
         }
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
@@ -523,7 +523,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             ((channels[_channelAddress].channelState == 3) &&
                 (channels[_channelAddress].channelState == 0))
         ) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         Channel storage channelData = channels[_channelAddress];
@@ -612,13 +612,13 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
         if (callerVerified <= 0) {
-            revert InvalidCallerParam("Unverified Caller");
+            revert Errors.InvalidCallerParam("Unverified Caller");
         }
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
         if (channelVerified != 0 || msg.sender != pushChannelAdmin) {
-            revert InvalidChannel();
+            revert Errors.InvalidChannel();
         }
 
         // Verify channel
@@ -639,7 +639,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
             channels[_channel].verifiedBy != msg.sender ||
             msg.sender != pushChannelAdmin
         ) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
 
         // Unverify channel
@@ -660,7 +660,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
 
     function sendFunds(address _user, uint256 _amount) external {
         if (msg.sender != feePoolStakingContract) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
         IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
@@ -687,7 +687,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
 
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
           if (msg.sender != epnsCommunicator) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
@@ -707,7 +707,7 @@ event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amo
      */
     function claimChatIncentives(uint256 _amount) external {
         if (celebUserFunds[msg.sender] < _amount) {
-            revert InvalidAmount();
+            revert Errors.InvalidAmount();
         }
 
         celebUserFunds[msg.sender] -= _amount;

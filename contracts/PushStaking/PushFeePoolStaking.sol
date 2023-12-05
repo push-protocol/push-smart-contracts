@@ -43,13 +43,13 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
 
     modifier onlyPushChannelAdmin() {
         if (msg.sender != pushChannelAdmin) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }        _;
     }
 
     modifier isMigrated() {
         if(migrated){
-            revert InvalidLogic("Migration Completed");
+            revert Errors.InvalidLogic("Migration Completed");
         }
         _;
     }
@@ -72,7 +72,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             _currentEpoch != _epochRewards.length ||
             _currentEpoch != _epochToTotalStakedWeight.length
         ) {
-            revert InvalidArgument("Invalid Length");
+            revert Errors.InvalidArgument("Invalid Length");
         }
 
         for (uint256 i; i < _currentEpoch; ++i) {
@@ -100,7 +100,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             _user.length != _lastStakedBlock.length ||
             _user.length != _lastClaimedBlock.length
         ) {
-            revert InvalidArgument("Invalid Length");
+            revert Errors.InvalidArgument("Invalid Length");
         }
         for (uint256 i = start; i < end; ++i) {
             userFeesInfo[_user[i]].stakedAmount = _stakedAmount[i];
@@ -126,7 +126,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             _user.length != _epochToUserStakedWeight.length ||
             _user.length != _userRewardsClaimed.length
         ) {
-            revert InvalidArgument("Invalid Length");
+            revert Errors.InvalidArgument("Invalid Length");
         }
 
         for (uint256 i = startIndex; i < endIndex; ++i) {
@@ -165,7 +165,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      */
     function lastEpochRelative(uint256 _from, uint256 _to) public pure returns (uint256) {
         if (_to < _from) {
-            revert InvalidArgument("To < from");
+            revert Errors.InvalidArgument("To < from");
         }
         return uint256((_to - _from) / epochDuration + 1);
     }
@@ -221,10 +221,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             block.number <=
             userFeesInfo[msg.sender].lastStakedBlock + epochDuration
         ) {
-            revert InvalidEpoch("incomplete epoch");
+            revert Errors.InvalidEpoch("incomplete epoch");
         }
         if (userFeesInfo[msg.sender].stakedAmount <= 0) {
-            revert InvalidCallerParam("not a staker");
+            revert Errors.InvalidCallerParam("not a staker");
         }
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
@@ -275,7 +275,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      */
     function daoHarvestPaginated(uint256 _tillEpoch) external {
         if (msg.sender != governance) {
-            revert InvalidCaller();
+            revert Errors.InvalidCaller();
         }
         uint256 rewards = harvest(core, _tillEpoch);
         IPushCore(core).sendFunds(msg.sender, rewards);
@@ -297,10 +297,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
         if (currentEpoch <= _tillEpoch) {
-            revert InvalidEpoch("currentEpoch <= _tillEpoch");
+            revert Errors.InvalidEpoch("currentEpoch <= _tillEpoch");
         }
         if (_tillEpoch < nextFromEpoch) {
-            revert InvalidEpoch("_tillEpoch < nextFromEpoch");
+            revert Errors.InvalidEpoch("_tillEpoch < nextFromEpoch");
         }
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
