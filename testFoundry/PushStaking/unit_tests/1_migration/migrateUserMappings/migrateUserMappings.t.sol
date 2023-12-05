@@ -2,6 +2,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
+import { Errors } from "../../../../../contracts/libraries/Errors.sol";
 
 import { BasePushFeePoolStaking } from "../../../BasePushFeePoolStaking.t.sol";
 
@@ -44,7 +45,7 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
     }
 
     function test_Revertwhen_MigrationCallerNotAdmin() public {
-        vm.expectRevert(bytes("PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller"));
+        vm.expectRevert(Errors.CallerNotAdmin.selector);
 
         changePrank(actor.bob_channel_owner);
         feePoolStaking.migrateUserMappings(
@@ -54,7 +55,7 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
 
     function test_Revertwhen_MigratePostMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
         feePoolStaking.setMigrationComplete();
-        vm.expectRevert(bytes("PushFeePoolStaking::isMigrated: Migration Completed"));
+        vm.expectRevert(Errors.PushStaking_MigrationCompleted.selector);
         feePoolStaking.migrateUserMappings(
             _epoch, startIndex, endIndex, _user, _epochToUserStakedWeight, _userRewardsClaimed
         );
@@ -69,7 +70,7 @@ contract MigrateUserMappings_Test is BasePushFeePoolStaking {
         _testUserLength[0] = address(actor.dan_push_holder);
         _testUserLength[1] = address(actor.tim_push_holder);
 
-        vm.expectRevert(bytes("Invalid Length"));
+        vm.expectRevert(Errors.InvalidArg_ArrayLengthMismatch.selector);
         feePoolStaking.migrateUserMappings(
             _epoch, startIndex, endIndex, _testUserLength, _epochToUserStakedWeight, _userRewardsClaimed
         );

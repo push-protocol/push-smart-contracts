@@ -2,6 +2,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
+import { Errors } from "../../../../../contracts/libraries/Errors.sol";
 
 import { BasePushFeePoolStaking } from "../../../BasePushFeePoolStaking.t.sol";
 
@@ -39,7 +40,7 @@ contract MigrateEpochDetails_Test is BasePushFeePoolStaking {
     }
 
     function test_Revertwhen_MigrationCallerNotAdmin() public {
-        vm.expectRevert(bytes("PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller"));
+        vm.expectRevert(Errors.CallerNotAdmin.selector);
 
         changePrank(actor.bob_channel_owner);
         feePoolStaking.migrateEpochDetails(_currentEpoch, _epochRewardss, _epochToTotalStakedWeights);
@@ -47,7 +48,7 @@ contract MigrateEpochDetails_Test is BasePushFeePoolStaking {
 
     function test_Revertwhen_MigratePostMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
         feePoolStaking.setMigrationComplete();
-        vm.expectRevert(bytes("PushFeePoolStaking::isMigrated: Migration Completed"));
+        vm.expectRevert(Errors.PushStaking_MigrationCompleted.selector);
         feePoolStaking.migrateEpochDetails(_currentEpoch, _epochRewardss, _epochToTotalStakedWeights);
     }
 
@@ -57,7 +58,7 @@ contract MigrateEpochDetails_Test is BasePushFeePoolStaking {
         whenMigrationComplete
     {
         uint256 _testEpoch = _currentEpoch - 1;
-        vm.expectRevert(bytes("Invalid Length"));
+        vm.expectRevert(Errors.InvalidArg_ArrayLengthMismatch.selector);
         feePoolStaking.migrateEpochDetails(_testEpoch, _epochRewardss, _epochToTotalStakedWeights);
     }
 
