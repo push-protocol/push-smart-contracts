@@ -50,7 +50,7 @@ describe("Incentivized chats", function () {
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
     ({
-      PROXYADMIN,
+      
       EPNSCoreV1Proxy,
       EPNSCommV1Proxy,
       ROUTER,
@@ -122,7 +122,7 @@ describe("Incentivized chats", function () {
         ethers.utils.parseEther("100")
       )
     ).to.be.revertedWith(
-      "PushCoreV2:handleChatRequestData::Unauthorized caller"
+      "UnauthorizedCaller"
     );
     const beforeCelebFunds = await EPNSCoreV1Proxy.celebUserFunds(ALICE);
     const beforePoolFees = await EPNSCoreV1Proxy.PROTOCOL_POOL_FEES();

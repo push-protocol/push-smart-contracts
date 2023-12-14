@@ -62,7 +62,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
 
     
     ({
-      PROXYADMIN,
+      
       EPNSCoreV1Proxy,
       EPNSCommV1Proxy, 
       ROUTER,
@@ -210,7 +210,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx2).to.be.revertedWith("PushCommV2::subscribeBySig: Invalid nonce")
+        await expect(tx2).to.be.revertedWith("Comm_InvalidNonce")
 
       }); 
 
@@ -240,7 +240,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx).to.be.revertedWith("PushCommV2::subscribeBySig: Signature expired")
+        await expect(tx).to.be.revertedWith("Comm_TimeExpired")
 
       }); 
     });
@@ -437,7 +437,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx2).to.be.revertedWith("PushCommV2::unsubscribeBySig: Invalid nonce")
+        await expect(tx2).to.be.revertedWith("Comm_InvalidNonce")
 
       }); 
 
@@ -467,7 +467,7 @@ describe("EPNS Comm V1_5 Protocol", function () {
           channel, subscriber,nonce, expiry,
           v,r,s
         )         
-        await expect(tx).to.be.revertedWith("PushCommV2::unsubscribeBySig: Signature expired")
+        await expect(tx).to.be.revertedWith("Comm_TimeExpired")
 
       }); 
     });

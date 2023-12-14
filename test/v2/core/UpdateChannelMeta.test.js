@@ -52,8 +52,7 @@ describe("EPNS CoreV2 Protocol", function () {
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
     ({
-      PROXYADMIN,
-      EPNSCoreV1Proxy,
+       EPNSCoreV1Proxy,
       EPNSCommV1Proxy,
       ROUTER,
       PushToken,
@@ -75,8 +74,8 @@ describe("EPNS CoreV2 Protocol", function () {
             await EPNSCommV1Proxy.connect(ADMINSIGNER).setEPNSCoreAddress(EPNSCoreV1Proxy.address);
             await PushToken.transfer(BOB, ADD_CHANNEL_MIN_FEES.mul(20));
             await PushToken.transfer(ALICE, ADD_CHANNEL_MIN_FEES.mul(20));
-            await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(20));
-            await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(20));
+            await PushToken.connect(BOBSIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(200));
+            await PushToken.connect(ALICESIGNER).approve(EPNSCoreV1Proxy.address, ADD_CHANNEL_MIN_FEES.mul(200));
 
             await EPNSCoreV1Proxy.connect(BOBSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_FEES,0);
             await EPNSCoreV1Proxy.connect(ALICESIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel, ADD_CHANNEL_MIN_FEES,0);
@@ -106,7 +105,7 @@ describe("EPNS CoreV2 Protocol", function () {
           it("Should revert IF Contract is Paused", async function(){
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
-            await expect(tx).to.be.revertedWith("Pausable: paused")
+            await expect(tx).to.be.revertedWith("EnforcedPause")
           });
 
           it('Should revert If channel address is 0x0', async function(){
@@ -116,25 +115,25 @@ describe("EPNS CoreV2 Protocol", function () {
               channelNewIdentity,
               ADD_CHANNEL_MIN_FEES
             );
-            await expect(tx).to.be.revertedWith("PushCoreV2::onlyChannelOwner: Invalid Channel Owner")
+            await expect(tx).to.be.revertedWith("UnauthorizedCaller")
           });
 
           it("Should revert IF Caller is not the Channel Owner", async function(){
             const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
-            await expect(tx).to.be.revertedWith("PushCoreV2::onlyChannelOwner: Invalid Channel Owner")
+            await expect(tx).to.be.revertedWith("UnauthorizedCaller")
           });
 
           it("Should revert IF Amount is 0 Push tokens", async function(){
             const LESS_AMOUNT = tokensBN(0)
             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, LESS_AMOUNT);
-            await expect(tx).to.be.revertedWith("PushCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+            await expect(tx).to.be.revertedWith("InvalidArg_LessThanExpected")
           });
 
           it("Should revert IF Amount is less than Required Push tokens", async function(){
             const LESS_AMOUNT = tokensBN(20)
             const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, LESS_AMOUNT);
 
-            await expect(tx).to.be.revertedWith("PushCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+            await expect(tx).to.be.revertedWith("InvalidArg_LessThanExpected")
           });
 
           it("Updating Channel Meta should update CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES correctly", async function(){
@@ -172,7 +171,7 @@ describe("EPNS CoreV2 Protocol", function () {
             const tx_2nd = EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES);
 
             await expect(counter_1).to.equal(1);
-            await expect(tx_2nd).to.be.revertedWith("PushCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+            await expect(tx_2nd).to.be.revertedWith("InvalidArg_LessThanExpected")
           });
 
           it("Contract should recieve 500 Push tokens for 4th Channel Update", async function(){
@@ -197,7 +196,7 @@ describe("EPNS CoreV2 Protocol", function () {
               const feePaidOnLastUpdate = ADD_CHANNEL_MIN_FEES.mul(i-1);
               await expect(
                 EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, feePaidOnLastUpdate)
-              ).to.be.revertedWith("PushCoreV2::updateChannelMeta: Insufficient Deposit Amount")
+              ).to.be.revertedWith("InvalidArg_LessThanExpected")
 
               // should pass on incresing fees linearly
               const feeToPay = ADD_CHANNEL_MIN_FEES.mul(i);
@@ -225,7 +224,7 @@ describe("EPNS CoreV2 Protocol", function () {
             await  EPNSCoreV1Proxy.connect(BOBSIGNER).deactivateChannel();
             await expect(
              EPNSCoreV1Proxy.connect(BOBSIGNER).updateChannelMeta(BOB, channelNewIdentity, ADD_CHANNEL_MIN_FEES)
-            ).to.be.revertedWith("PushCoreV2::onlyChannelOwner: Invalid Channel Owner");
+            ).to.be.revertedWith("UnauthorizedCaller");
           });
     });
 
