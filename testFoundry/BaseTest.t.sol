@@ -2,32 +2,46 @@ pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
-
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "contracts/token/EPNS.sol";
-import "contracts/PushCore/PushCoreStorageV2.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
-import "contracts/PushCore/PushCoreStorageV1_5.sol";
 import { PushCoreV2_5 } from "contracts/PushCore/PushCoreV2_5.sol";
+import { EPNSCoreProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
+import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
 import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
+import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
+import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
+import { CoreEvents } from "./utils/CoreEvents.sol";
 import { Constants } from "./utils/Constants.sol";
 
-abstract contract BaseTest is Test, Constants {
+abstract contract BaseTest is Test, Constants, CoreEvents {
     EPNS public pushToken;
     PushCoreV2_5 public core;
+    PushCoreV2_5 public coreProxy;
     PushCommV2_5 public comm;
+    PushCommV2_5 public commProxy;
     IUniswapV2Router public uniV2Router;
+    EPNSCoreProxy public epnsCoreProxy;
+    EPNSCoreAdmin public epnsCoreProxyAdmin;
+    EPNSCommProxy public epnsCommProxy;
+    EPNSCommAdmin public epnsCommProxyAdmin;
 
     /* ***************
         Main Actors in Test
      *************** */
     Actors internal actor;
     address tokenDistributor;
+
+    /* ***************
+        State Variables
+     *************** */
+    uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
+    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
+    uint256 FEE_AMOUNT = 10 ether;
+    uint256 MIN_POOL_CONTRIBUTION = 50 ether; 
+    uint256 ADJUST_FOR_FLOAT = 10 ** 7;
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -51,8 +65,11 @@ abstract contract BaseTest is Test, Constants {
             tim_push_holder: createActor("tim_push_holder")
         });
 
-        // Initialize Core Contract
-        core.initialize(
+        // Initialize core proxy admin and coreProxy contract
+        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
+        epnsCoreProxy = new EPNSCoreProxy(
+            address(core),
+            address(epnsCoreProxyAdmin),
             actor.admin,
             address(pushToken),
             address(0), // WETH Address
@@ -62,16 +79,32 @@ abstract contract BaseTest is Test, Constants {
             address(0), // aDai address
             0
         );
+        coreProxy = PushCoreV2_5(address(epnsCoreProxy));
 
-        // Initialize Comm Contract
-        comm.initialize(actor.admin, "FOUNDRY_TEST_NETWORK");
+        // Initialize comm proxy admin and commProxy contract
+        epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
+        epnsCommProxy = new EPNSCommProxy(
+            address(comm),
+            address(epnsCommProxyAdmin),
+            actor.admin,
+            "FOUNDRY_TEST_NETWORK"
+        );
+        commProxy = PushCommV2_5(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
-        comm.setEPNSCoreAddress(address(core));
-        core.setEpnsCommunicatorAddress(address(comm));
+        commProxy.setEPNSCoreAddress(address(coreProxy));
+        coreProxy.setEpnsCommunicatorAddress(address(commProxy));
         vm.stopPrank();
-        // Wrapping to exact timestamp of Core and Comm Deployment
+
+        // Approve tokens of actors now to core contract proxy address
+        approveTokens(actor.admin, address(coreProxy), 50_000 ether);
+        approveTokens(actor.governance, address(coreProxy), 50_000 ether);
+        approveTokens(actor.bob_channel_owner, address(coreProxy), 50_000 ether);
+        approveTokens(actor.alice_channel_owner, address(coreProxy), 50_000 ether);
+        approveTokens(actor.charlie_channel_owner, address(coreProxy), 50_000 ether);
+        approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
+        approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
         vm.warp(DEC_27_2021);
     }
 
@@ -97,8 +130,6 @@ abstract contract BaseTest is Test, Constants {
         // Transfer 50K PUSH Tokens for every actor
         vm.prank(tokenDistributor);
         pushToken.transfer(actor, 50_000 ether);
-        // Approve tokens for Core Contract
-        approveTokens(actor, address(core), 50_000 ether);
         return actor;
     }
 }
