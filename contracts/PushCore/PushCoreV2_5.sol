@@ -122,8 +122,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     function onlyChannelOwner(address _channel) private view {
         if (
             (
-                (channels[_channel].channelState != 1 && msg.sender != _channel)
-                    || (msg.sender != pushChannelAdmin && _channel != address(0x0))
+                (channels[_channel].channelState != 1 || msg.sender != _channel)
+                    || (msg.sender != pushChannelAdmin && _channel == address(0x0))
             )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -268,8 +268,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != ChannelType.InterestBearingOpen || _channelType != ChannelType.InterestBearingMutual
-                || _channelType != ChannelType.TimeBound || _channelType != ChannelType.TokenGaited
+            _channelType != ChannelType.InterestBearingOpen && _channelType != ChannelType.InterestBearingMutual
+                && _channelType != ChannelType.TimeBound && _channelType != ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -363,8 +363,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            (msg.sender != _channelAddress && channelData.expiryTime >= block.timestamp)
-                || (msg.sender != pushChannelAdmin && channelData.expiryTime + 14 days >= block.timestamp)
+            (msg.sender != _channelAddress || channelData.expiryTime >= block.timestamp)
+                && (msg.sender != pushChannelAdmin || channelData.expiryTime + 14 days >= block.timestamp)
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -521,7 +521,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
-        if (((channels[_channelAddress].channelState == 3) && (channels[_channelAddress].channelState == 0))) {
+        if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
