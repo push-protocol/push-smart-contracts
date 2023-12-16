@@ -282,6 +282,11 @@ contract PushCoreV2 is
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
+        require(
+            IERC20(PUSH_TOKEN_ADDRESS).allowance(_channel, address(this)) >= _amount,
+            "PushCoreV2: transfer amount exceeds allowance"
+        );
+
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             _channel,
             address(this),

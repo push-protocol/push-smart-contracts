@@ -775,6 +775,13 @@ contract PushCommV2 is Initializable, PushCommStorageV2 {
         require(amount > 0, "Request cannot be initiated without deposit");
         address requestSender = msg.sender;
         address coreContract = EPNSCoreAddress;
+        
+        // Verify that requestSender has permission to transfer the tokens
+        require(
+        IERC20(PUSH_TOKEN_ADDRESS).allowance(requestSender, address(this)) >= amount,
+        "PushCommV2: transfer amount exceeds allowance"
+        );
+
         // Transfer incoming PUSH Token to core contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
             requestSender,
