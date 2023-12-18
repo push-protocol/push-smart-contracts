@@ -6,42 +6,22 @@ import "forge-std/Test.sol";
 import "contracts/token/EPNS.sol";
 import "contracts/interfaces/IUniswapV2Router.sol";
 import { PushCoreV2_5 } from "contracts/PushCore/PushCoreV2_5.sol";
-import { EPNSCoreProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
-import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
 import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
-import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
-import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
-import { CoreEvents } from "./utils/CoreEvents.sol";
 import { Constants } from "./utils/Constants.sol";
 
-abstract contract BaseTest is Test, Constants, CoreEvents {
+abstract contract BaseTest is Test, Constants {
     EPNS public pushToken;
     PushCoreV2_5 public core;
-    PushCoreV2_5 public coreProxy;
     PushCommV2_5 public comm;
-    PushCommV2_5 public commProxy;
     IUniswapV2Router public uniV2Router;
-    EPNSCoreProxy public epnsCoreProxy;
-    EPNSCoreAdmin public epnsCoreProxyAdmin;
-    EPNSCommProxy public epnsCommProxy;
-    EPNSCommAdmin public epnsCommProxyAdmin;
 
     /* ***************
         Main Actors in Test
      *************** */
     Actors internal actor;
     address tokenDistributor;
-
-    /* ***************
-        State Variables
-     *************** */
-    uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
-    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
-    uint256 FEE_AMOUNT = 10 ether;
-    uint256 MIN_POOL_CONTRIBUTION = 50 ether; 
-    uint256 ADJUST_FOR_FLOAT = 10 ** 7;
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -66,11 +46,8 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
             tim_push_holder: createActor("tim_push_holder")
         });
 
-        // Initialize core proxy admin and coreProxy contract
-        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
-        epnsCoreProxy = new EPNSCoreProxy(
-            address(core),
-            address(epnsCoreProxyAdmin),
+        // Initialize Core Contract
+        core.initialize(
             actor.admin,
             address(pushToken),
             address(0), // WETH Address
@@ -80,7 +57,6 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
             address(0), // aDai address
             0
         );
-        coreProxy = PushCoreV2_5(address(epnsCoreProxy));
 
         // Initialize Comm Contract
         comm.initialize(actor.admin, "FOUNDRY_TEST_NETWORK");
@@ -89,18 +65,10 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
         pushToken.transfer(address(core), 1 ether);
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
-        commProxy.setEPNSCoreAddress(address(coreProxy));
-        coreProxy.setEpnsCommunicatorAddress(address(commProxy));
+        comm.setEPNSCoreAddress(address(core));
+        core.setEpnsCommunicatorAddress(address(comm));
         vm.stopPrank();
-
-        // Approve tokens of actors now to core contract proxy address
-        approveTokens(actor.admin, address(coreProxy), 50_000 ether);
-        approveTokens(actor.governance, address(coreProxy), 50_000 ether);
-        approveTokens(actor.bob_channel_owner, address(coreProxy), 50_000 ether);
-        approveTokens(actor.alice_channel_owner, address(coreProxy), 50_000 ether);
-        approveTokens(actor.charlie_channel_owner, address(coreProxy), 50_000 ether);
-        approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
-        approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
+        // Wrapping to exact timestamp of Core and Comm Deployment
         vm.warp(DEC_27_2021);
     }
 
