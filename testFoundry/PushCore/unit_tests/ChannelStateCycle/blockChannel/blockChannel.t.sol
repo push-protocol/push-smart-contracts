@@ -1,9 +1,7 @@
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-
 import {BasePushChannelStateCycle} from "../BasePushChannelStateCycle.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract BlockChannel_Test is BasePushChannelStateCycle {
     function setUp() public virtual override {
@@ -24,7 +22,7 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenCallerIsAdmin
     {
         vm.expectRevert(
-            bytes("PushCoreV2::onlyPushChannelAdmin: Invalid Caller")
+           Errors.CallerNotAdmin.selector
         );
 
         coreProxy.blockChannel(actor.bob_channel_owner);
@@ -63,9 +61,7 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         whenCallerIsAdmin
     {
         vm.prank(actor.admin);
-        vm.expectRevert(
-            bytes("PushCoreV2::onlyUnblockedChannels: Invalid Channel")
-        );
+        vm.expectRevert(Errors.Core_InvalidChannel.selector);
         coreProxy.blockChannel(actor.charlie_channel_owner);
     }
 
@@ -77,9 +73,7 @@ contract BlockChannel_Test is BasePushChannelStateCycle {
         vm.startPrank(actor.admin);
         coreProxy.blockChannel(actor.bob_channel_owner);
 
-        vm.expectRevert(
-            bytes("PushCoreV2::onlyUnblockedChannels: Invalid Channel")
-        );
+        vm.expectRevert(Errors.Core_InvalidChannel.selector);
         coreProxy.blockChannel(actor.bob_channel_owner);
         vm.stopPrank();
     }
