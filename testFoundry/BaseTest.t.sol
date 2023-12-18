@@ -61,6 +61,7 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
             bob_channel_owner: createActor("bob_channel_owner"),
             alice_channel_owner: createActor("alice_channel_owner"),
             charlie_channel_owner: createActor("charlie_channel_owner"),
+            tony_channel_owner: createActor("tony_channel_owner"),
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
@@ -91,6 +92,8 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
         );
         commProxy = PushCommV2_5(address(epnsCommProxy));
 
+        vm.prank(tokenDistributor);
+        pushToken.transfer(address(coreProxy), 1 ether);
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
         commProxy.setEPNSCoreAddress(address(coreProxy));
