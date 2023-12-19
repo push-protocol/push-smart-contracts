@@ -35,6 +35,12 @@ const deploy = {
     },
     localhost: {
       version: 1,
+    },
+    sepolia: {
+      version: 1,
+    },
+    fuseSpark: {
+      version: 1,
     }
   },
   args: {

@@ -142,7 +142,6 @@ module.exports = {
       accounts: {
         mnemonic: mnemonic(),
       }
-
     },
 
     // Linea Chain
@@ -152,7 +151,12 @@ module.exports = {
         mnemonic: mnemonic(),
       }
     },
-    
+
+    //Fuse testnet
+    fuseSpark:{
+      url:"https://rpc.fusespark.io",
+      accounts: [process.env.PRIVATE],
+    }
   },
   etherscan: {
     apiKey: {
@@ -160,7 +164,8 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API,
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
-      goerli:process.env.ETHERSCAN_API
+      goerli:process.env.ETHERSCAN_API,
+      fuseSpark: process.env.FUSE_API
     },
     customChains: [
       {
@@ -168,10 +173,19 @@ module.exports = {
         chainId: 59140,
         urls: {
           apiURL: "https://explorer.goerli.linea.build/api",
-          browserURL: "https://explorer.goerli.linea.build/"
+          browserURL: "https://explorer.goerli.linea.build/",
+        },
+      },
+
+      {
+        network: "fuseSpark",
+        chainId: 123, 
+        urls:{
+          apiURL: "https://explorer.fusespark.io/api",
+          browserURL: "https://explorer.fusespark.io/",
         }
       }
-    ]
+    ],
   },
 
   solidity: {
