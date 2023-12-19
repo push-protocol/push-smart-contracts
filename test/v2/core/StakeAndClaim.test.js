@@ -56,7 +56,7 @@ describe("EPNS CoreV2 Protocol", function () {
     CHARLIE = await charlieSigner.getAddress();
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
-    ({ PROXYADMIN, EPNSCoreV1Proxy, EPNSCommV1Proxy, ROUTER, PushToken } =
+    ({EPNSCoreV1Proxy, EPNSCommV1Proxy, ROUTER, PushToken } =
       await loadFixture(epnsContractFixture));
   });
 
@@ -301,7 +301,7 @@ describe("EPNS CoreV2 Protocol", function () {
           genesisBlock.number
         );
         await expect(tx).to.be.revertedWith(
-          "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow"
+          "InvalidArg_LessThanExpected"
         );
       });
 
@@ -557,7 +557,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
           await expect(tx).to.be.revertedWith(
-            "PushCoreV2::unstake: Invalid Caller"
+            "UnauthorizedCaller"
           );
         });
 
@@ -598,7 +598,7 @@ describe("EPNS CoreV2 Protocol", function () {
           // Bob tries to Claim at the end of EPOCH (without complete 1 complete epoch)
           const bobUnstake_tx = EPNSCoreV1Proxy.connect(BOBSIGNER).unstake();
 
-          await expect(bobUnstake_tx).to.be.revertedWith("PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH");
+          await expect(bobUnstake_tx).to.be.revertedWith("PushStaking_InvalidEpoch_LessThanExpected");
 
           // Jump to Epoch 3
           await passBlockNumers(1 * EPOCH_DURATION);
@@ -1038,7 +1038,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(10);
 
           await expect(tx).to.be.revertedWith(
-            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
+            "PushStaking_InvalidEpoch_LessThanExpected"
           );
         });
 
@@ -1055,7 +1055,7 @@ describe("EPNS CoreV2 Protocol", function () {
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);
           const tx = EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(3);
           await expect(tx).to.be.revertedWith(
-            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
+            "InvalidArg_LessThanExpected"
           );
           await EPNSCoreV1Proxy.connect(BOBSIGNER).harvestPaginated(4);
         });
@@ -1236,7 +1236,7 @@ describe("EPNS CoreV2 Protocol", function () {
           const tx = EPNSCoreV1Proxy.connect(ALICESIGNER).daoHarvestPaginated(2);
 
           await expect(tx).to.be.revertedWith(
-            "PushCoreV2::onlyGovernance: Invalid Caller"
+            "CallerNotAdmin"
           );
 
           await EPNSCoreV1Proxy.connect(ADMINSIGNER).daoHarvestPaginated(2);

@@ -49,7 +49,6 @@ describe("EPNS Comm V2 Protocol", function () {
     CHANNEL_CREATOR = await channelCreatorSigner.getAddress();
 
     ({
-      PROXYADMIN,
       EPNSCoreV1Proxy,
       EPNSCommV1Proxy,
       ROUTER,

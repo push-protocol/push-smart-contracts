@@ -49,7 +49,6 @@ describe("EPNS Core Protocol", function () {
 
     
     ({
-      PROXYADMIN,
       EPNSCoreV1Proxy,
       EPNSCommV1Proxy, 
       ROUTER,
@@ -94,20 +93,20 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
             await expect(
               EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
-            ).to.be.revertedWith("PushCoreV2::onlyInactiveChannels: Channel already Activated")
+            ).to.be.revertedWith("Core_InvalidChannel")
           });
 
           // Pauseable Tests
           it("Contract should only be Paused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).pauseContract();
 
-            await expect(tx).to.be.revertedWith('PushCoreV2::onlyGovernance: Invalid Caller')
+            await expect(tx).to.be.revertedWith('CallerNotAdmin')
           });
 
           it("Contract should only be UnPaused via GOVERNANCE", async function(){
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).unPauseContract();
 
-            await expect(tx).to.be.revertedWith('PushCoreV2::onlyGovernance: Invalid Caller')
+            await expect(tx).to.be.revertedWith('CallerNotAdmin')
           });
 
           it("Channel Creation Should not be executed if Contract is Paused", async function(){
@@ -116,7 +115,7 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
 
-            await expect(tx).to.be.revertedWith("Pausable: paused")
+            await expect(tx).to.be.revertedWith("EnforcedPause")
           });
 
           it("Channel Creation Should execute after UNPAUSE", async function(){
@@ -125,7 +124,7 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
 
-            await expect(tx).to.be.revertedWith("Pausable: paused");
+            await expect(tx).to.be.revertedWith("EnforcedPause");
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).unPauseContract();
             const tx_2 = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).createChannelWithPUSH(CHANNEL_TYPE, testChannel,ADD_CHANNEL_MIN_POOL_CONTRIBUTION,0)
 
@@ -141,7 +140,7 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).deactivateChannel();
 
-            await expect(tx).to.be.revertedWith("Pausable: paused")
+            await expect(tx).to.be.revertedWith("EnforcedPause")
           });
 
           it("Channel Reactivation Should not be executed if Contract is Paused", async function(){
@@ -150,7 +149,7 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).reactivateChannel(ADD_CHANNEL_MIN_POOL_CONTRIBUTION);
 
-            await expect(tx).to.be.revertedWith("Pausable: paused")
+            await expect(tx).to.be.revertedWith("EnforcedPause")
           });
 
           it("Channel Blocking Should not be executed if Contract is Paused", async function(){
@@ -159,7 +158,7 @@ describe("EPNS Core Protocol", function () {
             await EPNSCoreV1Proxy.connect(ADMINSIGNER).pauseContract();
             const tx = EPNSCoreV1Proxy.connect(CHANNEL_CREATORSIGNER).blockChannel(CHANNEL_CREATOR);
 
-            await expect(tx).to.be.revertedWith("Pausable: paused")
+            await expect(tx).to.be.revertedWith("EnforcedPause")
           });
     });
 

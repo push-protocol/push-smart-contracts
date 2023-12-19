@@ -1,11 +1,11 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/console.sol";
+import { Errors } from "../../../../../contracts/libraries/Errors.sol";
 
 import { BasePushFeePoolStaking } from "../../../BasePushFeePoolStaking.t.sol";
 
 contract MigrateUserData_Test is BasePushFeePoolStaking {
-
     uint256 start = 0;
     uint256 end = 3;
     address[] _user;
@@ -51,53 +51,69 @@ contract MigrateUserData_Test is BasePushFeePoolStaking {
     }
 
     function test_Revertwhen_MigrationCallerNotAdmin() public {
-        vm.expectRevert(bytes("PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller"));
+        vm.expectRevert(Errors.CallerNotAdmin.selector);
 
         changePrank(actor.bob_channel_owner);
-        feePoolStaking.migrateUserData(start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        feePoolStaking.migrateUserData(
+            start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock
+        );
     }
 
     function test_Revertwhen_MigratePostMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
         feePoolStaking.setMigrationComplete();
-        vm.expectRevert(bytes("PushFeePoolStaking::isMigrated: Migration Completed"));
-        feePoolStaking.migrateUserData(start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        vm.expectRevert(Errors.PushStaking_MigrationCompleted.selector);
+        feePoolStaking.migrateUserData(
+            start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock
+        );
     }
 
-    function test_Revertwhen_UnequalArrayLengthBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationComplete {
-        address[] memory  _testUserLength = new address[](2);
+    function test_Revertwhen_UnequalArrayLengthBeforeMigrationCompleted()
+        public
+        whenCallerIsAdmin
+        whenMigrationComplete
+    {
+        address[] memory _testUserLength = new address[](2);
         _testUserLength[0] = address(actor.dan_push_holder);
         _testUserLength[1] = address(actor.tim_push_holder);
 
-        vm.expectRevert(bytes("Invalid Length"));
-        feePoolStaking.migrateUserData(start, end, _testUserLength, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        vm.expectRevert(Errors.InvalidArg_ArrayLengthMismatch.selector);
+        feePoolStaking.migrateUserData(
+            start, end, _testUserLength, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock
+        );
     }
 
-    function testRevertwhen_EndMoreThanLength() public whenCallerIsAdmin whenMigrationNotComplete() {
+    function testRevertwhen_EndMoreThanLength() public whenCallerIsAdmin whenMigrationNotComplete {
         vm.expectRevert();
         uint256 _tempEndIndex = 5;
-        feePoolStaking.migrateUserData(start, _tempEndIndex, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        feePoolStaking.migrateUserData(
+            start, _tempEndIndex, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock
+        );
     }
 
     function test_MigrateBeforeMigrationCompleted() public whenCallerIsAdmin whenMigrationNotComplete {
-        feePoolStaking.migrateUserData(start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock);
+        feePoolStaking.migrateUserData(
+            start, end, _user, _stakedAmount, _stakedWeight, _lastStakedBlock, _lastClaimedBlock
+        );
 
         // Verifying userData
-        for (uint256 i=start; i<end; ++i) {
+        for (uint256 i = start; i < end; ++i) {
             address _userAddress = _user[i];
             uint256 expectedUserStakedAmount = _stakedAmount[i];
             uint256 expectedUserStakedWeight = _stakedWeight[i];
             uint256 expectedUserLastStakedBlock = _lastStakedBlock[i];
             uint256 expectedUserLastClaimedBlock = _lastClaimedBlock[i];
 
-            (uint256 actualUserStakedAmount, 
-            uint256 actualUserStakedWeight, 
-            uint256 actualUserLastStakedBlock,
-            uint256 actualUserLastClaimedBlock) = feePoolStaking.userFeesInfo(_userAddress);
+            (
+                uint256 actualUserStakedAmount,
+                uint256 actualUserStakedWeight,
+                uint256 actualUserLastStakedBlock,
+                uint256 actualUserLastClaimedBlock
+            ) = feePoolStaking.userFeesInfo(_userAddress);
 
             assertEq(expectedUserStakedAmount, actualUserStakedAmount);
             assertEq(expectedUserStakedWeight, actualUserStakedWeight);
             assertEq(expectedUserLastStakedBlock, actualUserLastStakedBlock);
-            assertEq(expectedUserLastClaimedBlock, actualUserLastClaimedBlock);   
+            assertEq(expectedUserLastClaimedBlock, actualUserLastClaimedBlock);
         }
     }
 }

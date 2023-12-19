@@ -24,13 +24,12 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   let PushToken = await ethers.getContractFactory("EPNS");
   PushToken = await PushToken.deploy(ADMIN);
 
-  const EPNSCore = await ethers.getContractFactory("PushCoreV2");
+  const EPNSCore = await ethers.getContractFactory("PushCoreV2_Temp");
   CORE_LOGIC = await EPNSCore.deploy();
 
-  const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");
-  PROXYADMIN = await proxyAdmin.deploy();
-
-  const EPNSCommunicator = await ethers.getContractFactory("PushCommV2");
+  // const proxyAdmin = await ethers.getContractFactory("EPNSCoreAdmin");
+  // PROXYADMIN = await proxyAdmin.deploy();
+  const EPNSCommunicator = await ethers.getContractFactory("PushCommV2_5");
   COMMUNICATOR_LOGIC = await EPNSCommunicator.deploy();
 
   const EPNSCoreProxyContract = await ethers.getContractFactory(
@@ -38,7 +37,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   );
   EPNSCoreProxy = await EPNSCoreProxyContract.deploy(
     CORE_LOGIC.address,
-    PROXYADMIN.address,
+    ADMIN,
     ADMIN,
     PushToken.address,
     WETH,
@@ -54,7 +53,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   );
   EPNSCommProxy = await EPNSCommProxyContract.deploy(
     COMMUNICATOR_LOGIC.address,
-    PROXYADMIN.address,
+    ADMIN,
     ADMIN,
     CHAIN_NAME
   );
@@ -66,7 +65,6 @@ const epnsContractFixture = async ([adminSigner, others]) => {
 
   return {
     CORE_LOGIC,
-    PROXYADMIN,
     COMMUNICATOR_LOGIC,
     EPNSCoreProxy,
     EPNSCoreV1Proxy,

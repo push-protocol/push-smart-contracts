@@ -1,11 +1,8 @@
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
-
 import {BaseTest} from "../../../BaseTest.t.sol";
 import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
-
+import {Errors} from "contracts/libraries/Errors.sol";
 
 contract CreateChannelWithPUSH_Test is BaseTest {
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
@@ -27,11 +24,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         );
 
         vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(
-            bytes(
-                "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount"
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector,50 ether, _amountBeingTransferred));
         coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
@@ -49,9 +42,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
             0
         );
 
-        vm.expectRevert(
-            bytes("PushCoreV2::onlyInactiveChannels: Channel already Activated")
-        );
+        vm.expectRevert(Errors.Core_InvalidChannel.selector);
         coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
@@ -64,11 +55,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
     function test_Revertwhen_ChannelTypeNotAllowed() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
 
-        vm.expectRevert(
-            bytes(
-                "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
-            )
-        );
+        vm.expectRevert(Errors.Core_InvalidChannelType.selector);
         coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.ProtocolPromotion,
             _testChannelIdentity,
@@ -206,9 +193,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
     function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public {
         vm.startPrank(actor.bob_channel_owner);
 
-        vm.expectRevert(
-            bytes("PushCoreV2::createChannel: Invalid channelExpiryTime")
-        );
+        vm.expectRevert(Errors.Core_InvalidExpiryTime.selector);
         coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.TimeBound,
             _testChannelIdentity,
