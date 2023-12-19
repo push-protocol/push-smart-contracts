@@ -56,7 +56,10 @@ const deploy = {
     },
     sepolia: {
       version: 1
-    }
+    },
+    fuseSpark: {
+      version: 1,
+    },
   },
   args: {
     epnsProxyAddress: null,
