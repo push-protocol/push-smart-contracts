@@ -35,10 +35,7 @@ const deploy = {
     },
     localhost: {
       version: 1,
-    },
-    fuseSpark: {
-      version: 1,
-    },
+    }
   },
   args: {
     daiAddress: null,
