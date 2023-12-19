@@ -30,10 +30,7 @@ async function main() {
 async function setupAllContracts(versionDetails) {
   let deployedContracts = []
   console.log("📡 Deploy \n");
-  // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
-  // await autoDeploy();
-  // OR
-  // custom deploy (to use deployed addresses dynamically for example:)
+
   const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
 
   const PushCommV2 = await deployContract("PushCommV2", [], "PushCommV2");

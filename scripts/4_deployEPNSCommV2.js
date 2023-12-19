@@ -30,10 +30,6 @@ async function main() {
 async function setupAllContracts(versionDetails) {
   let deployedContracts = []
   console.log("📡 Deploy \n");
-  // auto deploy to read contract directory and deploy them all (add ".args" files for arguments)
-  // await autoDeploy();
-  // OR
-  // custom deploy (to use deployed addresses dynamically for example:)
   const [adminSigner, aliceSigner, bobSigner, eventualAdmin] = await ethers.getSigners();
 
   const PushCommV2 = await deployContract("PushCommV2", [], "PushCommV2");
@@ -44,6 +40,7 @@ async function setupAllContracts(versionDetails) {
 
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Upgrading Contract to`), chalk.magenta(`${PushCommV2.address} \n\t\t\t\n`))
   await epnsAdminInstance.upgrade(versionDetails.deploy.args.epnsProxyAddress, PushCommV2.address);
+  // await epnsAdminInstance.upgradeAndCall(versionDetails.deploy.args.epnsProxyAddress, PushCommV2.address,"0x");
   console.log(chalk.bgWhite.bold.black(`\n\t\t\t\n ✅ Contracts Upgraded  \n\t\t\t\n`))
 
   return deployedContracts
