@@ -1,0 +1,10 @@
+contractPausability
+    ├── when contract is not Paused
+    │   ├── when it's not paused/unpaused via governance
+    │   │   └── it REVERT - CallerNotAdmin()
+    │   └── when it's paused/unpaused via governance
+    │       ├── it should pause/unpause successfully
+    │       └── channel creation, deactivation, reactivation, blocking should work after unpause
+    └── when contract is paused
+        ├── channel creation should REVERT EnforcedPause()
+        └── channel deactivation/reactivation/blocking should REVERT EnforcedPause()
