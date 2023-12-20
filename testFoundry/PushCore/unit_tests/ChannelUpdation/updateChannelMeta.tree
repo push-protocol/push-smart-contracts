@@ -1,0 +1,16 @@
+updateChannelMeta.t.sol
+    ├── when contract is Paused
+    │   └── it REVERT - EnforcedPause()
+    └── when contract is not Paused
+        ├── when channel is not activated
+        │   └── it REVERT - UnauthorizedCaller(caller) (Note: Core_InvalidChannel for later discussion)
+        └── when channel is activated
+            ├── when caller is not channel owner (if caller is pushChannelAdmin, then channel should be zero address)
+            │   └── it REVERT - UnauthorizedCaller(caller)
+            └── when caller is channel owner
+                ├── when amount passed is less than required fees (Fee Amount should be at least (50 * N) PUSH Tokens, where N is nth time for channel updation)
+                │   └── it REVERT - InvalidArg_LessThanExpected(required_fees, amount)
+                └── when amount passed is alright
+                    ├── it should update the channel successfully
+                    ├── it should update variables correctly
+                    └── fees should increase linearly for every update

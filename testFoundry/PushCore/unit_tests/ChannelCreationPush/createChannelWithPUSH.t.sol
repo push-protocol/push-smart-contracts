@@ -1,14 +1,13 @@
 pragma solidity ^0.8.20;
 
-import {BaseTest} from "../../../BaseTest.t.sol";
+import {BasePushCoreTest} from "../BasePushCoreTest.t.sol";
 import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
 import {Errors} from "contracts/libraries/Errors.sol";
 
-contract CreateChannelWithPUSH_Test is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
+contract CreateChannelWithPUSH_Test is BasePushCoreTest {
 
     function setUp() public virtual override {
-        BaseTest.setUp();
+        BasePushCoreTest.setUp();
     }
 
     modifier whenNotPaused() {
