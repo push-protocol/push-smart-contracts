@@ -13,7 +13,7 @@ pragma solidity ^0.8.20;
 import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IUniswapV2Router.sol";
+import "../interfaces/uniswap/IUniswapV2Router.sol";
 import "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 

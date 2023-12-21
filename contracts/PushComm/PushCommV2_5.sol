@@ -14,11 +14,11 @@ pragma solidity ^0.8.20;
  */
 
 import "./PushCommStorageV2.sol";
-import "../interfaces/IERC1271.sol";
-import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
-import "../interfaces/IPushCoreV2.sol";
-import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
+import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
+import { BaseHelper }  from "../libraries/BaseHelper.sol";
+import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
