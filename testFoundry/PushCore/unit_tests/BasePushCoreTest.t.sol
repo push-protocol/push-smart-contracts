@@ -48,6 +48,14 @@ contract BasePushCoreTest is BaseTest {
         channelWeight = actualChannelWeight;
     }
 
+    function _getChannelExpiryTime(
+        address _channel
+    ) internal view returns (uint256 channelExpiryTime) {
+        (, , , , , , , , , , uint256 actualChannelExpiryTime) = coreProxy.channels(_channel);
+
+        channelExpiryTime = actualChannelExpiryTime;
+    }
+
     function _getChannelUpdateBlock(
         address _channel
     ) internal view returns (uint256 channelUpdateBlock) {

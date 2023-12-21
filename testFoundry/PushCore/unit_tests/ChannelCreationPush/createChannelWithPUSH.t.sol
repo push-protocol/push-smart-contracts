@@ -165,7 +165,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation() public {
+    function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation() public whenNotPaused {
         vm.prank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
             PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
@@ -189,7 +189,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         assertEq(expectedChannelPoolFunds, coreProxy.CHANNEL_POOL_FUNDS());
     }
 
-    function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public {
+    function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
 
         vm.expectRevert(Errors.Core_InvalidExpiryTime.selector);
@@ -202,7 +202,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    function test_CoreInteractWithComm() public {
+    function test_CoreInteractWithComm() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
         address EPNS_ALERTER = address(0);
 
@@ -250,7 +250,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    function test_EmitRelevantEvents() public {
+    function test_EmitRelevantEvents() public whenNotPaused {
         vm.expectEmit(true, true, false, true, address(coreProxy));
         emit AddChannel(
             actor.bob_channel_owner,

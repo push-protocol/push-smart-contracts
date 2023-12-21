@@ -1,0 +1,29 @@
+timeBoundChannel.t.sol
+    ├── when contract is Paused
+    │   └── it REVERT - EnforcedPause()
+    └── when contract is not Paused
+        ├── when channelExpiryTime passed in createChannelWithPush is in past/present
+        │   └── it REVERT - Core_InvalidExpiryTime()
+        └── when channelExpiryTime passed in createChannelWithPush is in future
+            ├── should create a timebound channel
+            ├── should update _channelExpiryTime variable
+            ├── when someone tries to destroy a channel that's not timebound
+            │   └── it REVERT - Core_InvalidChannelType()
+            ├── when a caller tries to destroy other's timebound Channel
+            │   └── it REVERT - UnauthorizedCaller()
+            ├── when push admin/governance tries to destroy other's timebound channel before expiry + 14 days
+            │   └── it REVERT - UnauthorizedCaller()
+            ├── when channel owner tries to destroy own channel but before expiry time
+            │   └── it REVERT - UnauthorizedCaller()
+            └── when channel owner tries to destroy after expiry time or push admin/governance destroys other's channel after expiry + 14 days
+                ├── should destroy successfully
+                ├── should decrement channel count by 1
+                ├── should give appropriate refund back to channel owner if destroyed by channel creator
+                ├── should add proper amount in protocol fees if destroyed by push admin/governance
+                ├── should unsubscribe to all
+                ├── should delete channel info
+                └── should allow create channel again
+                    ├── when tries to deactivate destroyed channel
+                    │   └── it REVERT - Core_InvalidChannel()
+                    └── when tries to destroy deactivated channel
+                        └── it REVERT - Core_InvalidChannel()

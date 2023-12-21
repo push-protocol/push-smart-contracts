@@ -7,6 +7,7 @@ abstract contract CoreEvents {
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
     event ChannelBlocked(address indexed channel);
+    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
 }
 
 abstract contract CommEvents {}

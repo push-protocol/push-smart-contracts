@@ -1,4 +1,4 @@
-contractPausability
+contractPausability.t.sol
     ├── when contract is not Paused
     │   ├── when it's not paused/unpaused via governance
     │   │   └── it REVERT - CallerNotAdmin()
