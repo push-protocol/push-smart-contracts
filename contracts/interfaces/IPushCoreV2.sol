@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-interface IPushCore {
+interface IPushCoreV2 {
     // For Message Type
     enum ChannelType {
         ProtocolNonInterest,

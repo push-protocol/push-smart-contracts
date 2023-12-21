@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./PushFeePoolStorage.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IPushCore.sol";
+import "../interfaces/IPushCoreV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -218,7 +218,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
-        IPushCore(core).sendFunds(msg.sender, stakedAmount);
+        IPushCoreV2(core).sendFunds(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(msg.sender, userFeesInfo[msg.sender].stakedWeight, true);
@@ -241,7 +241,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreV2(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -253,7 +253,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      */
     function harvestPaginated(uint256 _tillEpoch) external {
         uint256 rewards = harvest(msg.sender, _tillEpoch);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreV2(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -268,7 +268,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             revert Errors.CallerNotAdmin();
         }
         uint256 rewards = harvest(core, _tillEpoch);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreV2(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -375,7 +375,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
-            uint256 PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
+            uint256 PROTOCOL_POOL_FEES = IPushCoreV2(core).PROTOCOL_POOL_FEES();
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 

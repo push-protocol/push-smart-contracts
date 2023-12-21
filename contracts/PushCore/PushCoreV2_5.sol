@@ -14,7 +14,7 @@ import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/IUniswapV2Router.sol";
-import "../interfaces/IEPNSCommV1.sol";
+import "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -330,13 +330,13 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         // Subscribe them to their own channel as well
         address _epnsCommunicator = epnsCommunicator;
         if (_channel != pushChannelAdmin) {
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_channel, _channel);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, _channel);
         }
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
         if (_channel != address(0x0)) {
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
         }
     }
 
@@ -379,9 +379,9 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount - 1;
         delete channels[_channelAddress];
