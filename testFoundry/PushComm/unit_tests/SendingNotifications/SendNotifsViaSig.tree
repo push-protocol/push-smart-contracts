@@ -1,0 +1,11 @@
+SendNotifsViaSig_Test
+├── when channel sends notificationu using 712 sig
+│   └── it Allows to send channel notification with 712 sig
+├── when delegatee sends notification using 712 sig
+│   └── it Allows delegatee to send notification
+├── when called using a 1271 sig
+│   └── it Allow to send channel notification with 1271 sig
+├── when invoked by a malicious user using signature replay
+│   └── it Returns false on signature replay
+└── when invoked by a malicious user using expired signature
+    └── it      Returns false on signature expire

@@ -1,0 +1,14 @@
+SendNotifs_Test
+├── when a User is sending Notif to Other Address Instead of themselves
+│   └── it Should return false
+├── when Recipient is Sending NOTIF Only to themselves
+│   └── it Should Emit Event
+├── when Channel is 0x00 But Caller is any address other than Admin or Governance
+│   └── it Should return false
+├── when Channel is 0x00 and Caller is Admin or Governance
+│   └── it Should Emit Event
+├── when Delegate without send notification without Approval
+│   └── it Should return false
+└── when Allowed Delagtes Sends Notification to any Recipient
+    └── it Should Emit Event
+    
