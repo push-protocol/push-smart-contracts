@@ -569,7 +569,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
         private
         returns (bool)
     {
-        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory] || _recipient == _signatory) {
+        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory] ) {
             // Emit the message out
             emit SendNotification(_channel, _recipient, _identity);
             return true;
