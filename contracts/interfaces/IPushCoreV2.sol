@@ -1,19 +1,15 @@
 pragma solidity ^0.8.20;
 
-interface IPushCoreV2 {
-    // For Message Type
-    enum ChannelType {
-        ProtocolNonInterest,
-        ProtocolPromotion,
-        InterestBearingOpen,
-        InterestBearingMutual,
-        TimeBound,
-        TokenGaited
-    }
+import { CoreTypes } from "../libraries/DataTypes.sol";
 
-    /* ***************
-        EVENTS
-     *************** */
+
+interface IPushCoreV2 {
+    /* *****************************
+
+       EVENTS
+
+    ***************************** */
+
     event UpdateChannel(
         address indexed channel,
         bytes identity,
@@ -25,7 +21,6 @@ interface IPushCoreV2 {
         address indexed channel,
         address indexed revoker
     );
-
     event DeactivateChannel(
         address indexed channel,
         uint256 indexed amountRefunded
@@ -37,7 +32,7 @@ interface IPushCoreV2 {
     event ChannelBlocked(address indexed channel);
     event AddChannel(
         address indexed channel,
-        ChannelType indexed channelType,
+        CoreTypes.ChannelType indexed channelType,
         bytes identity
     );
     event ChannelNotifcationSettingsAdded(
@@ -75,28 +70,28 @@ interface IPushCoreV2 {
         uint256 indexed amountClaimed
     );
 
-    /* ***************
+    /* *****************************
 
-    SETTER & HELPER FUNCTIONS
+        READ-ONLY FUNCTIONS  
 
-    *************** */
-    function handleChatRequestData(
-        address requestSender,
-        address requestReceiver,
-        uint256 amount
-    ) external;
+    ***************************** */
+    /**
+     * @notice    Function is designed to tell if a channel is verified or not
+     * @dev       Get if channel is verified or not
+     * @param    _channel Address of the channel to be Verified
+     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
+     * verification
+     *
+     */
 
-    function PROTOCOL_POOL_FEES() external view returns (uint256);
+    function getChannelVerfication(address _channel) external view returns (uint8 verificationStatus);
+    
+    /* *****************************
 
-    function sendFunds(address _user, uint256 _amount) external;
+        STATE-CHANGING FUNCTIONS  
 
+    ***************************** */
     function addSubGraph(bytes calldata _subGraphData) external;
-
-    /* ***********************************
-
-        CHANNEL RELATED FUNCTIONALTIES
-
-    **************************************/
     /**
      * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a
      * new identity bytes hash
@@ -120,11 +115,7 @@ interface IPushCoreV2 {
      * @param _amount amount of PUSH Token required for updating channel details.
      *
      */
-    function updateChannelMeta(
-        address _channel,
-        bytes calldata _newIdentity,
-        uint256 _amount
-    ) external;
+    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external;
 
     /**
      * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
@@ -138,12 +129,7 @@ interface IPushCoreV2 {
      * @param  _channelExpiryTime the expiry time for time bound channels
      *
      */
-    function createChannelWithPUSH(
-        ChannelType _channelType,
-        bytes calldata _identity,
-        uint256 _amount,
-        uint256 _channelExpiryTime
-    ) external;
+    function createChannelWithPUSH(CoreTypes.ChannelType _channelType, bytes calldata _identity, uint256 _amount, uint256 _channelExpiryTime) external;
 
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
@@ -159,9 +145,7 @@ interface IPushCoreV2 {
      *         - It transfers back refundable tokenAmount back to the USER.
      *
      */
-
     function destroyTimeBoundChannel(address _channelAddress) external;
-
     /**
      * @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
      * For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
@@ -185,12 +169,7 @@ interface IPushCoreV2 {
      *  @param _amountDeposited - Fees required for setting up channel notification settings
      *
      */
-    function createChannelSettings(
-        uint256 _notifOptions,
-        string calldata _notifSettings,
-        string calldata _notifDescription,
-        uint256 _amountDeposited
-    ) external;
+    function createChannelSettings(uint256 _notifOptions, string calldata _notifSettings, string calldata _notifDescription, uint256 _amountDeposited) external;
 
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be
@@ -217,7 +196,6 @@ interface IPushCoreV2 {
      * @param _amount Amount of PUSH to be deposited
      *
      */
-
     function reactivateChannel(uint256 _amount) external;
 
     /**
@@ -238,27 +216,6 @@ interface IPushCoreV2 {
 
     function blockChannel(address _channelAddress) external;
 
-    /* **************
-    => CHANNEL VERIFICATION FUNCTIONALTIES <=
-    *************** */
-
-    /**
-     * @notice    Function is designed to tell if a channel is verified or not
-     * @dev       Get if channel is verified or not
-     * @param    _channel Address of the channel to be Verified
-     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
-     * verification
-     *
-     */
-    function getChannelVerfication(
-        address _channel
-    ) external view returns (uint8 verificationStatus);
-
-    function batchVerification(
-        uint256 _startIndex,
-        uint256 _endIndex,
-        address[] calldata _channelList
-    ) external returns (bool);
 
     /**
      * @notice    Function is designed to verify a channel
@@ -278,88 +235,6 @@ interface IPushCoreV2 {
     function unverifyChannel(address _channel) external;
 
     /**
-     * Core-V2: Stake and Claim Functions **
-     */
-    /**
-     * Allows caller to add pool_fees at any given epoch
-     *
-     */
-    function addPoolFees(uint256 _rewardAmount) external;
-
-    /**
-     * @notice Returns the epoch ID based on the start and end block numbers passed as input
-     *
-     */
-    function lastEpochRelative(
-        uint256 _from,
-        uint256 _to
-    ) external view returns (uint256);
-
-    /**
-     * @notice Calculates and returns the claimable reward amount for a user at a given EPOCH ID.
-     * @dev    Formulae for reward calculation:
-     *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at
-     * EPOCH(n)
-     *
-     */
-    function calculateEpochRewards(
-        address _user,
-        uint256 _epochId
-    ) external view returns (uint256 rewards);
-
-    /**
-     * @notice Function to initialize the staking procedure in Core contract
-     * @dev    Requires caller to deposit/stake 1 PUSH token to ensure staking pool is never zero.
-     *
-     */
-    function initializeStake() external;
-
-    /**
-     * @notice Function to allow users to stake in the protocol
-     * @dev    Records total Amount staked so far by a particular user
-     *         Triggers weight adjustents functions
-     * @param  _amount represents amount of tokens to be staked
-     *
-     */
-    function stake(uint256 _amount) external;
-
-    /**
-     * @notice Function to allow users to Unstake from the protocol
-     * @dev    Allows stakers to claim rewards before unstaking their tokens
-     *         Triggers weight adjustents functions
-     *         Allows users to unstake all amount at once
-     *
-     */
-    function unstake() external;
-
-    /**
-     * @notice Allows users to harvest/claim their earned rewards from the protocol
-     * @dev    Computes nextFromEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
-     *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
-     *         Once calculated, user's total claimed rewards and nextFromEpoch details is updated.
-     *
-     */
-    function harvestAll() external;
-
-    /**
-     * @notice Allows paginated harvests for users between a particular number of epochs.
-     * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
-     * @dev    _tillEpoch should never be equal to currentEpoch.
-     *         Transfers rewards to caller and updates user's details.
-     *
-     */
-    function harvestPaginated(uint256 _tillEpoch) external;
-
-    /**
-     * @notice Allows Push Governance to harvest/claim the earned rewards for its stake in the protocol
-     * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
-     * @dev    only accessible by Push Admin
-     *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
-     *
-     */
-    function daoHarvestPaginated(uint256 _tillEpoch) external;
-
-    /**
      * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.
      * @dev    This function currently handles the PUSH tokens that enters the contract due to any
      *         activation of incentivizied chat request from Communicator contract.
@@ -370,6 +245,7 @@ interface IPushCoreV2 {
      * @param  requestReceiver  Address of the target user for whom the request is activated.
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external;
 
     /**
      * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.

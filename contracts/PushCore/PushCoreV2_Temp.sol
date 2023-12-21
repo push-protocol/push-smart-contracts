@@ -14,46 +14,18 @@ import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/uniswap/IUniswapV2Router.sol";
-import "../interfaces/IPushCommV2.sol";
+import {IPushCoreV2} from "../interfaces/IPushCoreV2.sol";
+import {IPushCommV2} from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
+import { CoreTypes } from "../libraries/DataTypes.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
+contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
     using SafeERC20 for IERC20;
-
-    /* ***************
-        EVENTS
-     *************** */
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
-    event RewardsClaimed(address indexed user, uint256 rewardAmount);
-    event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-
-    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
-    event ChannelBlocked(address indexed channel);
-    event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
-    event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
-    );
-    event AddSubGraph(address indexed channel, bytes _subGraphData);
-    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
-    event Staked(address indexed user, uint256 indexed amountStaked);
-    event Unstaked(address indexed user, uint256 indexed amountUnstaked);
-    event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
-    event IncentivizeChatReqReceived(
-        address requestSender,
-        address requestReceiver,
-        uint256 amountForReqReceiver,
-        uint256 feePoolAmount,
-        uint256 timestamp
-    );
-    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* ***************
         INITIALIZER
@@ -170,7 +142,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyGovernance();
         _unpause();
     }
-
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
@@ -253,7 +224,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function createChannelWithPUSH(
-        ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount,
         uint256 _channelExpiryTime
@@ -268,8 +239,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != ChannelType.InterestBearingOpen && _channelType != ChannelType.InterestBearingMutual
-                && _channelType != ChannelType.TimeBound && _channelType != ChannelType.TokenGaited
+            _channelType != CoreTypes.ChannelType.InterestBearingOpen && _channelType != CoreTypes.ChannelType.InterestBearingMutual
+                && _channelType != CoreTypes.ChannelType.TimeBound && _channelType != CoreTypes.ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -295,7 +266,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function _createChannel(
         address _channel,
-        ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
@@ -320,7 +291,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 _channelsCount = channelsCount;
         channelsCount = _channelsCount + 1;
 
-        if (_channelType == ChannelType.TimeBound) {
+        if (_channelType == CoreTypes.ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
                 revert Errors.Core_InvalidExpiryTime();
             }
@@ -357,9 +328,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
-        Channel memory channelData = channels[_channelAddress];
+        CoreTypes.Channel memory channelData = channels[_channelAddress];
 
-        if (channelData.channelType != ChannelType.TimeBound) {
+        if (channelData.channelType != CoreTypes.ChannelType.TimeBound) {
             revert Errors.Core_InvalidChannelType();
         }
         if (
@@ -447,7 +418,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function deactivateChannel() external whenNotPaused {
         onlyActivatedChannels(msg.sender);
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
@@ -491,7 +462,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
         uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
@@ -525,7 +496,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -980,5 +951,12 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
+    }
+
+    function sendFunds(address _user, uint256 _amount) external {
+        if (msg.sender != feePoolStakingContract) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 }

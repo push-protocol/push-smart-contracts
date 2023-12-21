@@ -14,46 +14,19 @@ import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/uniswap/IUniswapV2Router.sol";
-import "../interfaces/IPushCommV2.sol";
+import {IPushCoreV2} from "../interfaces/IPushCoreV2.sol";
+import {IPushCommV2} from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
+import { CoreTypes } from "../libraries/DataTypes.sol";
+
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
+contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
     using SafeERC20 for IERC20;
-
-    /* ***************
-        EVENTS
-     *************** */
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
-    event RewardsClaimed(address indexed user, uint256 rewardAmount);
-    event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-
-    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
-    event ChannelBlocked(address indexed channel);
-    event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
-    event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
-    );
-    event AddSubGraph(address indexed channel, bytes _subGraphData);
-    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
-    event Staked(address indexed user, uint256 indexed amountStaked);
-    event Unstaked(address indexed user, uint256 indexed amountUnstaked);
-    event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
-    event IncentivizeChatReqReceived(
-        address requestSender,
-        address requestReceiver,
-        uint256 amountForReqReceiver,
-        uint256 feePoolAmount,
-        uint256 timestamp
-    );
-    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* ***************
         INITIALIZER
@@ -200,29 +173,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-    /**
-     * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a
-     * new identity bytes hash
-     *
-     * @dev  Only accessible when contract is NOT Paused
-     *       Only accessible when Caller is the Channel Owner itself
-     *       If Channel Owner is updating the Channel Meta for the first time:
-     *       Required Fees => 50 PUSH tokens
-     *
-     *       If Channel Owner is updating the Channel Meta for the N time:
-     *       Required Fees => (50 * N) PUSH Tokens
-     *
-     *       Total fees goes to PROTOCOL_POOL_FEES
-     *       Updates the channelUpdateCounter
-     *       Updates the channelUpdateBlock
-     *       Records the Block Number of the Block at which the Channel is being updated
-     *       Emits an event with the new identity for the respective Channel Address
-     *
-     * @param _channel     address of the Channel
-     * @param _newIdentity bytes Value for the New Identity of the Channel
-     * @param _amount amount of PUSH Token required for updating channel details.
-     *
-     */
+    
+    /// @inheritdoc IPushCoreV2
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyChannelOwner(_channel);
         uint256 updateCounter = channelUpdateCounter[_channel] + 1;
@@ -240,20 +192,9 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
-    /**
-     * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
-     * @dev    Only allows users to Create One Channel for a specific address.
-     *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
-     *         Validates and Transfers the amount of PUSH  from the Channel Creator to the EPNS Core Contract
-     *
-     * @param  _channelType the type of the Channel Being created
-     * @param  _identity the bytes value of the identity of the Channel
-     * @param  _amount Amount of PUSH  to be deposited before Creating the Channel
-     * @param  _channelExpiryTime the expiry time for time bound channels
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function createChannelWithPUSH(
-        ChannelType _channelType,
+       CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount,
         uint256 _channelExpiryTime
@@ -268,8 +209,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != ChannelType.InterestBearingOpen && _channelType != ChannelType.InterestBearingMutual
-                && _channelType != ChannelType.TimeBound && _channelType != ChannelType.TokenGaited
+            _channelType != CoreTypes.ChannelType.InterestBearingOpen && _channelType != CoreTypes.ChannelType.InterestBearingMutual
+                && _channelType != CoreTypes.ChannelType.TimeBound && _channelType != CoreTypes.ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -295,7 +236,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
      */
     function _createChannel(
         address _channel,
-        ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
@@ -320,7 +261,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         uint256 _channelsCount = channelsCount;
         channelsCount = _channelsCount + 1;
 
-        if (_channelType == ChannelType.TimeBound) {
+        if (_channelType == CoreTypes.ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
                 revert Errors.Core_InvalidExpiryTime();
             }
@@ -340,26 +281,12 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         }
     }
 
-    /**
-     * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
-     * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
-     *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
-     *         - Can only be called if the Channel is of type - TimeBound
-     *         - Can only be called after the Channel Expiry time is up.
-     *         - If Channel Owner destroys the channel after expiration, he/she recieves back refundable amount &
-     * CHANNEL_POOL_FUNDS decreases.
-     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens
-     * are added to PROTOCOL_POOL_FEES.
-     *         - Deletes the Channel completely
-     *         - It transfers back refundable tokenAmount back to the USER.
-     *
-     */
-
+    /// @inheritdoc IPushCoreV2
     function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
-        Channel memory channelData = channels[_channelAddress];
+        CoreTypes.Channel memory channelData = channels[_channelAddress];
 
-        if (channelData.channelType != ChannelType.TimeBound) {
+        if (channelData.channelType != CoreTypes.ChannelType.TimeBound) {
             revert Errors.Core_InvalidChannelType();
         }
         if (
@@ -389,29 +316,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
     }
 
-    /**
-     * @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
-     * For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
-     *  5 -> Total Notification Options provided by a Channel owner
-     *
-     *  For Boolean Type Notif Options
-     *  1-0 -> 1 stands for BOOLEAN type - 0 stands for Default Boolean Type for that Notifcation(set by Channel Owner),
-     * In this case FALSE.
-     *  1-1 stands for BOOLEAN type - 1 stands for Default Boolean Type for that Notifcation(set by Channel Owner), In
-     * this case TRUE.
-     *
-     *  For SLIDER TYPE Notif Options
-     *   2-50-20-100 -> 2 stands for SLIDER TYPE - 50 stands for Default Value for that Option - 20 is the Start Range
-     * of that SLIDER - 100 is the END Range of that SLIDER Option
-     *  2-78-10-150 -> 2 stands for SLIDER TYPE - 78 stands for Default Value for that Option - 10 is the Start Range of
-     * that SLIDER - 150 is the END Range of that SLIDER Option
-     *
-     *  @param _notifOptions - Total Notification options provided by the Channel Owner
-     *  @param _notifSettings- Deliminated String of Notification Settings
-     *  @param _notifDescription - Description of each Notification that depicts the Purpose of that Notification
-     *  @param _amountDeposited - Fees required for setting up channel notification settings
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
@@ -432,22 +337,10 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
     }
 
-    /**
-     * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be
-     * Activated again.
-     * @dev    - Function can only be Called by Already Activated Channels
-     *         - Calculates the totalRefundableAmount for the Channel Owner.
-     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight &
-     * poolContribution never becomes ZERO.
-     *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
-     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the
-     * Minimum required PUSH  while reactivating.
-     *
-     */
-
+    /// @inheritdoc IPushCoreV2
     function deactivateChannel() external whenNotPaused {
         onlyActivatedChannels(msg.sender);
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
@@ -464,17 +357,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit DeactivateChannel(msg.sender, totalRefundableAmount);
     }
 
-    /**
-     * @notice Allows Channel Owner to Reactivate his/her Channel again.
-     * @dev    - Function can only be called by previously Deactivated Channels
-     *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
-     *         - Deposited PUSH amount is distributed between CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES
-     *         - Calculation of the new Channel Weight and poolContribution is performed and stored
-     *         - Updates the State of the Channel(channelState) in the Channel's Struct.
-     * @param _amount Amount of PUSH to be deposited
-     *
-     */
-
+    /// @inheritdoc IPushCoreV2
     function reactivateChannel(uint256 _amount) external whenNotPaused {
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
@@ -491,7 +374,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
         uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
@@ -503,29 +386,15 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit ReactivateChannel(msg.sender, _amount);
     }
 
-    /**
-     * @notice ALlows the pushChannelAdmin to Block any particular channel Completely.
-     *
-     * @dev    - Can only be called by pushChannelAdmin
-     *         - Can only be Called for Activated Channels
-     *         - Can only Be Called for NON-BLOCKED Channels
-     *
-     *         - Updates channel's state to BLOCKED ('3')
-     *         - Decreases the Channel Count
-     *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed
-     * from CHANNEL_POOL_FUNDS
-     *         - Emit 'ChannelBlocked' Event
-     * @param _channelAddress Address of the Channel to be blocked
-     *
-     */
-
+    
+    /// @inheritdoc IPushCoreV2
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
         if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -595,13 +464,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         return true;
     }
 
-    /**
-     * @notice    Function is designed to verify a channel
-     * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already
-     * verified
-     * @param    _channel Address of the channel to be Verified
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function verifyChannel(address _channel) public {
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
@@ -623,12 +486,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit ChannelVerified(_channel, msg.sender);
     }
 
-    /**
-     * @notice    Function is designed to unverify a channel
-     * @dev       Channel who verified this channel or Push Channel Admin can only revoke
-     * @param    _channel Address of the channel to be unverified
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function unverifyChannel(address _channel) public {
         if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
             revert Errors.CallerNotAdmin();
@@ -665,18 +523,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;
     }
-    /**
-     * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.
-     * @dev    This function currently handles the PUSH tokens that enters the contract due to any
-     *         activation of incentivizied chat request from Communicator contract.
-     *          - Can only be called by Communicator contract
-     *          - Records and keeps track of Pool Funds and Pool Fees
-     *          - Stores the PUSH tokens for the Celeb User, which can be claimed later only by that specific user.
-     * @param  requestSender    Address that initiates the incentivized chat request
-     * @param  requestReceiver  Address of the target user for whom the request is activated.
-     * @param  amount           Amount of PUSH tokens deposited for activating the chat request
-     */
-
+    
+    /// @inheritdoc IPushCoreV2
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -691,12 +539,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
-
-    /**
-     * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
-     * @dev    Only accessible if a particular user has a non-zero PUSH token earnings in contract.
-     * @param  _amount Amount of PUSH tokens to be claimed
-     */
+    
+    /// @inheritdoc IPushCoreV2
     function claimChatIncentives(uint256 _amount) external {
         if (celebUserFunds[msg.sender] < _amount) {
             revert Errors.InvalidArg_MoreThanExpected(celebUserFunds[msg.sender], _amount);
