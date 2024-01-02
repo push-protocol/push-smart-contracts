@@ -1,0 +1,19 @@
+SubscribeBySig_Test
+├── when user subscribes with 712 sig
+│   ├── when malicious user replays a 712 signature
+│   │   └── it Reverts on signature replay
+│   ├── when an expired 712 signature is passed
+│   │   └── it Reverts on signature expiry
+│   └── when the 712 sign is correct
+│       └── it Allows to optin with 712 sig
+├── when a contract subscribes with 1271 sign
+│   ├── when malicious user replays a 1271 sig
+│   │   └── it Reverts on signature replay
+│   ├── when an expired 1271 sig is passed
+│   │   └── it Reverts on signature expiry
+│   └── when the 1271 sign is correct
+│       └── it Allow to contract to optin using 1271 support
+├── when       users unsubscribe with 712 sig
+│   └── it Allows to optout with 712 sig
+└── when a contract unsubscribes with 1271 sig
+    └── it Allow contract to optout using 1271 support

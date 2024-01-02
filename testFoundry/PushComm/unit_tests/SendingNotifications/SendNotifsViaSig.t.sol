@@ -2,22 +2,8 @@ pragma solidity ^0.8.0;
 import {BaseTest} from "../../../BaseTest.t.sol";
 import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
 import {SignatureVerifier} from "contracts/mocks/MockERC1271.sol";
-import "forge-std/console.sol";
 
 contract SendNotifsViaSig_Test is BaseTest {
-    bytes32 public constant DOMAIN_TYPEHASH =
-        keccak256(
-            "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
-        );
-
-    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
-        keccak256(
-            "SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)"
-        );
-
-    bytes32 public constant NAME_HASH = keccak256(bytes("EPNS COMM V1"));
-
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     SignatureVerifier verifierContract;
