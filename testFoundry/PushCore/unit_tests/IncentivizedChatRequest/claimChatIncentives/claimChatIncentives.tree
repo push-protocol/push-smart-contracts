@@ -1,0 +1,9 @@
+claimChatIncentives.t.sol
+    ├── when contract is Paused
+    │   └── it REVERT - EnforcedPause()
+    └── when contract is not Paused
+        ├── when claimable funds of caller is less than amount asked
+        │   └── it REVERT - InvalidArg_MoreThanExpected(claimable funds, _amount)
+        └── when claimable funds of caller is more than equal to amount asked
+            ├── should update claimable funds of caller and emit ChatIncentiveClaimed(msg.sender, _amount)
+            └── should transfer PUSH token equal to _amount passed
