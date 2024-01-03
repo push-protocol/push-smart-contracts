@@ -486,6 +486,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2 {
      */
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
+        _subscribe(msg.sender,_delegate);
         emit AddDelegate(msg.sender, _delegate);
     }
 

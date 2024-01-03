@@ -92,4 +92,22 @@ contract SendNotifs_Test is BaseTest {
         );
         assertEq(res, true);
     }
+
+    function test_WhenAddDelegateItShouldBeSubscribedToChannel() external {
+        changePrank(actor.bob_channel_owner);
+        commProxy.addDelegate(actor.dan_push_holder);
+        bool isTonyDelegate = commProxy.delegatedNotificationSenders(
+            actor.bob_channel_owner,
+            actor.dan_push_holder
+        );
+
+        assertEq(isTonyDelegate, true);
+
+        //Check the delegate becomes a subscriber.
+        bool isSub = commProxy.isUserSubscribed(
+            actor.bob_channel_owner,
+            actor.dan_push_holder
+        );
+        assertEq(isSub, true);        
+    }
 }
