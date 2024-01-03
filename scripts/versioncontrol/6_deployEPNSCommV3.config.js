@@ -57,6 +57,9 @@ const deploy = {
     sepolia: {
       version: 1
     },
+    fuse : {
+      version: 1
+    },
     fuseSpark: {
       version: 1,
     }
