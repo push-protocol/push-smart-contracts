@@ -152,7 +152,13 @@ module.exports = {
       }
     },
 
-    //Fuse testnet
+    //Fuse Mainnet
+    fuse:{
+      url:"https://rpc.fuse.io",
+      accounts: [process.env.PRIVATE],
+    },
+
+    //Fuse Testnet
     fuseSpark:{
       url:"https://rpc.fusespark.io",
       accounts: [process.env.PRIVATE],
@@ -165,6 +171,7 @@ module.exports = {
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
       goerli:process.env.ETHERSCAN_API,
+      fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API
     },
     customChains: [
@@ -175,6 +182,15 @@ module.exports = {
           apiURL: "https://explorer.goerli.linea.build/api",
           browserURL: "https://explorer.goerli.linea.build/",
         },
+      },
+
+      {
+        network: "fuse",
+        chainId: 122, 
+        urls:{
+          apiURL: "https://explorer.fuse.io/api",
+          browserURL: "https://explorer.fuse.io/",
+        }
       },
 
       {
