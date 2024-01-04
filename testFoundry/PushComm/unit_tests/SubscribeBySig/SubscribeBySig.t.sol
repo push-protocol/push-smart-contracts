@@ -54,7 +54,6 @@ contract SubscribeBySig_Test is BaseTest {
             privateKeys[actor.alice_channel_owner],
             digest
         );
-        console.log(commProxy.nonces(actor.alice_channel_owner));
 
         commProxy.subscribeBySig(
             actor.bob_channel_owner,
@@ -65,13 +64,14 @@ contract SubscribeBySig_Test is BaseTest {
             r,
             s
         );
+        uint oldNonce = commProxy.nonces(actor.alice_channel_owner) - 1;
         changePrank(actor.charlie_channel_owner);
 
         vm.expectRevert(bytes("PushCommV2::subscribeBySig: Invalid nonce"));
         commProxy.subscribeBySig(
             actor.bob_channel_owner,
             actor.alice_channel_owner,
-            commProxy.nonces(actor.alice_channel_owner) - 1,
+            oldNonce,
             block.timestamp + 1000,
             v,
             r,
@@ -102,13 +102,14 @@ contract SubscribeBySig_Test is BaseTest {
             privateKeys[actor.alice_channel_owner],
             digest
         );
+        uint Nonce = commProxy.nonces(actor.alice_channel_owner);
         changePrank(actor.charlie_channel_owner);
 
         vm.expectRevert();
         commProxy.subscribeBySig(
             actor.bob_channel_owner,
             actor.alice_channel_owner,
-            commProxy.nonces(actor.alice_channel_owner),
+            Nonce,
             block.timestamp - 10,
             v,
             r,
@@ -190,13 +191,14 @@ contract SubscribeBySig_Test is BaseTest {
             r,
             s
         );
+        uint oldNonce = commProxy.nonces(address(verifierContract)) - 1;
 
         changePrank(actor.charlie_channel_owner);
-        // vm.expectRevert();
+        vm.expectRevert();
         commProxy.subscribeBySig(
             actor.bob_channel_owner,
             address(verifierContract),
-            commProxy.nonces(address(verifierContract)) - 1,
+            oldNonce,
             block.timestamp + 100,
             v,
             r,
@@ -227,13 +229,14 @@ contract SubscribeBySig_Test is BaseTest {
             privateKeys[actor.tim_push_holder],
             digest
         );
+        uint Nonce = commProxy.nonces(address(verifierContract));
 
         changePrank(actor.charlie_channel_owner);
         vm.expectRevert();
         commProxy.subscribeBySig(
             actor.bob_channel_owner,
             address(verifierContract),
-            commProxy.nonces(address(verifierContract)),
+            Nonce,
             block.timestamp - 100,
             v,
             r,
