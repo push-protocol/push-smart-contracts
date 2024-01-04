@@ -1,9 +1,7 @@
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-
 import {BasePushChannelStateCycle} from "../BasePushChannelStateCycle.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract ReactivateChannel_Test is BasePushChannelStateCycle {
     function setUp() public virtual override {
@@ -24,7 +22,7 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
 
         vm.startPrank(actor.bob_channel_owner);
         vm.expectRevert(
-            bytes("PushCoreV2::reactivateChannel: Insufficient Funds")
+            abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector,50 ether, _amountBeingTransferred)
         );
         coreProxy.reactivateChannel(_amountBeingTransferred);
         vm.stopPrank();
@@ -39,7 +37,7 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(
-            bytes("PushCoreV2::onlyDeactivatedChannels: Channel is Active")
+            Errors.Core_InvalidChannel.selector
         );
         coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
     }
@@ -56,7 +54,7 @@ contract ReactivateChannel_Test is BasePushChannelStateCycle {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(
-            bytes("PushCoreV2::onlyDeactivatedChannels: Channel is Active")
+           Errors.Core_InvalidChannel.selector
         );
         coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
     }

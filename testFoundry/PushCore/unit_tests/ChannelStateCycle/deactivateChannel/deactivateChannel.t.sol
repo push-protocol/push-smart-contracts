@@ -1,9 +1,7 @@
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-
 import {BasePushChannelStateCycle} from "../BasePushChannelStateCycle.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract DeactivateChannel_Test is BasePushChannelStateCycle {
     function setUp() public virtual override {
@@ -19,7 +17,7 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
         coreProxy.deactivateChannel();
 
         vm.expectRevert(
-            bytes("PushCoreV2::onlyActivatedChannels: Invalid Channel")
+           Errors.Core_InvalidChannel.selector
         );
         coreProxy.deactivateChannel();
         vm.stopPrank();
@@ -31,7 +29,7 @@ contract DeactivateChannel_Test is BasePushChannelStateCycle {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(
-            bytes("PushCoreV2::onlyActivatedChannels: Invalid Channel")
+           Errors.Core_InvalidChannel.selector
         );
         coreProxy.deactivateChannel();
     }

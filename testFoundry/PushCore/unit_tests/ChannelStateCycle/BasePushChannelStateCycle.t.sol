@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 import "forge-std/Test.sol";
 
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
 
 contract BasePushChannelStateCycle is BaseTest{
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
@@ -28,7 +28,7 @@ contract BasePushChannelStateCycle is BaseTest{
 
         vm.prank(from);
         coreProxy.createChannelWithPUSH(
-            PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
+            CoreTypes.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             ADD_CHANNEL_MIN_FEES,
             0
