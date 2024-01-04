@@ -94,4 +94,14 @@ library CommTypes{
         uint256 amountDeposited;
     }
 }
-   
+
+library StakingTypes{
+    //@notice: Stores all user's staking details
+    struct UserFessInfo {
+        uint256 stakedAmount;
+        uint256 stakedWeight;
+        uint256 lastStakedBlock;
+        uint256 lastClaimedBlock;
+        mapping(uint256 => uint256) epochToUserStakedWeight;
+    }
+}

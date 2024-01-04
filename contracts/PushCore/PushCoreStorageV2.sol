@@ -1,5 +1,7 @@
 pragma solidity ^0.8.20;
 
+import { StakingTypes } from "../libraries/DataTypes.sol";
+
 contract PushCoreStorageV2 {
     /* *** V2 State variables *** */
     bytes32 public constant DOMAIN_TYPEHASH =
@@ -15,15 +17,6 @@ contract PushCoreStorageV2 {
      */
     mapping(address => uint256) public usersRewardsClaimed;
 
-    //@notice: Stores all user's staking details
-    struct UserFessInfo {
-        uint256 stakedAmount;
-        uint256 stakedWeight;
-        uint256 lastStakedBlock;
-        uint256 lastClaimedBlock;
-        mapping(uint256 => uint256) epochToUserStakedWeight;
-    }
-
     uint256 public genesisEpoch; // Block number at which Stakig starts
     uint256 lastEpochInitialized; // The last EPOCH ID initialized with the respective epoch rewards
     uint256 lastTotalStakeEpochInitialized; // The last EPOCH ID initialized with the respective total staked weight
@@ -34,7 +27,7 @@ contract PushCoreStorageV2 {
     // @notice: Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
     // @notice: Stores User's Fees Details
-    mapping(address => UserFessInfo) public userFeesInfo;
+    mapping(address => StakingTypes.UserFessInfo) public userFeesInfo;
     // @notice: Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
 
