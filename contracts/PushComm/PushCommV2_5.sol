@@ -18,6 +18,7 @@ import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { BaseHelper }  from "../libraries/BaseHelper.sol";
+import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -98,7 +99,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     /// @inheritdoc IPushCommV2
     function isUserSubscribed(address _channel, address _user) public view returns (bool) {
-        User storage user = users[_user];
+        CommTypes.User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
             return true;
         }
@@ -171,7 +172,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         if (!isUserSubscribed(_channel, _user)) {
             _addUser(_user);
 
-            User storage user = users[_user];
+            CommTypes.User storage user = users[_user];
 
             uint256 _subscribedCount = user.subscribedCount;
 
@@ -268,7 +269,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      */
     function _unsubscribe(address _channel, address _user) private {
         if (isUserSubscribed(_channel, _user)) {
-            User storage user = users[_user];
+            CommTypes.User storage user = users[_user];
 
             uint256 _subscribedCount = user.subscribedCount - 1;
 
@@ -560,7 +561,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         // Transfer incoming PUSH Token to core contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
 
-        ChatDetails storage chatData = userChatData[requestSender];
+        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
         if (chatData.amountDeposited == 0) {
             chatData.requestSender = requestSender;
         }

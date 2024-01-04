@@ -91,6 +91,7 @@ interface IPushCoreV2 {
         STATE-CHANGING FUNCTIONS  
 
     ***************************** */
+    
     function addSubGraph(bytes calldata _subGraphData) external;
     /**
      * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a
