@@ -12,4 +12,16 @@ abstract contract Constants {
     uint256 public totalStakedAmount = 6_654_086 ether;
     uint256 public previouslySetEpochRewards = 60_000 ether;
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
+
+    //Comm Constants used for meta transaction
+    string public constant name = "EPNS COMM V1";
+        bytes32 public constant NAME_HASH = keccak256(bytes(name));
+    bytes32 public constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
+    bytes32 public constant SUBSCRIBE_TYPEHASH =
+        keccak256("Subscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
+    bytes32 public constant UNSUBSCRIBE_TYPEHASH =
+        keccak256("Unsubscribe(address channel,address subscriber,uint256 nonce,uint256 expiry)");
+    bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
+        keccak256("SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)");
 }

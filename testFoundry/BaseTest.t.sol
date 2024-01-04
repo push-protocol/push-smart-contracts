@@ -42,6 +42,7 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
     uint256 FEE_AMOUNT = 10 ether;
     uint256 MIN_POOL_CONTRIBUTION = 50 ether; 
     uint256 ADJUST_FOR_FLOAT = 10 ** 7;
+    mapping(address => uint) privateKeys;
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -124,12 +125,16 @@ abstract contract BaseTest is Test, Constants, CoreEvents {
     }
 
     function createActor(string memory name) internal returns (address payable) {
-        address payable actor = payable(makeAddr(name));
+        address actor;
+        uint Private;
+        (actor, Private) = makeAddrAndKey(name);
+        address payable _actor = payable(actor);
+        privateKeys[actor] = Private;
         // Transfer 50 eth to every actor
-        vm.deal({ account: actor, newBalance: 50 ether });
+        vm.deal({ account: _actor, newBalance: 50 ether });
         // Transfer 50K PUSH Tokens for every actor
         vm.prank(tokenDistributor);
-        pushToken.transfer(actor, 50_000 ether);
-        return actor;
+        pushToken.transfer(_actor, 50_000 ether);
+        return _actor;
     }
 }
