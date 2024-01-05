@@ -13,7 +13,7 @@ const { ethers } = require("ethers");
 const { isAddress, getAddress, formatUnits, parseUnits } = ethers.utils;
 
 // Check ENV File first and load ENV
-// verifyENV();
+verifyENV();
 async function verifyENV() {
   const envVerifierLoader = require('./loaders/envVerifier');
   envVerifierLoader(true);
