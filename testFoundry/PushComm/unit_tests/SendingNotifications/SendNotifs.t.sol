@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
 
 // import "forge-std/console.sol";
 contract SendNotifs_Test is BaseTest {
@@ -10,7 +10,7 @@ contract SendNotifs_Test is BaseTest {
         BaseTest.setUp();
         changePrank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
-            PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
+            CoreTypes.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             50e18,
             0

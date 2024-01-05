@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {PushCoreStorageV1_5} from "contracts/PushCore/PushCoreStorageV1_5.sol";
+import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
 import {SignatureVerifier} from "contracts/mocks/MockERC1271.sol";
 
 contract SendNotifsViaSig_Test is BaseTest {
@@ -15,7 +15,7 @@ contract SendNotifsViaSig_Test is BaseTest {
 
         changePrank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
-            PushCoreStorageV1_5.ChannelType.InterestBearingOpen,
+            CoreTypes.ChannelType.InterestBearingOpen,
             _testChannelIdentity,
             50e18,
             0
