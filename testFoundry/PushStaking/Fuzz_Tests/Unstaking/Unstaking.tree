@@ -1,0 +1,9 @@
+Unstaking_test
+└── when user unstakes
+    ├── when there are rewards pending
+    │   └── it should send the rewards along with the staked amount
+    ├── when user tries to claim rewards after unstaking
+    │   └── it should not allow to do
+    ├── it should send exact amount to the user
+    └── when user tries to unstake in the same epoch in which they staked
+        └── it should revert and only allow after one complete epoch

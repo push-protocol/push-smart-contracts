@@ -1,0 +1,33 @@
+UserHarvest_test
+├── when user stake and claim rewards
+│   ├── when user stakes in the first epoch and claims alone
+│   │   └── it should get all the rewards except the DAO rewards
+│   ├── when user stakes after one epoch and claims alone
+│   │   └── it should get similar rewards
+│   ├── when user stakes and harvests in the same epoch
+│   │   └── it should give zero rewards
+│   └── when user stakes at epoch 2 and harvests after 9 epoch
+│       └── it should give correct rewards
+├── when multiple users stake
+│   ├── when 2 users stake the same amount and harvest together
+│   │   └── it should give both of them equal rewards
+│   ├── when a users stakes a bit later than the first user in the same epoch
+│   │   └── it should give equal rewards
+│   ├── when 4 users stake the same amount and harvest together
+│   │   └── it should give all four of them equal rewards
+│   ├── when 4 users stake different amount and harvest at the same time
+│   │   └── it should give more rewards to user who staked more amount
+│   └── when 4 users stake same amount and each of them harvest with 2 epoch gap
+│       └── it should give same rewards to all 4
+├── when user uses harvestPaginated for a particular range of epochs
+│   └── it should allow the user to harvest
+├── when user tries to harvest for future epochs
+│   └── it should revert
+├── when user tries to harvest same epoch more than one time
+│   └── it should revert
+├── when Fees is added in multiple epochs
+│   └── it should allow the user to harvest all eligible epochs reward
+├── when user uses harvestAll or harvestPaginated
+│   └── it should give same rewards with both the functions
+└── when no rewards is added
+    └── it should give zero rewards for void epochs

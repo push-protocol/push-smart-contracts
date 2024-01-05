@@ -1,0 +1,12 @@
+StateVariables_test
+├── when calculating the current Epoch
+│   ├── when the block numbers are incorrect
+│   │   └── it (lastEpochRelative) should throw error
+│   └── when the block numbers are correct
+│       └── it (lastEpochRelative) should return the correct Epoch
+├── when a user stakes
+│   └── it should update the state variables correctly
+├── when a user harvest
+│   └── it should update the state variables correctly
+└── when a user unstakes
+    └── it should update the state variables correctly
