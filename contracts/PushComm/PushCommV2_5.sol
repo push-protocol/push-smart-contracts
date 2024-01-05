@@ -418,6 +418,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
     /// @inheritdoc IPushCommV2
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
+        _subscribe(msg.sender,_delegate);
         emit AddDelegate(msg.sender, _delegate);
     }
 
@@ -486,7 +487,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         private
         returns (bool)
     {
-        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory] || _recipient == _signatory) {
+        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory] ) {
             // Emit the message out
             emit SendNotification(_channel, _recipient, _identity);
             return true;
