@@ -93,10 +93,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            (
-                (channels[_channel].channelState != 1 || msg.sender != _channel)
-                    || (msg.sender != pushChannelAdmin && _channel == address(0x0))
-            )
+            !((channels[_channel].channelState == 1 && msg.sender == _channel) ||
+                (msg.sender == pushChannelAdmin && _channel == address(0x0)))
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -207,7 +205,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
