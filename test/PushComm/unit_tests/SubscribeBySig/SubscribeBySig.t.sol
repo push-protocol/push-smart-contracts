@@ -4,8 +4,6 @@ import { BasePushCommTest } from "../BasePushCommTest.t.sol";
 
 contract SubscribeBySig_Test is BasePushCommTest {
 
-    event Subscribe(address indexed channel, address indexed user);
-    event Unsubscribe(address indexed channel, address indexed user);
 
     function setUp() public override {
         BasePushCommTest.setUp();

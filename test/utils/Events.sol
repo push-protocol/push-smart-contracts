@@ -23,6 +23,8 @@ abstract contract CommEvents {
     event IncentivizeChatReqInitiated(
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
+    event Subscribe(address indexed channel, address indexed user);
+    event Unsubscribe(address indexed channel, address indexed user);
 }
 
 abstract contract ProxyEvents {
