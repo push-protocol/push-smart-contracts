@@ -5,7 +5,6 @@ import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
 
 // import "forge-std/console.sol";
 contract SendNotifs_Test is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     function setUp() public override {
         BaseTest.setUp();

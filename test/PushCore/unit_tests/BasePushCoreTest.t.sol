@@ -7,7 +7,6 @@ import { BaseTest } from "../../BaseTest.t.sol";
 import { CoreTypes } from "../../../contracts/libraries/DataTypes.sol";
 
 contract BasePushCoreTest is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
     bytes constant _testChannelUpdatedIdentity = bytes("test-updated-channel-hello-world");
 
     /* ***************

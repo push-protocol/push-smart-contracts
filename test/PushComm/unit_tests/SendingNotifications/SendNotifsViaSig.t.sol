@@ -5,7 +5,6 @@ import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import { SignatureVerifier } from "contracts/mocks/MockERC1271.sol";
 
 contract SendNotifsViaSig_Test is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     SignatureVerifier verifierContract;
 

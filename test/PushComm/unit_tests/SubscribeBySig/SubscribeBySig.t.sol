@@ -7,7 +7,6 @@ import { SignatureVerifier } from "contracts/mocks/MockERC1271.sol";
 import "forge-std/console.sol";
 
 contract SubscribeBySig_Test is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
