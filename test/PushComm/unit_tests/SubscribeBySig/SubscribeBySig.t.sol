@@ -14,7 +14,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         _;
     }
 
-    function testFail_WhenMaliciousUserReplaysA712Signature() public whenUserSubscribesWith712Sig {
+    function test_WhenMaliciousUserReplaysA712Signature() public whenUserSubscribesWith712Sig {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -37,8 +37,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         );
         uint256 oldNonce = commProxy.nonces(actor.alice_channel_owner) - 1;
         changePrank(actor.charlie_channel_owner);
-        // Revert fails for unknown reason - Needs to be fixed
-        //vm.expectRevert(bytes("PushCommV2::subscribeBySig: Invalid nonce"));
+        vm.expectRevert();
         commProxy.subscribeBySig(
             actor.bob_channel_owner, actor.alice_channel_owner, oldNonce, block.timestamp + 1000, v, r, s
         );
