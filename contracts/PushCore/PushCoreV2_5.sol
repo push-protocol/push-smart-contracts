@@ -296,12 +296,12 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         uint256 totalRefundableAmount = channelData.poolContribution;
-
+        // Update POOL_FUNDS & PROTOCOL_POOL_FEES
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+        
         if (msg.sender != pushChannelAdmin) {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
         } else {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
         }
         // Unsubscribing from imperative Channels
