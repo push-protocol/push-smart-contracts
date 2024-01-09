@@ -40,9 +40,9 @@ abstract contract BaseTest is Test, Constants, Events {
     uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
     uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
     uint256 FEE_AMOUNT = 10 ether;
-    uint256 MIN_POOL_CONTRIBUTION = 50 ether; 
+    uint256 MIN_POOL_CONTRIBUTION = 50 ether;
     uint256 ADJUST_FOR_FLOAT = 10 ** 7;
-    mapping(address => uint) privateKeys;
+    mapping(address => uint256) privateKeys;
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -84,12 +84,8 @@ abstract contract BaseTest is Test, Constants, Events {
 
         // Initialize comm proxy admin and commProxy contract
         epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
-        epnsCommProxy = new EPNSCommProxy(
-            address(comm),
-            address(epnsCommProxyAdmin),
-            actor.admin,
-            "FOUNDRY_TEST_NETWORK"
-        );
+        epnsCommProxy =
+            new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         commProxy = PushCommV2_5(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
@@ -126,7 +122,7 @@ abstract contract BaseTest is Test, Constants, Events {
 
     function createActor(string memory name) internal returns (address payable) {
         address actor;
-        uint Private;
+        uint256 Private;
         (actor, Private) = makeAddrAndKey(name);
         address payable _actor = payable(actor);
         privateKeys[actor] = Private;

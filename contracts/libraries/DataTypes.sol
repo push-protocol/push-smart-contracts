@@ -1,8 +1,7 @@
 pragma solidity ^0.8.20;
 
-
-library CoreTypes{
-     /* ***************
+library CoreTypes {
+    /* ***************
 
     ENUMS AND CONSTANTS
 
@@ -17,7 +16,7 @@ library CoreTypes{
         TimeBound,
         TokenGaited
     }
-    
+
     enum ChannelAction {
         ChannelRemoved,
         ChannelAdded,
@@ -61,7 +60,7 @@ library CoreTypes{
     }
 }
 
-library CommTypes{
+library CommTypes {
     /**
      * @notice User Struct that involves imperative details about
      * a specific User.
@@ -95,7 +94,7 @@ library CommTypes{
     }
 }
 
-library StakingTypes{
+library StakingTypes {
     //@notice: Stores all user's staking details
     struct UserFessInfo {
         uint256 stakedAmount;

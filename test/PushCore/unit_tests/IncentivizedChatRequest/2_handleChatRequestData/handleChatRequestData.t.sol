@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
-import {BaseIncentivizedChatRequest} from "../BaseIncentivizedChatRequest.t.sol";
-import {Errors} from "contracts/libraries/Errors.sol";
+import { BaseIncentivizedChatRequest } from "../BaseIncentivizedChatRequest.t.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract HandleChatRequestData_Test is BaseIncentivizedChatRequest {
     function setUp() public virtual override {
@@ -17,9 +17,7 @@ contract HandleChatRequestData_Test is BaseIncentivizedChatRequest {
         address requestReceiver = actor.charlie_channel_owner;
         uint256 amount = 1e6;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, requestSender)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, requestSender));
 
         vm.prank(requestSender);
         coreProxy.handleChatRequestData(requestSender, requestReceiver, amount);
@@ -58,11 +56,7 @@ contract HandleChatRequestData_Test is BaseIncentivizedChatRequest {
 
         vm.expectEmit(false, false, false, true, address(coreProxy));
         emit IncentivizeChatReqReceived(
-            requestSender,
-            requestReceiver,
-            amount - corePoolFeeAmount,
-            corePoolFeeAmount,
-            block.timestamp
+            requestSender, requestReceiver, amount - corePoolFeeAmount, corePoolFeeAmount, block.timestamp
         );
 
         vm.prank(requestSender);

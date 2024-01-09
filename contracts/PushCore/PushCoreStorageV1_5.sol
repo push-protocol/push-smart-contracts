@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
 contract PushCoreStorageV1_5 {
-
     /* **************
     MAPPINGS
     *************** */

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
-import {BaseIncentivizedChatRequest} from "../BaseIncentivizedChatRequest.t.sol";
-import {Errors} from "contracts/libraries/Errors.sol";
+import { BaseIncentivizedChatRequest } from "../BaseIncentivizedChatRequest.t.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
     function setUp() public virtual override {
@@ -19,13 +19,7 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
 
         vm.prank(requestSender);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Errors.InvalidArg_LessThanExpected.selector,
-                0,
-                amount
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 0, amount));
 
         commProxy.createIncentivizeChatRequest(requestReceiver, 0);
     }
@@ -37,11 +31,7 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
 
         vm.prank(requestSender);
 
-        vm.expectRevert(
-            bytes(
-                "Push::transferFrom: transfer amount exceeds spender allowance"
-            )
-        );
+        vm.expectRevert(bytes("Push::transferFrom: transfer amount exceeds spender allowance"));
 
         commProxy.createIncentivizeChatRequest(requestReceiver, amount);
     }
@@ -51,23 +41,15 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
         address requestReceiver = actor.charlie_channel_owner;
         uint256 amount = 1e20;
 
-        uint256 actualPushTokenbalanceBeforeCall = pushToken.balanceOf(
-            address(coreProxy)
-        );
+        uint256 actualPushTokenbalanceBeforeCall = pushToken.balanceOf(address(coreProxy));
 
         approveTokens(requestSender, address(commProxy), amount);
         vm.prank(requestSender);
         commProxy.createIncentivizeChatRequest(requestReceiver, amount);
 
-        uint256 actualPushTokenbalanceAfterCall = pushToken.balanceOf(
-            address(coreProxy)
-        );
-        uint256 expectedPushTokenbalanceAfterCall = actualPushTokenbalanceBeforeCall +
-                amount;
-        assertEq(
-            expectedPushTokenbalanceAfterCall,
-            actualPushTokenbalanceAfterCall
-        );
+        uint256 actualPushTokenbalanceAfterCall = pushToken.balanceOf(address(coreProxy));
+        uint256 expectedPushTokenbalanceAfterCall = actualPushTokenbalanceBeforeCall + amount;
+        assertEq(expectedPushTokenbalanceAfterCall, actualPushTokenbalanceAfterCall);
     }
 
     function test_ShouldUpdateVariables() public whenNotPaused {
@@ -115,10 +97,7 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
         ) = commProxy.userChatData(requestSender);
 
         assertEq(requestSenderAfterSecondRequest, requestSender);
-        assertEq(
-            timestampAfterSecondRequest,
-            blockTimestampInFirstRequest + forwardedTimestamp
-        );
+        assertEq(timestampAfterSecondRequest, blockTimestampInFirstRequest + forwardedTimestamp);
         assertEq(amountDepositedAfterSecondRequest, amount * 2);
     }
 
@@ -130,12 +109,7 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
         approveTokens(requestSender, address(commProxy), amount);
 
         vm.expectEmit(false, false, false, true, address(commProxy));
-        emit IncentivizeChatReqInitiated(
-            requestSender,
-            requestReceiver,
-            amount,
-            block.timestamp
-        );
+        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
 
         vm.prank(requestSender);
         commProxy.createIncentivizeChatRequest(requestReceiver, amount);

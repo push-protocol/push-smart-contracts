@@ -12,12 +12,11 @@ pragma solidity ^0.8.20;
  * Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-
 import "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
-import { BaseHelper }  from "../libraries/BaseHelper.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
@@ -133,7 +132,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      *
      */
-
     function migrateSubscribeData(
         uint256 _startIndex,
         uint256 _endIndex,
@@ -238,21 +236,20 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         return true;
     }
 
-    
     /* *****************************
 
          UNSUBSCRIBE FUNCTIONS
 
     ***************************** */
 
-   /// @inheritdoc IPushCommV2
+    /// @inheritdoc IPushCommV2
     function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
         return true;
     }
 
-   /// @inheritdoc IPushCommV2
+    /// @inheritdoc IPushCommV2
     function batchUnsubscribe(address[] calldata _channelList) external returns (bool) {
         for (uint256 i = 0; i < _channelList.length; i++) {
             _unsubscribe(_channelList[i], msg.sender);
@@ -331,7 +328,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         _unsubscribe(channel, subscriber);
     }
 
-   /// @inheritdoc IPushCommV2
+    /// @inheritdoc IPushCommV2
     function unSubscribeViaCore(address _channel, address _user) external onlyPushCore returns (bool) {
         _unsubscribe(_channel, _user);
         return true;
@@ -408,7 +405,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         _broadcastPublicKey(msg.sender, _publicKey);
     }
 
-    
     /* *****************************
 
          SEND NOTIFICATOINS FUNCTIONS
@@ -418,11 +414,11 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
     /// @inheritdoc IPushCommV2
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
-        _subscribe(msg.sender,_delegate);
+        _subscribe(msg.sender, _delegate);
         emit AddDelegate(msg.sender, _delegate);
     }
 
-     /// @inheritdoc IPushCommV2
+    /// @inheritdoc IPushCommV2
     function removeDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = false;
         emit RemoveDelegate(msg.sender, _delegate);
@@ -442,7 +438,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      *          -> We ensure "Delegate is the Caller" && "Delegatee is Approved by Chnnel Owner"
      *
      */
-
     function _checkNotifReq(address _channel, address _recipient) private view returns (bool) {
         if (
             (_channel == 0x0000000000000000000000000000000000000000 && msg.sender == pushChannelAdmin)
@@ -487,7 +482,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         private
         returns (bool)
     {
-        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory] ) {
+        if (_channel == _signatory || delegatedNotificationSenders[_channel][_signatory]) {
             // Emit the message out
             emit SendNotification(_channel, _recipient, _identity);
             return true;

@@ -14,8 +14,8 @@ import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/uniswap/IUniswapV2Router.sol";
-import {IPushCoreV2} from "../interfaces/IPushCoreV2.sol";
-import {IPushCommV2} from "../interfaces/IPushCommV2.sol";
+import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
@@ -93,8 +93,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            !((channels[_channel].channelState == 1 && msg.sender == _channel) ||
-                (msg.sender == pushChannelAdmin && _channel == address(0x0)))
+            !(
+                (channels[_channel].channelState == 1 && msg.sender == _channel)
+                    || (msg.sender == pushChannelAdmin && _channel == address(0x0))
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -148,6 +150,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param _newFees new minimum fees required for Channel Creation
      *
      */
+
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees < MIN_POOL_CONTRIBUTION) {
@@ -237,7 +240,8 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != CoreTypes.ChannelType.InterestBearingOpen && _channelType != CoreTypes.ChannelType.InterestBearingMutual
+            _channelType != CoreTypes.ChannelType.InterestBearingOpen
+                && _channelType != CoreTypes.ChannelType.InterestBearingMutual
                 && _channelType != CoreTypes.ChannelType.TimeBound && _channelType != CoreTypes.ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
@@ -323,7 +327,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *         - It transfers back refundable tokenAmount back to the USER.
      *
      */
-
     function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
         CoreTypes.Channel memory channelData = channels[_channelAddress];
@@ -413,7 +416,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * Minimum required PUSH  while reactivating.
      *
      */
-
     function deactivateChannel() external whenNotPaused {
         onlyActivatedChannels(msg.sender);
         CoreTypes.Channel storage channelData = channels[msg.sender];
@@ -443,7 +445,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param _amount Amount of PUSH to be deposited
      *
      */
-
     function reactivateChannel(uint256 _amount) external whenNotPaused {
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
@@ -487,7 +488,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param _channelAddress Address of the Channel to be blocked
      *
      */
-
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
         if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {

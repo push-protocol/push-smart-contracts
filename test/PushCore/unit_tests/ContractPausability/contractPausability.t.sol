@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
-import {BasePushCoreTest} from "../BasePushCoreTest.t.sol";
-import {Errors} from "contracts/libraries/Errors.sol";
+import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract ContractPausability_Test is BasePushCoreTest {
     function setUp() public virtual override {
@@ -33,18 +33,18 @@ contract ContractPausability_Test is BasePushCoreTest {
     }
 
     function test_UnpausingByGovernance() public {
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectEmit(false, false, false, true, address(coreProxy));
         emit Unpaused(actor.admin);
 
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.unPauseContract();
     }
 
     function test_Revertwhen_CreateChannelAfterPaused() public {
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
@@ -54,7 +54,7 @@ contract ContractPausability_Test is BasePushCoreTest {
     function test_Revertwhen_DeactivateChannelAfterPaused() public {
         _createChannel(actor.bob_channel_owner);
 
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
@@ -67,7 +67,7 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.prank(actor.bob_channel_owner);
         coreProxy.deactivateChannel();
 
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
@@ -78,7 +78,7 @@ contract ContractPausability_Test is BasePushCoreTest {
     function test_Revertwhen_BlockChannelAfterPaused() public {
         _createChannel(actor.bob_channel_owner);
 
-        vm.prank(actor.admin); 
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
@@ -87,7 +87,7 @@ contract ContractPausability_Test is BasePushCoreTest {
     }
 
     function test_ChannelFunctionsAfterPauseUnpause() public {
-        vm.startPrank(actor.admin); 
+        vm.startPrank(actor.admin);
         coreProxy.pauseContract();
         coreProxy.unPauseContract();
         vm.stopPrank();

@@ -14,11 +14,10 @@ import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import "../interfaces/uniswap/IUniswapV2Router.sol";
-import {IPushCoreV2} from "../interfaces/IPushCoreV2.sol";
-import {IPushCommV2} from "../interfaces/IPushCommV2.sol";
+import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
-
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -94,12 +93,15 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            !((channels[_channel].channelState == 1 && msg.sender == _channel) ||
-                (msg.sender == pushChannelAdmin && _channel == address(0x0)))
+            !(
+                (channels[_channel].channelState == 1 && msg.sender == _channel)
+                    || (msg.sender == pushChannelAdmin && _channel == address(0x0))
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
     }
+
     function addSubGraph(bytes calldata _subGraphData) external {
         onlyActivatedChannels(msg.sender);
         emit AddSubGraph(msg.sender, _subGraphData);
@@ -170,7 +172,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-    
+
     /// @inheritdoc IPushCoreV2
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyChannelOwner(_channel);
@@ -191,7 +193,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     /// @inheritdoc IPushCoreV2
     function createChannelWithPUSH(
-       CoreTypes.ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount,
         uint256 _channelExpiryTime
@@ -206,7 +208,8 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != CoreTypes.ChannelType.InterestBearingOpen && _channelType != CoreTypes.ChannelType.InterestBearingMutual
+            _channelType != CoreTypes.ChannelType.InterestBearingOpen
+                && _channelType != CoreTypes.ChannelType.InterestBearingMutual
                 && _channelType != CoreTypes.ChannelType.TimeBound && _channelType != CoreTypes.ChannelType.TokenGaited
         ) {
             revert Errors.Core_InvalidChannelType();
@@ -383,7 +386,6 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit ReactivateChannel(msg.sender, _amount);
     }
 
-    
     /// @inheritdoc IPushCoreV2
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
@@ -499,7 +501,6 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     /**
      * Core-V2: Stake and Claim Functions **
      */
-
     function updateStakingAddress(address _stakingAddress) external {
         onlyPushChannelAdmin();
         feePoolStakingContract = _stakingAddress;
@@ -520,7 +521,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;
     }
-    
+
     /// @inheritdoc IPushCoreV2
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         if (msg.sender != epnsCommunicator) {
@@ -536,7 +537,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
-    
+
     /// @inheritdoc IPushCoreV2
     function claimChatIncentives(uint256 _amount) external {
         if (celebUserFunds[msg.sender] < _amount) {

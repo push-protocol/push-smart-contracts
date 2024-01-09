@@ -2,7 +2,6 @@ pragma solidity ^0.8.20;
 
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
-
 interface IPushCoreV2 {
     /* *****************************
 
@@ -10,54 +9,23 @@ interface IPushCoreV2 {
 
     ***************************** */
 
-    event UpdateChannel(
-        address indexed channel,
-        bytes identity,
-        uint256 indexed amountDeposited
-    );
+    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
     event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(
-        address indexed channel,
-        address indexed revoker
-    );
-    event DeactivateChannel(
-        address indexed channel,
-        uint256 indexed amountRefunded
-    );
-    event ReactivateChannel(
-        address indexed channel,
-        uint256 indexed amountDeposited
-    );
+    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
+    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event ChannelBlocked(address indexed channel);
-    event AddChannel(
-        address indexed channel,
-        CoreTypes.ChannelType indexed channelType,
-        bytes identity
-    );
+    event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     event ChannelNotifcationSettingsAdded(
-        address _channel,
-        uint256 totalNotifOptions,
-        string _notifSettings,
-        string _notifDescription
+        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     event AddSubGraph(address indexed channel, bytes _subGraphData);
-    event TimeBoundChannelDestroyed(
-        address indexed channel,
-        uint256 indexed amountRefunded
-    );
-    event ChannelOwnershipTransfer(
-        address indexed channel,
-        address indexed newOwner
-    );
+    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
+    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
-    event RewardsHarvested(
-        address indexed user,
-        uint256 indexed rewardAmount,
-        uint256 fromEpoch,
-        uint256 tillEpoch
-    );
+    event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     event IncentivizeChatReqReceived(
         address requestSender,
         address requestReceiver,
@@ -65,10 +33,7 @@ interface IPushCoreV2 {
         uint256 feePoolAmount,
         uint256 timestamp
     );
-    event ChatIncentiveClaimed(
-        address indexed user,
-        uint256 indexed amountClaimed
-    );
+    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* *****************************
 
@@ -83,15 +48,14 @@ interface IPushCoreV2 {
      * verification
      *
      */
-
     function getChannelVerfication(address _channel) external view returns (uint8 verificationStatus);
-    
+
     /* *****************************
 
         STATE-CHANGING FUNCTIONS  
 
     ***************************** */
-    
+
     function addSubGraph(bytes calldata _subGraphData) external;
     /**
      * @notice Allows Channel Owner to update their Channel's Details like Description, Name, Logo, etc by passing in a
@@ -130,7 +94,13 @@ interface IPushCoreV2 {
      * @param  _channelExpiryTime the expiry time for time bound channels
      *
      */
-    function createChannelWithPUSH(CoreTypes.ChannelType _channelType, bytes calldata _identity, uint256 _amount, uint256 _channelExpiryTime) external;
+    function createChannelWithPUSH(
+        CoreTypes.ChannelType _channelType,
+        bytes calldata _identity,
+        uint256 _amount,
+        uint256 _channelExpiryTime
+    )
+        external;
 
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
@@ -170,7 +140,13 @@ interface IPushCoreV2 {
      *  @param _amountDeposited - Fees required for setting up channel notification settings
      *
      */
-    function createChannelSettings(uint256 _notifOptions, string calldata _notifSettings, string calldata _notifDescription, uint256 _amountDeposited) external;
+    function createChannelSettings(
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription,
+        uint256 _amountDeposited
+    )
+        external;
 
     /**
      * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be
@@ -184,7 +160,6 @@ interface IPushCoreV2 {
      * Minimum required PUSH  while reactivating.
      *
      */
-
     function deactivateChannel() external;
 
     /**
@@ -214,9 +189,7 @@ interface IPushCoreV2 {
      * @param _channelAddress Address of the Channel to be blocked
      *
      */
-
     function blockChannel(address _channelAddress) external;
-
 
     /**
      * @notice    Function is designed to verify a channel

@@ -108,7 +108,6 @@ contract EPNS {
      * @param rawAmount The number of tokens that are approved (2^256-1 means infinite)
      * @return Whether or not the approval succeeded
      */
-
     function approve(address spender, uint256 rawAmount) external returns (bool) {
         uint96 amount;
         if (rawAmount >= type(uint96).max) {

@@ -1,7 +1,8 @@
 pragma solidity ^0.8.0;
-import {BaseTest} from "../../../BaseTest.t.sol";
-import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
-import {SignatureVerifier} from "contracts/mocks/MockERC1271.sol";
+
+import { BaseTest } from "../../../BaseTest.t.sol";
+import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { SignatureVerifier } from "contracts/mocks/MockERC1271.sol";
 
 contract SendNotifsViaSig_Test is BaseTest {
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
@@ -14,12 +15,7 @@ contract SendNotifsViaSig_Test is BaseTest {
         verifierContract = new SignatureVerifier();
 
         changePrank(actor.bob_channel_owner);
-        coreProxy.createChannelWithPUSH(
-            CoreTypes.ChannelType.InterestBearingOpen,
-            _testChannelIdentity,
-            50e18,
-            0
-        );
+        coreProxy.createChannelWithPUSH(CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, 50e18, 0);
     }
 
     function test_WhenChannelSendsNotificationuUsing712Sig() external {
@@ -34,9 +30,7 @@ contract SendNotifsViaSig_Test is BaseTest {
             block.timestamp + 1000
         );
         bytes32 structHash = getStructHash(_sendNotif);
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKeys[actor.bob_channel_owner], digest);
 
         bool res = commProxy.sendNotifBySig(
@@ -69,9 +63,7 @@ contract SendNotifsViaSig_Test is BaseTest {
             block.timestamp + 1000
         );
         bytes32 structHash = getStructHash(_sendNotif);
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKeys[actor.charlie_channel_owner], digest);
 
         bool res = commProxy.sendNotifBySig(
@@ -100,9 +92,7 @@ contract SendNotifsViaSig_Test is BaseTest {
             block.timestamp + 1000
         );
         bytes32 structHash = getStructHash(_sendNotif);
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKeys[actor.tim_push_holder], digest);
 
         bool res = commProxy.sendNotifBySig(
@@ -131,9 +121,7 @@ contract SendNotifsViaSig_Test is BaseTest {
             block.timestamp + 1000
         );
         bytes32 structHash = getStructHash(_sendNotif);
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKeys[actor.tim_push_holder], digest);
         //Notification already sent one time
         commProxy.sendNotifBySig(
@@ -174,9 +162,7 @@ contract SendNotifsViaSig_Test is BaseTest {
             block.timestamp + 1000
         );
         bytes32 structHash = getStructHash(_sendNotif);
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash)
-        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKeys[actor.tim_push_holder], digest);
 
         bool res = commProxy.sendNotifBySig(
@@ -199,36 +185,25 @@ contract SendNotifsViaSig_Test is BaseTest {
         address _channel;
         address _recipient;
         bytes _identity;
-        uint nonce;
-        uint expiry;
+        uint256 nonce;
+        uint256 expiry;
     }
 
     // computes the hash of a sendNotif
-    function getStructHash(
-        SendNotif memory _sendNotif
-    ) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    SEND_NOTIFICATION_TYPEHASH,
-                    _sendNotif._channel,
-                    _sendNotif._recipient,
-                    keccak256(_sendNotif._identity),
-                    _sendNotif.nonce,
-                    _sendNotif.expiry
-                )
-            );
+    function getStructHash(SendNotif memory _sendNotif) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                SEND_NOTIFICATION_TYPEHASH,
+                _sendNotif._channel,
+                _sendNotif._recipient,
+                keccak256(_sendNotif._identity),
+                _sendNotif.nonce,
+                _sendNotif.expiry
+            )
+        );
     }
 
     function getDomainSeparator() public returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    DOMAIN_TYPEHASH,
-                    NAME_HASH,
-                    block.chainid,
-                    address(commProxy)
-                )
-            );
+        return keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(commProxy)));
     }
 }

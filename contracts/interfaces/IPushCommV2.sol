@@ -1,7 +1,6 @@
 pragma solidity ^0.8.20;
 
 interface IPushCommV2 {
-    
     /* *****************************
 
        EVENTS
@@ -36,7 +35,6 @@ interface IPushCommV2 {
     /// @return True if User is actually a subscriber of a Channel
     function isUserSubscribed(address _channel, address _user) external view returns (bool);
 
-
     /* *****************************
 
         STATE-CHANGING FUNCTIONS  
@@ -51,10 +49,9 @@ interface IPushCommV2 {
     ///  @param _channel address of the channel that the user is subscribing to
     function subscribe(address _channel) external returns (bool);
 
-    
     /// @notice Allows users to subscribe a List of Channels at once
     /// @param _channelList array of addresses of the channels that the user wishes to Subscribe
-    function batchSubscribe( address[] calldata _channelList) external returns (bool);
+    function batchSubscribe(address[] calldata _channelList) external returns (bool);
 
     /// @notice Subscribe Function through Meta TX
     /// @dev Takes into Consideration the Sign of the User
@@ -67,30 +64,34 @@ interface IPushCommV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    )
+        external;
 
-    
-    /// @notice Allows PushCore contract to call the Base Subscribe function whenever a User Creates his/her own Channel.
-    ///         This ensures that the Channel Owner is subscribed to imperative Push Channels as well as his/her own Channel.
-    /// @dev    Only Callable by the PushCore. This is to ensure that Users should only able to Subscribe for their own addresses.
-    ///         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses) or the PushCore contract
+    /// @notice Allows PushCore contract to call the Base Subscribe function whenever a User Creates his/her own
+    /// Channel.
+    ///         This ensures that the Channel Owner is subscribed to imperative Push Channels as well as his/her own
+    /// Channel.
+    /// @dev    Only Callable by the PushCore. This is to ensure that Users should only able to Subscribe for their own
+    /// addresses.
+    ///         The caller of the main Subscribe function should Either Be the USERS themselves(for their own addresses)
+    /// or the PushCore contract
     /// @param _channel address of the channel that the user is subscribing to
     /// @param _user address of the Subscriber of a Channel
 
-    function subscribeViaCore( address _channel, address _user) external returns (bool);
+    function subscribeViaCore(address _channel, address _user) external returns (bool);
 
-    
-    /// @notice Allows PushCore contract to call the Base UnSubscribe function whenever a User Destroys his/her TimeBound Channel.
-    ///         This ensures that the Channel Owner is unSubscribed from the imperative Push Channels as well as his/her own Channel.
-    ///        NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create the Channel again using the same Wallet Address.
+    /// @notice Allows PushCore contract to call the Base UnSubscribe function whenever a User Destroys his/her
+    /// TimeBound Channel.
+    ///         This ensures that the Channel Owner is unSubscribed from the imperative Push Channels as well as his/her
+    /// own Channel.
+    ///        NOTE-If they don't unsubscribe before destroying their Channel, they won't be able to create the Channel
+    /// again using the same Wallet Address.
     /// @dev    Only Callable by the PushCore.
     /// @param _channel address of the channel being unsubscribed
     /// @param _user address of the UnSubscriber of a Channel
 
     function unSubscribeViaCore(address _channel, address _user) external returns (bool);
 
-
-    
     /// @notice External Unsubcribe Function that allows users to directly unsubscribe from a particular channel
     /// @dev UnSubscribes the caller of the function from the particular Channel.
     ///    Takes into Consideration the "msg.sender"
@@ -98,13 +99,10 @@ interface IPushCommV2 {
 
     function unsubscribe(address _channel) external returns (bool);
 
-    
     /// @notice Allows users to unsubscribe from a List of Channels at once
     /// @param _channelList array of addresses of the channels that the user wishes to Unsubscribe
 
-    function batchUnsubscribe(
-        address[] calldata _channelList
-    ) external returns (bool);
+    function batchUnsubscribe(address[] calldata _channelList) external returns (bool);
 
     /// @notice Unsubscribe Function through Meta TX
     /// @dev Takes into Consideration the Signer of the transactioner
@@ -118,23 +116,22 @@ interface IPushCommV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    )
+        external;
 
-
-
-    
     /// @notice Allows a Channel Owner to ADD a Delegate for sending Notifications
     ///         Delegate shall be able to send Notification on the Channel's Behalf
     /// @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
-    /// NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
+    /// NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via
+    /// the PUSH NODES.
     ///@param _delegate address of the delegate who is allowed to Send Notifications
 
     function addDelegate(address _delegate) external;
 
-    
     /// @notice Allows a Channel Owner to Remove a Delegate's Permission to Send Notification
     /// @dev    This function will be only be callable by the Channel Owner from the PushCore contract.
-    /// NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via the PUSH NODES.
+    /// NOTE:   Verification of whether or not a Channel Address is actually the owner of the Channel, will be done via
+    /// the PUSH NODES.
     /// @param _delegate address of the delegate who is allowed to Send Notifications
 
     function removeDelegate(address _delegate) external;
@@ -145,11 +142,7 @@ interface IPushCommV2 {
     /// @param _recipient address of the reciever of the Notification
     /// @param _identity Info about the Notification
 
-    function sendNotification(
-        address _channel,
-        address _recipient,
-        bytes memory _identity
-    ) external returns (bool);
+    function sendNotification(address _channel, address _recipient, bytes memory _identity) external returns (bool);
 
     /// @notice Meta transaction function for Sending Notifications
     /// @dev   Allows the Caller to Simply Sign the transaction to initiate the Send Notif Function
@@ -166,10 +159,13 @@ interface IPushCommV2 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (bool);
+    )
+        external
+        returns (bool);
 
     /// @notice  Allows Users to Create and Subscribe to a Specific Notication Setting for a Channel.
-    /// @dev     Updates the userToChannelNotifs mapping to keep track of a User's Notification Settings for a Specific Channel
+    /// @dev     Updates the userToChannelNotifs mapping to keep track of a User's Notification Settings for a Specific
+    /// Channel
     ///          Deliminated Notification Settings string contains -> Decimal Representation Notif Settings +
     ///          Notification Settings
     ///          For instance, for a Notif Setting that looks like -> 3+1-0+2-0+3-1+4-98
@@ -187,9 +183,5 @@ interface IPushCommV2 {
     /// @param   _notifID- Decimal Representation of the Options selected by the user
     /// @param   _notifSettings - Deliminated string that depicts the User's Notifcation Settings
 
-    function changeUserChannelSettings(
-        address _channel,
-        uint256 _notifID,
-        string calldata _notifSettings
-    ) external;
+    function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external;
 }
