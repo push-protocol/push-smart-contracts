@@ -13,4 +13,4 @@ updateChannelMeta.t.sol
                 └── when amount passed is accurate
                     ├── it should update the channel successfully
                     ├── it should update variables correctly
-                    └── fees should increase linearly for every update
+                    └── it should increase the fees linearly for every update
