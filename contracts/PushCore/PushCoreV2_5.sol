@@ -94,15 +94,12 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     function onlyChannelOwner(address _channel) private view {
         if (
-            (
-                (channels[_channel].channelState != 1 || msg.sender != _channel)
-                    || (msg.sender != pushChannelAdmin && _channel == address(0x0))
-            )
+            !((channels[_channel].channelState == 1 && msg.sender == _channel) ||
+                (msg.sender == pushChannelAdmin && _channel == address(0x0)))
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
     }
-
     function addSubGraph(bytes calldata _subGraphData) external {
         onlyActivatedChannels(msg.sender);
         emit AddSubGraph(msg.sender, _subGraphData);
