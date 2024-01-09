@@ -185,7 +185,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
