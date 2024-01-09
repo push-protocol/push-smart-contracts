@@ -1,14 +1,13 @@
 pragma solidity ^0.8.20;
 
-import {BaseTest} from "../../../BaseTest.t.sol";
+import {BasePushCoreTest} from "../BasePushCoreTest.t.sol";
 import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
 import {Errors} from "contracts/libraries/Errors.sol";
 
-contract CreateChannelWithPUSH_Test is BaseTest {
-    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
+contract CreateChannelWithPUSH_Test is BasePushCoreTest {
 
     function setUp() public virtual override {
-        BaseTest.setUp();
+        BasePushCoreTest.setUp();
     }
 
     modifier whenNotPaused() {
@@ -166,7 +165,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.stopPrank();
     }
 
-    function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation() public {
+    function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation() public whenNotPaused {
         vm.prank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
             CoreTypes.ChannelType.InterestBearingOpen,
@@ -190,7 +189,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         assertEq(expectedChannelPoolFunds, coreProxy.CHANNEL_POOL_FUNDS());
     }
 
-    function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public {
+    function test_Revertwhen_ChannelExpiryLessThanBlockTimestamp() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
 
         vm.expectRevert(Errors.Core_InvalidExpiryTime.selector);
@@ -203,7 +202,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.stopPrank();
     }
 
-    function test_CoreInteractWithComm() public {
+    function test_CoreInteractWithComm() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);
         address EPNS_ALERTER = address(0);
 
@@ -251,7 +250,7 @@ contract CreateChannelWithPUSH_Test is BaseTest {
         vm.stopPrank();
     }
 
-    function test_EmitRelevantEvents() public {
+    function test_EmitRelevantEvents() public whenNotPaused {
         vm.expectEmit(true, true, false, true, address(coreProxy));
         emit AddChannel(
             actor.bob_channel_owner,
