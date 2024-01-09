@@ -18,10 +18,6 @@ contract SendNotifs_Test is BaseTest {
         assertEq(res, false);
     }
 
-    function test_WhenRecipientIsSendingNOTIFOnlyToThemselves() external {
-        //User can no longer send notifs to themselves
-    }
-
     function test_WhenChannelIs0x00ButCallerIsAnyAddressOtherThanAdminOrGovernance() external {
         changePrank(actor.charlie_channel_owner);
         bool res = commProxy.sendNotification(address(0), actor.alice_channel_owner, _testChannelIdentity);
