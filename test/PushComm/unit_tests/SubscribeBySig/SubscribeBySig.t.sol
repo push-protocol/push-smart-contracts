@@ -14,7 +14,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         _;
     }
 
-    function test_WhenMaliciousUserReplaysA712Signature() public whenUserSubscribesWith712Sig {
+    function test_RevertWhen_MaliciousUserReplaysA712Signature() public whenUserSubscribesWith712Sig {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -43,7 +43,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         );
     }
 
-    function test_WhenAnExpired712SignatureIsPassed() public whenUserSubscribesWith712Sig {
+    function test_RevertWhen_AnExpired712SignatureIsPassed() public whenUserSubscribesWith712Sig {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -91,7 +91,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         _;
     }
 
-    function test_WhenMaliciousUserReplaysA1271Sig() public whenAContractSubscribesWith1271Sign {
+    function test_RevertWhen_MaliciousUserReplaysA1271Sig() public whenAContractSubscribesWith1271Sign {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -122,7 +122,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         );
     }
 
-    function test_WhenAnExpired1271SigIsPassed() public whenAContractSubscribesWith1271Sign {
+    function test_RevertWhen_AnExpired1271SigIsPassed() public whenAContractSubscribesWith1271Sign {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
