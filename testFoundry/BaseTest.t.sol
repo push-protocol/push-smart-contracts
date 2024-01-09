@@ -13,10 +13,10 @@ import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
-import { CoreEvents } from "./utils/CoreEvents.sol";
+import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
 
-abstract contract BaseTest is Test, Constants, CoreEvents {
+abstract contract BaseTest is Test, Constants, Events {
     EPNS public pushToken;
     PushCoreV2_5 public core;
     PushCoreV2_5 public coreProxy;

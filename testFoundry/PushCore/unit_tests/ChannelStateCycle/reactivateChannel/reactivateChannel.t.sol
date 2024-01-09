@@ -1,11 +1,13 @@
 pragma solidity ^0.8.20;
 
-import {BasePushChannelStateCycle} from "../BasePushChannelStateCycle.t.sol";
+import {BasePushCoreTest} from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
-contract ReactivateChannel_Test is BasePushChannelStateCycle {
+contract ReactivateChannel_Test is BasePushCoreTest {
     function setUp() public virtual override {
-        BasePushChannelStateCycle.setUp();
+        BasePushCoreTest.setUp();
+
+        _createChannel(actor.bob_channel_owner);
     }
 
     modifier whenNotPaused() {

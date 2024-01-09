@@ -20,6 +20,8 @@ library Errors {
     error InvalidArg_MoreThanExpected(uint256 max_threshold, uint256 actual_value);
     /// @notice Reverts when uint256 argument passed is less than expected value.
     error InvalidArg_LessThanExpected(uint256 min_threshold, uint256 actual_value);
+    /// @notice Reverts when operation failed because the contract is paused.
+    error EnforcedPause();
 
     /* ***************
         CORE Errors

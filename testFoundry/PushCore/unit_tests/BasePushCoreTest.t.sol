@@ -3,11 +3,12 @@ pragma experimental ABIEncoderV2;
 
 import "forge-std/Test.sol";
 
-import {BaseTest} from "../../../BaseTest.t.sol";
-import {CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+import {CoreTypes} from "../../../contracts/libraries/DataTypes.sol";
 
-contract BasePushChannelStateCycle is BaseTest{
+contract BasePushCoreTest is BaseTest {
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
+    bytes constant _testChannelUpdatedIdentity = bytes("test-updated-channel-hello-world");
 
     /* ***************
        Initializing Set-Up for Push Contracts
@@ -19,13 +20,9 @@ contract BasePushChannelStateCycle is BaseTest{
         vm.prank(actor.admin);
         coreProxy.setMinPoolContribution(1 ether);
         MIN_POOL_CONTRIBUTION = 1 ether;
-
-        _createChannel(actor.bob_channel_owner);
     }
 
     function _createChannel(address from) internal {
-        approveTokens(from, address(coreProxy), ADD_CHANNEL_MIN_FEES);
-
         vm.prank(from);
         coreProxy.createChannelWithPUSH(
             CoreTypes.ChannelType.InterestBearingOpen,
@@ -36,26 +33,42 @@ contract BasePushChannelStateCycle is BaseTest{
     }
 
     function _getChannelState(
-        address from
+        address _channel
     ) internal view returns (uint8 channelState) {
-        (, uint8 actualChannelState, , , , , , , , , ) = coreProxy.channels(from);
+        (, uint8 actualChannelState, , , , , , , , , ) = coreProxy.channels(_channel);
 
         channelState = actualChannelState;
     }
 
     function _getChannelWeight(
-        address from
+        address _channel
     ) internal view returns (uint256 channelWeight) {
-        (, , , , , , , , , uint256 actualChannelWeight, ) = coreProxy.channels(from);
+        (, , , , , , , , , uint256 actualChannelWeight, ) = coreProxy.channels(_channel);
 
         channelWeight = actualChannelWeight;
     }
 
+    function _getChannelExpiryTime(
+        address _channel
+    ) internal view returns (uint256 channelExpiryTime) {
+        (, , , , , , , , , , uint256 actualChannelExpiryTime) = coreProxy.channels(_channel);
+
+        channelExpiryTime = actualChannelExpiryTime;
+    }
+
+    function _getChannelUpdateBlock(
+        address _channel
+    ) internal view returns (uint256 channelUpdateBlock) {
+        (, , , , , , , , uint256 actualChannelUpdateBlock, , ) = coreProxy.channels(_channel);
+
+        channelUpdateBlock = actualChannelUpdateBlock;
+    }
+
     function _getChannelPoolContribution(
-        address from
+        address _channel
     ) internal view returns (uint256 channelContribution) {
         (, , , uint256 actualPoolContribution, , , , , , , ) = coreProxy.channels(
-            from
+            _channel
         );
 
         channelContribution = actualPoolContribution;
