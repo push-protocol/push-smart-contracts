@@ -468,7 +468,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
-        if (callerVerified <= 0) {
+        if (callerVerified == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
 
