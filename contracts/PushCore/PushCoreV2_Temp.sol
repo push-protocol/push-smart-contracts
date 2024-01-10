@@ -151,16 +151,16 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
+     * @dev    Minimum required amount can never be below the sum of MIN_POOL_CONTRIBUTION and FEE_AMOUNT 
      *
      * @param _newFees new minimum fees required for Channel Creation
      *
      */
-
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
-        if (_newFees < MIN_POOL_CONTRIBUTION) {
-            revert Errors.InvalidArg_LessThanExpected(MIN_POOL_CONTRIBUTION, _newFees);
+        uint256 minFeeRequired = MIN_POOL_CONTRIBUTION + FEE_AMOUNT;
+        if (_newFees < minFeeRequired) {
+            revert Errors.InvalidArg_LessThanExpected(minFeeRequired, _newFees);
         }
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
