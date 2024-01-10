@@ -213,7 +213,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
-        if (userFeesInfo[msg.sender].stakedAmount <= 0) {
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         harvestAll();

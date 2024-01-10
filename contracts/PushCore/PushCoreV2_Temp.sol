@@ -133,7 +133,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
-        if (_newAmount <= 0) {
+        if (_newAmount == 0) {
             revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
@@ -246,9 +246,11 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannel();
         }
         if (
-            _channelType != CoreTypes.ChannelType.InterestBearingOpen
-                && _channelType != CoreTypes.ChannelType.InterestBearingMutual
-                && _channelType != CoreTypes.ChannelType.TimeBound && _channelType != CoreTypes.ChannelType.TokenGaited
+            !(
+                _channelType == CoreTypes.ChannelType.InterestBearingOpen
+                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited
+            )
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -721,7 +723,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
-        if (userFeesInfo[msg.sender].stakedAmount <= 0) {
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
 

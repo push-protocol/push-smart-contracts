@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 abstract contract Constants {
     // General Constant Values of All Contracts
     uint256 internal constant DEC_27_2021 = 1_640_605_391;
+    bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     // Specific Constant Values for Staking-Related Contracts
     uint256 public genesisEpoch = 17_821_509;
