@@ -463,8 +463,12 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         returns (bool)
     {
         onlyPushChannelAdmin();
-        for (uint256 i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; ) {
             verifyChannel(_channelList[i]);
+            
+            unchecked {
+                i++;
+            }
         }
         return true;
     }
