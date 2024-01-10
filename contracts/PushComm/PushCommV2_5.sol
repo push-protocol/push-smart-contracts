@@ -112,8 +112,12 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     /// @inheritdoc IPushCommV2
     function batchSubscribe(address[] calldata _channelList) external returns (bool) {
-        for (uint256 i = 0; i < _channelList.length; i++) {
+        uint256 channelListLength = _channelList.length;
+        for (uint256 i = 0; i < channelListLength; ) {
             _subscribe(_channelList[i], msg.sender);
+            unchecked {
+                i++;
+            }
         }
         return true;
     }
@@ -146,12 +150,14 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
-        for (uint256 i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; ) {
             if (isUserSubscribed(_channelList[i], _usersList[i])) {
+                unchecked { i++; }
                 continue;
             } else {
                 _subscribe(_channelList[i], _usersList[i]);
             }
+            unchecked { i++; }
         }
         return true;
     }
@@ -200,6 +206,12 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         if (subscriber == address(0)) {
             revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
+        if (nonce != nonces[subscriber]++) {
+            revert Errors.Comm_InvalidNonce();
+        }
+        if (block.timestamp > expiry) {
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
+        }
 
         bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
@@ -218,13 +230,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             if (signatory != subscriber) {
                 revert Errors.Comm_InvalidSignature_FromEOA();
             }
-        }
-        if (nonce != nonces[subscriber]++) {
-            revert Errors.Comm_InvalidNonce();
-        }
-
-        if (block.timestamp > expiry) {
-            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
 
         _subscribe(channel, subscriber);
@@ -251,8 +256,12 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     /// @inheritdoc IPushCommV2
     function batchUnsubscribe(address[] calldata _channelList) external returns (bool) {
-        for (uint256 i = 0; i < _channelList.length; i++) {
+        uint256 channelListLength = _channelList.length;
+        for (uint256 i = 0; i < channelListLength; ) {
             _unsubscribe(_channelList[i], msg.sender);
+            unchecked {
+                i++;
+            }
         }
         return true;
     }
@@ -299,6 +308,13 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         if (subscriber == address(0)) {
             revert Errors.InvalidArgument_WrongAddress(subscriber);
         }
+        if (nonce != nonces[subscriber]++) {
+            revert Errors.Comm_InvalidNonce();
+        }
+        if (block.timestamp > expiry) {
+            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
+        }
+
         // EIP-712
         bytes32 domainSeparator =
             keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
@@ -317,13 +333,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             if (signatory != subscriber) {
                 revert Errors.Comm_InvalidSignature_FromEOA();
             }
-        }
-        if (nonce != nonces[subscriber]++) {
-            revert Errors.Comm_InvalidNonce();
-        }
-
-        if (block.timestamp > expiry) {
-            revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
         _unsubscribe(channel, subscriber);
     }
