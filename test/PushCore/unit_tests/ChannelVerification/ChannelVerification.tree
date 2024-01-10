@@ -1,0 +1,40 @@
+.
+├── when checked the default verification status
+│   ├── when checked the verification status for admin or zero address
+│   │   └── it should return 1 for admin and zero address
+│   └── when checked the verification status for unverified channel
+│       └── it should return 0 for unverified Channels
+├── when a channel is verified
+│   ├── when admin verifies a channel
+│   │   └── it should return primary verified for channels verified by admin
+│   ├── when a verified channel verifies another channel
+│   │   └── it should give secondary verification(2) to that channel
+│   ├── when an unverified channel tries verifying another channel
+│   │   └── it should REVERT
+│   ├── when a channel has secondary verification
+│   │   └── it should allow admin to give primary verification
+│   └── when a primary verified channel verifies another primary erified channel
+│       └── it should REVERT- not allowing downgrade primary verified to secondary
+├── when a channel gets unverified
+│   ├── when admin unverifies a channel verified by admin itself
+│   │   └── it should be able to unverify
+│   ├── when admin unverifies a channel verified by another Channel
+│   │   └── it should be able to unverify
+│   ├── when a channel unverifies a secondary verified channel verified by itself
+│   │   └── it should be able to unverify
+│   └── when a channel unverifies a secondary verified channel verified by another channel
+│       └── it should REVERT
+├── when there is a chain of secondary verifications
+│   ├── when a secondary verified channel verifies another channel
+│   │   └── it should give secondary verification to that channel
+│   ├── when a secondary verified channel unverifies another secondary channels verified by itself
+│   │   └── it should unverify those channels
+│   ├── when a secondary verified channel gets unverifed
+│   │   └── it should unverify any other secondary verified channel that is verified by this channel
+│   └── when admin unverifies any channel primary or secondary
+│       └── it should unverify all of them as well as any secondary channel verified by those channels
+└── when batchVerification function is called
+    ├── when non-admin calls batchVerification
+    │   └── it should REVERT- not allowing anyone other than Admin
+    └── when admin calls batchVerification
+        └── it should execute and set the verifications to primary
