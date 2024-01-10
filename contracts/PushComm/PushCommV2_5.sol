@@ -347,13 +347,9 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      *        Does nothing if an address has already been added.
      *
      * @param _user address of the user
-     * @return userAlreadyAdded returns whether or not a user is already added.
-     *
      */
-    function _addUser(address _user) private returns (bool userAlreadyAdded) {
-        if (users[_user].userActivated) {
-            userAlreadyAdded = true;
-        } else {
+    function _addUser(address _user) private {
+        if (!users[_user].userActivated) {
             // Activates the user
             users[_user].userStartBlock = block.number;
             users[_user].userActivated = true;
