@@ -127,7 +127,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
-        if (_newAmount <= 0) {
+        if (_newAmount == 0) {
             revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
@@ -575,7 +575,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
-        if (callerVerified <= 0) {
+        if (callerVerified == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
 
@@ -716,7 +716,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
             revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
         }
-        if (userFeesInfo[msg.sender].stakedAmount <= 0) {
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
 
