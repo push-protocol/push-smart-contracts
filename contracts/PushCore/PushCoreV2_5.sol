@@ -258,8 +258,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         channels[_channel].channelUpdateBlock = block.number;
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
-        uint256 _channelsCount = channelsCount;
-        channelsCount = _channelsCount + 1;
+        channelsCount = channelsCount + 1;
 
         if (_channelType == CoreTypes.ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
