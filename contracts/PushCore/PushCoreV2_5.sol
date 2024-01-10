@@ -116,10 +116,16 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         onlyPushChannelAdmin();
         governance = _governanceAddress;
     }
-
+    /**
+     * @notice Allows admin to set the Fee Amount of core contract
+     *
+     * @dev    _newFees must not be more than (or equal to) the ADD_CHANNEL_MIN_FEES
+     *
+     * @param _newFees new minimum fees required for FEE_AMOUNT 
+     */
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
-        if (_newFees > ADD_CHANNEL_MIN_FEES) {
+        if (_newFees >= ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_MoreThanExpected(ADD_CHANNEL_MIN_FEES, _newFees);
         }
         FEE_AMOUNT = _newFees;
