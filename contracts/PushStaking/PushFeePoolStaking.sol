@@ -73,9 +73,13 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
-        for (uint256 i; i < _currentEpoch; ++i) {
+        for (uint256 i; i < _currentEpoch; ) {
             epochRewards[i + 1] = _epochRewards[i];
             epochToTotalStakedWeight[i + 1] = _epochToTotalStakedWeight[i];
+            
+            unchecked {
+                i++;
+            }
         }
     }
 
@@ -98,11 +102,15 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         ) {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
-        for (uint256 i = start; i < end; ++i) {
+        for (uint256 i = start; i < end; ) {
             userFeesInfo[_user[i]].stakedAmount = _stakedAmount[i];
             userFeesInfo[_user[i]].stakedWeight = _stakedWeight[i];
             userFeesInfo[_user[i]].lastStakedBlock = _lastStakedBlock[i];
             userFeesInfo[_user[i]].lastClaimedBlock = _lastClaimedBlock[i];
+
+            unchecked {
+                i++;
+            }
         }
     }
 
@@ -122,10 +130,14 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
-        for (uint256 i = startIndex; i < endIndex; ++i) {
+        for (uint256 i = startIndex; i < endIndex; ) {
             userFeesInfo[_user[i]].epochToUserStakedWeight[_epoch] = _epochToUserStakedWeight[i];
             if (_userRewardsClaimed.length > 0) {
                 usersRewardsClaimed[_user[i]] = _userRewardsClaimed[i];
+            }
+
+            unchecked {
+                i++;
             }
         }
     }
