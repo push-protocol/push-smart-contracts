@@ -3,7 +3,8 @@ pragma solidity ^0.8.20;
 
 import "./PushFeePoolStorage.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IPushCore.sol";
+import { IPushCoreStaking } from "../interfaces/IPushCoreStaking.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -41,12 +42,16 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     }
 
     modifier onlyPushChannelAdmin() {
-        require(msg.sender == pushChannelAdmin, "PushFeePoolStaking::onlyPushChannelAdmin: Invalid Caller");
+        if (msg.sender != pushChannelAdmin) {
+            revert Errors.CallerNotAdmin();
+        }
         _;
     }
 
     modifier isMigrated() {
-        require(!migrated, "PushFeePoolStaking::isMigrated: Migration Completed");
+        if (migrated) {
+            revert Errors.PushStaking_MigrationCompleted();
+        }
         _;
     }
 
@@ -64,9 +69,10 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         onlyPushChannelAdmin
         isMigrated
     {
-        require(
-            _currentEpoch == _epochRewards.length && _currentEpoch == _epochToTotalStakedWeight.length, "Invalid Length"
-        );
+        if (_currentEpoch != _epochRewards.length || _currentEpoch != _epochToTotalStakedWeight.length) {
+            revert Errors.InvalidArg_ArrayLengthMismatch();
+        }
+
         for (uint256 i; i < _currentEpoch; ++i) {
             epochRewards[i + 1] = _epochRewards[i];
             epochToTotalStakedWeight[i + 1] = _epochToTotalStakedWeight[i];
@@ -86,11 +92,12 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         onlyPushChannelAdmin
         isMigrated
     {
-        require(
-            _user.length == _stakedAmount.length && _user.length == _stakedWeight.length
-                && _user.length == _lastStakedBlock.length && _user.length == _lastClaimedBlock.length,
-            "Invalid Length"
-        );
+        if (
+            _user.length != _stakedAmount.length || _user.length != _stakedWeight.length
+                || _user.length != _lastStakedBlock.length || _user.length != _lastClaimedBlock.length
+        ) {
+            revert Errors.InvalidArg_ArrayLengthMismatch();
+        }
         for (uint256 i = start; i < end; ++i) {
             userFeesInfo[_user[i]].stakedAmount = _stakedAmount[i];
             userFeesInfo[_user[i]].stakedWeight = _stakedWeight[i];
@@ -111,10 +118,9 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         onlyPushChannelAdmin
         isMigrated
     {
-        require(
-            _user.length == _epochToUserStakedWeight.length && _user.length == _userRewardsClaimed.length,
-            "Invalid Length"
-        );
+        if (_user.length != _epochToUserStakedWeight.length || _user.length != _userRewardsClaimed.length) {
+            revert Errors.InvalidArg_ArrayLengthMismatch();
+        }
 
         for (uint256 i = startIndex; i < endIndex; ++i) {
             userFeesInfo[_user[i]].epochToUserStakedWeight[_epoch] = _epochToUserStakedWeight[i];
@@ -128,15 +134,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         migrated = true;
     }
 
-    // *************** MIGRATION FUNCTIONS BEGINS ********************* //
-
-    /**
-     * @notice Function to return User's Staked Weight for any given EPOCH ID
-     *
-     */
-    function getEpochToUserStakedWeight(address _user, uint256 _epoch) external view returns (uint256) {
-        return userFeesInfo[_user].epochToUserStakedWeight[_epoch];
-    }
+    // *************** MIGRATION FUNCTIONS ENDS ********************* //
 
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
@@ -159,7 +157,9 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function lastEpochRelative(uint256 _from, uint256 _to) public pure returns (uint256) {
-        require(_to >= _from, "PushFeePoolStaking::lastEpochRelative: Relative Block Number Overflow");
+        if (_to < _from) {
+            revert Errors.InvalidArg_LessThanExpected(_from, _to);
+        }
         return uint256((_to - _from) / epochDuration + 1);
     }
 
@@ -210,14 +210,15 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function unstake() external {
-        require(
-            block.number > userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
-            "PushFeePoolStaking::unstake: Can't Unstake before 1 complete EPOCH"
-        );
-        require(userFeesInfo[msg.sender].stakedAmount > 0, "PushFeePoolStaking::unstake: Invalid Caller");
+        if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
+            revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
+        }
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
-        IPushCore(core).sendFunds(msg.sender, stakedAmount);
+        IPushCoreStaking(core).sendFunds(msg.sender, stakedAmount);
 
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(msg.sender, userFeesInfo[msg.sender].stakedWeight, true);
@@ -240,7 +241,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
 
         uint256 rewards = harvest(msg.sender, currentEpoch - 1);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreStaking(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -252,7 +253,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      */
     function harvestPaginated(uint256 _tillEpoch) external {
         uint256 rewards = harvest(msg.sender, _tillEpoch);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreStaking(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -263,9 +264,11 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
      *
      */
     function daoHarvestPaginated(uint256 _tillEpoch) external {
-        require(msg.sender == governance, "PushFeePoolStaking::onlyGovernance: Invalid Caller");
+        if (msg.sender != governance) {
+            revert Errors.CallerNotAdmin();
+        }
         uint256 rewards = harvest(core, _tillEpoch);
-        IPushCore(core).sendFunds(msg.sender, rewards);
+        IPushCoreStaking(core).sendFunds(msg.sender, rewards);
     }
 
     /**
@@ -283,12 +286,12 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
-        require(
-            currentEpoch > _tillEpoch, "PushFeePoolStaking::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
-        );
-        require(
-            _tillEpoch >= nextFromEpoch, "PushFeePoolStaking::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
-        );
+        if (currentEpoch <= _tillEpoch) {
+            revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
+        }
+        if (_tillEpoch < nextFromEpoch) {
+            revert Errors.InvalidArg_LessThanExpected(nextFromEpoch, _tillEpoch);
+        }
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards + claimableReward;
@@ -372,7 +375,7 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
-            uint256 PROTOCOL_POOL_FEES = IPushCore(core).PROTOCOL_POOL_FEES();
+            uint256 PROTOCOL_POOL_FEES = IPushCoreStaking(core).PROTOCOL_POOL_FEES();
             uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 

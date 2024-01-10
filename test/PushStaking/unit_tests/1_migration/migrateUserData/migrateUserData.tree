@@ -1,0 +1,12 @@
+migrateUserData.t.sol
+└── when caller is not Push Admin
+    │   └── it REVERT - PushFeePool::onlyPushChannelAdmin: Invalid Caller
+    └── when caller is Push Admin
+        ├── when migration is already completed
+        │   └── it REVERT - PushFeePool::isMigrated: Migration Completed
+        └── when migration is not yet completed
+            ├── when array lengths are not equal to User's array length
+            │   └── it REVERT - Ivalid Length
+            └── it should update UserFeesInfo accurately
+
+

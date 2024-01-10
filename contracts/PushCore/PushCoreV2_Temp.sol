@@ -13,46 +13,19 @@ pragma solidity ^0.8.20;
 import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/IUniswapV2Router.sol";
-import "../interfaces/IEPNSCommV1.sol";
+import "../interfaces/uniswap/IUniswapV2Router.sol";
+import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
+import { Errors } from "../libraries/Errors.sol";
+import { CoreTypes } from "../libraries/DataTypes.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
+contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
     using SafeERC20 for IERC20;
-
-    /* ***************
-        EVENTS
-     *************** */
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
-    event RewardsClaimed(address indexed user, uint256 rewardAmount);
-    event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-
-    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
-    event ChannelBlocked(address indexed channel);
-    event AddChannel(address indexed channel, ChannelType indexed channelType, bytes identity);
-    event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
-    );
-    event AddSubGraph(address indexed channel, bytes _subGraphData);
-    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
-    event Staked(address indexed user, uint256 indexed amountStaked);
-    event Unstaked(address indexed user, uint256 indexed amountUnstaked);
-    event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
-    event IncentivizeChatReqReceived(
-        address requestSender,
-        address requestReceiver,
-        uint256 amountForReqReceiver,
-        uint256 feePoolAmount,
-        uint256 timestamp
-    );
-    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* ***************
         INITIALIZER
@@ -100,26 +73,33 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     SETTER & HELPER FUNCTIONS
 
     *************** */
-    function onlyPushChannelAdmin() private {
-        require(msg.sender == pushChannelAdmin, "PushCoreV2::onlyPushChannelAdmin: Invalid Caller");
+    function onlyPushChannelAdmin() private view {
+        if (msg.sender != pushChannelAdmin) {
+            revert Errors.CallerNotAdmin();
+        }
     }
 
-    function onlyGovernance() private {
-        require(msg.sender == governance, "PushCoreV2::onlyGovernance: Invalid Caller");
+    function onlyGovernance() private view {
+        if (msg.sender != governance) {
+            revert Errors.CallerNotAdmin();
+        }
     }
 
-    function onlyActivatedChannels(address _channel) private {
-        require(channels[_channel].channelState == 1, "PushCoreV2::onlyActivatedChannels: Invalid Channel");
+    function onlyActivatedChannels(address _channel) private view {
+        if (channels[_channel].channelState != 1) {
+            revert Errors.Core_InvalidChannel();
+        }
     }
 
-    function onlyChannelOwner(address _channel) private {
-        require(
-            (
+    function onlyChannelOwner(address _channel) private view {
+        if (
+            !(
                 (channels[_channel].channelState == 1 && msg.sender == _channel)
                     || (msg.sender == pushChannelAdmin && _channel == address(0x0))
-            ),
-            "PushCoreV2::onlyChannelOwner: Invalid Channel Owner"
-        );
+            )
+        ) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
     }
 
     function addSubGraph(bytes calldata _subGraphData) external {
@@ -136,16 +116,26 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyPushChannelAdmin();
         governance = _governanceAddress;
     }
-
+    /**
+     * @notice Allows admin to set the Fee Amount of core contract
+     *
+     * @dev    _newFees must not be more than (or equal to) the ADD_CHANNEL_MIN_FEES
+     *
+     * @param _newFees new minimum fees required for FEE_AMOUNT 
+     */
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
-        require(_newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES, "PushCoreV2::setFeeAmount: Invalid Fee");
+        if (_newFees >= ADD_CHANNEL_MIN_FEES) {
+            revert Errors.InvalidArg_MoreThanExpected(ADD_CHANNEL_MIN_FEES, _newFees);
+        }
         FEE_AMOUNT = _newFees;
     }
 
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
-        require(_newAmount > 0, "PushCoreV2::setMinPoolContribution: Invalid Amount");
+        if (_newAmount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
+        }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
 
@@ -158,25 +148,28 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyGovernance();
         _unpause();
     }
-
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below MIN_POOL_CONTRIBUTION
+     * @dev    Minimum required amount can never be below the sum of MIN_POOL_CONTRIBUTION and FEE_AMOUNT 
      *
      * @param _newFees new minimum fees required for Channel Creation
      *
      */
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
-        require(_newFees >= MIN_POOL_CONTRIBUTION, "PushCoreV2::setMinChannelCreationFees: Invalid Fees");
+        uint256 minFeeRequired = MIN_POOL_CONTRIBUTION + FEE_AMOUNT;
+        if (_newFees < minFeeRequired) {
+            revert Errors.InvalidArg_LessThanExpected(minFeeRequired, _newFees);
+        }
         ADD_CHANNEL_MIN_FEES = _newFees;
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external {
         onlyPushChannelAdmin();
-        require(_newAdmin != address(0), "PushCoreV2::transferPushChannelAdminControl: Invalid Address");
-        require(_newAdmin != pushChannelAdmin, "PushCoreV2::transferPushChannelAdminControl: Similar Admnin Address");
+        if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
+            revert Errors.InvalidArgument_WrongAddress(_newAdmin);
+        }
         pushChannelAdmin = _newAdmin;
     }
 
@@ -213,12 +206,15 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 updateCounter = channelUpdateCounter[_channel] + 1;
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
-        require(_amount >= requiredFees, "PushCoreV2::updateChannelMeta: Insufficient Deposit Amount");
+        if (_amount < requiredFees) {
+            revert Errors.InvalidArg_LessThanExpected(requiredFees, _amount);
+        }
+
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
@@ -235,7 +231,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function createChannelWithPUSH(
-        ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
         uint256 _amount,
         uint256 _channelExpiryTime
@@ -243,15 +239,21 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         external
         whenNotPaused
     {
-        require(_amount >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount");
-        require(channels[msg.sender].channelState == 0, "PushCoreV2::onlyInactiveChannels: Channel already Activated");
-        require(
-            (
-                _channelType == ChannelType.InterestBearingOpen || _channelType == ChannelType.InterestBearingMutual
-                    || _channelType == ChannelType.TimeBound || _channelType == ChannelType.TokenGaited
-            ),
-            "PushCoreV2::onlyUserAllowedChannelType: Invalid Channel Type"
-        );
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
+            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+        }
+        if (channels[msg.sender].channelState != 0) {
+            revert Errors.Core_InvalidChannel();
+        }
+        if (
+            !(
+                _channelType == CoreTypes.ChannelType.InterestBearingOpen
+                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited
+            )
+        ) {
+            revert Errors.Core_InvalidChannelType();
+        }
 
         emit AddChannel(msg.sender, _channelType, _identity);
 
@@ -274,7 +276,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      */
     function _createChannel(
         address _channel,
-        ChannelType _channelType,
+        CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
@@ -296,24 +298,25 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         channels[_channel].channelUpdateBlock = block.number;
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
-        uint256 _channelsCount = channelsCount;
-        channelsCount = _channelsCount + 1;
+        channelsCount = channelsCount + 1;
 
-        if (_channelType == ChannelType.TimeBound) {
-            require(_channelExpiryTime > block.timestamp, "PushCoreV2::createChannel: Invalid channelExpiryTime");
+        if (_channelType == CoreTypes.ChannelType.TimeBound) {
+            if (_channelExpiryTime <= block.timestamp) {
+                revert Errors.Core_InvalidExpiryTime();
+            }
             channels[_channel].expiryTime = _channelExpiryTime;
         }
 
         // Subscribe them to their own channel as well
         address _epnsCommunicator = epnsCommunicator;
         if (_channel != pushChannelAdmin) {
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_channel, _channel);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, _channel);
         }
 
         // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
         if (_channel != address(0x0)) {
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
-            IEPNSCommV1(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
+            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
         }
     }
 
@@ -331,34 +334,33 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *         - It transfers back refundable tokenAmount back to the USER.
      *
      */
-
     function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
         onlyActivatedChannels(_channelAddress);
-        Channel memory channelData = channels[_channelAddress];
+        CoreTypes.Channel memory channelData = channels[_channelAddress];
 
-        require(
-            channelData.channelType == ChannelType.TimeBound,
-            "PushCoreV2::destroyTimeBoundChannel: Channel not TIME BOUND"
-        );
-        require(
-            (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
-                || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp),
-            "PushCoreV2::destroyTimeBoundChannel: Invalid Caller or Channel Not Expired"
-        );
+        if (channelData.channelType != CoreTypes.ChannelType.TimeBound) {
+            revert Errors.Core_InvalidChannelType();
+        }
+        if (
+            (msg.sender != _channelAddress || channelData.expiryTime >= block.timestamp)
+                && (msg.sender != pushChannelAdmin || channelData.expiryTime + 14 days >= block.timestamp)
+        ) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
         uint256 totalRefundableAmount = channelData.poolContribution;
-
+        // Update POOL_FUNDS & PROTOCOL_POOL_FEES
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+        
         if (msg.sender != pushChannelAdmin) {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
         } else {
-            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
         }
         // Unsubscribing from imperative Channels
         address _epnsCommunicator = epnsCommunicator;
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
-        IEPNSCommV1(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
+        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount - 1;
         delete channels[_channelAddress];
@@ -398,10 +400,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         external
     {
         onlyActivatedChannels(msg.sender);
-        require(
-            _amountDeposited >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::createChannelSettings: Insufficient Funds Passed"
-        );
-
+        if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
+            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
+        }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
         channelNotifSettings[msg.sender] = notifSetting;
 
@@ -422,10 +423,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * Minimum required PUSH  while reactivating.
      *
      */
-
     function deactivateChannel() external whenNotPaused {
         onlyActivatedChannels(msg.sender);
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
@@ -452,10 +452,14 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param _amount Amount of PUSH to be deposited
      *
      */
-
     function reactivateChannel(uint256 _amount) external whenNotPaused {
-        require(_amount >= ADD_CHANNEL_MIN_FEES, "PushCoreV2::reactivateChannel: Insufficient Funds");
-        require(channels[msg.sender].channelState == 2, "PushCoreV2::onlyDeactivatedChannels: Channel is Active");
+        if (_amount < ADD_CHANNEL_MIN_FEES) {
+            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+        }
+
+        if (channels[msg.sender].channelState != 2) {
+            revert Errors.Core_InvalidChannel();
+        }
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         uint256 poolFeeAmount = FEE_AMOUNT;
@@ -464,7 +468,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        Channel storage channelData = channels[msg.sender];
+        CoreTypes.Channel storage channelData = channels[msg.sender];
 
         uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
         uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
@@ -491,15 +495,13 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param _channelAddress Address of the Channel to be blocked
      *
      */
-
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyPushChannelAdmin();
-        require(
-            ((channels[_channelAddress].channelState != 3) && (channels[_channelAddress].channelState != 0)),
-            "PushCoreV2::onlyUnblockedChannels: Invalid Channel"
-        );
+        if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
+            revert Errors.Core_InvalidChannel();
+        }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channels[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -580,14 +582,15 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
         uint8 callerVerified = getChannelVerfication(msg.sender);
-        require(callerVerified > 0, "PushCoreV2::verifyChannel: Caller is not verified");
+        if (callerVerified == 0) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
-        require(
-            channelVerified == 0 || msg.sender == pushChannelAdmin,
-            "PushCoreV2::verifyChannel: Channel already verified"
-        );
+        if (channelVerified != 0 || msg.sender != pushChannelAdmin) {
+            revert Errors.Core_InvalidChannel();
+        }
 
         // Verify channel
         channels[_channel].verifiedBy = msg.sender;
@@ -603,10 +606,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function unverifyChannel(address _channel) public {
-        require(
-            channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin,
-            "PushCoreV2::unverifyChannel: Invalid Caller"
-        );
+        if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
+            revert Errors.CallerNotAdmin();
+        }
 
         // Unverify channel
         channels[_channel].verifiedBy = address(0x0);
@@ -648,7 +650,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
-        require(_to >= _from, "PushCoreV2:lastEpochRelative:: Relative Block Number Overflow");
+        if (_to < _from) {
+            revert Errors.InvalidArg_LessThanExpected(_from, _to);
+        }
+
         return uint256((_to - _from) / epochDuration + 1);
     }
 
@@ -670,7 +675,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function initializeStake() external {
-        require(genesisEpoch == 0, "PushCoreV2::initializeStake: Already Initialized");
+        if (genesisEpoch != 0) {
+            revert("Already Initialized");
+        }
+
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
@@ -712,11 +720,13 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function unstake() external whenNotPaused {
-        require(
-            block.number > userFeesInfo[msg.sender].lastStakedBlock + epochDuration,
-            "PushCoreV2::unstake: Can't Unstake before 1 complete EPOCH"
-        );
-        require(userFeesInfo[msg.sender].stakedAmount > 0, "PushCoreV2::unstake: Invalid Caller");
+        if (block.number <= userFeesInfo[msg.sender].lastStakedBlock + epochDuration) {
+            revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
+        }
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
+
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, stakedAmount);
@@ -785,8 +795,12 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, userFeesInfo[_user].lastClaimedBlock);
 
-        require(currentEpoch > _tillEpoch, "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch");
-        require(_tillEpoch >= nextFromEpoch, "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch");
+        if (currentEpoch <= _tillEpoch) {
+            revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
+        }
+        if (_tillEpoch < nextFromEpoch) {
+            revert Errors.InvalidArg_LessThanExpected(nextFromEpoch, _tillEpoch);
+        }
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
             uint256 claimableReward = calculateEpochRewards(_user, i);
             rewards = rewards + claimableReward;
@@ -914,7 +928,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
-        require(msg.sender == epnsCommunicator, "PushCoreV2:handleChatRequestData::Unauthorized caller");
+        if (msg.sender != epnsCommunicator) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -932,11 +948,20 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external {
-        require(celebUserFunds[msg.sender] >= _amount, "PushCoreV2:claimChatIncentives::Invalid Amount");
+        if (celebUserFunds[msg.sender] < _amount) {
+            revert Errors.InvalidArg_MoreThanExpected(celebUserFunds[msg.sender], _amount);
+        }
 
         celebUserFunds[msg.sender] -= _amount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
+    }
+
+    function sendFunds(address _user, uint256 _amount) external {
+        if (msg.sender != feePoolStakingContract) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
+        IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 }
