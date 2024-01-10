@@ -208,8 +208,11 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannel();
         }
         if (
-            !(_channelType == CoreTypes.ChannelType.InterestBearingOpen || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited)
+            !(
+                _channelType == CoreTypes.ChannelType.InterestBearingOpen
+                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited
+            )
         ) {
             revert Errors.Core_InvalidChannelType();
         }
@@ -289,8 +292,10 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            !((msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
-                || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp))
+            !(
+                (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
+                    || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp)
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }

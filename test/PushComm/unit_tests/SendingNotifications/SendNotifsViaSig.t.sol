@@ -1,13 +1,13 @@
 pragma solidity ^0.8.0;
 
-import {BasePushCommTest} from "../BasePushCommTest.t.sol";
-contract SendNotifsViaSig_Test is BasePushCommTest {
+import { BasePushCommTest } from "../BasePushCommTest.t.sol";
 
+contract SendNotifsViaSig_Test is BasePushCommTest {
     function setUp() public override {
         BasePushCommTest.setUp();
     }
 
-    function test_WhenChannelSendsNotificationuUsing712Sig() external {
+    function test_WhenChannel_SendsNotification_Using712Sig() external {
         // it Allows to send channel notification with 712 sig
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
 
@@ -37,7 +37,7 @@ contract SendNotifsViaSig_Test is BasePushCommTest {
         assertEq(true, res);
     }
 
-    function test_WhenDelegateeSendsNotificationUsing712Sig() external {
+    function test_WhenDelegatee_SendsNotification_Using712Sig() external {
         // it Allows delegatee to send notification
 
         changePrank(actor.bob_channel_owner);
@@ -99,7 +99,7 @@ contract SendNotifsViaSig_Test is BasePushCommTest {
         assertEq(true, res);
     }
 
-    function test_WhenInvokedByAMaliciousUserUsingSignatureReplay() external {
+    function test_WhenInvokedBy_AMaliciousUser_UsingSignatureReplay() external {
         // it Returns false on signature replay
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SendNotif memory _sendNotif = SendNotif(
@@ -140,7 +140,7 @@ contract SendNotifsViaSig_Test is BasePushCommTest {
         assertEq(false, res);
     }
 
-    function test_WhenInvokedByAMaliciousUserUsingExpiredSignature() external {
+    function test_WhenInvokedBy_AMaliciousUserUsing_ExpiredSignature() external {
         // it Returns false on signature expire
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SendNotif memory _sendNotif = SendNotif(

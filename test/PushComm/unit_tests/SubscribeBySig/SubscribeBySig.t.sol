@@ -3,18 +3,15 @@ pragma solidity ^0.8.0;
 import { BasePushCommTest } from "../BasePushCommTest.t.sol";
 
 contract SubscribeBySig_Test is BasePushCommTest {
-
-
     function setUp() public override {
         BasePushCommTest.setUp();
-
     }
 
     modifier whenUserSubscribesWith712Sig() {
         _;
     }
 
-    function test_RevertWhen_MaliciousUserReplaysA712Signature() public whenUserSubscribesWith712Sig {
+    function test_RevertWhen_MaliciousUser_ReplaysA712Signature() public whenUserSubscribesWith712Sig {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -91,7 +88,7 @@ contract SubscribeBySig_Test is BasePushCommTest {
         _;
     }
 
-    function test_RevertWhen_MaliciousUserReplaysA1271Sig() public whenAContractSubscribesWith1271Sign {
+    function test_RevertWhen_MaliciousUserReplays_1271Sig() public whenAContractSubscribesWith1271Sign {
         bytes32 DOMAIN_SEPARATOR = getDomainSeparator();
         SubscribeUnsubscribe memory _subscribeUnsubscribe = SubscribeUnsubscribe(
             actor.bob_channel_owner,
@@ -244,6 +241,4 @@ contract SubscribeBySig_Test is BasePushCommTest {
             s1
         );
     }
-
-
 }
