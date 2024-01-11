@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
-import {BasePushCommTest} from "../BasePushCommTest.t.sol";
-import {Errors} from "contracts/libraries/Errors.sol";
+
+import { BasePushCommTest } from "../BasePushCommTest.t.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
 contract CommAdminActions_Test is BasePushCommTest {
     function setUp() public override {
@@ -22,9 +23,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.EPNSCoreAddress(), address(123));
     }
 
-    function test_REVERTWhen_Non_adminTriesTo_ChangeGovernanceAddress()
-        external
-    {
+    function test_REVERTWhen_Non_adminTriesTo_ChangeGovernanceAddress() external {
         // it should REVERT
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
@@ -39,9 +38,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.governance(), actor.governance);
     }
 
-    function test_RevertWhen_NonAdminTransfers_PushChannelAdminControl()
-        external
-    {
+    function test_RevertWhen_NonAdminTransfers_PushChannelAdminControl() external {
         // it should REVERT
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
@@ -49,17 +46,10 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.pushChannelAdmin(), actor.admin);
     }
 
-    function test_RevertWhen_AdminTransfers_AdminControl_ToZeroAddress()
-        external
-    {
+    function test_RevertWhen_AdminTransfers_AdminControl_ToZeroAddress() external {
         // it should REVERT
         changePrank(actor.admin);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Errors.InvalidArgument_WrongAddress.selector,
-                address(0)
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArgument_WrongAddress.selector, address(0)));
         commProxy.transferPushChannelAdminControl(address(0));
         assertEq(commProxy.pushChannelAdmin(), actor.admin);
     }
@@ -67,12 +57,7 @@ contract CommAdminActions_Test is BasePushCommTest {
     function test_RevertWhen_AdminTransfers_AdminControl_ToItself() external {
         // it should REVERT
         changePrank(actor.admin);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Errors.InvalidArgument_WrongAddress.selector,
-                actor.admin
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArgument_WrongAddress.selector, actor.admin));
         commProxy.transferPushChannelAdminControl(actor.admin);
     }
 
