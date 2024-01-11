@@ -546,7 +546,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
         if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(0, amount);
+            revert Errors.InvalidArg_LessThanExpected(1, amount);
         }
         address requestSender = msg.sender;
         address coreContract = EPNSCoreAddress;

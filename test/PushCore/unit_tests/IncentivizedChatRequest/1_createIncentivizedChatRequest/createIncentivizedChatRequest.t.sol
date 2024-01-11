@@ -19,7 +19,7 @@ contract CreateIncentivizeChatRequest_Test is BaseIncentivizedChatRequest {
 
         vm.prank(requestSender);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 0, amount));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 1, amount));
 
         commProxy.createIncentivizeChatRequest(requestReceiver, 0);
     }
