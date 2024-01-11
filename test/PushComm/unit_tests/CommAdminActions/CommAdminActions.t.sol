@@ -7,7 +7,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         BasePushCommTest.setUp();
     }
 
-    function test_REVERTWhen_Non_adminTriesToChangeCoreAddress() external {
+    function test_REVERTWhen_Non_adminTriesToChange_CoreAddress() external {
         // it should REVERT
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
@@ -15,14 +15,14 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.EPNSCoreAddress(), address(coreProxy));
     }
 
-    function test_WhenAdminTriesToChangeCoreAddress() external {
+    function test_WhenAdminTriesToChange_CoreAddress() external {
         // it should update the core address
         changePrank(actor.admin);
         commProxy.setEPNSCoreAddress(address(123));
         assertEq(commProxy.EPNSCoreAddress(), address(123));
     }
 
-    function test_REVERTWhen_Non_adminTriesToChangeGovernanceAddress()
+    function test_REVERTWhen_Non_adminTriesTo_ChangeGovernanceAddress()
         external
     {
         // it should REVERT
@@ -32,14 +32,14 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.governance(), actor.admin);
     }
 
-    function test_WhenAdminChangesTheGovernanceAddress() external {
+    function test_WhenAdminChanges_GovernanceAddress() external {
         // it should update the governance address
         changePrank(actor.admin);
         commProxy.setGovernanceAddress(actor.governance);
         assertEq(commProxy.governance(), actor.governance);
     }
 
-    function test_REVERTWhen_Non_adminTransfersThePushChannelAdminControl()
+    function test_RevertWhen_NonAdminTransfers_PushChannelAdminControl()
         external
     {
         // it should REVERT
@@ -49,7 +49,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.pushChannelAdmin(), actor.admin);
     }
 
-    function test_REVERTWhen_AdminTransfersTheAdminControlToAZeroAddress()
+    function test_RevertWhen_AdminTransfers_AdminControl_ToZeroAddress()
         external
     {
         // it should REVERT
@@ -64,7 +64,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.pushChannelAdmin(), actor.admin);
     }
 
-    function test_REVERTWhen_AdminTransfersTheAdminControlToItself() external {
+    function test_RevertWhen_AdminTransfers_AdminControl_ToItself() external {
         // it should REVERT
         changePrank(actor.admin);
         vm.expectRevert(
@@ -76,7 +76,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         commProxy.transferPushChannelAdminControl(actor.admin);
     }
 
-    function test_WhenAdminTransfersAdminControlToCorrectAddress() external {
+    function test_WhenAdminTransfers_AdminControl_ToCorrectAddress() external {
         // it should update the admin control
         changePrank(actor.admin);
 
@@ -84,7 +84,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.pushChannelAdmin(), actor.bob_channel_owner);
     }
 
-    function test_REVERTWhen_Non_adminTriesToSetThePushTokenAddress() external {
+    function test_RevertWhen_NonAdminTriesToSet_ThePushTokenAddress() external {
         // it should REVERT
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
@@ -92,7 +92,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         assertEq(commProxy.PUSH_TOKEN_ADDRESS(), address(pushToken));
     }
 
-    function test_WhenAdminSetsThePushTokenAddress() external {
+    function test_WhenAdminSets_ThePushTokenAddress() external {
         // it should update the push token address
 
         changePrank(actor.admin);
