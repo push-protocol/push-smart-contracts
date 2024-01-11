@@ -1,0 +1,21 @@
+.
+├── when non-admin tries to change core address
+│   └── it should REVERT
+├── when admin tries to change core address
+│   └── it should update the core address
+├── when non-admin tries to change governance address
+│   └── it should REVERT
+├── when admin changes the governance address
+│   └── it should update the governance address
+├── when non-admin transfers the pushChannelAdmin control
+│   └── it should REVERT
+├── when admin transfers the admin control to a zero address
+│   └── it should REVERT
+├── when admin transfers the admin control to itself
+│   └── it should REVERT
+├── when admin transfers admin control to correct address
+│   └── it should update the admin control
+├── when non-admin tries to set the push token address
+│   └── it should REVERT
+└── when admin sets the push Token address
+    └── it should update the push token address
