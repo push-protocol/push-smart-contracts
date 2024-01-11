@@ -7,32 +7,32 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         BasePushCoreTest.setUp();
     }
 
-    function test_WhenNon_adminTriesToSetTheCommunicatorAddress() external {
-        // it should REVERT
+    function test_WhenNonAdminTriesTo_Set_CommunicatorAddress() external {
+        // it should Revert
         vm.expectRevert(Errors.CallerNotAdmin.selector);
         changePrank(actor.bob_channel_owner);
         coreProxy.setEpnsCommunicatorAddress(address(123));
         assertTrue(coreProxy.epnsCommunicator() != address(123));
     }
 
-    function test_WhenAdminTriesToSetTheCommunicatorAddress() external {
+    function test_WhenAdmin_TriesToSet_CommunicatorAddress() external {
         // it should succesfuly set the communicator address
         changePrank(actor.admin);
         coreProxy.setEpnsCommunicatorAddress(address(0x0));
         assertTrue(coreProxy.epnsCommunicator() == address(0x0));
     }
 
-    function test_REVERTWhen_Non_adminTriesToSetTheGovernanceAddress()
+    function test_RevertWhenNonAdmin_Set_GovernanceAddress()
         external
     {
-        // it should REVERT
+        // it should Revert
         vm.expectRevert(Errors.CallerNotAdmin.selector);
         changePrank(actor.bob_channel_owner);
         coreProxy.setGovernanceAddress(actor.governance);
         assertTrue(coreProxy.governance() != actor.governance);
     }
 
-    function test_WhenAdminTriesToSetTheGovernanceAddress() external {
+    function test_WhenAdmin_TriesToSet_GovernanceAddress() external {
         // it should succesfuly set the governance address
         changePrank(actor.admin);
         coreProxy.setGovernanceAddress(actor.governance);
@@ -43,22 +43,22 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         _;
     }
 
-    function test_REVERTWhen_Non_adminTriesToTransferAdminControl()
+    function test_RevertWhen_NonAdminTriesTo_TransferAdminControl()
         external
         whenAdminTransfersTheAdminControl
     {
-        // it should REVERT
+        // it should Revert
         vm.expectRevert(Errors.CallerNotAdmin.selector);
         changePrank(actor.bob_channel_owner);
         coreProxy.transferPushChannelAdminControl(actor.bob_channel_owner);
         assertTrue(coreProxy.pushChannelAdmin() == actor.admin);
     }
 
-    function test_REVERTWhen_TheNewAdminAddressIsZeroAddress()
+    function test_RevertWhen_NewAdminAddress_IsZeroAddress()
         external
         whenAdminTransfersTheAdminControl
     {
-        // it should REVERT Errors.InvalidArgument_WrongAddress
+        // it should Revert Errors.InvalidArgument_WrongAddress
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.InvalidArgument_WrongAddress.selector,
@@ -70,11 +70,11 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         assertTrue(coreProxy.pushChannelAdmin() == actor.admin);
     }
 
-    function test_REVERTWhen_TheNewAdminAddressIsSameAsOldAdminAddress()
+    function test_RevertWhen_NewAdminAddress_IsSameAs_OldAdminAddress()
         external
         whenAdminTransfersTheAdminControl
     {
-        // it should REVERT
+        // it should Revert
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.InvalidArgument_WrongAddress.selector,
@@ -85,7 +85,7 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         coreProxy.transferPushChannelAdminControl(actor.admin);
     }
 
-    function test_WhenTheNewAdminAddressIsCorrect()
+    function test_WhenNewAdmin_AddressIsCorrect()
         external
         whenAdminTransfersTheAdminControl
     {
@@ -95,17 +95,17 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         assertTrue(coreProxy.pushChannelAdmin() == actor.charlie_channel_owner);
     }
 
-    modifier whenTheGovernanceCallsTheSetterFunctions() {
+    modifier when_GovernanceCalls_TheSetterFunctions() {
         changePrank(actor.admin);
         coreProxy.setGovernanceAddress(actor.governance);
         _;
     }
 
-    function test_REVERTWhen_NewFeeIsGreaterThanOrEqualToAddChannelFees()
+    function test_RevertWhen_NewFeeIs_GreaterThanOrEqualTo_AddChannelFees()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
     {
-        // it should REVERT
+        // it should Revert
         uint addChannelMin = coreProxy.ADD_CHANNEL_MIN_FEES();
         vm.expectRevert();
         changePrank(actor.governance);
@@ -114,9 +114,9 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         coreProxy.setFeeAmount(addChannelMin + 1000);
     }
 
-    function test_WhenNewFeeIsSmallerThanAddChannelFees()
+    function test_WhenNewFee_IsSmaller_ThanAddChannelFees()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
     {
         // it should update the FEE_AMOUNT
         uint addChannelMin = coreProxy.ADD_CHANNEL_MIN_FEES();
@@ -129,9 +129,9 @@ contract CoreAdminActions_Test is BasePushCoreTest {
 
     function test_RevertWhen_TheNewValueIsZero()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
     {
-        // it should revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
+        // it should Revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.InvalidArg_LessThanExpected.selector,
@@ -143,9 +143,9 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         coreProxy.setMinPoolContribution(0);
     }
 
-    function test_WhenTheNewValueIsGreaterThanZero()
+    function test_WhenTheNewValue_IsGreaterThanZero()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
     {
         // it should update the MinPoolContribution
         changePrank(actor.governance);
@@ -157,14 +157,14 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         _;
     }
 
-    function test_WhenNewFeesIsSmallerThanMinRequiredFees()
+    function test_WhenNewFees_IsSmallerThan_MinRequiredFees()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
         whenGovernanceSetsTheMinChannelCreationFees
     {
         uint256 minFeeRequired = coreProxy.MIN_POOL_CONTRIBUTION() +
             coreProxy.FEE_AMOUNT();
-        // it should REVERT
+        // it should Revert
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.InvalidArg_LessThanExpected.selector,
@@ -176,15 +176,15 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         coreProxy.setMinChannelCreationFees(minFeeRequired - 10);
     }
 
-    function test_WhenNewFeesIsGreaterOrEqualToMinRequiredFees()
+    function test_WhenNewFees_IsGreaterOrEqualTo_MinRequiredFees()
         external
-        whenTheGovernanceCallsTheSetterFunctions
+        when_GovernanceCalls_TheSetterFunctions
         whenGovernanceSetsTheMinChannelCreationFees
     {
         // it should update the minChannelCreationFees
         uint256 minFeeRequired = coreProxy.MIN_POOL_CONTRIBUTION() +
             coreProxy.FEE_AMOUNT();
-        // it should REVERT
+        // it should Revert
         changePrank(actor.governance);
         coreProxy.setMinChannelCreationFees(minFeeRequired);
         assertEq(coreProxy.ADD_CHANNEL_MIN_FEES(), minFeeRequired);
