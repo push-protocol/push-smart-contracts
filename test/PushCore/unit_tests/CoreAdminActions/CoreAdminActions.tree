@@ -1,0 +1,34 @@
+.
+├── when non-admin tries to set the communicator address
+│   └── it should REVERT
+├── when admin tries to set the communicator address
+│   └── it should succesfuly set the communicator address
+├── when non-admin tries to set the governance address
+│   └── it should REVERT
+├── when admin tries to set the governance address
+│   └── it should succesfuly set the governance address
+├── when admin control is transferred
+│   ├── when non-admin tries to transfer admin control
+│   │   └── it should REVERT
+│   ├── when the new admin address is zero address
+│   │   └── it should REVERT
+│   ├── when the new admin address is same as old admin address
+│   │   └── it should REVERT
+│   └── when the new admin address is correct
+│       └── it should change the admin address
+├── when the governance calls the setter functions
+│   └── when governance tries to set the feeAmount
+│       ├── when new fee is greater than or equal to addChannelFees
+│       │   └── it should REVERT
+│       └── when new fee is smaller than addChannelFees
+│           └── it should update the FEE_AMOUNT
+├── when governance tries to set the MinPoolContribution
+│   ├── when the new value is zero
+│   │   └── it should revert
+│   └── when the new value is greater than zero
+│       └── it should update the MinPoolContribution
+└── when governance sets the minChannelCreationFees
+    ├── when new Fees is smaller than minRequiredFees
+    │   └── it should REVERT
+    └── when new fees is greater or equal to minRequiredFees
+        └── it should update the minChannelCreationFees
