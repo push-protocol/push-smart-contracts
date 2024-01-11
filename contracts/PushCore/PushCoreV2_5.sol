@@ -125,6 +125,9 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
      */
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
+        if (_newFees == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, _newFees);
+        }
         if (_newFees >= ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_MoreThanExpected(ADD_CHANNEL_MIN_FEES, _newFees);
         }
@@ -134,7 +137,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
         if (_newAmount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
+            revert Errors.InvalidArg_LessThanExpected(1, _newAmount);
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
