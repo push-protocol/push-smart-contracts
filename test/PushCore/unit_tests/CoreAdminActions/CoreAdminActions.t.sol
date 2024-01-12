@@ -103,7 +103,7 @@ contract CoreAdminActions_Test is BasePushCoreTest {
 
     function test_RevertWhen_TheNewValueIsZero() external when_GovernanceCalls_TheSetterFunctions {
         // it should Revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 0, 0));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 1, 0));
         changePrank(actor.governance);
         coreProxy.setMinPoolContribution(0);
     }
