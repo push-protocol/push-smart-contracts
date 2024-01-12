@@ -1,4 +1,4 @@
-.
+ChannelUnverification_Test
 ├── when a channel gets unverified
     ├── when admin unverifies a channel verified by admin itself
     │   └── it should be able to unverify

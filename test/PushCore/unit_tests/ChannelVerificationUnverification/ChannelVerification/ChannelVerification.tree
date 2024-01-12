@@ -1,4 +1,4 @@
-.
+ChannelVerification_Test
 ├── when checked the default verification status
 │   ├── when checked the verification status for admin or zero address
 │   │   └── it should return 1 for admin and zero address

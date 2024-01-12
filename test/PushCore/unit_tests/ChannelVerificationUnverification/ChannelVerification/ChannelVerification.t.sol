@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 import { BasePushCoreTest } from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
-contract UpdateChannelMeta_Test is BasePushCoreTest {
+contract ChannelVerification_Test is BasePushCoreTest {
     function setUp() public virtual override {
         BasePushCoreTest.setUp();
         _createChannel(actor.bob_channel_owner);
