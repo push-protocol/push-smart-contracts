@@ -1,0 +1,16 @@
+.
+├── when a channel gets unverified
+    ├── when admin unverifies a channel verified by admin itself
+    │   └── it should be able to unverify
+    ├── when admin unverifies a channel verified by another Channel
+    │   └── it should be able to unverify
+    ├── when a channel unverifies a secondary verified channel verified by itself
+    │   └── it should be able to unverify
+    ├──when a channel unverifies a secondary verified channel verified by another channel
+    │   └── it should REVERT
+    ├── when a secondary verified channel unverifies another secondary channels verified by itself
+    │   └── it should unverify those channels
+    ├── when a secondary verified channel gets unverifed
+    │   └── it should unverify any other secondary verified channel that is verified by this channel
+    └── when admin unverifies any channel primary or secondary
+       └── it should unverify all of them as well as any secondary channel verified by those channels
