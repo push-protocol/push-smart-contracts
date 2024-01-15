@@ -12,7 +12,7 @@ pragma solidity ^0.8.20;
  * Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import "./PushCommStorageV2.sol";
+import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
