@@ -1,16 +1,22 @@
 ChannelUnverification_Test
 ├── when a channel gets unverified
     ├── when admin unverifies a channel verified by admin itself
-    │   └── it should be able to unverify
+    │   ├── it should set verification status to 0 for that channel
+    │   └── it should emit ChannelVerificationRevoked event
     ├── when admin unverifies a channel verified by another Channel
-    │   └── it should be able to unverify
+    │   ├── it should set verification status to 0 for that channel
+    │   └── it should emit ChannelVerificationRevoked event
     ├── when a channel unverifies a secondary verified channel verified by itself
-    │   └── it should be able to unverify
+    │   ├── it should set verification status to 0 for that channel
+    │   └── it should emit ChannelVerificationRevoked event
     ├──when a channel unverifies a secondary verified channel verified by another channel
     │   └── it should REVERT
     ├── when a secondary verified channel unverifies another secondary channels verified by itself
-    │   └── it should unverify those channels
+    │   ├── it should set verification status to 0
+    │   └── it should emit ChannelVerificationRevoked event
     ├── when a secondary verified channel gets unverifed
-    │   └── it should unverify any other secondary verified channel that is verified by this channel
+    │   ├── it should set verification status to 0 for any other secondary verified channel that is verified by this channel
+    │   └── it should emit ChannelVerificationRevoked event
     └── when admin unverifies any channel primary or secondary
-       └── it should unverify all of them as well as any secondary channel verified by those channels
+       ├── it should set verification status to 0 for all of them as well as any secondary channel verified by those channels
+       └── it should emit ChannelVerificationRevoked event
