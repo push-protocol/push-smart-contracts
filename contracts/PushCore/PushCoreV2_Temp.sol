@@ -594,7 +594,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
-        if (channelVerified != 0 || msg.sender != pushChannelAdmin) {
+        if (!(channelVerified == 0 || msg.sender == pushChannelAdmin)) {
             revert Errors.Core_InvalidChannel();
         }
 
@@ -612,7 +612,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      */
     function unverifyChannel(address _channel) public {
-        if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
+        if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 

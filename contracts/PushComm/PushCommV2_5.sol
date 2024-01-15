@@ -12,7 +12,7 @@ pragma solidity ^0.8.20;
  * Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import "./PushCommStorageV2.sol";
+import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
@@ -81,6 +81,10 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
         governance = _governanceAddress;
+    }
+
+    function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
+        PUSH_TOKEN_ADDRESS = _tokenAddress;
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
@@ -547,10 +551,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
-        PUSH_TOKEN_ADDRESS = _tokenAddress;
     }
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {

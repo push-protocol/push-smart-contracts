@@ -1,0 +1,32 @@
+ChannelVerification_Test
+├── when checked the default verification status
+│   ├── when checked the verification status for admin or zero address
+│   │   └── it should return 1 for admin and zero address
+│   └── when checked the verification status for unverified channel
+│       └── it should return 0 for unverified Channels
+├── when a channel is verified
+│   ├── when admin verifies an INACTIVE channel
+│       └── it should REVERT
+│   ├── when admin verifies an ACTIVE channel
+│   │   ├── it should return primary verified for channels verified by admin
+│   │   └── it should emit ChannelVerified event 
+│   ├── when a verified channel verifies another channel
+│   │   ├── it should give secondary verification(2) to that channel
+│   │   └── it should emit ChannelVerified event
+│   ├── when an unverified channel tries verifying another channel
+│   │   └── it should REVERT 
+│   ├── when a channel has secondary verification
+│   │   ├── it should allow admin to give primary verification
+│   │   └── it should emit ChannelVerified event
+│   └── when a primary verified channel verifies another primary erified channel
+│       └── it should REVERT- not allowing downgrade primary verified to secondary
+├── when there is a chain of secondary verifications
+│   └── when a secondary verified channel verifies another channel
+│       ├──it should give secondary verification to that channel
+│       └── it should emit ChannelVerified event
+└── when batchVerification function is called
+    ├── when non-admin calls batchVerification
+    │   └── it should REVERT- not allowing anyone other than Admin
+    └── when admin calls batchVerification
+        ├── it should execute and set the verifications to primary
+        └── it should emit ChannelVerified events

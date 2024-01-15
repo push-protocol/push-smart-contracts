@@ -10,10 +10,10 @@ pragma solidity ^0.8.20;
  * Functionalties.
  *
  */
-import "./PushCoreStorageV1_5.sol";
-import "./PushCoreStorageV2.sol";
-import "../interfaces/IPUSH.sol";
-import "../interfaces/uniswap/IUniswapV2Router.sol";
+import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
+import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
+import { IPUSH } from "../interfaces/IPUSH.sol";
+import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
@@ -492,7 +492,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
         // Check if channel is verified
         uint8 channelVerified = getChannelVerfication(_channel);
-        if (channelVerified != 0 || msg.sender != pushChannelAdmin) {
+        if (!(channelVerified == 0 || msg.sender == pushChannelAdmin)) {
             revert Errors.Core_InvalidChannel();
         }
 
@@ -505,7 +505,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     /// @inheritdoc IPushCoreV2
     function unverifyChannel(address _channel) public {
-        if (channels[_channel].verifiedBy != msg.sender || msg.sender != pushChannelAdmin) {
+        if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 
