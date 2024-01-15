@@ -5,7 +5,9 @@ ChannelVerification_Test
 │   └── when checked the verification status for unverified channel
 │       └── it should return 0 for unverified Channels
 ├── when a channel is verified
-│   ├── when admin verifies a channel
+│   ├── when admin verifies an INACTIVE channel
+│       └── it should REVERT
+│   ├── when admin verifies an ACTIVE channel
 │   │   ├── it should return primary verified for channels verified by admin
 │   │   └── it should emit ChannelVerified event 
 │   ├── when a verified channel verifies another channel
