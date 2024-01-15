@@ -59,6 +59,6 @@ contract BasePushCoreTest is BaseTest {
     }
 
     function _getVerifiedBy(address _channel) internal view returns (address _verifiedBy) {
-        (, , _verifiedBy, , , , , , , , ) = coreProxy.channels(_channel);
+        (,, _verifiedBy,,,,,,,,) = coreProxy.channels(_channel);
     }
 }
