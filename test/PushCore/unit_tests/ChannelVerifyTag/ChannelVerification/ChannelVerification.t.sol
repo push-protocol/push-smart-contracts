@@ -15,7 +15,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         _;
     }
 
-    function test_WhenCheckedTheVerificationStatusForAdminOrZeroAddress()
+    function test_WhenChecked_TheVerificationStatusFor_AdminOrZeroAddress()
         external
         whenCheckedTheDefaultVerificationStatus
     {
@@ -32,7 +32,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Zero_verifiedBy, address(0));
     }
 
-    function test_WhenCheckedTheVerificationStatusForUnverifiedChannel()
+    function test_WhenChecked_TheVerificationStatusFor_UnverifiedChannel()
         external
         whenCheckedTheDefaultVerificationStatus
     {
@@ -50,7 +50,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, address(0));
     }
 
-    function test_WhenAdminVerifiesAChannel() external {
+    function test_WhenAdmin_Verifies_AChannel() external {
         // it should return primary verified for channels verified by admin
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -62,7 +62,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Bob_verifiedBy, actor.admin);
     }
 
-    function test_WhenAVerifiedChannelVerifiesAnotherChannel() external {
+    function test_WhenAVerifiedChannel_Verifies_AnotherChannel() external {
         // it should give secondary verification(2) to that channel
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -76,7 +76,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, actor.bob_channel_owner);
     }
 
-    function test_RevertWhen_AnUnverifiedChannelTriesVerifyingAnotherChannel() external {
+    function test_RevertWhen_AnUnverifiedChannelTries_VerifyingAnotherChannel() external {
         // it should REVERT
         vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
         changePrank(actor.bob_channel_owner);
@@ -89,7 +89,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, address(0));
     }
 
-    function test_WhenAdminUpgradesTheVerification() external {
+    function test_WhenAdminUpgrades_TheVerification() external {
         // it should allow admin to give primary verification
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -112,7 +112,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedByAfter, actor.admin);
     }
 
-    function test_RevertWhen_APrimaryVerifiedChannelVerifiesAnotherPrimaryVerifiedChannel() external {
+    function test_RevertWhen_APrimaryVerifiedChannelVerifies_AnotherPrimaryVerifiedChannel() external {
         // it should REVERT- not allowing downgrade primary verified to secondary
 
         changePrank(actor.admin);
@@ -137,7 +137,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedByAfter, actor.admin);
     }
 
-    function test_WhenASecondaryVerifiedChannelVerifiesAnotherChannel() external {
+    function test_When_ASecondaryVerifiedChannel_VerifiesAnotherChannel() external {
         // it should give secondary verification to that channel
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -155,7 +155,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, actor.charlie_channel_owner);
     }
 
-    function test_RevertWhen_Non_adminCallsBatchVerification() external {
+    function test_RevertWhen_NonAdminCalls_BatchVerification() external {
         // it should REVERT- not allowing anyone other than Admin
         address[] memory _channels = new address[](2);
         _channels[0] = actor.charlie_channel_owner;
@@ -171,7 +171,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(aliceVerificationAfter, 0, "alice");
     }
 
-    function test_WhenAdminCallsBatchVerification() external {
+    function test_WhenAdminCalls_BatchVerification() external {
         // it should execute and set the verifications to primary
         address[] memory _channels = new address[](3);
         _channels[0] = actor.charlie_channel_owner;
