@@ -429,14 +429,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
     *************** */
 
-    /**
-     * @notice    Function is designed to tell if a channel is verified or not
-     * @dev       Get if channel is verified or not
-     * @param    _channel Address of the channel to be Verified
-     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
-     * verification
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
         address verifiedBy = channels[_channel].verifiedBy;
         bool logicComplete = false;
