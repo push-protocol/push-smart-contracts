@@ -11,7 +11,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         _createChannel(actor.charlie_channel_owner);
     }
 
-    function test_WhenAdminUnverifiesAChannelVerifiedByAdminItself() external {
+    function test_WhenAdminUnverifies_AChannelVerifiedBy_AdminItself() external {
         // it should be able to unverify
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -29,7 +29,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Bob_verifiedBy, address(0));
     }
 
-    function test_WhenAdminUnverifiesAChannelVerifiedByAnotherChannel() external {
+    function test_WhenAdminUnverifies_AChannelVerifiedBy_AnotherChannel() external {
         // it should be able to unverify
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -49,7 +49,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, address(0));
     }
 
-    function test_WhenAChannelUnverifiesASecondaryVerifiedChannelVerifiedByItself() external {
+    function test_WhenAChannelUnverifies_ASecondaryVerifiedChannel_VerifiedByItself() external {
         // it should be able to unverify
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -69,7 +69,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, address(0));
     }
 
-    function test_RevertWhen_AChannelUnverifiesASecondaryVerifiedChannelVerifiedByAnotherChannel() external {
+    function test_RevertWhen_AChannelUnverifies_ASecondaryVerifiedChannel_VerifiedByAnotherChannel() external {
         // it should REVERT
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -93,7 +93,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, actor.bob_channel_owner);
     }
 
-    function test_WhenASecondaryVerifiedChannelUnverifiesAnotherSecondaryChannelVerifiedByItself() external {
+    function test_WhenASecondaryVerifiedChannel_UnverifiesAnotherSecondaryChannel_VerifiedByItself() external {
         // it should unverify those channels
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -117,7 +117,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedBy, address(0));
     }
 
-    function test_WhenASecondaryVerifiedChannelGetsUnverifed() external {
+    function test_WhenASecondaryVerifiedChannel_GetsUnverifed() external {
         // it should unverify any other secondary verified channel that is verified by this channel
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
@@ -146,7 +146,7 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(Charlie_verifiedBy, address(0),"Charlie");
     }
 
-    function test_WhenAdminUnverifiesAnyChannelPrimaryOrSecondary() external {
+    function test_WhenAdminUnverifies_AnyChannelPrimaryOrSecondary() external {
         // it should unverify all of them as well as any secondary channel verified by those channels
         changePrank(actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
