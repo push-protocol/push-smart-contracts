@@ -49,8 +49,19 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Bob_verifiedBy, address(0));
         assertEq(Alice_verifiedBy, address(0));
     }
+    function test_RevertWhen_Admin_Verifies_InactiveChannel() external {
+        // it should return primary verified for channels verified by admin
+        changePrank(actor.admin);
+        vm.expectRevert(Errors.Core_InvalidChannel.selector);
+        coreProxy.verifyChannel(actor.tim_push_holder);
 
-    function test_WhenAdmin_Verifies_AChannel() external {
+        uint8 timVerification = coreProxy.getChannelVerfication(actor.tim_push_holder);
+        assertEq(timVerification, 0);
+
+        address Tim_verifiedBy = _getVerifiedBy(actor.tim_push_holder);
+        assertEq(Tim_verifiedBy, address(0));
+    }
+    function test_WhenAdmin_Verifies_ActiveChannel() external {
         // it should return primary verified for channels verified by admin
         changePrank(actor.admin);
         vm.expectEmit(true,true,false,false);
