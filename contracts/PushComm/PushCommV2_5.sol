@@ -83,6 +83,10 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         governance = _governanceAddress;
     }
 
+    function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
+        PUSH_TOKEN_ADDRESS = _tokenAddress;
+    }
+
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
         if (_newAdmin == address(0) || _newAdmin == pushChannelAdmin) {
             revert Errors.InvalidArgument_WrongAddress(_newAdmin);
@@ -538,10 +542,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
-        PUSH_TOKEN_ADDRESS = _tokenAddress;
     }
 
     function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
