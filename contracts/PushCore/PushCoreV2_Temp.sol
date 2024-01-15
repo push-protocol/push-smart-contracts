@@ -121,8 +121,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      *
      * @dev    _newFees must not be more than (or equal to) the ADD_CHANNEL_MIN_FEES
      *
-     * @param _newFees new minimum fees required for FEE_AMOUNT 
+     * @param _newFees new minimum fees required for FEE_AMOUNT
      */
+
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
         if (_newFees >= ADD_CHANNEL_MIN_FEES) {
@@ -151,11 +152,12 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
      *
-     * @dev    Minimum required amount can never be below the sum of MIN_POOL_CONTRIBUTION and FEE_AMOUNT 
+     * @dev    Minimum required amount can never be below the sum of MIN_POOL_CONTRIBUTION and FEE_AMOUNT
      *
      * @param _newFees new minimum fees required for Channel Creation
      *
      */
+
     function setMinChannelCreationFees(uint256 _newFees) external {
         onlyGovernance();
         uint256 minFeeRequired = MIN_POOL_CONTRIBUTION + FEE_AMOUNT;
@@ -350,7 +352,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         uint256 totalRefundableAmount = channelData.poolContribution;
         // Update POOL_FUNDS & PROTOCOL_POOL_FEES
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
-        
+
         if (msg.sender != pushChannelAdmin) {
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
         } else {

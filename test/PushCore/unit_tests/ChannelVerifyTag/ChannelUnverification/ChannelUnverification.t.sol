@@ -150,9 +150,9 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerificationAfter, 0, "alice");
 
         address Alice_verifiedBy = _getVerifiedBy(actor.alice_channel_owner);
-        assertEq(Alice_verifiedBy, actor.charlie_channel_owner,"Alice");
+        assertEq(Alice_verifiedBy, actor.charlie_channel_owner, "Alice");
         address Charlie_verifiedBy = _getVerifiedBy(actor.charlie_channel_owner);
-        assertEq(Charlie_verifiedBy, address(0),"Charlie");
+        assertEq(Charlie_verifiedBy, address(0), "Charlie");
     }
 
     function test_WhenAdminUnverifies_AnyChannelPrimaryOrSecondary() external {
@@ -183,10 +183,10 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(bobVerificationAfter, 0, "bob");
 
         address Alice_verifiedBy = _getVerifiedBy(actor.alice_channel_owner);
-        assertEq(Alice_verifiedBy, actor.charlie_channel_owner,"Alice");
+        assertEq(Alice_verifiedBy, actor.charlie_channel_owner, "Alice");
         address Charlie_verifiedBy = _getVerifiedBy(actor.charlie_channel_owner);
-        assertEq(Charlie_verifiedBy, actor.bob_channel_owner,"Charlie");
+        assertEq(Charlie_verifiedBy, actor.bob_channel_owner, "Charlie");
         address Bob_verifiedBy = _getVerifiedBy(actor.bob_channel_owner);
-        assertEq(Bob_verifiedBy, address(0),"Bob");
+        assertEq(Bob_verifiedBy, address(0), "Bob");
     }
 }
