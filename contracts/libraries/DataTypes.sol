@@ -14,7 +14,7 @@ library CoreTypes {
         InterestBearingOpen,
         InterestBearingMutual,
         TimeBound,
-        TokenGaited
+        TokenGated  
     }
 
     enum ChannelAction {
