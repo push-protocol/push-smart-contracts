@@ -1,7 +1,8 @@
 pragma solidity ^0.8.20;
 
 /**
- * EPNS Core is the main protocol that deals with the imperative
+ * @title PushCoreV2_Temp
+ * @notice EPNS Core is the main protocol that deals with the imperative
  * features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
  * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
@@ -13,7 +14,6 @@ pragma solidity ^0.8.20;
 import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import "../interfaces/uniswap/IUniswapV2Router.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
@@ -504,12 +504,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     }
 
     /**
-     * Core-V2: Stake and Claim Functions **
+     * Core-V2: Stake and Claim Functions
      */
-    /**
-     * Allows caller to add pool_fees at any given epoch
-     *
-     */
+
+     /// @notice Allows caller to add pool_fees at any given epoch
     function addPoolFees(uint256 _rewardAmount) external {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;
@@ -517,7 +515,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
-     *
      */
     function _returnPushTokenWeight(
         address _account,
@@ -533,7 +530,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     /**
      * @notice Returns the epoch ID based on the start and end block numbers passed as input
-     *
      */
     function lastEpochRelative(uint256 _from, uint256 _to) public view returns (uint256) {
         if (_to < _from) {
@@ -548,7 +544,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * @dev    Formulae for reward calculation:
      *         rewards = ( userStakedWeight at Epoch(n) * avalailable rewards at EPOCH(n) ) / totalStakedWeight at
      * EPOCH(n)
-     *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
         rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId])

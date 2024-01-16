@@ -24,11 +24,11 @@ contract PushCoreStorageV2 {
     uint256 public previouslySetEpochRewards; // Amount of rewards set in last initialized epoch
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
-    // @notice: Stores all the individual epoch rewards
+    /// @notice Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
-    // @notice: Stores User's Fees Details
+    /// @notice Stores User's Fees Details
     mapping(address => StakingTypes.UserFessInfo) public userFeesInfo;
-    // @notice: Stores the total staked weight at a specific epoch.
+    /// @notice Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
 
     /**

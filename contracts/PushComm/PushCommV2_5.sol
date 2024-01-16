@@ -2,7 +2,8 @@ pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
- * Push Communicator, as the name suggests, is more of a Communictation Layer
+ * @title PushCommV2_5
+ * @notice Push Communicator, as the name suggests, is more of a Communictation Layer
  * between END USERS and Push Core Protocol.
  * The Communicator Protocol is comparatively much simpler & involves basic
  * details, specifically about the USERS of the Protocols

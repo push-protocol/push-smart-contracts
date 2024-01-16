@@ -1,7 +1,8 @@
 pragma solidity ^0.8.20;
 
 /**
- * EPNS Core is the main protocol that deals with the imperative
+ * @title PushCoreV2_Temp
+ * @notice EPNS Core is the main protocol that deals with the imperative
  * features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
  * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
@@ -12,8 +13,6 @@ pragma solidity ^0.8.20;
  */
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
-import { IPUSH } from "../interfaces/IPUSH.sol";
-import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
