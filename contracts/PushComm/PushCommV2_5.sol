@@ -372,48 +372,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
     }
 
-    /* @dev Internal system to handle broadcasting of public key,
-     *     A entry point for subscribe, or create channel but is optional
-     */
-    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey) private {
-        // Add the user, will do nothing if added already, but is needed before broadcast
-        _addUser(_userAddr);
-
-        // get address from public key
-        address userAddr = getWalletFromPublicKey(_publicKey);
-
-        if (_userAddr == userAddr) {
-            // Only change it when verification suceeds, else assume the channel just wants to send group message
-            users[userAddr].publicKeyRegistered = true;
-
-            // Emit the event out
-            emit PublicKeyRegistered(userAddr, _publicKey);
-        } else {
-            revert("Public Key Validation Failed");
-        }
-    }
-
-    /// @dev Don't forget to add 0x into it
-    function getWalletFromPublicKey(bytes memory _publicKey) public pure returns (address wallet) {
-        if (_publicKey.length == 64) {
-            wallet = address(uint160(uint256(keccak256(_publicKey))));
-        } else {
-            wallet = 0x0000000000000000000000000000000000000000;
-        }
-    }
-
-    /// @dev Performs action by the user themself to broadcast their public key
-    function broadcastUserPublicKey(bytes calldata _publicKey) external {
-        // Will save gas
-        if (users[msg.sender].publicKeyRegistered) {
-            // Nothing to do, user already registered
-            return;
-        }
-
-        // broadcast it
-        _broadcastPublicKey(msg.sender, _publicKey);
-    }
-
     /* *****************************
 
          SEND NOTIFICATOINS FUNCTIONS
