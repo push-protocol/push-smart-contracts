@@ -10,7 +10,7 @@ library Core {
         InterestBearingOpen,
         InterestBearingMutual,
         TimeBound,
-        TokenGaited
+        TokenGated
     }
     enum ChannelAction {
         ChannelRemoved,
