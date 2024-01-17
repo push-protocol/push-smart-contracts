@@ -57,7 +57,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         chainName = _chainName;
-        chainID = BaseHelper.getChainId();
+        chainID = block.chainid;
         return true;
     }
 
@@ -218,7 +218,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
 
         bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -321,7 +321,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
         // EIP-712
         bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -520,7 +520,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
 
         bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, BaseHelper.getChainId(), address(this)));
+            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash =
             keccak256(abi.encode(SEND_NOTIFICATION_TYPEHASH, _channel, _recipient, keccak256(_identity), nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
