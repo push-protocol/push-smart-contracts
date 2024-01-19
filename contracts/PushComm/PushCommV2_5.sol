@@ -140,31 +140,32 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      *
      */
-    function migrateSubscribeData(
-        uint256 _startIndex,
-        uint256 _endIndex,
-        address[] calldata _channelList,
-        address[] calldata _usersList
-    )
-        external
-        onlyPushChannelAdmin
-        returns (bool)
-    {
-        if (isMigrationComplete || _channelList.length != _usersList.length) {
-            revert Errors.InvalidArg_ArrayLengthMismatch();
-        }
+    // {NOT-TO-BE-USED in this Version}
+    // function migrateSubscribeData(
+    //     uint256 _startIndex,
+    //     uint256 _endIndex,
+    //     address[] calldata _channelList,
+    //     address[] calldata _usersList
+    // )
+    //     external
+    //     onlyPushChannelAdmin
+    //     returns (bool)
+    // {
+    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
+    //         revert Errors.InvalidArg_ArrayLengthMismatch();
+    //     }
 
-        for (uint256 i = _startIndex; i < _endIndex; ) {
-            if (isUserSubscribed(_channelList[i], _usersList[i])) {
-                unchecked { i++; }
-                continue;
-            } else {
-                _subscribe(_channelList[i], _usersList[i]);
-            }
-            unchecked { i++; }
-        }
-        return true;
-    }
+    //     for (uint256 i = _startIndex; i < _endIndex; ) {
+    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
+    //             unchecked { i++; }
+    //             continue;
+    //         } else {
+    //             _subscribe(_channelList[i], _usersList[i]);
+    //         }
+    //         unchecked { i++; }
+    //     }
+    //     return true;
+    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
