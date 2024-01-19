@@ -9,23 +9,35 @@ interface IPushCoreV2 {
 
     ***************************** */
 
+    /// @notice emits whenever a channel updates its metadata
     event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
-    event RewardsClaimed(address indexed user, uint256 rewardAmount);
+    /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
     event ChannelVerified(address indexed channel, address indexed verifier);
+    /// @notice emits whenever the verification is revoked for a channel
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+    /// @notice emits whenever any channel is deactivated 
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
+    /// @notice emits whenever any deactivated channel is reactivated 
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
+    /// @notice emits whenever any channel is blocked by admin 
     event ChannelBlocked(address indexed channel);
+    /// @notice emits whenever a new channel is created
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    /// @notice emits whenever a channel changes the notification settings
     event ChannelNotifcationSettingsAdded(
         address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
+    /// @notice emits whenever a subgraph is added(handled by backend)
     event AddSubGraph(address indexed channel, bytes _subGraphData);
+    /// @notice emits whenever any time bound channel is deleted permanently
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
+    /// @notice emits whenever a user stakes in the staking program
     event Staked(address indexed user, uint256 indexed amountStaked);
+    /// @notice emits whenever a user unstakes from the staking program
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
+    /// @notice emits whenever a users claims the rewards from the staking program(not unstake)
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
+    /// @notice emits whenever any user receives an incentivized chat request from another user
     event IncentivizeChatReqReceived(
         address requestSender,
         address requestReceiver,
@@ -33,6 +45,7 @@ interface IPushCoreV2 {
         uint256 feePoolAmount,
         uint256 timestamp
     );
+    /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* *****************************

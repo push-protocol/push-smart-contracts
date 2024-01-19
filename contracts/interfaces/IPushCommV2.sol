@@ -6,19 +6,31 @@ interface IPushCommV2 {
        EVENTS
 
     ***************************** */
+    /// @notice emits whenever a new delegate is added 
     event AddDelegate(address channel, address delegate);
+    /// @notice emits whenever any delegate is removed
     event RemoveDelegate(address channel, address delegate);
+    /// @notice emits whenever an address subscribes to any channel
     event Subscribe(address indexed channel, address indexed user);
+    /// @notice emits whenever an address unsubscribes from any channel
     event Unsubscribe(address indexed channel, address indexed user);
+    /// @notice emits whenever public key is broadcasted internally
     event PublicKeyRegistered(address indexed owner, bytes publickey);
+    /// @notice emits whenever a notification is sent 
+    /// @param channel notification sender
+    /// @param recipient notification receiver(interpreted in the backend)
+    /// @param identity metadata of the notification 
     event SendNotification(address indexed channel, address indexed recipient, bytes identity);
+    /// @notice emits whenever a user opts for notification settings 
     event UserNotifcationSettingsAdded(address _channel, address _user, uint256 _notifID, string _notifSettings);
+    /// @notice emits whenever alias is added for any channel
     event ChannelAlias(
         string _chainName,
         uint256 indexed _chainID,
         address indexed _channelOwnerAddress,
         string _ethereumChannelAddress
     );
+    /// @notice emits whenever a user initiates an incentivized chat 
     event IncentivizeChatReqInitiated(
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
