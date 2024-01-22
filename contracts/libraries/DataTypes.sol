@@ -41,7 +41,7 @@ library CoreTypes {
         uint8 channelState;
         /// @notice denotes the address of the verifier of the Channel
         address verifiedBy;
-        /// @notice Total Amount of Dai deposited during Channel Creation
+        /// @notice Total Amount of PUSH deposited during Channel Creation
         uint256 poolContribution;
         /// @notice Represents the Historical Constant
         uint256 channelHistoricalZ;
@@ -67,7 +67,7 @@ library CommTypes {
      *
      */
     struct User {
-        /// @notice Depicts whether or not a user is ACTIVE
+        /// @notice Indicates whether or not a user is ACTIVE
         bool userActivated;
         /// @notice Will be false until public key is emitted
         bool publicKeyRegistered;
@@ -76,14 +76,14 @@ library CommTypes {
         /// @notice Keep track of subscribers
         uint256 subscribedCount;
         /**
-         * @notice Depicts if User subscribed to a Specific Channel Address
+         * @notice Indicates if User subscribed to a Specific Channel Address
          * 1 -> User is Subscribed
          * 0 -> User is NOT SUBSCRIBED
-         *
          */
         mapping(address => uint8) isSubscribed;
         ///@notice Keeps track of all subscribed channels
         mapping(address => uint256) subscribed;
+        ///@notice Maps ID to the Channel
         mapping(uint256 => address) mapAddressSubscribed;
     }
 
@@ -99,11 +99,11 @@ library StakingTypes {
     struct UserFessInfo {
         ///@notice Total amount staked by a user at any given time
         uint256 stakedAmount;
-        ///@notice weight of PUSH tokens staked by user 
+        ///@notice weight of PUSH tokens staked by user
         uint256 stakedWeight;
-        ///@notice The last block when user staked 
+        ///@notice The last block when user staked
         uint256 lastStakedBlock;
-        ///@notice The last block when user claimed rewards 
+        ///@notice The last block when user claimed rewards
         uint256 lastClaimedBlock;
         ///@notice Weight of staked amount of a user w.r.t total staked in a single epoch
         mapping(uint256 => uint256) epochToUserStakedWeight;

@@ -49,6 +49,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Bob_verifiedBy, address(0));
         assertEq(Alice_verifiedBy, address(0));
     }
+
     function test_RevertWhen_Admin_Verifies_InactiveChannel() external {
         // it should return primary verified for channels verified by admin
         changePrank(actor.admin);
@@ -61,11 +62,12 @@ contract ChannelVerification_Test is BasePushCoreTest {
         address Tim_verifiedBy = _getVerifiedBy(actor.tim_push_holder);
         assertEq(Tim_verifiedBy, address(0));
     }
+
     function test_WhenAdmin_Verifies_ActiveChannel() external {
         // it should return primary verified for channels verified by admin
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
 
         uint8 bobVerification = coreProxy.getChannelVerfication(actor.bob_channel_owner);
@@ -78,13 +80,13 @@ contract ChannelVerification_Test is BasePushCoreTest {
     function test_WhenAVerifiedChannel_Verifies_AnotherChannel() external {
         // it should give secondary verification(2) to that channel
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.bob_channel_owner);
         coreProxy.verifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerification = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -110,12 +112,12 @@ contract ChannelVerification_Test is BasePushCoreTest {
     function test_WhenAdminUpgrades_TheVerification() external {
         // it should allow admin to give primary verification
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
 
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.bob_channel_owner);
         changePrank(actor.bob_channel_owner);
         coreProxy.verifyChannel(actor.alice_channel_owner);
 
@@ -126,8 +128,8 @@ contract ChannelVerification_Test is BasePushCoreTest {
         assertEq(Alice_verifiedByBefore, actor.bob_channel_owner);
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerificationAfter = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -141,12 +143,12 @@ contract ChannelVerification_Test is BasePushCoreTest {
         // it should REVERT- not allowing downgrade primary verified to secondary
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
 
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerificationBefore = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -169,18 +171,18 @@ contract ChannelVerification_Test is BasePushCoreTest {
     function test_When_ASecondaryVerifiedChannel_VerifiesAnotherChannel() external {
         // it should give secondary verification to that channel
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
         coreProxy.verifyChannel(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.charlie_channel_owner,actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.charlie_channel_owner, actor.bob_channel_owner);
         coreProxy.verifyChannel(actor.charlie_channel_owner);
 
         changePrank(actor.charlie_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.charlie_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.charlie_channel_owner);
         coreProxy.verifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerification = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -214,12 +216,12 @@ contract ChannelVerification_Test is BasePushCoreTest {
         _channels[2] = actor.alice_channel_owner;
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.charlie_channel_owner,actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.bob_channel_owner,actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerified(actor.alice_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.charlie_channel_owner, actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.bob_channel_owner, actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerified(actor.alice_channel_owner, actor.admin);
         coreProxy.batchVerification(0, 3, _channels);
 
         uint8 charlieVerificationAfter = coreProxy.getChannelVerfication(actor.charlie_channel_owner);

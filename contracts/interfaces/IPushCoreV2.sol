@@ -15,11 +15,11 @@ interface IPushCoreV2 {
     event ChannelVerified(address indexed channel, address indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-    /// @notice emits whenever any channel is deactivated 
+    /// @notice emits whenever any channel is deactivated
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    /// @notice emits whenever any deactivated channel is reactivated 
+    /// @notice emits whenever any deactivated channel is reactivated
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
-    /// @notice emits whenever any channel is blocked by admin 
+    /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(address indexed channel);
     /// @notice emits whenever a new channel is created
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);

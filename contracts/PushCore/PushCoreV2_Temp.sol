@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title PushCoreV2_Temp
+ * @title PushCore v2_Temp
  * @notice EPNS Core is the main protocol that deals with the imperative
  * features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
@@ -458,7 +458,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         returns (bool)
     {
         onlyPushChannelAdmin();
-        for (uint256 i = _startIndex; i < _endIndex; ) {
+        for (uint256 i = _startIndex; i < _endIndex;) {
             verifyChannel(_channelList[i]);
 
             unchecked {
@@ -507,7 +507,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
      * Core-V2: Stake and Claim Functions
      */
 
-     /// @notice Allows caller to add pool_fees at any given epoch
+    /// @notice Allows caller to add pool_fees at any given epoch
     function addPoolFees(uint256 _rewardAmount) external {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _rewardAmount;

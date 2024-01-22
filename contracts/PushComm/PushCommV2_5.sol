@@ -2,15 +2,16 @@ pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
- * @title PushCommV2_5
+ * @title PushComm v2.5
+ * @author Push Protocol
  * @notice Push Communicator, as the name suggests, is more of a Communictation Layer
- * between END USERS and Push Core Protocol.
- * The Communicator Protocol is comparatively much simpler & involves basic
- * details, specifically about the USERS of the Protocols
+ *         between END USERS and Push Core Protocol.
+ *         The Communicator Protocol is comparatively much simpler & involves basic
+ *         details, specifically about the USERS of the Protocols
  *
- * Some imperative functionalities that the Push Communicator Protocol allows
- * are Subscribing to a particular channel, Unsubscribing a channel, Sending
- * Notifications to a particular recipient or all subscribers of a Channel etc.
+ * @dev   Some imperative functionalities that the Push Communicator Protocol allows
+ *        are Subscribing to a particular channel, Unsubscribing a channel, Sending
+ *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
@@ -118,7 +119,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
     /// @inheritdoc IPushCommV2
     function batchSubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
-        for (uint256 i = 0; i < channelListLength; ) {
+        for (uint256 i = 0; i < channelListLength;) {
             _subscribe(_channelList[i], msg.sender);
             unchecked {
                 i++;
@@ -155,14 +156,18 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             revert Errors.InvalidArg_ArrayLengthMismatch();
         }
 
-        for (uint256 i = _startIndex; i < _endIndex; ) {
+        for (uint256 i = _startIndex; i < _endIndex;) {
             if (isUserSubscribed(_channelList[i], _usersList[i])) {
-                unchecked { i++; }
+                unchecked {
+                    i++;
+                }
                 continue;
             } else {
                 _subscribe(_channelList[i], _usersList[i]);
             }
-            unchecked { i++; }
+            unchecked {
+                i++;
+            }
         }
         return true;
     }
@@ -218,8 +223,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             revert Errors.Comm_TimeExpired(expiry, block.timestamp);
         }
 
-        bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash = keccak256(abi.encode(SUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -262,7 +266,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
     /// @inheritdoc IPushCommV2
     function batchUnsubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
-        for (uint256 i = 0; i < channelListLength; ) {
+        for (uint256 i = 0; i < channelListLength;) {
             _unsubscribe(_channelList[i], msg.sender);
             unchecked {
                 i++;
@@ -321,8 +325,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
 
         // EIP-712
-        bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash = keccak256(abi.encode(UNSUBSCRIBE_TYPEHASH, channel, subscriber, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
@@ -520,8 +523,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
             return false;
         }
 
-        bytes32 domainSeparator =
-            keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
+        bytes32 domainSeparator = keccak256(abi.encode(DOMAIN_TYPEHASH, NAME_HASH, block.chainid, address(this)));
         bytes32 structHash =
             keccak256(abi.encode(SEND_NOTIFICATION_TYPEHASH, _channel, _recipient, keccak256(_identity), nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
