@@ -32,13 +32,13 @@ contract PushCoreStorageV1_5 {
     uint256 ADJUST_FOR_FLOAT;
     uint256 public channelsCount;
 
-    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
+    ///  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
     uint256 public groupNormalizedWeight;
     uint256 public groupHistoricalZ;
     uint256 public groupLastUpdate;
     uint256 public groupFairShareCount;
 
-    // @notice Necessary variables for Keeping track of Funds and Fees
+    /// @notice Necessary variables for Keeping track of Funds and Fees
     uint256 public CHANNEL_POOL_FUNDS;
     uint256 public PROTOCOL_POOL_FEES;
     uint256 public ADD_CHANNEL_MIN_FEES;

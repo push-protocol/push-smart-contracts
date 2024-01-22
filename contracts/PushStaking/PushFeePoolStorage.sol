@@ -20,11 +20,11 @@ contract PushFeePoolStorage {
     address public governance;
     address public core;
 
-    // @notice: Stores all the individual epoch rewards
+    /// @notice Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
-    // @notice: Stores User's Fees Details
+    /// @notice Stores User's Fees Details
     mapping(address => StakingTypes.UserFessInfo) public userFeesInfo;
-    // @notice: Stores the total staked weight at a specific epoch.
+    /// @notice Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
     bool migrated;
 }

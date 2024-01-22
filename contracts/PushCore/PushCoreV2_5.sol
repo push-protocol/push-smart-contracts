@@ -1,19 +1,18 @@
 pragma solidity ^0.8.20;
 
 /**
- * EPNS Core is the main protocol that deals with the imperative
- * features and functionalities like Channel Creation, pushChannelAdmin etc.
+ * @title  PushCore v2.5
+ * @author Push Protocol
+ * @notice Push Core is the main protocol that deals with the imperative
+ *         features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
- * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
- * protocols can be deployed on Multiple Chains.
- * The EPNS Core is more inclined towards the storing and handling the Channel related
- * Functionalties.
+ * @dev This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
+ *      protocols can be deployed on Multiple Chains.
+ *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
  *
  */
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
-import { IPUSH } from "../interfaces/IPUSH.sol";
-import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
@@ -429,14 +428,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
     *************** */
 
-    /**
-     * @notice    Function is designed to tell if a channel is verified or not
-     * @dev       Get if channel is verified or not
-     * @param    _channel Address of the channel to be Verified
-     * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
-     * verification
-     *
-     */
+    /// @inheritdoc IPushCoreV2
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
         address verifiedBy = channels[_channel].verifiedBy;
         bool logicComplete = false;
@@ -471,9 +463,9 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         returns (bool)
     {
         onlyPushChannelAdmin();
-        for (uint256 i = _startIndex; i < _endIndex; ) {
+        for (uint256 i = _startIndex; i < _endIndex;) {
             verifyChannel(_channelList[i]);
-            
+
             unchecked {
                 i++;
             }

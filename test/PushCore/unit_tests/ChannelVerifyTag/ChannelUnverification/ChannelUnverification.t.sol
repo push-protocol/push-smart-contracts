@@ -20,8 +20,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(bobVerificationBefore, 1);
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.bob_channel_owner, actor.admin);
         coreProxy.unverifyChannel(actor.bob_channel_owner);
 
         uint8 bobVerificationAfter = coreProxy.getChannelVerfication(actor.bob_channel_owner);
@@ -42,8 +42,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerification, 2);
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.alice_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.alice_channel_owner, actor.admin);
         coreProxy.unverifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerificationAfter = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -64,8 +64,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerification, 2);
 
         changePrank(actor.bob_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.alice_channel_owner,actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.alice_channel_owner, actor.bob_channel_owner);
         coreProxy.unverifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerificationAfter = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -113,8 +113,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerification, 2);
 
         changePrank(actor.charlie_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.alice_channel_owner,actor.charlie_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.alice_channel_owner, actor.charlie_channel_owner);
         coreProxy.unverifyChannel(actor.alice_channel_owner);
 
         uint8 aliceVerificationAfter = coreProxy.getChannelVerfication(actor.alice_channel_owner);
@@ -139,8 +139,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerification, 2);
 
         changePrank(actor.bob_channel_owner);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.charlie_channel_owner,actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.charlie_channel_owner, actor.bob_channel_owner);
         coreProxy.unverifyChannel(actor.charlie_channel_owner);
 
         uint8 charlieVerificationAfter = coreProxy.getChannelVerfication(actor.charlie_channel_owner);
@@ -170,8 +170,8 @@ contract ChannelUnverification_Test is BasePushCoreTest {
         assertEq(aliceVerification, 2);
 
         changePrank(actor.admin);
-        vm.expectEmit(true,true,false,false);
-        emit ChannelVerificationRevoked(actor.bob_channel_owner,actor.admin);
+        vm.expectEmit(true, true, false, false);
+        emit ChannelVerificationRevoked(actor.bob_channel_owner, actor.admin);
         coreProxy.unverifyChannel(actor.bob_channel_owner);
 
         uint8 bobVerificationAfter = coreProxy.getChannelVerfication(actor.bob_channel_owner);
