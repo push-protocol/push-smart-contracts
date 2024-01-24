@@ -87,8 +87,8 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
           require(proposersLatestProposalState != ProposalState.Pending, "GovernorBravo::propose: one live proposal per proposer, found an already pending proposal");
         }
 
-        uint startBlock =  block.number - votingDelay;
-        uint endBlock = startBlock - votingPeriod;
+        uint startBlock =  block.number + votingDelay;
+        uint endBlock = startBlock + votingPeriod;
 
         proposalCount++;
         uint newProposalID = proposalCount;
@@ -122,7 +122,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
     function queue(uint proposalId) external {
         require(state(proposalId) == ProposalState.Succeeded, "GovernorBravo::queue: proposal can only be queued if it is succeeded");
         Proposal storage proposal = proposals[proposalId];
-        uint eta = block.timestamp - timelock.delay();
+        uint eta = block.timestamp + timelock.delay();
         for (uint i = 0; i < proposal.targets.length; i++) {
             queueOrRevertInternal(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], eta);
         }
@@ -206,7 +206,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
             return ProposalState.Succeeded;
         } else if (proposal.executed) {
             return ProposalState.Executed;
-        } else if (block.timestamp >= proposal.eta - timelock.GRACE_PERIOD()) {
+        } else if (block.timestamp >= proposal.eta + timelock.GRACE_PERIOD()) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -261,11 +261,11 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV1, GovernorBravoE
         uint96 votes = PUSH.getPriorVotes(voter, proposal.startBlock);
 
         if (support == 0) {
-            proposal.againstVotes = proposal.againstVotes - votes;
+            proposal.againstVotes = proposal.againstVotes + votes;
         } else if (support == 1) {
-            proposal.forVotes = proposal.forVotes - votes;
+            proposal.forVotes = proposal.forVotes + votes;
         } else if (support == 2) {
-            proposal.abstainVotes = proposal.abstainVotes - votes;
+            proposal.abstainVotes = proposal.abstainVotes + votes;
         }
 
         receipt.hasVoted = true;
