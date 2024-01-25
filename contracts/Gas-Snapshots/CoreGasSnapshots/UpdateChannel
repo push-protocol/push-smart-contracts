@@ -1,0 +1,13 @@
+
+UpdateChannelMeta_Test:test_ContractShouldReceiveFeeTokens() (gas: 802085)
+UpdateChannelMeta_Test:test_EmitRelevantEventsU() (gas: 692053)
+UpdateChannelMeta_Test:test_Revertwhen_AmountLessThanRequiredFees() (gas: 655212)
+UpdateChannelMeta_Test:test_Revertwhen_AmountLessThanRequiredFeesForSecondUpdate() (gas: 693268)
+UpdateChannelMeta_Test:test_Revertwhen_CallerNotChannelOwner() (gas: 654700)
+UpdateChannelMeta_Test:test_Revertwhen_UpdateZeroAddressChannel() (gas: 25816)
+UpdateChannelMeta_Test:test_Revertwhen_UpdatingDeactivatedChannel() (gas: 666121)
+UpdateChannelMeta_Test:test_Revertwhen_UpdatingInactiveChannel() (gas: 25937)
+UpdateChannelMeta_Test:test_ShouldUpdateChannelVariables() (gas: 824047)
+UpdateChannelMeta_Test:test_ShouldUpdateFeeVariables() (gas: 694075)
+UpdateChannelMeta_Test:test_UpdateWithSufficientFees() (gas: 790066)
+UpdateChannelMeta_Test:test_UpdateZeroAddressChannel() (gas: 170029)

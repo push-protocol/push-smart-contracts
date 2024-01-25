@@ -1,0 +1,8 @@
+
+ClaimChatIncentives_Test:test_REVERTWhen_ClaimableFunds_OfCaller_IsLessThan_AmountAsked() (gas: 21349)
+ClaimChatIncentives_Test:test_When_ClaimableFunds_OfCaller_IsMoreThanOrEqual_ToAmountAsked() (gas: 60852)ContractPausability_Test:test_Revertwhen_DeactivateChannelAfterPaused() (gas: 677964)
+
+HandleChatRequestData_Test:test_Revertwhen_CallerNotComm() (gas: 20786)
+HandleChatRequestData_Test:test_ShouldEmitRelevantEvent() (gas: 253650)
+HandleChatRequestData_Test:test_ShouldUpdateRelevantVariables() (gas: 256895)
+
