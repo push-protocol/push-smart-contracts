@@ -348,12 +348,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         return true;
     }
 
-    /* **************
-
-    => PUBLIC KEY BROADCASTING & USER ADDING FUNCTIONALITIES <=
-
-    *************** */
-
     /**
      * @notice Activates/Adds a particular User's Address in the Protocol.
      *         Keeps track of the Total User Count
