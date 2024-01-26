@@ -5,5 +5,5 @@ handleChatRequestData.t.sol
         ├── when function caller is not Comm contract
         │   └── it REVERT - UnauthorizedCaller(caller)
         └── when function caller is Comm contract
-            ├── should update relevant variables
-            └── should emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp)
+            ├── it should update relevant variables
+            └── it should emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp)

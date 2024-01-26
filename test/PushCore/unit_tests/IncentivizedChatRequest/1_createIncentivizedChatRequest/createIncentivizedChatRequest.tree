@@ -8,6 +8,6 @@ createIncentivizeChatRequest.t.sol
             ├── when push token allowance is less than amount
             │   └── it REVERT - Push::transferFrom: transfer amount exceeds spender allowance
             └── when push token allowance is enough
-                ├── should send PUSH tokens to Core
-                ├── should update chatData variables
-                └── should emit event IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp)
+                ├── it should send PUSH tokens to Core
+                ├── it should update chatData variables
+                └── it should emit event IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp)
