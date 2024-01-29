@@ -126,6 +126,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
+        if (_newFees == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, _newFees);
+        }
         if (_newFees >= ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_MoreThanExpected(ADD_CHANNEL_MIN_FEES, _newFees);
         }
@@ -135,7 +138,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
         if (_newAmount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
+            revert Errors.InvalidArg_LessThanExpected(1, _newAmount);
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
@@ -298,8 +301,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            (msg.sender != _channelAddress || channelData.expiryTime >= block.timestamp)
-                && (msg.sender != pushChannelAdmin || channelData.expiryTime + 14 days >= block.timestamp)
+            !(
+                (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
+                    || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp)
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -823,12 +828,5 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
-    }
-
-    function sendFunds(address _user, uint256 _amount) external {
-        if (msg.sender != feePoolStakingContract) {
-            revert Errors.UnauthorizedCaller(msg.sender);
-        }
-        IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 }
