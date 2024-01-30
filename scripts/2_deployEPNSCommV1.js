@@ -53,7 +53,7 @@ async function setupAllContracts(versionDetails) {
   // const epns = await deployContract("EPNS", [], "EPNS");
   // deployedContracts.push(epns)
 
-  const EPNSCommV1 = await deployContract("EPNSCommV1", [], "EPNSCommV1");
+  const EPNSCommV1 = await deployContract("EPNSCommV2", [], "EPNSCommV2");
   deployedContracts.push(EPNSCommV1)
 
   const EPNSCommAdmin = await deployContract("EPNSCommAdmin", [], "EPNSCommAdmin");

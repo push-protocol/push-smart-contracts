@@ -162,6 +162,13 @@ module.exports = {
     fuseSpark:{
       url:"https://rpc.fusespark.io",
       accounts: [process.env.PRIVATE],
+    },
+    //Shardeum Testnet
+    sphinx:{
+      url: "https://sphinx.shardeum.org/",
+      chainId: 8082,
+      accounts:[process.env.PRIVATE]
+    
     }
   },
   etherscan: {

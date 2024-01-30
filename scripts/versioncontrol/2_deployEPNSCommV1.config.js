@@ -44,6 +44,9 @@ const deploy = {
     },
     fuseSpark: {
       version: 1
+    },
+    sphinx:{
+      version:1,
     }
   },
   args: {
