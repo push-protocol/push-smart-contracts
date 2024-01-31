@@ -11,18 +11,18 @@ pragma solidity ^0.8.20;
  * Functionalties.
  *
  */
-import "./PushCoreStorageV1_5.sol";
-import "./PushCoreStorageV2.sol";
+import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
+import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
     using SafeERC20 for IERC20;
