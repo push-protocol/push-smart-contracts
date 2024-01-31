@@ -1,14 +1,14 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title PushCore v2_Temp
- * @notice EPNS Core is the main protocol that deals with the imperative
- * features and functionalities like Channel Creation, pushChannelAdmin etc.
+ * @title  PushCore v2.5
+ * @author Push Protocol
+ * @notice Push Core is the main protocol that deals with the imperative
+ *         features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
- * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
- * protocols can be deployed on Multiple Chains.
- * The EPNS Core is more inclined towards the storing and handling the Channel related
- * Functionalties.
+ * @dev This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
+ *      protocols can be deployed on Multiple Chains.
+ *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
  *
  */
 import "./PushCoreStorageV1_5.sol";
