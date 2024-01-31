@@ -1,0 +1,8 @@
+SubscribeBySig_Test:test_RevertWhen_AnExpired1271SigIsPassed() (gas: 52495)
+SubscribeBySig_Test:test_RevertWhen_AnExpired712SignatureIsPassed() (gas: 50452)
+SubscribeBySig_Test:test_RevertWhen_MaliciousUserReplays_1271Sig() (gas: 212081)
+SubscribeBySig_Test:test_RevertWhen_MaliciousUser_ReplaysA712Signature() (gas: 203711)
+SubscribeBySig_Test:test_WhenAContractUnsubscribesWith1271Sig() (gas: 175548)
+SubscribeBySig_Test:test_WhenThe1271SignIsCorrect() (gas: 204884)
+SubscribeBySig_Test:test_WhenThe712SignIsCorrect() (gas: 198675)
+SubscribeBySig_Test:test_WhenUsersUnsubscribeWith712Sig() (gas: 157738)

@@ -1,0 +1,37 @@
+| contracts/PushCore/EPNSCoreProxy.sol:EPNSCoreProxy contract |                 |        |        |        |         |
+|-------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                             | Deployment Size |        |        |        |         |
+| 948366                                                      | 4853            |        |        |        |         |
+| Function Name                                               | min             | avg    | median | max    | # calls |
+| ADD_CHANNEL_MIN_FEES                                        | 784             | 1784   | 1784   | 2784   | 4       |
+| CHANNEL_POOL_FUNDS                                          | 805             | 971    | 805    | 2805   | 12      |
+| FEE_AMOUNT                                                  | 806             | 2906   | 2806   | 7306   | 5       |
+| MIN_POOL_CONTRIBUTION                                       | 829             | 2162   | 2829   | 2829   | 3       |
+| PROTOCOL_POOL_FEES                                          | 829             | 1529   | 829    | 7329   | 15      |
+| batchVerification                                           | 7670            | 21508  | 21508  | 35347  | 2       |
+| blockChannel                                                | 960             | 23164  | 19649  | 43466  | 12      |
+| celebUserFunds                                              | 1043            | 4293   | 4293   | 7543   | 4       |
+| channelUpdateCounter                                        | 1064            | 1064   | 1064   | 1064   | 5       |
+| channels                                                    | 2341            | 12769  | 18341  | 24841  | 49      |
+| channelsCount                                               | 784             | 2409   | 784    | 7284   | 8       |
+| claimChatIncentives                                         | 7727            | 16379  | 16379  | 25031  | 2       |
+| createChannelWithPUSH                                       | 1290            | 531655 | 592169 | 658058 | 151     |
+| deactivateChannel                                           | 810             | 35699  | 51331  | 64431  | 17      |
+| destroyTimeBoundChannel                                     | 1250            | 17429  | 18638  | 29898  | 19      |
+| epnsCommunicator                                            | 855             | 4105   | 4105   | 7355   | 2       |
+| getChannelVerfication                                       | 1315            | 3111   | 2090   | 10028  | 35      |
+| governance                                                  | 835             | 4085   | 4085   | 7335   | 2       |
+| handleChatRequestData                                       | 4089            | 41603  | 47889  | 56389  | 9       |
+| pauseContract                                               | 7313            | 25291  | 27396  | 30646  | 8       |
+| pushChannelAdmin                                            | 867             | 5200   | 7367   | 7367   | 3       |
+| reactivateChannel                                           | 890             | 12746  | 14000  | 20052  | 8       |
+| setEpnsCommunicatorAddress                                  | 7471            | 22902  | 23083  | 23083  | 159     |
+| setFeeAmount                                                | 1257            | 2856   | 1257   | 6055   | 3       |
+| setGovernanceAddress                                        | 7538            | 11923  | 12550  | 12550  | 8       |
+| setMinChannelCreationFees                                   | 1319            | 2956   | 1325   | 6225   | 3       |
+| setMinPoolContribution                                      | 1046            | 1095   | 1053   | 5953   | 116     |
+| transferPushChannelAdminControl                             | 7474            | 8351   | 7625   | 10680  | 4       |
+| unPauseContract                                             | 1797            | 3635   | 1797   | 7311   | 3       |
+| unverifyChannel                                             | 1201            | 2140   | 2280   | 2382   | 7       |
+| updateChannelMeta                                           | 1719            | 22865  | 13497  | 157327 | 25      |
+| verifyChannel                                               | 2229            | 12109  | 9702   | 17578  | 31      |

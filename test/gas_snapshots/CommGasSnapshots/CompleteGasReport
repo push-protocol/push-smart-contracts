@@ -1,0 +1,26 @@
+| contracts/PushComm/EPNSCommProxy.sol:EPNSCommProxy contract |                 |        |        |        |         |
+|-------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                             | Deployment Size |        |        |        |         |
+| 803882                                                      | 4812            |        |        |        |         |
+| Function Name                                               | min             | avg    | median | max    | # calls |
+| EPNSCoreAddress                                             | 835             | 4085   | 4085   | 7335   | 2       |
+| PUSH_TOKEN_ADDRESS                                          | 846             | 4096   | 4096   | 7346   | 2       |
+| addDelegate                                                 | 171752          | 171752 | 171752 | 171752 | 3       |
+| createIncentivizeChatRequest                                | 5422            | 122061 | 162066 | 181716 | 10      |
+| delegatedNotificationSenders                                | 1188            | 3354   | 1188   | 7688   | 3       |
+| governance                                                  | 823             | 4073   | 4073   | 7323   | 2       |
+| isUserSubscribed                                            | 1281            | 2098   | 1300   | 7781   | 13      |
+| nonces                                                      | 999             | 3434   | 999    | 7499   | 31      |
+| pushChannelAdmin                                            | 801             | 5134   | 7301   | 7301   | 3       |
+| sendNotifBySig                                              | 1832            | 23749  | 30382  | 35721  | 6       |
+| sendNotification                                            | 1817            | 7169   | 8317   | 10812  | 5       |
+| setEPNSCoreAddress                                          | 1160            | 21609  | 23060  | 23060  | 169     |
+| setGovernanceAddress                                        | 7467            | 9968   | 9968   | 12470  | 2       |
+| setPushTokenAddress                                         | 1193            | 21642  | 23093  | 23093  | 169     |
+| subscribe                                                   | 148184          | 148184 | 148184 | 148184 | 1       |
+| subscribeBySig                                              | 1520            | 101488 | 170939 | 175160 | 9       |
+| subscribeViaCore                                            | 44267           | 109255 | 139166 | 167566 | 432     |
+| transferPushChannelAdminControl                             | 7470            | 8332   | 7607   | 10645  | 4       |
+| unSubscribeViaCore                                          | 4010            | 4010   | 4010   | 4010   | 30      |
+| unsubscribeBySig                                            | 9498            | 16569  | 16569  | 23641  | 2       |
+| userChatData                                                | 1342            | 4842   | 1342   | 11842  | 3       |

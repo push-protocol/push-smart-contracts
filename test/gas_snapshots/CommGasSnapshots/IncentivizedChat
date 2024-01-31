@@ -1,0 +1,5 @@
+CreateIncentivizeChatRequest_Test:test_CoreShouldReceiveTokens() (gas: 252040)
+CreateIncentivizeChatRequest_Test:test_Revertwhen_AmountIsZero() (gas: 18637)
+CreateIncentivizeChatRequest_Test:test_Revertwhen_NotEnoughAllowance() (gas: 29814)
+CreateIncentivizeChatRequest_Test:test_ShouldEmitRelevantEvent() (gas: 250062)
+CreateIncentivizeChatRequest_Test:test_ShouldUpdateVariables() (gas: 280364)
