@@ -1,28 +1,28 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title PushCore v2_Temp
- * @notice EPNS Core is the main protocol that deals with the imperative
- * features and functionalities like Channel Creation, pushChannelAdmin etc.
+ * @title  PushCore v2.5
+ * @author Push Protocol
+ * @notice Push Core is the main protocol that deals with the imperative
+ *         features and functionalities like Channel Creation, pushChannelAdmin etc.
  *
- * This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
- * protocols can be deployed on Multiple Chains.
- * The EPNS Core is more inclined towards the storing and handling the Channel related
- * Functionalties.
+ * @dev This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
+ *      protocols can be deployed on Multiple Chains.
+ *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
  *
  */
-import "./PushCoreStorageV1_5.sol";
-import "./PushCoreStorageV2.sol";
+import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
+import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
     using SafeERC20 for IERC20;
@@ -126,6 +126,9 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function setFeeAmount(uint256 _newFees) external {
         onlyGovernance();
+        if (_newFees == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, _newFees);
+        }
         if (_newFees >= ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_MoreThanExpected(ADD_CHANNEL_MIN_FEES, _newFees);
         }
@@ -135,7 +138,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
         if (_newAmount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(0, _newAmount);
+            revert Errors.InvalidArg_LessThanExpected(1, _newAmount);
         }
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
@@ -298,8 +301,10 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             revert Errors.Core_InvalidChannelType();
         }
         if (
-            (msg.sender != _channelAddress || channelData.expiryTime >= block.timestamp)
-                && (msg.sender != pushChannelAdmin || channelData.expiryTime + 14 days >= block.timestamp)
+            !(
+                (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
+                    || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp)
+            )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -823,12 +828,5 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
-    }
-
-    function sendFunds(address _user, uint256 _amount) external {
-        if (msg.sender != feePoolStakingContract) {
-            revert Errors.UnauthorizedCaller(msg.sender);
-        }
-        IERC20(PUSH_TOKEN_ADDRESS).transfer(_user, _amount);
     }
 }
