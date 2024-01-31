@@ -39,5 +39,6 @@ body:
         - Push Token
         - Push Governance Contracts
         - Push Staking V2
+        - Scripts Or tests
     validations:
       required: true
