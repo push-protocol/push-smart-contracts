@@ -143,12 +143,12 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
     }
 
     function pauseContract() external {
-        onlyGovernance();
+        onlyPushChannelAdmin();
         _pause();
     }
 
     function unPauseContract() external {
-        onlyGovernance();
+        onlyPushChannelAdmin();
         _unpause();
     }
 
@@ -401,7 +401,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
     /// @inheritdoc IPushCoreV2
     function blockChannel(address _channelAddress) external whenNotPaused {
-        onlyPushChannelAdmin();
+        onlyGovernance();
         if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
