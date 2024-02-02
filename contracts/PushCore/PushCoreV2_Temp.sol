@@ -81,7 +81,7 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
 
     function onlyGovernance() private view {
         if (msg.sender != governance) {
-            revert Errors.CallerNotAdmin();
+            revert Errors.CallerNotGovernance();
         }
     }
 

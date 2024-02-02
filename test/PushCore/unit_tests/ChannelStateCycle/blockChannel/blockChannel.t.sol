@@ -18,8 +18,8 @@ contract BlockChannel_Test is BasePushCoreTest {
         _;
     }
 
-    function test_Revertwhen_BlockCallerNotAdmin() public whenNotPaused whenCallerIsAdmin {
-        vm.expectRevert(Errors.CallerNotAdmin.selector);
+    function test_Revertwhen_BlockCallerNotGovernance() public whenNotPaused whenCallerIsAdmin {
+        vm.expectRevert(Errors.CallerNotGovernance.selector);
 
         coreProxy.blockChannel(actor.bob_channel_owner);
     }

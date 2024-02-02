@@ -12,27 +12,27 @@ contract ContractPausability_Test is BasePushCoreTest {
         _;
     }
 
-    function test_Revertwhen_PausingNotByGovernance() public whenNotPaused {
+    function test_Revertwhen_PausingNotByAdmin() public whenNotPaused {
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
         coreProxy.pauseContract();
     }
 
-    function test_Revertwhen_UnpausingNotByGovernance() public {
+    function test_Revertwhen_UnpausingNotByAdmin() public {
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
         coreProxy.unPauseContract();
     }
 
-    function test_PausingByGovernance() public whenNotPaused {
+    function test_PausingByAdmin() public whenNotPaused {
         vm.expectEmit(false, false, false, true, address(coreProxy));
         emit Paused(actor.admin);
 
-        vm.prank(actor.admin); // admin is governance until push migrates to on-chain governance
+        vm.prank(actor.admin);
         coreProxy.pauseContract();
     }
 
-    function test_UnpausingByGovernance() public {
+    function test_UnpausingByAdmin() public {
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
