@@ -221,7 +221,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             !(
                 _channelType == CoreTypes.ChannelType.InterestBearingOpen
                     || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
             )
         ) {
             revert Errors.Core_InvalidChannelType();
