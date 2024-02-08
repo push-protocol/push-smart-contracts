@@ -23,13 +23,10 @@ contract ChannelVerification_Test is BasePushCoreTest {
         uint8 zeroAddressVerification = coreProxy.getChannelVerfication(address(0));
 
         assertEq(adminVerification, 1);
-        assertEq(adminVerification, zeroAddressVerification);
 
         address Admin_verifiedBy = _getVerifiedBy(actor.admin);
-        address Zero_verifiedBy = _getVerifiedBy(address(0));
 
         assertEq(Admin_verifiedBy, address(0));
-        assertEq(Zero_verifiedBy, address(0));
     }
 
     function test_WhenChecked_TheVerificationStatusFor_UnverifiedChannel()

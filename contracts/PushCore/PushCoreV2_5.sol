@@ -434,7 +434,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
+        if (verifiedBy == pushChannelAdmin || _channel == pushChannelAdmin) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {
