@@ -10,6 +10,8 @@ library Errors {
 
     /// @notice Reverts when `msg.sender` is not the admin of the contract.
     error CallerNotAdmin();
+    /// @notice Reverts when `msg.sender` is not the governance.
+    error CallerNotGovernance();
     /// @notice Reverts when `msg.sender` is not the admin of the contract.
     error UnauthorizedCaller(address caller);
     /// @notice Reverts when address argument is zero address or invalid for the function.

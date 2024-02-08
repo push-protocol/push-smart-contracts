@@ -43,6 +43,13 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         _;
     }
 
+    modifier onlyPushGovernance() {
+        if (msg.sender != governance) {
+            revert Errors.CallerNotGovernance();
+        }
+        _;
+    }
+    
     modifier onlyPushCore() {
         if (msg.sender != EPNSCoreAddress) {
             revert Errors.UnauthorizedCaller(msg.sender);
