@@ -247,34 +247,6 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         assertEq(expectedPushTokenBalanceOfAdminAfterDestroying, actualPushTokenBalanceOfAdminAfterDestroying);
     }
 
-    function test_ShouldUnsubscribeAfterDestroyed() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
-        address EPNS_ALERTER = address(0);
-
-        bool isChannelSubscribedToOwn_Before =
-            commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
-        bool isChannelSubscribedToEPNS_Before = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
-        bool isAdminSubscribedToChannel_Before = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
-
-        skip(1 days + 1 seconds);
-
-        vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-
-        bool isChannelSubscribedToOwn_After =
-            commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
-        bool isChannelSubscribedToEPNS_After = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
-        bool isAdminSubscribedToChannel_After = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
-
-        assertEq(isChannelSubscribedToOwn_Before, true);
-        assertEq(isChannelSubscribedToEPNS_Before, true);
-        assertEq(isAdminSubscribedToChannel_Before, true);
-
-        assertEq(isChannelSubscribedToOwn_After, false);
-        assertEq(isChannelSubscribedToEPNS_After, false);
-        assertEq(isAdminSubscribedToChannel_After, false);
-    }
-
     function test_ShouldDeleteDataAfterDestroyed() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
@@ -348,4 +320,34 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         vm.prank(actor.bob_channel_owner);
         coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
     }
+
+    // Auto-Subscription Funcationality Removed
+    
+    // function test_ShouldUnsubscribeAfterDestroyed() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    //     address EPNS_ALERTER = address(0);
+
+    //     bool isChannelSubscribedToOwn_Before =
+    //         commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
+    //     bool isChannelSubscribedToEPNS_Before = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
+    //     bool isAdminSubscribedToChannel_Before = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
+
+    //     skip(1 days + 1 seconds);
+
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+
+    //     bool isChannelSubscribedToOwn_After =
+    //         commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
+    //     bool isChannelSubscribedToEPNS_After = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
+    //     bool isAdminSubscribedToChannel_After = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
+
+    //     assertEq(isChannelSubscribedToOwn_Before, true);
+    //     assertEq(isChannelSubscribedToEPNS_Before, true);
+    //     assertEq(isAdminSubscribedToChannel_Before, true);
+
+    //     assertEq(isChannelSubscribedToOwn_After, false);
+    //     assertEq(isChannelSubscribedToEPNS_After, false);
+    //     assertEq(isAdminSubscribedToChannel_After, false);
+    // }
 }
