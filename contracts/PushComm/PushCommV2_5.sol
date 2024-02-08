@@ -412,8 +412,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      */
     function _checkNotifReq(address _channel, address _recipient) private view returns (bool) {
         if (
-            (_channel == 0x0000000000000000000000000000000000000000 && msg.sender == pushChannelAdmin)
-                || (_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])
+            (_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])
         ) {
             return true;
         }
