@@ -49,14 +49,6 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         coreProxy.updateChannelMeta(_channelAddress, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
-    function test_UpdateZeroAddressChannel() public whenNotPaused {
-        uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
-        address _channelAddress = address(0x0);
-
-        vm.prank(actor.admin);
-        coreProxy.updateChannelMeta(_channelAddress, _testChannelUpdatedIdentity, _amountBeingTransferred);
-    }
-
     function test_Revertwhen_AmountLessThanRequiredFees() public whenNotPaused {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES - 10 ether;
         _createChannel(actor.bob_channel_owner);
@@ -168,4 +160,13 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
+
+    // Zero-Address Channel Support - Now Deprecated
+    // function test_UpdateZeroAddressChannel() public whenNotPaused {
+    //     uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
+    //     address _channelAddress = address(0x0);
+
+    //     vm.prank(actor.admin);
+    //     coreProxy.updateChannelMeta(_channelAddress, _testChannelUpdatedIdentity, _amountBeingTransferred);
+    // }
 }
