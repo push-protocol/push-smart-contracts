@@ -278,18 +278,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
             }
             channels[_channel].expiryTime = _channelExpiryTime;
         }
-
-        // Subscribe them to their own channel as well
-        address _epnsCommunicator = epnsCommunicator;
-        if (_channel != pushChannelAdmin) {
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, _channel);
-        }
-
-        // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
-        if (_channel != address(0x0)) {
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
-        }
     }
 
     /// @inheritdoc IPushCoreV2
