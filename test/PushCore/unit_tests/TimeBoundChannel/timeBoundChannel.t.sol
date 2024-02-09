@@ -321,7 +321,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
     }
 
-    // Auto-Subscription Funcationality Removed
+    // Auto-UnSubscription from Channels - Now Deprecated
     
     // function test_ShouldUnsubscribeAfterDestroyed() public whenNotPaused {
     //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
