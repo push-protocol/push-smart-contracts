@@ -47,7 +47,10 @@ const deploy = {
     },
     sphinx:{
       version:1,
-    }
+    },
+    berachainTestnet: {
+      version: 1,
+    },
   },
   args: {
     chainName: null
