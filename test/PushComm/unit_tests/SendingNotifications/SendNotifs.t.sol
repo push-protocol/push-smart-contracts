@@ -20,11 +20,12 @@ contract SendNotifs_Test is BasePushCommTest {
         assertEq(res, false);
     }
 
-    function test_WhenChannelIs0x00_AndCallerIs_Admin() external {
-        changePrank(actor.admin);
-        bool res = commProxy.sendNotification(address(0), actor.alice_channel_owner, _testChannelIdentity);
-        assertEq(res, true);
-    }
+    // Alerter Support removed
+    // function test_WhenChannelIs0x00_AndCallerIs_Admin() external {
+    //     changePrank(actor.admin);
+    //     bool res = commProxy.sendNotification(address(0), actor.alice_channel_owner, _testChannelIdentity);
+    //     assertEq(res, true);
+    // }
 
     function test_WhenDelegate_SendNotification_WithoutApproval() external {
         bool isTonyDelegate = commProxy.delegatedNotificationSenders(actor.bob_channel_owner, actor.dan_push_holder);

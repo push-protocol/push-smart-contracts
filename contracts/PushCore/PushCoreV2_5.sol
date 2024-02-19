@@ -94,7 +94,6 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         if (
             !(
                 (channels[_channel].channelState == 1 && msg.sender == _channel)
-                    || (msg.sender == pushChannelAdmin && _channel == address(0x0))
             )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -221,7 +220,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             !(
                 _channelType == CoreTypes.ChannelType.InterestBearingOpen
                     || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGaited
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
             )
         ) {
             revert Errors.Core_InvalidChannelType();
@@ -278,18 +277,6 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
             }
             channels[_channel].expiryTime = _channelExpiryTime;
         }
-
-        // Subscribe them to their own channel as well
-        address _epnsCommunicator = epnsCommunicator;
-        if (_channel != pushChannelAdmin) {
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, _channel);
-        }
-
-        // All Channels are subscribed to EPNS Alerter as well, unless it's the EPNS Alerter channel iteself
-        if (_channel != address(0x0)) {
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(address(0x0), _channel);
-            IPushCommV2(_epnsCommunicator).subscribeViaCore(_channel, pushChannelAdmin);
-        }
     }
 
     /// @inheritdoc IPushCoreV2
@@ -317,11 +304,6 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         } else {
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
         }
-        // Unsubscribing from imperative Channels
-        address _epnsCommunicator = epnsCommunicator;
-        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(address(0x0), _channelAddress);
-        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, _channelAddress);
-        IPushCommV2(_epnsCommunicator).unSubscribeViaCore(_channelAddress, pushChannelAdmin);
         // Decrement Channel Count and Delete Channel Completely
         channelsCount = channelsCount - 1;
         delete channels[_channelAddress];
@@ -434,7 +416,7 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (verifiedBy == pushChannelAdmin || _channel == address(0x0) || _channel == pushChannelAdmin) {
+        if (verifiedBy == pushChannelAdmin || _channel == pushChannelAdmin) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {

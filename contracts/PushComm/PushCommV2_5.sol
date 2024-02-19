@@ -149,35 +149,35 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      * @param _usersList   array of addresses of the Users or Subscribers of the Channels
      *
      */
-    function migrateSubscribeData(
-        uint256 _startIndex,
-        uint256 _endIndex,
-        address[] calldata _channelList,
-        address[] calldata _usersList
-    )
-        external
-        onlyPushChannelAdmin
-        returns (bool)
-    {
-        if (isMigrationComplete || _channelList.length != _usersList.length) {
-            revert Errors.InvalidArg_ArrayLengthMismatch();
-        }
+    // function migrateSubscribeData(
+    //     uint256 _startIndex,
+    //     uint256 _endIndex,
+    //     address[] calldata _channelList,
+    //     address[] calldata _usersList
+    // )
+    //     external
+    //     onlyPushChannelAdmin
+    //     returns (bool)
+    // {
+    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
+    //         revert Errors.InvalidArg_ArrayLengthMismatch();
+    //     }
 
-        for (uint256 i = _startIndex; i < _endIndex;) {
-            if (isUserSubscribed(_channelList[i], _usersList[i])) {
-                unchecked {
-                    i++;
-                }
-                continue;
-            } else {
-                _subscribe(_channelList[i], _usersList[i]);
-            }
-            unchecked {
-                i++;
-            }
-        }
-        return true;
-    }
+    //     for (uint256 i = _startIndex; i < _endIndex;) {
+    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
+    //             unchecked {
+    //                 i++;
+    //             }
+    //             continue;
+    //         } else {
+    //             _subscribe(_channelList[i], _usersList[i]);
+    //         }
+    //         unchecked {
+    //             i++;
+    //         }
+    //     }
+    //     return true;
+    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
@@ -358,12 +358,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         return true;
     }
 
-    /* **************
-
-    => PUBLIC KEY BROADCASTING & USER ADDING FUNCTIONALITIES <=
-
-    *************** */
-
     /**
      * @notice Activates/Adds a particular User's Address in the Protocol.
      *         Keeps track of the Total User Count
@@ -381,48 +375,6 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
 
             usersCount = usersCount + 1;
         }
-    }
-
-    /* @dev Internal system to handle broadcasting of public key,
-     *     A entry point for subscribe, or create channel but is optional
-     */
-    function _broadcastPublicKey(address _userAddr, bytes memory _publicKey) private {
-        // Add the user, will do nothing if added already, but is needed before broadcast
-        _addUser(_userAddr);
-
-        // get address from public key
-        address userAddr = getWalletFromPublicKey(_publicKey);
-
-        if (_userAddr == userAddr) {
-            // Only change it when verification suceeds, else assume the channel just wants to send group message
-            users[userAddr].publicKeyRegistered = true;
-
-            // Emit the event out
-            emit PublicKeyRegistered(userAddr, _publicKey);
-        } else {
-            revert("Public Key Validation Failed");
-        }
-    }
-
-    /// @dev Don't forget to add 0x into it
-    function getWalletFromPublicKey(bytes memory _publicKey) public pure returns (address wallet) {
-        if (_publicKey.length == 64) {
-            wallet = address(uint160(uint256(keccak256(_publicKey))));
-        } else {
-            wallet = 0x0000000000000000000000000000000000000000;
-        }
-    }
-
-    /// @dev Performs action by the user themself to broadcast their public key
-    function broadcastUserPublicKey(bytes calldata _publicKey) external {
-        // Will save gas
-        if (users[msg.sender].publicKeyRegistered) {
-            // Nothing to do, user already registered
-            return;
-        }
-
-        // broadcast it
-        _broadcastPublicKey(msg.sender, _publicKey);
     }
 
     /* *****************************
@@ -460,8 +412,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      */
     function _checkNotifReq(address _channel, address _recipient) private view returns (bool) {
         if (
-            (_channel == 0x0000000000000000000000000000000000000000 && msg.sender == pushChannelAdmin)
-                || (_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])
+            (_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])
         ) {
             return true;
         }
