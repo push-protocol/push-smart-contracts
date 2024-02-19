@@ -169,7 +169,13 @@ module.exports = {
       chainId: 8082,
       accounts:[process.env.PRIVATE]
     
-    }
+    },
+    //Bera Chain testnet
+      berachainTestnet: {
+      url: "https://artio.rpc.berachain.com/",
+      chainId: 80085,
+      accounts: [process.env.PRIVATE],
+    },
   },
   etherscan: {
     apiKey: {
@@ -179,7 +185,8 @@ module.exports = {
       sepolia:process.env.ETHERSCAN_API,
       goerli:process.env.ETHERSCAN_API,
       fuse: process.env.FUSE_API,
-      fuseSpark: process.env.FUSE_API
+      fuseSpark: process.env.FUSE_API,
+      berachainTestnet: "apiNotRequired"
     },
     customChains: [
       {
@@ -206,8 +213,17 @@ module.exports = {
         urls:{
           apiURL: "https://explorer.fusespark.io/api",
           browserURL: "https://explorer.fusespark.io/",
-        }
-      }
+        },
+      },
+      {
+        network: "berachainTestnet",
+        chainId: 80085,
+        urls: {
+          apiURL:
+            "https://api.routescan.io/v2/network/testnet/evm/80085/etherscan/api/",
+          browserURL: "https://artio.beratrail.io/",
+        },
+      },
     ],
   },
 
