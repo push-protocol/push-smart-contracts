@@ -95,7 +95,6 @@ contract PushCoreV2_Temp is Initializable, PushCoreStorageV1_5, PausableUpgradea
         if (
             !(
                 (channels[_channel].channelState == 1 && msg.sender == _channel)
-                    || (msg.sender == pushChannelAdmin && _channel == address(0x0))
             )
         ) {
             revert Errors.UnauthorizedCaller(msg.sender);
