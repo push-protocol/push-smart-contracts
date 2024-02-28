@@ -143,6 +143,10 @@ module.exports = {
         mnemonic: mnemonic(),
       }
     },
+    optimismSepolia :{
+      url :"https://sepolia.optimism.io/" ,
+      accounts:[process.env.PRIVATE]
+    },
 
     // Linea Chain
     linea: {
@@ -176,6 +180,12 @@ module.exports = {
       chainId: 80085,
       accounts: [process.env.PRIVATE],
     },
+
+    //Arbitrum sepolia
+    arbitrumSepolia :{
+      url : "https://sepolia-rollup.arbitrum.io/rpc",
+      accounts:[process.env.PRIVATE]
+    }
   },
   etherscan: {
     apiKey: {
@@ -186,6 +196,8 @@ module.exports = {
       goerli:process.env.ETHERSCAN_API,
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
+      arbitrumSepolia:process.env.ARBISCAN_API,
+      optimismSepolia :process.env.OPTIMISM_API,
       berachainTestnet: "apiNotRequired"
     },
     customChains: [
@@ -224,6 +236,24 @@ module.exports = {
           browserURL: "https://artio.beratrail.io/",
         },
       },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL:
+            "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io//",
+        },
+      },
+      {
+        network: "optimismSepolia",
+        chainId: 11155420,
+        urls: {
+          apiURL:
+            "https://api-sepolia-optimistic.etherscan.io/api",
+          browserURL: "https://sepolia-optimistic.etherscan.io/",
+        },
+      }
     ],
   },
 

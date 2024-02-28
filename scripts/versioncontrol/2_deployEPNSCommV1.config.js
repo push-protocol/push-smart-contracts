@@ -51,6 +51,12 @@ const deploy = {
     berachainTestnet: {
       version: 1,
     },
+    arbitrumSepolia:{
+      version: 1,
+    },
+    optimismSepolia:{
+      version: 1,
+    }
   },
   args: {
     chainName: null
