@@ -3,10 +3,10 @@ const chalk = require('chalk');
 const fs = require("fs");
 
 require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 require('hardhat-contract-sizer');
+require("@nomicfoundation/hardhat-verify");
 
 
 const { ethers } = require("ethers");
@@ -144,6 +144,11 @@ module.exports = {
       }
     },
 
+    // Arbitrum Sepolia
+    arbitrumSepolia: {
+      url: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+      accounts: [process.env.PRIVATE]
+    },
     // Linea Chain
     linea: {
       url: `https://rpc.goerli.linea.build/`,
@@ -186,6 +191,7 @@ module.exports = {
       goerli:process.env.ETHERSCAN_API,
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
+      arbitrumSepolia: process.env.ARBISCAN_API,
       berachainTestnet: "apiNotRequired"
     },
     customChains: [
