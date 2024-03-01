@@ -24,7 +24,7 @@ const deploy = {
     arbitrumMainnet: {
       version: 1
     },
-    optimismGoerli: {
+    optimismSepolia: {
       version: 1
     },
     optimismMainnet: {

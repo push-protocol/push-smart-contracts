@@ -131,8 +131,8 @@ module.exports = {
     },
 
     // Optimisim Chain
-    optimismGoerli: {
-      url: "https://goerli.optimism.io",
+    optimismSepolia: {
+      url: "https://sepolia.optimism.io",
       accounts: {
         mnemonic: mnemonic(),
       }
@@ -149,6 +149,7 @@ module.exports = {
       url: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
       accounts: [process.env.PRIVATE]
     },
+    
     // Linea Chain
     linea: {
       url: `https://rpc.goerli.linea.build/`,
