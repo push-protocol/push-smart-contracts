@@ -3,9 +3,6 @@ const deploy = {
     mainnet: {
       version: 1,
     },
-    goerli: {
-      version: 1,
-    },
     polygon: {
       version: 1,
     },
@@ -18,13 +15,7 @@ const deploy = {
     bnbMainnet: {
       version: 1,
     },
-    arbitrumTestnet: {
-      version: 1,
-    },
     arbitrumMainnet: {
-      version: 1,
-    },
-    optimismGoerli: {
       version: 1,
     },
     optimismMainnet: {
