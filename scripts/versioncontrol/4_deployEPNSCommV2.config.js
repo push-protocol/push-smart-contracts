@@ -3,9 +3,6 @@ const deploy = {
     mainnet: {
       version: 1,
     },
-    goerli: {
-      version: 1,
-    },
     polygon: {
       version: 1,
     },
@@ -61,6 +58,12 @@ const deploy = {
       version: 1
     },
     fuseSpark: {
+      version: 1,
+    },
+    arbitrumSepolia:{
+      version: 1,
+    },
+    optimismSepolia:{
       version: 1,
     }
   },

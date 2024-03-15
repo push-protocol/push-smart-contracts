@@ -69,11 +69,6 @@ module.exports = {
     },
 
   // ETH Network
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: [process.env.PRIVATE]
-
-    },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
       accounts: [process.env.PRIVATE]
@@ -140,7 +135,11 @@ module.exports = {
       url: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
       accounts: [process.env.PRIVATE]
     },
-    
+    optimismSepolia :{
+      url :"https://sepolia.optimism.io/" ,
+      accounts:[process.env.PRIVATE]
+    },
+
     // Linea Chain
     linea: {
       url: `https://rpc.goerli.linea.build/`,
@@ -172,6 +171,12 @@ module.exports = {
       chainId: 80085,
       accounts: [process.env.PRIVATE],
     },
+
+    //Arbitrum sepolia
+    arbitrumSepolia :{
+      url : "https://sepolia-rollup.arbitrum.io/rpc",
+      accounts:[process.env.PRIVATE]
+    }
   },
   etherscan: {
     apiKey: {
@@ -179,10 +184,10 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API,
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
-      goerli:process.env.ETHERSCAN_API,
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
-      arbitrumSepolia: process.env.ARBISCAN_API,
+      arbitrumSepolia:process.env.ARBISCAN_API,
+      optimismSepolia :process.env.OPTIMISM_API,
       berachainTestnet: "apiNotRequired"
     },
     customChains: [
@@ -221,6 +226,24 @@ module.exports = {
           browserURL: "https://artio.beratrail.io/",
         },
       },
+      {
+        network: "arbitrumSepolia",
+        chainId: 421614,
+        urls: {
+          apiURL:
+            "https://api-sepolia.arbiscan.io/api",
+          browserURL: "https://sepolia.arbiscan.io//",
+        },
+      },
+      {
+        network: "optimismSepolia",
+        chainId: 11155420,
+        urls: {
+          apiURL:
+            "https://api-sepolia-optimistic.etherscan.io/api",
+          browserURL: "https://sepolia-optimistic.etherscan.io/",
+        },
+      }
     ],
   },
 

@@ -3,9 +3,6 @@ const deploy = {
     mainnet: {
       version: 1,
     },
-    goerli: {
-      version: 1,
-    },
     polygon: {
       version: 1,
     },
