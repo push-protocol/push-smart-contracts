@@ -15,7 +15,13 @@ const deploy = {
     bnbMainnet: {
       version: 1
     },
+    arbitrumSepolia: {
+      version: 1
+    },
     arbitrumMainnet: {
+      version: 1
+    },
+    optimismSepolia: {
       version: 1
     },
     optimismMainnet: {
@@ -36,17 +42,11 @@ const deploy = {
     fuseSpark: {
       version: 1
     },
-    sphinx:{
-      version:1,
+    sphinx: {
+      version: 1
     },
     berachainTestnet: {
-      version: 1,
-    },
-    arbitrumSepolia:{
-      version: 1,
-    },
-    optimismSepolia:{
-      version: 1,
+      version: 1
     }
   },
   args: {

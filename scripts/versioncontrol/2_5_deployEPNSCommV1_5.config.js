@@ -15,7 +15,13 @@ const deploy = {
     bnbMainnet: {
       version: 1,
     },
+    arbitrumSepolia: {
+      version: 1,
+    },
     arbitrumMainnet: {
+      version: 1,
+    },
+    optimismSepolia: {
       version: 1,
     },
     optimismMainnet: {

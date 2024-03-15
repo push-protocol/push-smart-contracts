@@ -15,6 +15,9 @@ const deploy = {
     bnbMainnet: {
       version: 1,
     },
+    arbitrumSepolia: {
+      version: 1,
+    },
     hardhat: {
       version: 1
     },
@@ -30,7 +33,10 @@ const deploy = {
     zkEVMTestnet: {
       version: 1
     },
-    optimismGoerli: {
+    optimismSepolia: {
+      version: 1
+    },
+    optimismMainnet: {
       version: 1
     },
     polygon: {
