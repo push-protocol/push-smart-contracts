@@ -102,6 +102,11 @@ module.exports = {
       },
     },
 
+    polygonAmoy: {
+      url: `https://rpc-amoy.polygon.technology/`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts:[process.env.PRIVATE],
+    },
+
     // BSC Chain
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -198,7 +203,8 @@ module.exports = {
       fuseSpark: process.env.FUSE_API,
       arbitrumSepolia:process.env.ARBISCAN_API,
       optimismSepolia :process.env.OPTIMISM_API,
-      berachainTestnet: "apiNotRequired"
+      berachainTestnet: "apiNotRequired",
+      polygonAmoy:"OKLINK"
     },
     customChains: [
       {
@@ -253,6 +259,14 @@ module.exports = {
             "https://api-sepolia-optimistic.etherscan.io/api",
           browserURL: "https://sepolia-optimistic.etherscan.io/",
         },
+      },
+      {
+        network: "polygonAmoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/polygon_amoy",
+          browserURL: "https://www.oklink.com/amoy"
+        }
       }
     ],
   },

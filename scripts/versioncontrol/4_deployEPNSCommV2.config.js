@@ -62,6 +62,9 @@ const deploy = {
     },
     fuseSpark: {
       version: 1,
+    },
+    polygonAmoy:{
+      version: 1
     }
   },
   args: {
