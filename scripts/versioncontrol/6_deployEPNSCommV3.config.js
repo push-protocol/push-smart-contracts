@@ -65,6 +65,12 @@ const deploy = {
     },
     optimismSepolia:{
       version: 1,
+    },
+    polygonAmoy:{
+      version: 1
+    },
+    X1:{
+      version: 1
     }
   },
   args: {
