@@ -3,9 +3,6 @@ const deploy = {
     mainnet: {
       version: 1
     },
-    goerli: {
-      version: 1
-    },
     polygon: {
       version: 1
     },
@@ -18,13 +15,13 @@ const deploy = {
     bnbMainnet: {
       version: 1
     },
-    arbitrumTestnet: {
+    arbitrumSepolia: {
       version: 1
     },
     arbitrumMainnet: {
       version: 1
     },
-    optimismGoerli: {
+    optimismSepolia: {
       version: 1
     },
     optimismMainnet: {
@@ -45,17 +42,11 @@ const deploy = {
     fuseSpark: {
       version: 1
     },
-    sphinx:{
-      version:1,
+    sphinx: {
+      version: 1
     },
     berachainTestnet: {
-      version: 1,
-    },
-    arbitrumSepolia:{
-      version: 1,
-    },
-    optimismSepolia:{
-      version: 1,
+      version: 1
     },
     polygonAmoy:{
       version: 1

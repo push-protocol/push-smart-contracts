@@ -35,13 +35,12 @@
     "ethereumjs-wallet": "1.0.1",
     "ethers": "^5.1.4",
     "hardhat": "^2.12.6",
-    "hardhat": "^2.12.6",
     "hardhat-gas-reporter": "^1.0.4",
     "node-watch": "^0.7.1",
     "solidity-bytes-utils": "^0.0.9"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@nomicfoundation/hardhat-verify": "^2.0.4",
     "hardhat-contract-sizer": "^2.8.0",
     "moment": "^2.29.1",
     "prettier": "^2.3.2",

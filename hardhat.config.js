@@ -3,10 +3,10 @@ const chalk = require('chalk');
 const fs = require("fs");
 
 require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 require('hardhat-contract-sizer');
+require("@nomicfoundation/hardhat-verify");
 
 
 const { ethers } = require("ethers");
@@ -69,17 +69,10 @@ module.exports = {
     },
 
   // ETH Network
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
-    },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // <---- YOUR INFURA ID! (or it won't work)
@@ -91,15 +84,13 @@ module.exports = {
     // Polygon Chain
     polygonMumbai: {
       url: `https://rpc-mumbai.maticvigil.com/`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      accounts: [process.env.PRIVATE]
+
     },
     polygon: {
       url: `https://polygon-rpc.com/`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      accounts: [process.env.PRIVATE]
+
     },
 
     polygonAmoy: {
@@ -116,37 +107,38 @@ module.exports = {
     },
     bscMainnet: {
       url: "https://bsc-dataseed1.binance.org/",
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
     },
 
     // Polygon zkEVM Chain
     zkEVMTestnet: {
       url: "https://rpc.public.zkevm-test.net	",
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
     },
     zkEVMMainnet: {
       url: "https://zkevm-rpc.com	",
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
     },
 
     // Optimisim Chain
-    optimismGoerli: {
-      url: "https://goerli.optimism.io",
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+    optimismSepolia: {
+      url: "https://sepolia.optimism.io",
+      accounts: [process.env.PRIVATE]
+
     },
     optimismMainnet: {
       url: "https://mainnet.optimism.io",
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
+    },
+
+    // Arbitrum Sepolia
+    arbitrumSepolia: {
+      url: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+      accounts: [process.env.PRIVATE]
     },
     optimismSepolia :{
       url :"https://sepolia.optimism.io/" ,
@@ -156,9 +148,8 @@ module.exports = {
     // Linea Chain
     linea: {
       url: `https://rpc.goerli.linea.build/`,
-      accounts: {
-        mnemonic: mnemonic(),
-      }
+      accounts: [process.env.PRIVATE]
+
     },
 
     //Fuse Mainnet
@@ -203,7 +194,6 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API,
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
-      goerli:process.env.ETHERSCAN_API,
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
       arbitrumSepolia:process.env.ARBISCAN_API,
