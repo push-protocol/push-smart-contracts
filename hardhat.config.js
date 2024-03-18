@@ -190,6 +190,11 @@ module.exports = {
     arbitrumSepolia :{
       url : "https://sepolia-rollup.arbitrum.io/rpc",
       accounts:[process.env.PRIVATE]
+    },
+    //OKX testnet X1
+    X1: {
+      url: "https://testrpc.x1.tech",
+      accounts:[process.env.PRIVATE]
     }
   },
   etherscan: {
@@ -204,7 +209,8 @@ module.exports = {
       arbitrumSepolia:process.env.ARBISCAN_API,
       optimismSepolia :process.env.OPTIMISM_API,
       berachainTestnet: "apiNotRequired",
-      polygonAmoy:"OKLINK"
+      polygonAmoy:"OKLINK",
+      X1: "Not required"
     },
     customChains: [
       {
@@ -266,6 +272,14 @@ module.exports = {
         urls: {
           apiURL: "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/polygon_amoy",
           browserURL: "https://www.oklink.com/amoy"
+        }
+      },
+      {
+        network: "X1",
+        chainId: 195,
+        urls: {
+            apiURL: "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/x1_test",
+            browserURL: "https://www.oklink.com/x1-test"
         }
       }
     ],

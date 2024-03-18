@@ -59,6 +59,9 @@ const deploy = {
     },
     polygonAmoy:{
       version: 1
+    },
+    X1:{
+      version: 1
     }
   },
   args: {
