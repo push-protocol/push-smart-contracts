@@ -2,13 +2,15 @@
 pragma solidity ^0.8.20;
 
 import "./PushFeePoolStorage.sol";
-import "../interfaces/IPUSH.sol";
+import { IPUSH } from "../interfaces/IPUSH.sol";
 import { IPushCoreStaking } from "../interfaces/IPushCoreStaking.sol";
 import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+import { PushVoteDelegator } from "./PushVoteDelegator.sol";
 
 contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     using SafeERC20 for IERC20;
@@ -418,4 +420,37 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
+
+    // *************** Governance and Votes Handling FUNCTIONS ********************* //
+    
+    struct UserVotesInfo{
+        ///@notice The address of the delegate that receives the Voting Power
+        address delegate;
+        ///@notice The address of the VoteDelegator contract for the staker
+        PushVoteDelegator voteDelegator;
+    }
+    mapping(address => UserVotesInfo) public userVotesInfo;
+
+    function preserveVotingPower(address _delegate) external returns(PushVoteDelegator _voteDelegator) {
+        // Caller must be a staker
+        if (userFeesInfo[msg.sender].stakedAmount == 0) {
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
+        // Ensure _delegate is non-zero
+        if (_delegate == address(0)) {
+            revert Errors.InvalidArgument_WrongAddress(_delegate);
+        }
+        StakingTypes.UserFessInfo storage _userFeesInfo = userFeesInfo[msg.sender];
+        UserVotesInfo storage _userVotesInfo = userVotesInfo[msg.sender];
+        // Fetch or Deploy new VoteDelegator contract
+        _voteDelegator = _userVotesInfo.voteDelegator;
+
+        if(address(_voteDelegator) == address(0)){
+            _voteDelegator = new PushVoteDelegator(IPUSH(PUSH_TOKEN_ADDRESS), _delegate);
+            _userVotesInfo.voteDelegator =  _voteDelegator;
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, address(_voteDelegator), _userFeesInfo.stakedAmount);
+        }
+    }
+
+
 }
