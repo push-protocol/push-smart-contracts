@@ -24,6 +24,6 @@ contract PushVoteDelegator {
   /// address.
   constructor(IPUSH _token, address _delegatee) {
     _token.delegate(_delegatee);
-    _token.approve(msg.sender, type(uint256).max);
+    _token.approve(msg.sender, type(uint96).max);
   }
 }
