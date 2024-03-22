@@ -206,7 +206,15 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         uint256 blockNumberToConsider = genesisEpoch + (epochDuration * currentEpoch);
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, core, _amount);
+        //-----------  CHANGES For VoteHolder Contract -------------
+        PushVoteDelegator _voteDelegatorContract = userVotesInfo[msg.sender].voteDelegator;
+
+        if(address(_voteDelegatorContract) != address(0)){
+            _stakeTokenTransferFrom(msg.sender, address(_voteDelegatorContract), _amount);
+        }else{
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, core, _amount);
+        }
+        //-----------  CHANGES For VoteHolder Contract ENDs -------------
 
         userFeesInfo[_staker].stakedAmount = userFeesInfo[_staker].stakedAmount + _amount;
         userFeesInfo[_staker].lastClaimedBlock =
@@ -232,7 +240,16 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         }
         harvestAll();
         uint256 stakedAmount = userFeesInfo[msg.sender].stakedAmount;
-        IPushCoreStaking(core).sendFunds(msg.sender, stakedAmount);
+        
+        //-----------  CHANGES For VoteHolder Contract -------------
+        PushVoteDelegator _voteDelegatorContract = userVotesInfo[msg.sender].voteDelegator;
+        if(address(_voteDelegatorContract) != address(0)){
+            _stakeTokenTransferFrom(address(_voteDelegatorContract), msg.sender, stakedAmount);
+
+        }else{
+            IPushCoreStaking(core).sendFunds(msg.sender, stakedAmount);
+        }
+        //-----------  CHANGES For VoteHolder Contract ENDs -------------
 
         // Adjust user and total rewards, piggyback method
         _adjustUserAndTotalStake(msg.sender, userFeesInfo[msg.sender].stakedWeight, true);
@@ -430,7 +447,12 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         PushVoteDelegator voteDelegator;
     }
     mapping(address => UserVotesInfo) public userVotesInfo;
-
+    /// @notice Allows stakers to preserve their voting right using a VoteDelegator contract of their own.
+    ///         This VoteDelegator contract is responsible to hold the tokens of the staker and also 
+    ///         delegate the staker's voting right to a preferred address chosen by the staker.
+    ///         { Check - PushVoteDelegator contract for more info }
+    /// @param _delegate Address of the _delegate chosen by the staker. This address will be the one 
+    ///        holding all voting rights for the staker. 
     function preserveVotingPower(address _delegate) external returns(PushVoteDelegator _voteDelegator) {
         // Caller must be a staker
         if (userFeesInfo[msg.sender].stakedAmount == 0) {
@@ -448,9 +470,20 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
         if(address(_voteDelegator) == address(0)){
             _voteDelegator = new PushVoteDelegator(IPUSH(PUSH_TOKEN_ADDRESS), _delegate);
             _userVotesInfo.voteDelegator =  _voteDelegator;
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(core, address(_voteDelegator), _userFeesInfo.stakedAmount);
         }
+
+        _stakeTokenTransferFrom(core, address(_voteDelegator), _userFeesInfo.stakedAmount);
+
     }
+
+    /// @notice Internal method to trigger the `transferFrom` method on the stake token
+    ///         contract and reverts on failure.
+    /// @param _from Sender of the token
+    /// @param _to   Recipient of the token
+    /// @param _value Quantity of token to be transferred.
+  function _stakeTokenTransferFrom(address _from, address _to, uint256 _value) internal {
+    IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_from, _to, _value);
+  }
 
 
 }
