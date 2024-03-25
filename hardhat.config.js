@@ -146,8 +146,14 @@ module.exports = {
     },
 
     // Linea Chain
-    linea: {
-      url: `https://rpc.goerli.linea.build/`,
+    lineaSepolia: {
+      url: `https://rpc.sepolia.linea.build`,
+      accounts: [process.env.PRIVATE]
+
+    },
+
+    lineaMainnet: {
+      url: `https://rpc.linea.build`,
       accounts: [process.env.PRIVATE]
 
     },
@@ -190,7 +196,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      linea: process.env.ETHERSCAN_API,
+      lineaSepolia: process.env.ETHERSCAN_API,
       mainnet: process.env.ETHERSCAN_API,
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
@@ -204,11 +210,20 @@ module.exports = {
     },
     customChains: [
       {
-        network: "linea",
-        chainId: 59140,
+        network: "lineaSepolia",
+        chainId: 59141,
         urls: {
-          apiURL: "https://explorer.goerli.linea.build/api",
-          browserURL: "https://explorer.goerli.linea.build/",
+          apiURL: "https://explorer.sepolia.linea.build/api",
+          browserURL: "https://sepolia.lineascan.build/",
+        },
+      },
+
+      {
+        network: "lineaMainnet",
+        chainId: 59144,
+        urls: {
+          apiURL: "https://api.lineascan.build/api",
+          browserURL: "https://lineascan.build/",
         },
       },
 

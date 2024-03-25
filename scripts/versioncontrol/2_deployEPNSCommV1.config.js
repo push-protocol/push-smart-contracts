@@ -53,10 +53,16 @@ const deploy = {
     },
     X1:{
       version: 1
-    }
+    },
+    lineaMainnet: {
+      version: 1
+    },
+    lineaSepolia: {
+      version: 1
+    },
   },
   args: {
-    chainName: null
+    chainName: "Linea-Sepolia"
   }
 }
 

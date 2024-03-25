@@ -42,7 +42,10 @@ const deploy = {
     polygon: {
       version: 1
     },
-    linea: {
+    lineaMainnet: {
+      version: 1
+    },
+    lineaSepolia: {
       version: 1
     },
     bscMainnet: {
