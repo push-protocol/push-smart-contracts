@@ -490,6 +490,32 @@ contract PushCoreV2_5 is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         emit ChannelVerificationRevoked(_channel, msg.sender);
     }
 
+    function transferChannelOwnership(
+        address _channelAddress,
+        address _newChannelAddress,
+        uint256 _amountDeposited
+    ) external whenNotPaused returns (bool) {
+        onlyChannelOwner(_channelAddress);
+        if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
+            revert Errors.InvalidArg_LessThanExpected(
+                ADD_CHANNEL_MIN_FEES,
+                _amountDeposited
+            );
+        }
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            _channelAddress,
+            address(this),
+            _amountDeposited
+        );
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
+
+        CoreTypes.Channel memory channelData = channels[_channelAddress];
+        channels[_newChannelAddress] = channelData;
+
+        delete channels[_channelAddress];
+        emit ChannelOwnershipTransfer(_channelAddress, _newChannelAddress);
+        return true;
+    }
     /**
      * Core-V2: Stake and Claim Functions **
      */

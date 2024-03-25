@@ -47,7 +47,7 @@ interface IPushCoreV2 {
     );
     /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
-
+    event ChannelOwnershipTransfer(address indexed channel, address indexed newOwner);
     /* *****************************
 
         READ-ONLY FUNCTIONS  

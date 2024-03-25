@@ -1,0 +1,12 @@
+transferChannelOwnership
+└── when the function is called
+    ├── when contract is paused
+    │   └── it should REVERT
+    ├── when caller is not owner
+    │   └── it should REVERT
+    ├── when channel is not active
+    │   └── it should REVERT
+    ├── when amount is less than minimum fees
+    │   └── it should REVERT
+    └── when all inputs are correct
+        └── it should execute and update the storage
