@@ -42,9 +42,6 @@ const deploy = {
     polygon: {
       version: 1
     },
-    linea: {
-      version: 1
-    },
     bscMainnet: {
       version: 1
     },
