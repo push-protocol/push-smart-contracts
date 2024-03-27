@@ -140,10 +140,10 @@ forge test
 
 ## Resources
 - **[Website](https://push.org)** To checkout our Product.
-- **[Docs](https://docs.push.org/developers/)** For comprehensive documentation.
+- **[Docs](https://push.org/docs/)** For comprehensive documentation.
 - **[Blog](https://medium.com/push-protocol)** To learn more about our partners, new launches, etc.
 - **[Discord](https://discord.gg/pushprotocol)** for support and discussions with the community and the team.
-- **[GitHub](https://github.com/ethereum-push-notification-service)** for source code, project board, issues, and pull requests.
+- **[GitHub](https://github.com/push-protocol)** for source code, project board, issues, and pull requests.
 - **[Twitter](https://twitter.com/pushprotocol)** for the latest updates on the product and published blogs.
 
 
