@@ -1,0 +1,10 @@
+DaoHarvest_test
+└── when admin harvests
+    ├── when reward is added
+    │   └── it should allow the admin to harvest correct reward
+    ├── when rewards are not added
+    │   └── it should give 0 rewards to admin
+    ├── when any user harvests at the same time
+    │   └── it should give all the rewards to user and admin
+    └── when there's no other staker
+        └── it should give all the rewards to the admin

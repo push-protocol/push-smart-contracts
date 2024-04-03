@@ -62,6 +62,7 @@ abstract contract BaseTest is Test, Constants, Events {
             bob_channel_owner: createActor("bob_channel_owner"),
             alice_channel_owner: createActor("alice_channel_owner"),
             charlie_channel_owner: createActor("charlie_channel_owner"),
+            tony_channel_owner: createActor("tony_channel_owner"),
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
@@ -81,6 +82,9 @@ abstract contract BaseTest is Test, Constants, Events {
             0
         );
         coreProxy = PushCoreV2_5(address(epnsCoreProxy));
+
+        vm.prank(tokenDistributor);
+        pushToken.transfer(address(coreProxy), 1 ether);
 
         // Initialize comm proxy admin and commProxy contract
         epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
