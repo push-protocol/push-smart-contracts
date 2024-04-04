@@ -1,35 +1,49 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.20;
 
-import {Test, console2} from "forge-std/Test.sol";
-import {PushVoteDelegator} from "../../contracts/PushStaking/PushVoteDelegator.sol";
-import {PushMockToken} from "../mocks/PushMockToken.sol";
+import { PushVoteDelegator } from "../../contracts/PushStaking/PushVoteDelegator.sol";
+import { PushMockToken } from "../mocks/PushMockToken.sol";
 import { IPUSH } from "../../contracts/interfaces/IPUSH.sol";
-import "../BaseTest.t.sol";
+import "../PushStaking/fuzz_tests/BaseFuzzStaking.f.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 
-contract PushVoteDelegatorTest is Test, BaseTest{
-  PushMockToken govToken;
+contract PushVoteDelegatorTest is BaseFuzzStaking {
+    PushMockToken govToken;
 
-  function setUp() public virtual override {
-    BaseTest.setUp(); 
-    govToken = new PushMockToken(actor.admin);
-    vm.label(address(govToken), "Push Governance Token");
-  }
+    function setUp() public virtual override {
+        BaseFuzzStaking.setUp();
+        govToken = new PushMockToken(actor.admin);
+        vm.label(address(govToken), "Push Governance Token");
+    }
 
-  function __deploy(address _deployer, address _delegatee) public returns (PushVoteDelegator) {
-   vm.assume(_deployer != address(0));
+    function __deploy(address _deployer, address _delegatee) public returns (PushVoteDelegator) {
+        vm.assume(_deployer != address(0));
 
-    vm.prank(_deployer);
-    PushVoteDelegator _voteDelegator = new PushVoteDelegator(IPUSH(address(govToken)), _delegatee);
-    return _voteDelegator;
-  }
+        changePrank(_deployer);
+        PushVoteDelegator _voteDelegator = new PushVoteDelegator(IPUSH(address(govToken)), _delegatee);
+        return _voteDelegator;
+    }
 }
 
 contract Constructor is PushVoteDelegatorTest {
-  function testFuzz_DelegatesToDeployer(address _deployer, address _delegatee) public {
-    PushVoteDelegator _voteDelegator = __deploy(_deployer, _delegatee);
-    assertEq(_delegatee, govToken.delegates(address(_voteDelegator)));
-  }
+    function testFuzz_Revert_WhenUserNotStaker() public {
+        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        changePrank(actor.bob_channel_owner);
+        feePoolStaking.preserveVotingPower(actor.bob_channel_owner);
+    }
+
+    function testFuzz_Revert_WhenZeroAddressPassed() public {
+        vm.startPrank(actor.bob_channel_owner);
+        stake(actor.bob_channel_owner,100);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArgument_WrongAddress.selector, address(0)));
+        feePoolStaking.preserveVotingPower(address(0));
+        vm.stopPrank();
+    }
+
+    function testFuzz_DelegatesToDeployer(address _deployer, address _delegatee) public {
+        PushVoteDelegator _voteDelegator = __deploy(_deployer, _delegatee);
+        assertEq(_delegatee, govToken.delegates(address(_voteDelegator)));
+    }
 
   function testFuzz_MaxApprovesDeployerToEnableWithdrawals(
     address _deployer,
@@ -39,17 +53,19 @@ contract Constructor is PushVoteDelegatorTest {
   ) public {
     vm.assume(_receiver != address(0));
 
-    PushVoteDelegator _voteDelegator = __deploy(_deployer, _delegatee);
-    govToken.mint(address(_voteDelegator), _amount);
+        PushVoteDelegator _voteDelegator = __deploy(_deployer, _delegatee);
+        govToken.mint(_deployer, _amount);
+        changePrank(_deployer);
+        govToken.transfer(address(_voteDelegator), _amount);
 
     uint256 _allowance = govToken.allowance(address(_voteDelegator), _deployer);
     assertEq(_allowance, type(uint96).max);
 
-    vm.prank(_deployer);
-    //govToken.transferFrom(address(_voteDelegator), _receiver, _amount);
+        changePrank(_deployer);
+        govToken.transferFrom(address(_voteDelegator), _receiver, _amount);
 
-    //assertEq(govToken.balanceOf(_receiver), _amount);
-  }
+        assertEq(govToken.balanceOf(_receiver), _amount);
+    }
 
   function test_DelegationWorks_with_EOA() public {
     address _delegatee = actor.bob_channel_owner; 
@@ -68,7 +84,7 @@ contract Constructor is PushVoteDelegatorTest {
     // Alice Delegates to Charlie
    uint96 voteCountBefore = govToken.getCurrentVotes(actor.charlie_channel_owner);
 
-    vm.prank(actor.alice_channel_owner);
+        changePrank(actor.alice_channel_owner);
 
     govToken.delegate(actor.charlie_channel_owner);
     // Delegates Match 
@@ -78,7 +94,6 @@ contract Constructor is PushVoteDelegatorTest {
     uint96 voteCountAfter = govToken.getCurrentVotes(actor.charlie_channel_owner);
     assertGt(voteCountAfter, voteCountBefore);
     assertEq(voteCountAfter, 1129);
-    vm.stopPrank();
 
   }
 

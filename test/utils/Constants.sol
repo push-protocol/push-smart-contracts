@@ -7,13 +7,18 @@ abstract contract Constants {
     bytes constant _testChannelIdentity = bytes("test-channel-hello-world");
 
     // Specific Constant Values for Staking-Related Contracts
-    uint256 public genesisEpoch = 17_821_509;
-    uint256 public lastEpochInitialized = 5;
-    uint256 public lastTotalStakeEpochInitialized = 0;
-    uint256 public totalStakedAmount = 6_654_086 ether;
-    uint256 public previouslySetEpochRewards = 60_000 ether;
+    // uint256 public genesisEpoch = 17_821_509;
+    // uint256 public lastEpochInitialized = 5;
+    // uint256 public lastTotalStakeEpochInitialized = 0;
+    // uint256 public totalStakedAmount = 6_654_086 ether;
+    // uint256 public previouslySetEpochRewards = 60_000 ether;
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
+    uint256 public genesisEpoch = block.number;
+    uint256 public lastEpochInitialized = genesisEpoch;
+    uint256 public lastTotalStakeEpochInitialized = 0;
+    uint256 public totalStakedAmount = 0 ether;
+    uint256 public previouslySetEpochRewards = 0 ether;
     //Comm Constants used for meta transaction
     string public constant name = "EPNS COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));

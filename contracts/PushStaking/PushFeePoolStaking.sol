@@ -11,7 +11,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import { PushVoteDelegator } from "./PushVoteDelegator.sol";
-
 contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
     using SafeERC20 for IERC20;
 
@@ -472,7 +471,8 @@ contract PushFeePoolStaking is Initializable, PushFeePoolStorage {
             _userVotesInfo.voteDelegator =  _voteDelegator;
         }
 
-        _stakeTokenTransferFrom(core, address(_voteDelegator), _userFeesInfo.stakedAmount);
+        // _stakeTokenTransferFrom(core, address(_voteDelegator), _userFeesInfo.stakedAmount);
+        IPushCoreStaking(core).sendFunds(address(_voteDelegator), _userFeesInfo.stakedAmount);
 
     }
 
