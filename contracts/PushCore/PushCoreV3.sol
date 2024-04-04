@@ -30,43 +30,16 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     /* ***************
         INITIALIZER
     *************** */
+    /**
+     * @notice Initializer has been removed to save contract space. 
+     * However, for readability, initialized values have been mentioned below:
+     *   FEE_AMOUNT            = 10 ether;
+     *   MIN_POOL_CONTRIBUTION = 1 ether;
+     *   ADD_CHANNEL_MIN_FEES  = 50 ether;
+     *   ADJUST_FOR_FLOAT      = 10 ** 7;
+     * --------------------------------------------------------------------------
+     */
 
-    function initialize(
-        address _pushChannelAdmin,
-        address _pushTokenAddress,
-        address _wethAddress,
-        address _uniswapRouterAddress,
-        address _lendingPoolProviderAddress,
-        address _daiAddress,
-        address _aDaiAddress,
-        uint256 _referralCode
-    )
-        public
-        initializer
-        returns (bool success)
-    {
-        // setup addresses
-        pushChannelAdmin = _pushChannelAdmin;
-        governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
-        daiAddress = _daiAddress;
-        aDaiAddress = _aDaiAddress;
-        WETH_ADDRESS = _wethAddress;
-        REFERRAL_CODE = _referralCode;
-        PUSH_TOKEN_ADDRESS = _pushTokenAddress;
-        UNISWAP_V2_ROUTER = _uniswapRouterAddress;
-        lendingPoolProviderAddress = _lendingPoolProviderAddress;
-
-        FEE_AMOUNT = 10 ether; // PUSH Amount that will be charged as Protocol Pool Fees
-        MIN_POOL_CONTRIBUTION = 50 ether; // Channel's poolContribution should never go below MIN_POOL_CONTRIBUTION
-        ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
-
-        ADJUST_FOR_FLOAT = 10 ** 7;
-        groupLastUpdate = block.number;
-        groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
-
-        // Create Channel
-        success = true;
-    }
 
     /* ***************
 
