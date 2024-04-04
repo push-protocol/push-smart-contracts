@@ -16,9 +16,9 @@ interface IPushCoreV3 {
     /// @notice emits whenever the verification is revoked for a channel
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
     /// @notice emits whenever any channel is deactivated
-    event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
+    // event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
     /// @notice emits whenever any deactivated channel is reactivated
-    event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
+    // event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(address indexed channel);
     /// @notice emits whenever a new channel is created
@@ -30,7 +30,7 @@ interface IPushCoreV3 {
     /// @notice emits whenever a subgraph is added(handled by backend)
     event AddSubGraph(address indexed channel, bytes _subGraphData);
     /// @notice emits whenever any time bound channel is deleted permanently
-    event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
+    // event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     /// @notice emits whenever a user stakes in the staking program
     event Staked(address indexed user, uint256 indexed amountStaked);
     /// @notice emits whenever a user unstakes from the staking program
@@ -48,7 +48,7 @@ interface IPushCoreV3 {
     /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated, Blocked or Deleted
-    event ChannelStateUpdate(address indexed channel, uint8 newState, uint256 amountRefunded, uint256 amountDeposited);
+    event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
 
     /* *****************************
 

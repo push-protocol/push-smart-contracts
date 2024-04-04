@@ -374,13 +374,13 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
                 channelData.channelState = 2;
                 channelData.channelWeight = _newChannelWeight;
                 channelData.poolContribution = minPoolContribution;
-                emit ChannelStateUpdate(msg.sender, 2, totalRefundableAmount, 0);
+                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
 
             }else{    // TIME-BOUND CHANNEL DELETION PHASE
                 totalRefundableAmount = channelData.poolContribution;
                 channelsCount = channelsCount - 1;
                 delete channels[msg.sender];
-                emit ChannelStateUpdate(msg.sender, 0, totalRefundableAmount, 0);
+                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
             }
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
@@ -403,7 +403,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
             channelData.channelState = 1;
             channelData.poolContribution = _newPoolContribution;
             channelData.channelWeight = _newChannelWeight;
-            emit ChannelStateUpdate(msg.sender, 1, 0, _amount);
+            emit ChannelStateUpdate(msg.sender, 0, _amount);
 
         }
     }
