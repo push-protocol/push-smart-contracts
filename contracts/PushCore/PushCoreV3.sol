@@ -64,16 +64,6 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         }
     }
 
-    function onlyChannelOwner(address _channel) private view {
-        if (
-            !(
-                (channels[_channel].channelState == 1 && msg.sender == _channel)
-            )
-        ) {
-            revert Errors.UnauthorizedCaller(msg.sender);
-        }
-    }
-
     function addSubGraph(bytes calldata _subGraphData) external {
         onlyActivatedChannels(msg.sender);
         emit AddSubGraph(msg.sender, _subGraphData);
@@ -156,8 +146,13 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
     **************************************/
     ///@inheritdoc IPushCoreV3
-    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
-        onlyChannelOwner(_channel);
+    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused{
+        onlyActivatedChannels(_channel);
+
+        if( msg.sender != _channel){
+            revert Errors.UnauthorizedCaller(msg.sender);
+        }
+
         uint256 updateCounter = channelUpdateCounter[_channel] + 1;
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
@@ -169,7 +164,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         channelUpdateCounter[_channel] = updateCounter;
         channels[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
