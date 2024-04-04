@@ -14,7 +14,7 @@ pragma solidity ^0.8.20;
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
-import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
@@ -24,7 +24,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
-contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV2 {
+contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV3 {
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -155,7 +155,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         CHANNEL RELATED FUNCTIONALTIES
 
     **************************************/
-    ///@inheritdoc IPushCoreV2
+    ///@inheritdoc IPushCoreV3
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyChannelOwner(_channel);
         uint256 updateCounter = channelUpdateCounter[_channel] + 1;
@@ -173,7 +173,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function createChannelWithPUSH(
         CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
@@ -252,39 +252,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         }
     }
 
-    /// @inheritdoc IPushCoreV2
-    function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
-        onlyActivatedChannels(_channelAddress);
-        CoreTypes.Channel memory channelData = channels[_channelAddress];
-
-        if (channelData.channelType != CoreTypes.ChannelType.TimeBound) {
-            revert Errors.Core_InvalidChannelType();
-        }
-        if (
-            !(
-                (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
-                    || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp)
-            )
-        ) {
-            revert Errors.UnauthorizedCaller(msg.sender);
-        }
-        uint256 totalRefundableAmount = channelData.poolContribution;
-        // Update POOL_FUNDS & PROTOCOL_POOL_FEES
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
-
-        if (msg.sender != pushChannelAdmin) {
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
-        } else {
-            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
-        }
-        // Decrement Channel Count and Delete Channel Completely
-        channelsCount = channelsCount - 1;
-        delete channels[_channelAddress];
-
-        emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
-    }
-
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function createChannelSettings(
         uint256 _notifOptions,
         string calldata _notifSettings,
@@ -305,56 +273,147 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
     }
 
-    /// @inheritdoc IPushCoreV2
-    function deactivateChannel() external whenNotPaused {
-        onlyActivatedChannels(msg.sender);
+   // --------- TO BE REMOVED If updateChannelState() is FINALIZED ----------
+    ///// @inheritdoc IPushCoreV3
+    // function destroyTimeBoundChannel(address _channelAddress) external whenNotPaused {
+    //     onlyActivatedChannels(_channelAddress);
+    //     CoreTypes.Channel memory channelData = channels[_channelAddress];
+
+    //     if (channelData.channelType != CoreTypes.ChannelType.TimeBound) {
+    //         revert Errors.Core_InvalidChannelType();
+    //     }
+    //     if (
+    //         !(
+    //             (msg.sender == _channelAddress && channelData.expiryTime < block.timestamp)
+    //                 || (msg.sender == pushChannelAdmin && channelData.expiryTime + 14 days < block.timestamp)
+    //         )
+    //     ) {
+    //         revert Errors.UnauthorizedCaller(msg.sender);
+    //     }
+    //     uint256 totalRefundableAmount = channelData.poolContribution;
+    //     // Update POOL_FUNDS & PROTOCOL_POOL_FEES
+    //     CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+
+    //     if (msg.sender != pushChannelAdmin) {
+    //         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
+    //     } else {
+    //         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + totalRefundableAmount;
+    //     }
+    //     // Decrement Channel Count and Delete Channel Completely
+    //     channelsCount = channelsCount - 1;
+    //     delete channels[_channelAddress];
+
+    //     emit TimeBoundChannelDestroyed(msg.sender, totalRefundableAmount);
+    // }
+
+    ///// @inheritdoc IPushCoreV3
+    // function deactivateChannel() external whenNotPaused {
+    //     onlyActivatedChannels(msg.sender);
+    //     CoreTypes.Channel storage channelData = channels[msg.sender];
+
+    //     uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
+    //     uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
+
+    //     uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
+
+    //     channelData.channelState = 2;
+    //     CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+    //     channelData.channelWeight = _newChannelWeight;
+    //     channelData.poolContribution = minPoolContribution;
+
+    //     IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
+
+    //     emit DeactivateChannel(msg.sender, totalRefundableAmount);
+    // }
+
+    // /// @inheritdoc IPushCoreV3
+    // function reactivateChannel(uint256 _amount) external whenNotPaused {
+    //     if (_amount < ADD_CHANNEL_MIN_FEES) {
+    //         revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+    //     }
+
+    //     if (channels[msg.sender].channelState != 2) {
+    //         revert Errors.Core_InvalidChannel();
+    //     }
+
+    //     IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+    //     uint256 poolFeeAmount = FEE_AMOUNT;
+    //     uint256 poolFundAmount = _amount - poolFeeAmount;
+    //     //store funds in pool_funds & pool_fees
+    //     CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
+    //     PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
+
+    //     CoreTypes.Channel storage channelData = channels[msg.sender];
+
+    //     uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
+    //     uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
+
+    //     channelData.channelState = 1;
+    //     channelData.poolContribution = _newPoolContribution;
+    //     channelData.channelWeight = _newChannelWeight;
+
+    //     emit ReactivateChannel(msg.sender, _amount);
+    // }
+
+    // --------- TO BE REMOVED If updateChannelState() is FINALIZED ----------
+
+    function updateChannelState(uint256 _amount) external whenNotPaused{
+        // Check channel's current state
         CoreTypes.Channel storage channelData = channels[msg.sender];
-
-        uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        uint256 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
-
-        uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
-
-        channelData.channelState = 2;
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
-        channelData.channelWeight = _newChannelWeight;
-        channelData.poolContribution = minPoolContribution;
-
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
-
-        emit DeactivateChannel(msg.sender, totalRefundableAmount);
-    }
-
-    /// @inheritdoc IPushCoreV2
-    function reactivateChannel(uint256 _amount) external whenNotPaused {
-        if (_amount < ADD_CHANNEL_MIN_FEES) {
-            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
-        }
-
-        if (channels[msg.sender].channelState != 2) {
+        uint8 channelCurrentState = channelData.channelState;
+        // Prevent INACTIVE or BLOCKED Channels 
+        if(channelCurrentState != 1 && channelCurrentState != 2){
             revert Errors.Core_InvalidChannel();
         }
+        
+        uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
+        // If Active State , Enter the Time-Bound Deletion/Deactivate Channel Phase
+        if(channelCurrentState == 1){
+            uint256 totalRefundableAmount;
+            bool isTimeBound =  channelData.channelType == CoreTypes.ChannelType.TimeBound;
+            if(!isTimeBound){ // DEACTIVATION PHASE
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-        uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amount - poolFeeAmount;
-        //store funds in pool_funds & pool_fees
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
+                totalRefundableAmount = channelData.poolContribution - minPoolContribution;
 
-        CoreTypes.Channel storage channelData = channels[msg.sender];
+                uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
+                channelData.channelState = 2;
+                channelData.channelWeight = _newChannelWeight;
+                channelData.poolContribution = minPoolContribution;
+                emit ChannelStateUpdate(msg.sender, 2, totalRefundableAmount, 0);
 
-        uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
-        uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
+            }else{    // TIME-BOUND CHANNEL DELETION PHASE
+                totalRefundableAmount = channelData.poolContribution;
+                channelsCount = channelsCount - 1;
+                delete channels[msg.sender];
+                emit ChannelStateUpdate(msg.sender, 0, totalRefundableAmount, 0);
+            }
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
+        } // RE-ACTIVATION PHASE
+        else{
+            if (_amount < ADD_CHANNEL_MIN_FEES) {
+                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+            }
 
-        channelData.channelState = 1;
-        channelData.poolContribution = _newPoolContribution;
-        channelData.channelWeight = _newChannelWeight;
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+            uint256 poolFeeAmount = FEE_AMOUNT;
+            uint256 poolFundAmount = _amount - poolFeeAmount;
+            //store funds in pool_funds & pool_fees
+            CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
+            PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        emit ReactivateChannel(msg.sender, _amount);
+            uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
+            uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
+
+            channelData.channelState = 1;
+            channelData.poolContribution = _newPoolContribution;
+            channelData.channelWeight = _newChannelWeight;
+            emit ChannelStateUpdate(msg.sender, 1, 0, _amount);
+
+        }
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyGovernance();
         if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
@@ -383,7 +442,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     => CHANNEL VERIFICATION FUNCTIONALTIES <=
     *************** */
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
         address verifiedBy = channels[_channel].verifiedBy;
         bool logicComplete = false;
@@ -428,7 +487,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         return true;
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function verifyChannel(address _channel) public {
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
@@ -450,7 +509,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         emit ChannelVerified(_channel, msg.sender);
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function unverifyChannel(address _channel) public {
         if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
@@ -757,7 +816,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -773,7 +832,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         );
     }
 
-    /// @inheritdoc IPushCoreV2
+    /// @inheritdoc IPushCoreV3
     function claimChatIncentives(uint256 _amount) external {
         if (celebUserFunds[msg.sender] < _amount) {
             revert Errors.InvalidArg_MoreThanExpected(celebUserFunds[msg.sender], _amount);
