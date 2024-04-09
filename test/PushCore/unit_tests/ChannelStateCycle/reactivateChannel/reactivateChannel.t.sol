@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 import { BasePushCoreTest } from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
+import "forge-std/console.sol";
 contract ReactivateChannel_Test is BasePushCoreTest {
     function setUp() public virtual override {
         BasePushCoreTest.setUp();
@@ -19,20 +20,24 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         approveTokens(actor.bob_channel_owner, address(coreProxy), _amountBeingTransferred);
 
         vm.startPrank(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
         vm.expectRevert(
             abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 50 ether, _amountBeingTransferred)
         );
-        coreProxy.reactivateChannel(_amountBeingTransferred);
+        coreProxy.updateChannelState(_amountBeingTransferred);
         vm.stopPrank();
     }
 
-    function test_Revertwhen_ChannelAlreadyActive() public whenNotPaused {
-        approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
+    //Invalid test if using the updated function
+    // function test_Revertwhen_ChannelAlreadyActive() public whenNotPaused {
+    //     approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
-        vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(Errors.Core_InvalidChannel.selector);
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
-    }
+    //     vm.prank(actor.bob_channel_owner);
+    // vm.expectRevert(Errors.Core_InvalidChannel.selector);
+    //     coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
+    //     uint8 actualChannelStateAfterDeactivation = _getChannelState(actor.bob_channel_owner);
+    //      console.log(actualChannelStateAfterDeactivation);
+    // }
 
     function test_Revertwhen_ReactivatingBlockedChannel() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
@@ -42,19 +47,19 @@ contract ReactivateChannel_Test is BasePushCoreTest {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
     }
 
     function test_ReactivatingDeactivatedChannel() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         vm.startPrank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
         vm.expectEmit(true, true, false, false, address(coreProxy));
-        emit ReactivateChannel(actor.bob_channel_owner, ADD_CHANNEL_MIN_FEES);
+        emit ChannelStateUpdate(actor.bob_channel_owner, 0, ADD_CHANNEL_MIN_FEES);
 
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
 
         vm.stopPrank();
     }
@@ -65,10 +70,10 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         uint8 actualChannelStateBeforeDeactivation = _getChannelState(actor.bob_channel_owner);
 
         vm.startPrank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
         uint8 actualChannelStateAfterDeactivation = _getChannelState(actor.bob_channel_owner);
 
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
         uint8 actualChannelStateAfterReactivation = _getChannelState(actor.bob_channel_owner);
 
         uint8 expectedChannelStateBeforeDeactivation = 1;
@@ -86,9 +91,9 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         vm.startPrank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
         uint256 actualChannelFundsAfterReactivation = coreProxy.CHANNEL_POOL_FUNDS();
         uint256 actualPoolFeesAfterReactivation = coreProxy.PROTOCOL_POOL_FEES();
         uint256 actualChannelWeightAfterReactivation = _getChannelWeight(actor.bob_channel_owner);

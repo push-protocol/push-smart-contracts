@@ -16,7 +16,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
 
         vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
@@ -24,10 +24,10 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
         _createChannel(actor.bob_channel_owner);
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
         vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
@@ -45,7 +45,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         address _channelAddress = address(0x0);
 
         vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
         coreProxy.updateChannelMeta(_channelAddress, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 

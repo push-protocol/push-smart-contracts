@@ -14,8 +14,8 @@ contract StateVariables_test is BaseFuzzStaking {
         roll(_passEpoch * epochDuration);
         uint256 future = block.number;
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector,future, genesis));
-        feePoolStaking.lastEpochRelative(future, genesis);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, future, genesis));
+        coreProxy.lastEpochRelative(future, genesis);
     }
 
     //Should calculate relative epoch numbers accurately
@@ -25,7 +25,7 @@ contract StateVariables_test is BaseFuzzStaking {
         roll(_passEpoch * epochDuration);
         uint256 future = block.number;
 
-        assertEq(feePoolStaking.lastEpochRelative(genesis, future), _passEpoch);
+        assertEq(coreProxy.lastEpochRelative(genesis, future), _passEpoch);
     }
 
     // Should count staked EPOCH of user correctly
@@ -37,10 +37,10 @@ contract StateVariables_test is BaseFuzzStaking {
         stake(actor.bob_channel_owner, _amount);
 
         (uint256 stakedAmount, uint256 stakedWeight, uint256 lastStakedBlock, uint256 lastClaimedBlock) =
-            feePoolStaking.userFeesInfo(actor.bob_channel_owner);
+            coreProxy.userFeesInfo(actor.bob_channel_owner);
 
-        uint256 lastClaimedEpoch = feePoolStaking.lastEpochRelative(genesis, lastClaimedBlock);
-        uint256 lastStakedEpoch = feePoolStaking.lastEpochRelative(genesis, lastStakedBlock);
+        uint256 lastClaimedEpoch = coreProxy.lastEpochRelative(genesis, lastClaimedBlock);
+        uint256 lastStakedEpoch = coreProxy.lastEpochRelative(genesis, lastStakedBlock);
         assertEq(stakedAmount, _amount * 1e18);
         assertEq(lastClaimedEpoch, 1);
         assertEq(lastStakedEpoch, _passEpoch);
@@ -54,16 +54,16 @@ contract StateVariables_test is BaseFuzzStaking {
         uint256 stakeEpoch = getCurrentEpoch();
         // Stakes Push Tokens after 5 blocks, at 6th EPOCH
         stake(actor.bob_channel_owner, _amount);
-        (,, uint256 lastStakedBlock,) = feePoolStaking.userFeesInfo(actor.bob_channel_owner);
+        (,, uint256 lastStakedBlock,) = coreProxy.userFeesInfo(actor.bob_channel_owner);
 
-        uint256 userLastStakedEpochId = feePoolStaking.lastEpochRelative(genesis, lastStakedBlock);
+        uint256 userLastStakedEpochId = coreProxy.lastEpochRelative(genesis, lastStakedBlock);
 
         roll((_passEpoch + 5) * epochDuration);
         uint256 harvestEpoch = getCurrentEpoch();
         // Harvests Push Tokens after 15 blocks, at 16th EPOCH
         harvest(actor.bob_channel_owner);
-        (,,, uint256 lastClaimedBlockAfter) = feePoolStaking.userFeesInfo(actor.bob_channel_owner);
-        uint256 userLastClaimedEpochId = feePoolStaking.lastEpochRelative(genesis, lastClaimedBlockAfter);
+        (,,, uint256 lastClaimedBlockAfter) = coreProxy.userFeesInfo(actor.bob_channel_owner);
+        uint256 userLastClaimedEpochId = coreProxy.lastEpochRelative(genesis, lastClaimedBlockAfter);
         assertEq(userLastStakedEpochId, _passEpoch);
         assertEq(userLastClaimedEpochId, 5 + _passEpoch);
     }
@@ -81,10 +81,10 @@ contract StateVariables_test is BaseFuzzStaking {
         stake(actor.bob_channel_owner, _amount);
         roll(epochDuration * (_passEpoch + 2));
 
-        (,, uint256 blocks,) = feePoolStaking.userFeesInfo(actor.bob_channel_owner);
+        (,, uint256 blocks,) = coreProxy.userFeesInfo(actor.bob_channel_owner);
         unstake(actor.bob_channel_owner);
         (uint256 stakedAmount, uint256 stakedWeight, uint256 lastStakedBlock, uint256 lastClaimedBlock) =
-            feePoolStaking.userFeesInfo(actor.bob_channel_owner);
+            coreProxy.userFeesInfo(actor.bob_channel_owner);
 
         assertEq(stakedAmount, 0);
         assertEq(stakedWeight, 0);

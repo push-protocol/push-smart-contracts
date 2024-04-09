@@ -1,59 +1,41 @@
 pragma solidity ^0.8.20;
 pragma experimental ABIEncoderV2;
 
-import {BasePushFeePoolStaking} from "../BasePushFeePoolStaking.t.sol";
+import { BaseTest } from "../../BaseTest.t.sol";
 
-contract BaseFuzzStaking is BasePushFeePoolStaking {
-    uint genesis;
+contract BaseFuzzStaking is BaseTest {
+    uint256 genesis;
 
     function setUp() public virtual override {
-        BasePushFeePoolStaking.setUp();
+        BaseTest.setUp();
 
-        genesis = feePoolStaking.genesisEpoch();
+        approveTokens(actor.admin, address(coreProxy), 100_000 ether);
+        approveTokens(actor.admin, address(coreProxy), 100_000 ether);
+        approveTokens(actor.bob_channel_owner, address(coreProxy), 100_000 ether);
+        approveTokens(actor.alice_channel_owner, address(coreProxy), 100_000 ether);
+        approveTokens(actor.charlie_channel_owner, address(coreProxy), 100_000 ether);
+        approveTokens(actor.tony_channel_owner, address(coreProxy), 100_000 ether);
 
-        approveTokens(actor.admin, address(feePoolStaking), 100000 ether);
-        approveTokens(actor.admin, address(coreProxy), 100000 ether);
-        approveTokens(
-            actor.bob_channel_owner,
-            address(feePoolStaking),
-            100000 ether
-        );
-        approveTokens(
-            actor.alice_channel_owner,
-            address(feePoolStaking),
-            100000 ether
-        );
-        approveTokens(
-            actor.charlie_channel_owner,
-            address(feePoolStaking),
-            100000 ether
-        );
-        approveTokens(
-            actor.tony_channel_owner,
-            address(feePoolStaking),
-            100000 ether
-        );
-
-        approveTokens(address(coreProxy), address(feePoolStaking), 1 ether);
         //initialize stake to avoid divsion by zero errors
-
-        stake(address(coreProxy), 1);
+        vm.prank(actor.admin);
+        coreProxy.initializeStake();
+        genesis = coreProxy.genesisEpoch();
     }
 
     //Helper Functions
     function stake(address signer, uint256 amount) internal {
         changePrank(signer);
-        feePoolStaking.stake(amount * 1e18);
+        coreProxy.stake(amount * 1e18);
     }
 
     function harvest(address signer) internal {
         changePrank(signer);
-        feePoolStaking.harvestAll();
+        coreProxy.harvestAll();
     }
 
-    function harvestPaginated(address signer, uint _till) internal {
+    function harvestPaginated(address signer, uint256 _till) internal {
         changePrank(signer);
-        feePoolStaking.harvestPaginated(_till);
+        coreProxy.harvestPaginated(_till);
     }
 
     function addPool(uint256 amount) internal {
@@ -63,15 +45,15 @@ contract BaseFuzzStaking is BasePushFeePoolStaking {
 
     function unstake(address signer) internal {
         changePrank(signer);
-        feePoolStaking.unstake();
+        coreProxy.unstake();
     }
 
-    function daoHarvest(address signer, uint _epoch) internal {
+    function daoHarvest(address signer, uint256 _epoch) internal {
         changePrank(signer);
-        feePoolStaking.daoHarvestPaginated(_epoch);
+        coreProxy.daoHarvestPaginated(_epoch);
     }
 
     function getCurrentEpoch() public returns (uint256 currentEpoch) {
-        currentEpoch = feePoolStaking.lastEpochRelative(genesis, block.number);
+        currentEpoch = coreProxy.lastEpochRelative(genesis, block.number);
     }
 }

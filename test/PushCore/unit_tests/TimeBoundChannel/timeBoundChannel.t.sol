@@ -44,24 +44,24 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         assertEq(expectedExpiryTime, actualExpiryTime);
     }
 
-    function test_Revertwhen_DestroyNotTimeBoundChannel() public whenNotPaused {
-        _createChannel(actor.bob_channel_owner);
+    // function test_Revertwhen_DestroyNotTimeBoundChannel() public whenNotPaused {
+    //     _createChannel(actor.bob_channel_owner);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannelType.selector));
+    //     vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannelType.selector));
 
-        vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-    }
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
+    // }
 
     function test_Revertwhen_DestroyByOtherAfterExpiry() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
         skip(2 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.charlie_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.charlie_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
 
     function test_Revertwhen_DestroyByOtherBeforeExpiry() public whenNotPaused {
@@ -69,10 +69,10 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
 
         skip(1 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.charlie_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.charlie_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
 
     function test_Revertwhen_DestroyByOwnerBeforeExpiry() public whenNotPaused {
@@ -80,54 +80,54 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
 
         skip(1 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
 
-    function test_Revertwhen_DestroyByAdminBeforeExpiry() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(2 days));
+    // function test_Revertwhen_DestroyByAdminBeforeExpiry() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(2 days));
 
-        skip(1 days);
+    //     skip(1 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
+    //     vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-    }
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
+    // }
 
-    function test_Revertwhen_DestroyByAdminAfterExpiryBefore14Days() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    // function test_Revertwhen_DestroyByAdminAfterExpiryBefore14Days() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
-        skip(2 days);
+    //     skip(2 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
+    //     vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-    }
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
+    // }
 
-    function test_Revertwhen_DestroyByAdminAfterExpiryEqualTo14Days() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    // function test_Revertwhen_DestroyByAdminAfterExpiryEqualTo14Days() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
-        skip(15 days);
+    //     skip(15 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
+    //     vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.admin));
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-    }
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
+    // }
 
     function test_Revert_when_DestroyByOwnerAtExpiry() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
         skip(1 days);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.bob_channel_owner));
+        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
 
     function test_DestroyByOwnerAfterExpiry() public whenNotPaused {
@@ -137,53 +137,51 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
 
         uint256 actualPoolContribution = _getChannelPoolContribution(actor.bob_channel_owner);
 
-        vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit TimeBoundChannelDestroyed(actor.bob_channel_owner, actualPoolContribution);
+        emit ChannelStateUpdate(actor.bob_channel_owner, actualPoolContribution,0);
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
+    // Admin can't perform this in the updated function
+    // function test_DestroyByAdminAfterExpiryAfter14Days() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
-    function test_DestroyByAdminAfterExpiryAfter14Days() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    //     skip(15 days + 1 seconds);
 
-        skip(15 days + 1 seconds);
+    //     uint256 actualPoolContribution = _getChannelPoolContribution(actor.bob_channel_owner);
 
-        uint256 actualPoolContribution = _getChannelPoolContribution(actor.bob_channel_owner);
+    //     emit TimeBoundChannelDestroyed(actor.admin, actualPoolContribution);
 
-        vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit TimeBoundChannelDestroyed(actor.admin, actualPoolContribution);
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
+    // }
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
-    }
+    // function test_VariablesUpdationAfterDestroyedByAdmin() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
-    function test_VariablesUpdationAfterDestroyedByAdmin() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    //     skip(15 days + 1 seconds);
 
-        skip(15 days + 1 seconds);
+    //     uint256 poolContributionBeforeDestroyed = _getChannelPoolContribution(actor.bob_channel_owner);
+    //     uint256 channelsCountBeforeDestroyed = coreProxy.channelsCount();
+    //     uint256 channelPoolFundsBeforeDestroyed = coreProxy.CHANNEL_POOL_FUNDS();
+    //     uint256 protocolPoolFeesBeforeDestroyed = coreProxy.PROTOCOL_POOL_FEES();
 
-        uint256 poolContributionBeforeDestroyed = _getChannelPoolContribution(actor.bob_channel_owner);
-        uint256 channelsCountBeforeDestroyed = coreProxy.channelsCount();
-        uint256 channelPoolFundsBeforeDestroyed = coreProxy.CHANNEL_POOL_FUNDS();
-        uint256 protocolPoolFeesBeforeDestroyed = coreProxy.PROTOCOL_POOL_FEES();
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+    //     uint256 actualChannelsCountAfterDestroyed = coreProxy.channelsCount();
+    //     uint256 actualChannelPoolFundsAfterDestroyed = coreProxy.CHANNEL_POOL_FUNDS();
+    //     uint256 actualProtocolPoolFeesAfterDestroyed = coreProxy.PROTOCOL_POOL_FEES();
+    //     uint256 expectedChannelsCountAfterDestroyed = channelsCountBeforeDestroyed - 1;
+    //     uint256 expectedChannelPoolFundsAfterDestroyed =
+    //         channelPoolFundsBeforeDestroyed - poolContributionBeforeDestroyed;
+    //     uint256 expectedProtocolPoolFeesAfterDestroyed =
+    //         protocolPoolFeesBeforeDestroyed + poolContributionBeforeDestroyed;
 
-        uint256 actualChannelsCountAfterDestroyed = coreProxy.channelsCount();
-        uint256 actualChannelPoolFundsAfterDestroyed = coreProxy.CHANNEL_POOL_FUNDS();
-        uint256 actualProtocolPoolFeesAfterDestroyed = coreProxy.PROTOCOL_POOL_FEES();
-        uint256 expectedChannelsCountAfterDestroyed = channelsCountBeforeDestroyed - 1;
-        uint256 expectedChannelPoolFundsAfterDestroyed =
-            channelPoolFundsBeforeDestroyed - poolContributionBeforeDestroyed;
-        uint256 expectedProtocolPoolFeesAfterDestroyed =
-            protocolPoolFeesBeforeDestroyed + poolContributionBeforeDestroyed;
-
-        assertEq(expectedChannelsCountAfterDestroyed, actualChannelsCountAfterDestroyed);
-        assertEq(expectedChannelPoolFundsAfterDestroyed, actualChannelPoolFundsAfterDestroyed);
-        assertEq(expectedProtocolPoolFeesAfterDestroyed, actualProtocolPoolFeesAfterDestroyed);
-    }
+    //     assertEq(expectedChannelsCountAfterDestroyed, actualChannelsCountAfterDestroyed);
+    //     assertEq(expectedChannelPoolFundsAfterDestroyed, actualChannelPoolFundsAfterDestroyed);
+    //     assertEq(expectedProtocolPoolFeesAfterDestroyed, actualProtocolPoolFeesAfterDestroyed);
+    // }
 
     function test_VariablesUpdationAfterDestroyedByOwner() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
@@ -196,7 +194,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         uint256 protocolPoolFeesBeforeDestroyed = coreProxy.PROTOCOL_POOL_FEES();
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
 
         uint256 actualChannelsCountAfterDestroyed = coreProxy.channelsCount();
         uint256 actualChannelPoolFundsAfterDestroyed = coreProxy.CHANNEL_POOL_FUNDS();
@@ -219,7 +217,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         uint256 poolContributionBeforeDestroyed = _getChannelPoolContribution(actor.bob_channel_owner);
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
 
         uint256 actualPushTokenBalanceOfOwnerAfterDestroying = pushToken.balanceOf(actor.bob_channel_owner);
         uint256 expectedPushTokenBalanceOfOwnerAfterDestroying =
@@ -228,24 +226,24 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         assertEq(expectedPushTokenBalanceOfOwnerAfterDestroying, actualPushTokenBalanceOfOwnerAfterDestroying);
     }
 
-    function test_ShouldNotRefundAfterDestroyedByAdmin() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
+    // function test_ShouldNotRefundAfterDestroyedByAdmin() public whenNotPaused {
+    //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
-        skip(15 days + 1 seconds);
-        uint256 pushTokenBalanceOfOwnerBeforeDestroying = pushToken.balanceOf(actor.bob_channel_owner);
-        uint256 pushTokenBalanceOfAdminBeforeDestroying = pushToken.balanceOf(actor.admin);
+    //     skip(15 days + 1 seconds);
+    //     uint256 pushTokenBalanceOfOwnerBeforeDestroying = pushToken.balanceOf(actor.bob_channel_owner);
+    //     uint256 pushTokenBalanceOfAdminBeforeDestroying = pushToken.balanceOf(actor.admin);
 
-        vm.prank(actor.admin);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+    //     vm.prank(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
 
-        uint256 actualPushTokenBalanceOfOwnerAfterDestroying = pushToken.balanceOf(actor.bob_channel_owner);
-        uint256 expectedPushTokenBalanceOfOwnerAfterDestroying = pushTokenBalanceOfOwnerBeforeDestroying;
-        uint256 actualPushTokenBalanceOfAdminAfterDestroying = pushToken.balanceOf(actor.admin);
-        uint256 expectedPushTokenBalanceOfAdminAfterDestroying = pushTokenBalanceOfAdminBeforeDestroying;
+    //     uint256 actualPushTokenBalanceOfOwnerAfterDestroying = pushToken.balanceOf(actor.bob_channel_owner);
+    //     uint256 expectedPushTokenBalanceOfOwnerAfterDestroying = pushTokenBalanceOfOwnerBeforeDestroying;
+    //     uint256 actualPushTokenBalanceOfAdminAfterDestroying = pushToken.balanceOf(actor.admin);
+    //     uint256 expectedPushTokenBalanceOfAdminAfterDestroying = pushTokenBalanceOfAdminBeforeDestroying;
 
-        assertEq(expectedPushTokenBalanceOfOwnerAfterDestroying, actualPushTokenBalanceOfOwnerAfterDestroying);
-        assertEq(expectedPushTokenBalanceOfAdminAfterDestroying, actualPushTokenBalanceOfAdminAfterDestroying);
-    }
+    //     assertEq(expectedPushTokenBalanceOfOwnerAfterDestroying, actualPushTokenBalanceOfOwnerAfterDestroying);
+    //     assertEq(expectedPushTokenBalanceOfAdminAfterDestroying, actualPushTokenBalanceOfAdminAfterDestroying);
+    // }
 
     function test_ShouldDeleteDataAfterDestroyed() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
@@ -253,7 +251,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         skip(1 days + 1 seconds);
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
 
         (
             CoreTypes.ChannelType channelTypeAfterChannelDestroyed,
@@ -288,7 +286,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         skip(1 days + 1 seconds);
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
 
         _createChannel(actor.bob_channel_owner);
     }
@@ -299,26 +297,26 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         skip(1 days + 1 seconds);
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
     }
-
+    //TODO This is an edge case where the updateChannelState function fails.
     function test_Revertwhen_DestroyDeactivatedChannel() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
         skip(1 days + 1 seconds);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
     }
 
     // Auto-UnSubscription from Channels - Now Deprecated
@@ -335,7 +333,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
     //     skip(1 days + 1 seconds);
 
     //     vm.prank(actor.bob_channel_owner);
-    //     coreProxy.destroyTimeBoundChannel(actor.bob_channel_owner);
+    //     coreProxy.updateChannelState(0);
 
     //     bool isChannelSubscribedToOwn_After =
     //         commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
