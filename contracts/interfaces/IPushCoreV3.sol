@@ -15,10 +15,6 @@ interface IPushCoreV3 {
     event ChannelVerified(address indexed channel, address indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-    /// @notice emits whenever any channel is deactivated
-    // event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    /// @notice emits whenever any deactivated channel is reactivated
-    // event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(address indexed channel);
     /// @notice emits whenever a new channel is created
@@ -47,7 +43,8 @@ interface IPushCoreV3 {
     );
     /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
-    /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated, Blocked or Deleted
+    /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
+    /// Blocked or Deleted
     event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
 
     /* *****************************
@@ -131,7 +128,7 @@ interface IPushCoreV3 {
      *         - It transfers back refundable tokenAmount back to the USER.
      *
      */
-   // function destroyTimeBoundChannel(address _channelAddress) external;
+    // function destroyTimeBoundChannel(address _channelAddress) external;
     /**
      * @notice - Deliminated Notification Settings string contains -> Total Notif Options + Notification Settings
      * For instance: 5+1-0+2-50-20-100+1-1+2-78-10-150
@@ -164,30 +161,32 @@ interface IPushCoreV3 {
         external;
 
     /**
-     * @notice Allows Channel Owner to Deactivate his/her Channel for any period of Time. Channels Deactivated can be
-     * Activated again.
-     * @dev    - Function can only be Called by Already Activated Channels
-     *         - Calculates the totalRefundableAmount for the Channel Owner.
-     *         - The function deducts MIN_POOL_CONTRIBUTION from refundAble amount to ensure that channel's weight &
-     * poolContribution never becomes ZERO.
-     *         - Updates the State of the Channel(channelState) and the New Channel Weight in the Channel's Struct
-     *         - In case, the Channel Owner wishes to reactivate his/her channel, they need to Deposit at least the
-     * Minimum required PUSH  while reactivating.
+     * @notice Allows Channel Owners to change the state of their channel or remove Expired Channels (if channel was
+     * time-bound)
+     *         A channel's state can be => INACTIVE, ACTIVATED, DEACTIVATED or BLOCKED
+     *
+     * @dev    - Can only be called by the onwer of the channel
+     *         - Channel must not be in an INACTIVE or BLOCKED state, else REVERTS
+     *
+     *          - If Channel is ACTIVE state, it can enter either of the two phases:
+     *            - DEACTIVATION PHASE:
+     *              a. Channel gets deactivated and refundable amount gets transferred back to Channel Owner.
+     *            - TIME-BOUND CHANNEL DELETION PHASE:
+     *              a. If Channel is expired, it gets deleted from the protocol. Refundable amount is refunded to
+     * Channel Owner
+     *              b. Channel Count is decreased in the protocol.
+     *
+     *         - If Channel is in DEACTIVATED state, it can only enter the REACTIVATION PHASE:
+     *           - REACTIVATION PHASE:
+     *              a. Chanel Owner pays fees to reactivate his/her channel
+     *              b. Fees goes to Pool Funds
+     *
+     *         - Emit 'ChannelStateUpdate' Event
+     * @param _amount Amount to be passed for reactivating a channel. If Channel is to be deactivated, or deleted,
+     * amount can be ZERO.
      *
      */
-   // function deactivateChannel() external;
-
-    /**
-     * @notice Allows Channel Owner to Reactivate his/her Channel again.
-     * @dev    - Function can only be called by previously Deactivated Channels
-     *         - Channel Owner must Depost at least minimum amount of PUSH  to reactivate his/her channel.
-     *         - Deposited PUSH amount is distributed between CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES
-     *         - Calculation of the new Channel Weight and poolContribution is performed and stored
-     *         - Updates the State of the Channel(channelState) in the Channel's Struct.
-     * @param _amount Amount of PUSH to be deposited
-     *
-     */
-   // function reactivateChannel(uint256 _amount) external;
+    function updateChannelState(uint256 _amount) external;
 
     /**
      * @notice ALlows the pushChannelAdmin to Block any particular channel Completely.
