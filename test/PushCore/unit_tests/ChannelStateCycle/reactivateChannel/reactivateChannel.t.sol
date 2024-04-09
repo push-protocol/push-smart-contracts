@@ -29,17 +29,6 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    //Invalid test if using the updated function
-    // function test_Revertwhen_ChannelAlreadyActive() public whenNotPaused {
-    //     approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
-
-    //     vm.prank(actor.bob_channel_owner);
-    // vm.expectRevert(Errors.Core_InvalidChannel.selector);
-    //     coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
-    //     uint8 actualChannelStateAfterDeactivation = _getChannelState(actor.bob_channel_owner);
-    //      console.log(actualChannelStateAfterDeactivation);
-    // }
-
     function test_Revertwhen_ReactivatingBlockedChannel() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 

@@ -13,15 +13,6 @@ contract DeactivateChannel_Test is BasePushCoreTest {
     modifier whenNotPaused() {
         _;
     }
-    //This test is not applicable when using the updated function.
-    // function test_Revertwhen_ChannelAlreadyDeactive() public whenNotPaused {
-    //     vm.startPrank(actor.bob_channel_owner);
-    //     coreProxy.updateChannelState(0);
-
-    // vm.expectRevert(Errors.Core_InvalidChannel.selector);
-    //     coreProxy.updateChannelState(0);
-    //     vm.stopPrank();
-    // }
 
     function test_Revertwhen_DeactivatingBlockedChannel() public whenNotPaused {
         vm.prank(actor.admin);
