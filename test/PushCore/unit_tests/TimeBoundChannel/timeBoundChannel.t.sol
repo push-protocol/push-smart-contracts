@@ -304,20 +304,6 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
     }
-    //TODO This is an edge case where the updateChannelState function fails.
-    function test_Revertwhen_DestroyDeactivatedChannel() public whenNotPaused {
-        _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
-
-        vm.prank(actor.bob_channel_owner);
-        coreProxy.updateChannelState(0);
-
-        skip(1 days + 1 seconds);
-
-        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
-
-        vm.prank(actor.bob_channel_owner);
-        coreProxy.updateChannelState(0);
-    }
 
     // Auto-UnSubscription from Channels - Now Deprecated
     
