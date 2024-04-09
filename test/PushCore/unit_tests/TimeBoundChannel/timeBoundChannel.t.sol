@@ -137,7 +137,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
 
         uint256 actualPoolContribution = _getChannelPoolContribution(actor.bob_channel_owner);
 
-        emit ChannelStateUpdate(actor.bob_channel_owner, actualPoolContribution,0);
+        emit ChannelStateUpdate(actor.bob_channel_owner, actualPoolContribution, 0);
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
@@ -306,7 +306,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
     }
 
     // Auto-UnSubscription from Channels - Now Deprecated
-    
+
     // function test_ShouldUnsubscribeAfterDestroyed() public whenNotPaused {
     //     _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
     //     address EPNS_ALERTER = address(0);

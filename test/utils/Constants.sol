@@ -19,7 +19,7 @@ abstract contract Constants {
     uint256 public lastTotalStakeEpochInitialized = 0;
     uint256 public totalStakedAmount = 0 ether;
     uint256 public previouslySetEpochRewards = 0 ether;
-    
+
     //Comm Constants used for meta transaction
     string public constant name = "EPNS COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));

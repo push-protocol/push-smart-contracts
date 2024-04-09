@@ -145,7 +145,6 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-
     function test_EmitRelevantEvents() public whenNotPaused {
         vm.expectEmit(true, true, false, true, address(coreProxy));
         emit AddChannel(actor.bob_channel_owner, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity);
@@ -156,7 +155,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         );
     }
 
-    // Auto-Subscription to Channels - Now Deprecated 
+    // Auto-Subscription to Channels - Now Deprecated
 
     // function test_CoreInteractWithComm() public whenNotPaused {
     //     vm.startPrank(actor.bob_channel_owner);
