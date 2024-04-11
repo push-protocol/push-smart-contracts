@@ -92,12 +92,6 @@ contract Push is Ownable{
     /// @dev Selector 0x04a208c7.
     error InvalidMinterZeroAddress();
 
-    /// @notice Error when insufficient balance to burn the amount.
-    /// @dev Selector 0xcf479181.
-    /// @param balance The balance of the account.
-    /// @param amount The amount to burn.
-    error InsufficientBalance(uint256 balance, uint256 amount);
-
     modifier onlyMinter() {
         if (msg.sender != minter) {
             revert CallerNotMinter(msg.sender);
