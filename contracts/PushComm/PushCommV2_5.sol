@@ -16,7 +16,7 @@ pragma solidity ^0.8.20;
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
@@ -531,7 +531,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         chatData.amountDeposited += amount;
 
         // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV2(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
+        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
 
         emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
     }
