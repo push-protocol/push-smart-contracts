@@ -16,7 +16,7 @@ pragma solidity ^0.8.20;
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { IPushCoreV2 } from "../interfaces/IPushCoreV2.sol";
+import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
@@ -27,7 +27,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
+contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -49,7 +49,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
         _;
     }
-    
+
     modifier onlyPushCore() {
         if (msg.sender != EPNSCoreAddress) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -411,9 +411,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
      *
      */
     function _checkNotifReq(address _channel, address _recipient) private view returns (bool) {
-        if (
-            (_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])
-        ) {
+        if ((_channel == msg.sender) || (delegatedNotificationSenders[_channel][msg.sender])) {
             return true;
         }
 
@@ -531,7 +529,7 @@ contract PushCommV2_5 is Initializable, PushCommStorageV2, IPushCommV2 {
         chatData.amountDeposited += amount;
 
         // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV2(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
+        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
 
         emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
     }

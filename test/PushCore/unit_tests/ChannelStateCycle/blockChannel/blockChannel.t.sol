@@ -34,7 +34,7 @@ contract BlockChannel_Test is BasePushCoreTest {
 
     function test_AdminCanBlockDeactivatedChannel() public whenNotPaused whenCallerIsAdmin {
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
         vm.expectEmit(true, false, false, false, address(coreProxy));
         emit ChannelBlocked(actor.bob_channel_owner);

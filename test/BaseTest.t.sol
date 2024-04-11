@@ -5,10 +5,11 @@ import "forge-std/Test.sol";
 
 import "contracts/token/EPNS.sol";
 import "contracts/interfaces/uniswap/IUniswapV2Router.sol";
-import { PushCoreV2_5 } from "contracts/PushCore/PushCoreV2_5.sol";
-import { EPNSCoreProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
+import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
+import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
+import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
-import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
+import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
@@ -18,10 +19,10 @@ import { Constants } from "./utils/Constants.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     EPNS public pushToken;
-    PushCoreV2_5 public core;
-    PushCoreV2_5 public coreProxy;
-    PushCommV2_5 public comm;
-    PushCommV2_5 public commProxy;
+    PushCoreMock public coreMock;
+    PushCoreV3 public coreProxy;
+    PushCommV3 public comm;
+    PushCommV3 public commProxy;
     IUniswapV2Router public uniV2Router;
     EPNSCoreProxy public epnsCoreProxy;
     EPNSCoreAdmin public epnsCoreProxyAdmin;
@@ -52,8 +53,9 @@ abstract contract BaseTest is Test, Constants, Events {
         tokenDistributor = makeAddr("tokenDistributor");
 
         pushToken = new EPNS(tokenDistributor);
-        core = new PushCoreV2_5();
-        comm = new PushCommV2_5();
+        coreMock = new PushCoreMock();
+        coreProxy = new PushCoreV3();
+        comm = new PushCommV3();
         uniV2Router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         actor = Actors({
@@ -67,11 +69,10 @@ abstract contract BaseTest is Test, Constants, Events {
             tim_push_holder: createActor("tim_push_holder")
         });
 
-        // Initialize core proxy admin and coreProxy contract
-        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
+        // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
-            address(core),
-            address(epnsCoreProxyAdmin),
+            address(coreMock),
+            actor.admin,
             actor.admin,
             address(pushToken),
             address(0), // WETH Address
@@ -81,8 +82,19 @@ abstract contract BaseTest is Test, Constants, Events {
             address(0), // aDai address
             0
         );
-        coreProxy = PushCoreV2_5(address(epnsCoreProxy));
+        address admin = address(
+            uint160(
+                uint256(
+                    vm.load(address(epnsCoreProxy), 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
+                )
+            )
+        );
+        vm.prank(actor.admin);
+        EPNSCoreAdmin(admin).upgradeAndCall(
+            ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy), ""
+        );
 
+        coreProxy = PushCoreV3(address(epnsCoreProxy));
         vm.prank(tokenDistributor);
         pushToken.transfer(address(coreProxy), 1 ether);
 
@@ -90,7 +102,7 @@ abstract contract BaseTest is Test, Constants, Events {
         epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
         epnsCommProxy =
             new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
-        commProxy = PushCommV2_5(address(epnsCommProxy));
+        commProxy = PushCommV3(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);

@@ -20,7 +20,7 @@ contract DaoHarvest_test is BaseFuzzStaking {
         roll(epochDuration * _passEpoch);
 
         daoHarvest(actor.admin, _passEpoch - 1);
-        uint256 rewards = feePoolStaking.usersRewardsClaimed(address(coreProxy));
+        uint256 rewards = coreProxy.usersRewardsClaimed(address(coreProxy));
 
         assertEq(rewards, _fee * 1e18);
     }
@@ -30,10 +30,10 @@ contract DaoHarvest_test is BaseFuzzStaking {
         _passEpoch = bound(_passEpoch, 3, 22);
 
         roll(epochDuration * _passEpoch);
-        vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
+        vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotGovernance.selector));
         daoHarvest(actor.bob_channel_owner, _passEpoch - 1);
         daoHarvest(actor.admin, _passEpoch - 1);
-        uint256 rewardsBef = feePoolStaking.usersRewardsClaimed(address(coreProxy));
+        uint256 rewardsBef = coreProxy.usersRewardsClaimed(address(coreProxy));
 
         assertEq(rewardsBef, 0);
     }
@@ -50,8 +50,8 @@ contract DaoHarvest_test is BaseFuzzStaking {
         roll(epochDuration * _passEpoch);
         harvest(actor.bob_channel_owner);
         daoHarvest(actor.admin, _passEpoch - 1);
-        uint256 rewardsAd = feePoolStaking.usersRewardsClaimed(address(coreProxy));
-        uint256 rewardsBob = feePoolStaking.usersRewardsClaimed(actor.bob_channel_owner);
+        uint256 rewardsAd = coreProxy.usersRewardsClaimed(address(coreProxy));
+        uint256 rewardsBob = coreProxy.usersRewardsClaimed(actor.bob_channel_owner);
         uint256 claimed = rewardsAd + rewardsBob;
         assertApproxEqAbs(_fee * 1e18, claimed, 1 ether);
     }
@@ -65,7 +65,7 @@ contract DaoHarvest_test is BaseFuzzStaking {
         roll(epochDuration * _passEpoch);
         daoHarvest(actor.admin, _passEpoch - 1);
 
-        uint256 claimed = feePoolStaking.usersRewardsClaimed(address(coreProxy));
+        uint256 claimed = coreProxy.usersRewardsClaimed(address(coreProxy));
         assertEq(claimed, _fee * 1e18);
     }
 }

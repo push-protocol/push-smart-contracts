@@ -59,20 +59,20 @@ contract ContractPausability_Test is BasePushCoreTest {
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
     }
 
     function test_Revertwhen_ReactivateChannelAfterPaused() public {
         _createChannel(actor.bob_channel_owner);
         vm.prank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
+        coreProxy.updateChannelState(0);
 
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
         vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
         vm.prank(actor.bob_channel_owner);
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
     }
 
     function test_Revertwhen_BlockChannelAfterPaused() public {
@@ -94,8 +94,8 @@ contract ContractPausability_Test is BasePushCoreTest {
 
         _createChannel(actor.bob_channel_owner);
         vm.startPrank(actor.bob_channel_owner);
-        coreProxy.deactivateChannel();
-        coreProxy.reactivateChannel(ADD_CHANNEL_MIN_FEES);
+        coreProxy.updateChannelState(0);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
         vm.stopPrank();
 
         vm.prank(actor.admin);
