@@ -1,9 +1,20 @@
 deactivateChannel.t.sol 
-    ├── when contract is Paused
-    │   └── it REVERT - EnforcedPause()
-    └── when contract is not Paused
-        ├── when caller's channel is not active
-        │   └── it REVERT - PushCoreV2::onlyActivatedChannels: Invalid Channel
-        └── when caller's channel is active
-            ├── it  should update relevant state
-            └── it should transfer correct amount of push token as refund to the caller 
+.
+├── when contract is Paused
+│   └── it REVERT - EnforcedPause()
+└── when contract is not Paused
+    ├── when caller's chanel is INACTIVE or BLOCKED
+    │   └── it REVERT - Core_InvalidChannel()
+    └── when caller's channel is ACTIVE
+        ├── when caller's channel is NOT Time-Bound
+        │   ├── Calculate totalRefundableAmount
+        │   ├── Calculate newChannelWeight
+        │   ├── Update channel's state to 2 (DEACTIVATED)
+        │   ├── Update channel's weight, pool contribution
+        │   ├── Subtract CHANNEL_POOL_FUNDS - totalRefundableAmount from CHANNEL_POOL_FUNDS
+        │   ├── Transfer totalRefundableAmount back to Caller (Channel Owner)
+        │   └── Emit ChannelStateUpdate(callerAddress, totalRefundableAmount, 0)
+        └── when caller's Channel is Time-Bound
+            └── Enter Time-Bound Phase
+    
+    
