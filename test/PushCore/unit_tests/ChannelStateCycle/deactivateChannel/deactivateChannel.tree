@@ -1,4 +1,4 @@
-deactivateChannel.t.sol 
+updateChannelState.t.sol 
 .
 ├── when contract is Paused
 │   └── it REVERT - EnforcedPause()
