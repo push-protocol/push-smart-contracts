@@ -56,7 +56,7 @@ contract ReactivateChannel_Test is BasePushCoreTest {
 
     function test_CoreContract_ShouldReceive_CorrectRefund_PostReactivation() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
-        
+
         vm.startPrank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
 

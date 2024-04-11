@@ -9,7 +9,7 @@ import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
-import { PushCommV2_5 } from "contracts/PushComm/PushCommV2_5.sol";
+import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 
@@ -21,8 +21,8 @@ abstract contract BaseTest is Test, Constants, Events {
     EPNS public pushToken;
     PushCoreMock public coreMock;
     PushCoreV3 public coreProxy;
-    PushCommV2_5 public comm;
-    PushCommV2_5 public commProxy;
+    PushCommV3 public comm;
+    PushCommV3 public commProxy;
     IUniswapV2Router public uniV2Router;
     EPNSCoreProxy public epnsCoreProxy;
     EPNSCoreAdmin public epnsCoreProxyAdmin;
@@ -55,7 +55,7 @@ abstract contract BaseTest is Test, Constants, Events {
         pushToken = new EPNS(tokenDistributor);
         coreMock = new PushCoreMock();
         coreProxy = new PushCoreV3();
-        comm = new PushCommV2_5();
+        comm = new PushCommV3();
         uniV2Router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         actor = Actors({
@@ -102,7 +102,7 @@ abstract contract BaseTest is Test, Constants, Events {
         epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
         epnsCommProxy =
             new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
-        commProxy = PushCommV2_5(address(epnsCommProxy));
+        commProxy = PushCommV3(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);

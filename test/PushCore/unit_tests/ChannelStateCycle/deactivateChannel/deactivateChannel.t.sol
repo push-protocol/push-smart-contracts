@@ -27,7 +27,6 @@ contract DeactivateChannel_Test is BasePushCoreTest {
     }
 
     function test_Revertwhen_DeactivatingInactiveChannel() public whenNotPaused {
-
         vm.prank(actor.tim_push_holder);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
         coreProxy.updateChannelState(0);
@@ -42,7 +41,6 @@ contract DeactivateChannel_Test is BasePushCoreTest {
         coreProxy.updateChannelState(0);
     }
 
-
     function test_Revertwhen_timeBoundChannels_ShouldEnter_TimeBoundPhase() public whenNotPaused {
         _createTimeBoundChannel(actor.alice_channel_owner, _getFutureTime(1 days));
 
@@ -50,7 +48,6 @@ contract DeactivateChannel_Test is BasePushCoreTest {
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
         coreProxy.updateChannelState(0);
     }
-
 
     function test_ShouldCalculate_RefundableAmountCorrectly() public whenNotPaused {
         vm.startPrank(actor.bob_channel_owner);

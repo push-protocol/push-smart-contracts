@@ -100,6 +100,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
     }
+
     function test_VariablesUpdationAfterDestroyedByOwner() public whenNotPaused {
         _createTimeBoundChannel(actor.bob_channel_owner, _getFutureTime(1 days));
 
