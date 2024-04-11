@@ -16,6 +16,17 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         _;
     }
 
+    function test_Revertwhen_ReactivatingBlockedChannel() public whenNotPaused {
+        approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
+
+        vm.prank(actor.admin);
+        coreProxy.blockChannel(actor.bob_channel_owner);
+
+        vm.prank(actor.bob_channel_owner);
+        vm.expectRevert(Errors.Core_InvalidChannel.selector);
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
+    }
+
     function test_Revertwhen_PushAllowanceNotEnough() public whenNotPaused {
         uint256 _amountBeingTransferred = 10 ether;
         approveTokens(actor.bob_channel_owner, address(coreProxy), _amountBeingTransferred);
@@ -27,17 +38,6 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         );
         coreProxy.updateChannelState(_amountBeingTransferred);
         vm.stopPrank();
-    }
-
-    function test_Revertwhen_ReactivatingBlockedChannel() public whenNotPaused {
-        approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
-
-        vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
-
-        vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(Errors.Core_InvalidChannel.selector);
-        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
     }
 
     function test_ReactivatingDeactivatedChannel() public whenNotPaused {
@@ -54,7 +54,26 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    function test_ChannelStateUpdation() public whenNotPaused {
+    function test_CoreContract_ShouldReceive_CorrectRefund_PostReactivation() public whenNotPaused {
+        approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
+        
+        vm.startPrank(actor.bob_channel_owner);
+        coreProxy.updateChannelState(0);
+
+        uint256 pushBalanceOfCore_beforeReactivation = pushToken.balanceOf(address(coreProxy));
+
+        uint256 expectedDepositAmount = ADD_CHANNEL_MIN_FEES;
+        coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
+
+        uint256 pushBalanceOfCore_afterReactivation = pushToken.balanceOf(address(coreProxy));
+        uint256 expectedCoreBalance = pushBalanceOfCore_beforeReactivation + expectedDepositAmount;
+
+        assertEq(pushBalanceOfCore_afterReactivation, expectedCoreBalance);
+
+        vm.stopPrank();
+    }
+
+    function test_ChannelStateUpdation_PostReactivation() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         uint8 actualChannelStateBeforeDeactivation = _getChannelState(actor.bob_channel_owner);
@@ -77,7 +96,7 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         vm.stopPrank();
     }
 
-    function test_FundsVariablesUpdation() public whenNotPaused {
+    function test_FundsVariablesUpdation_PostReactivation() public whenNotPaused {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         vm.startPrank(actor.bob_channel_owner);
