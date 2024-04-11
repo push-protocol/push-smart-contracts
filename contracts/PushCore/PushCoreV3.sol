@@ -11,7 +11,6 @@ pragma solidity ^0.8.20;
  *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
  *
  */
-import "forge-std/console.sol";
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
@@ -295,7 +294,6 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
             } else {
                 // TIME-BOUND CHANNEL DELETION PHASE
                 if (channelData.expiryTime >= block.timestamp) {
-                    console.log(channelData.expiryTime, block.timestamp);
                     revert Errors.Core_InvalidChannel();
                 }
                 totalRefundableAmount = channelData.poolContribution;
