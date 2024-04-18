@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import "forge-std/Test.sol";
 
 import "contracts/token/EPNS.sol";
+import "contracts/token/Push.sol";
 import "contracts/interfaces/uniswap/IUniswapV2Router.sol";
 import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
@@ -18,6 +19,7 @@ import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
+    Push public pushNttToken;
     EPNS public pushToken;
     PushCoreMock public coreMock;
     PushCoreV3 public coreProxy;
@@ -68,6 +70,8 @@ abstract contract BaseTest is Test, Constants, Events {
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
+
+        pushNttToken = new Push(actor.admin);
 
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
