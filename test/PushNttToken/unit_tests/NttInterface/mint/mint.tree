@@ -1,0 +1,11 @@
+mint.t.sol
+├── when caller is not minter
+│   └── it REVERT - CallerNotMinter(caller)
+└── when caller is minter
+    ├── when account passed is zero address
+    │   └── it REVERT - Push::mint: cannot mint tokens to the zero address
+    └── when account passed is not zero address
+        ├── when rawAmount passed exceeds 96 bits
+        │   └── it REVERT - Push::mint: amount exceeds 96 bits
+        └── when rawAmount passed doesn't exceeds 96 bits
+            └── it should increase totalSupply by that amount and balance of the account by the amount and emit event Transfer(address(0), account, _amount)

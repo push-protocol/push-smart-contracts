@@ -124,17 +124,17 @@ contract Push is Ownable{
     }
 
     /// NOTE: the `mint` method is added for INttToken Interface support.
-    /// @notice Mints `_amount` tokens to `_account`, only callable by the minter.
-    /// @param _account The address to receive the minted tokens.
+    /// @notice Mints `_amount` tokens to `account`, only callable by the minter.
+    /// @param account The address to receive the minted tokens.
     /// @param rawAmount The amount of tokens to mint.
-    function mint(address _account, uint256 rawAmount) external onlyMinter {
-        require(_account != address(0), "Push::_mint: cannot mint tokens to the zero address");
-        uint96 _amount = safe96(rawAmount, "Push::burn: amount exceeds 96 bits");
+    function mint(address account, uint256 rawAmount) external onlyMinter {
+        require(account != address(0), "Push::mint: cannot mint tokens to the zero address");
+        uint96 _amount = safe96(rawAmount, "Push::mint: amount exceeds 96 bits");
 
         totalSupply = totalSupply + _amount;
-        balances[_account] = balances[_account] + _amount;
+        balances[account] = balances[account] + _amount;
 
-        emit Transfer(address(0), _account, _amount);
+        emit Transfer(address(0), account, _amount);
     }
 
     /**

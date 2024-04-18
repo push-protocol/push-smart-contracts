@@ -35,4 +35,9 @@ abstract contract ProxyEvents {
     event Unpaused(address account);
 }
 
-abstract contract Events is CoreEvents, CommEvents, ProxyEvents { }
+abstract contract PushTokenEvents {
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event NewMinter(address indexed newMinter);
+}
+
+abstract contract Events is CoreEvents, CommEvents, ProxyEvents, PushTokenEvents { }
