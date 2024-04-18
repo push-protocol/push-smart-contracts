@@ -310,7 +310,7 @@ contract Push is Ownable{
         uint96 amount = safe96(rawAmount, "Push::burn: amount exceeds 96 bits");
 
         balances[account] = sub96(balance, amount, "Push::burn: burn amount exceeds balance");
-        totalSupply = sub256(totalSupply, rawAmount, "Push::burn: supply underflow");
+        totalSupply -= amount;
         emit Transfer(account, address(0), amount);
     }
 
