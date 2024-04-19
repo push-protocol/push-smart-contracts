@@ -1,0 +1,21 @@
+migrationAdminActions.t.sol
+├── when non-admin tries to call setNewPushToken
+│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+├── when admin tries to call setNewPushToken
+│   └── when passed _newToken is zero address
+│       ├── it REVERT - InvalidArgument_WrongAddress(0)
+│       └── when newPushToken is not zero address but already set once
+│           ├── it REVERT - InvalidArgument_WrongAddress(0)
+│           └── when newPushToken is not not set already
+│               └── it should update newPushToken
+├── when non-admin tries to call toggleUnMigrationStatus
+│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+├── when admin tries to call toggleUnMigrationStatus
+│   └── it should successfully set unMigrationPaused as passed value
+├── when non-admin tries to call burnOldTokens
+│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+└── when admin tries to call burnOldTokens
+    ├── when balance of the migration contract is less than _amount passed
+    │   └── it REVERT - Push::_transferTokens: transfer amount exceeds balance
+    └── when balance of the migration contract is more than equal to _amount passed
+        └── it should burn the tokens and send to dead address
