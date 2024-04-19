@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import "forge-std/Test.sol";
 
 import "contracts/token/EPNS.sol";
+import "contracts/token/Push.sol";
 import "contracts/interfaces/uniswap/IUniswapV2Router.sol";
 import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
@@ -12,12 +13,16 @@ import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
 import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
+import { PushMigrationHelper } from "contracts/token/PushMigration.sol";
+import { PushMigrationProxy } from "contracts/token/PushMigrationProxy.sol";
+import { PushMigrationAdmin } from "contracts/token/PushMigrationAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
+    Push public pushNttToken;
     EPNS public pushToken;
     PushCoreMock public coreMock;
     PushCoreV3 public coreProxy;
@@ -28,6 +33,10 @@ abstract contract BaseTest is Test, Constants, Events {
     EPNSCoreAdmin public epnsCoreProxyAdmin;
     EPNSCommProxy public epnsCommProxy;
     EPNSCommAdmin public epnsCommProxyAdmin;
+    PushMigrationHelper public pushMigrationHelper;
+    PushMigrationHelper public pushMigrationHelperProxy;
+    PushMigrationProxy public pushMigrationProxy;
+    PushMigrationAdmin public pushMigrationAdmin;
 
     /* ***************
         Main Actors in Test
@@ -56,6 +65,7 @@ abstract contract BaseTest is Test, Constants, Events {
         coreMock = new PushCoreMock();
         coreProxy = new PushCoreV3();
         comm = new PushCommV3();
+        pushMigrationHelper = new PushMigrationHelper();
         uniV2Router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         actor = Actors({
@@ -68,6 +78,14 @@ abstract contract BaseTest is Test, Constants, Events {
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
+
+        pushNttToken = new Push(actor.admin);
+
+        // Initialize pushMigration proxy admin and proxy contract
+        pushMigrationAdmin = new PushMigrationAdmin(actor.admin);
+        pushMigrationProxy =
+            new PushMigrationProxy(address(pushMigrationHelper), address(pushMigrationAdmin), actor.admin, address(pushToken));
+        pushMigrationHelperProxy = PushMigrationHelper(address(pushMigrationProxy));
 
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
@@ -134,6 +152,13 @@ abstract contract BaseTest is Test, Constants, Events {
         vm.startPrank(from);
         pushToken.approve(to, amount);
         pushToken.setHolderDelegation(to, true);
+        vm.stopPrank();
+    }
+
+    function approveNttTokens(address from, address to, uint256 amount) internal {
+        vm.startPrank(from);
+        pushNttToken.approve(to, amount);
+        pushNttToken.setHolderDelegation(to, true);
         vm.stopPrank();
     }
 

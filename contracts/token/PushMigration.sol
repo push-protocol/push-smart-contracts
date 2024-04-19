@@ -66,7 +66,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable{
     }
 
     /// @notice Allows 1:1 migration of old push token to new Push Tokens. 
-    /// @dev    Caller can send migrated tokens to any preferred receipient address
+    /// @dev    Caller can send migrated tokens to any preferred recipient address
     /// @param _amount Amount of tokens to be migrated
     function migratePushTokensTo(address _recipient, uint256 _amount) external whenNotPaused{
         if(_recipient == address(0)){
@@ -95,7 +95,4 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable{
     function burnOldTokens(uint256 _amount) external onlyOwner {
         oldPushToken.safeTransfer(0x000000000000000000000000000000000000dEaD, _amount);
     }
-
-
-
 }
