@@ -7,6 +7,9 @@ import "contracts/token/Push.sol";
 contract HolderWeightUpdation_Test is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
+
+        vm.prank(actor.governance);
+        pushNttToken.mint(actor.admin, 1e5 ether);
     }
 
     function test_BornAndWeight_ShouldBeEqual() public {

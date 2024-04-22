@@ -7,6 +7,9 @@ import { Errors } from "contracts/libraries/Errors.sol";
 contract Burn_Test is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
+
+        vm.prank(actor.governance);
+        pushNttToken.mint(actor.admin, 1e5 ether);
     }
 
     function test_Revertwhen_AmountExceedsLimit() public {

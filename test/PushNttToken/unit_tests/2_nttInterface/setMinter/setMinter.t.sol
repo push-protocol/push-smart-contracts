@@ -36,6 +36,6 @@ contract SetMinter_Test is BaseTest {
         address minterAfter = pushNttToken.minter();
 
         assertEq(minterAfter, actor.dan_push_holder);
-        assertEq(minterBefore, address(0));
+        assertEq(minterBefore, actor.governance);
     }
 }
