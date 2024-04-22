@@ -90,7 +90,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable{
     }
 
     /// @notice Allows owner to BURN old PUSH Tokens in the contract
-    /// @dev    Can only be called if un-migration is allowed by the governance
+    /// @dev    Can only be called by the owner
     /// @param _amount Amount of tokens to be un-migrated    
     function burnOldTokens(uint256 _amount) external onlyOwner {
         oldPushToken.safeTransfer(0x000000000000000000000000000000000000dEaD, _amount);
