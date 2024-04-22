@@ -1,0 +1,8 @@
+setMinter.t.sol
+├── when caller is not owner
+│   └── it REVERT - OwnableUnauthorizedAccount(caller)
+└── when caller is owner
+    ├── when newMinter passed is zero address
+    │   └── it REVERT - InvalidMinterZeroAddress()
+    └── when newMinter passed is not zero address
+        └── it should update minter and emit event NewMinter(newMinter)
