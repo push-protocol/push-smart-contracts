@@ -60,9 +60,12 @@ const deploy = {
     lineaSepolia: {
       version: 1
     },
+    polygonZkEVMTestnet: {
+      version: 1
+    }
   },
   args: {
-    chainName: "Linea-Sepolia"
+    chainName: "Polygon_zkEVM_Cardona_Testnet"
   }
 }
 

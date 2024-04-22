@@ -63,4 +63,4 @@ sender = "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38"
 
   #zkEVM Networks
   zkEVMMainnet = "https://zkevm-rpc.com"
-  zkEVMTestnet =  "https://rpc.public.zkevm-test.net"
+  polygonZkEVMTestnet =  "https://rpc.public.zkevm-test.net"

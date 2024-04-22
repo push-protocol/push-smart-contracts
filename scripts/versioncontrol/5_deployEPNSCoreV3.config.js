@@ -30,7 +30,7 @@ const deploy = {
     bscTestnet: {
       version: 1
     },
-    zkEVMTestnet: {
+    polygonZkEVMTestnet: {
       version: 1
     },
     optimismSepolia: {
