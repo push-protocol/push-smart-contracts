@@ -1,0 +1,12 @@
+unmigratePushTokens.t.sol
+├── when unmigration is paused
+│   └── it REVERT - UnmigrationPaused()
+└── when unmigration is not Paused
+    ├── when allowance of newToken to migration contract is less than _amount passed
+    │   └── it REVERT - Push::transferFrom: transfer amount exceeds spender allowance
+    └── when allowance of newToken to migration contract is more than equal to _amount passed
+        ├── when balance of the caller is less than _amount passed
+        │   └── it REVERT - Push::_transferTokens: transfer amount exceeds balance
+        └── when balance of the caller is more than equal to _amount passed
+            ├── it should receive newToken and send oldTokens to the caller
+            └── it should emit event TokenUnmigrated(msg.sender, _amount)

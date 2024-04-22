@@ -24,6 +24,8 @@ library Errors {
     error InvalidArg_LessThanExpected(uint256 min_threshold, uint256 actual_value);
     /// @notice Reverts when operation failed because the contract is paused.
     error EnforcedPause();
+    /// @notice The caller account is not authorized to perform an operation.
+    error OwnableUnauthorizedAccount(address account);
 
     /* ***************
         CORE Errors

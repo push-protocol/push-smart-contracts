@@ -35,4 +35,9 @@ abstract contract ProxyEvents {
     event Unpaused(address account);
 }
 
-abstract contract Events is CoreEvents, CommEvents, ProxyEvents { }
+abstract contract MigrationEvents {
+    event TokenMigrated(address indexed _tokenHolder, address indexed _tokenReceiver, uint256 _amountMigrated);
+    event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
+}
+
+abstract contract Events is CoreEvents, CommEvents, ProxyEvents, MigrationEvents { }
