@@ -112,8 +112,8 @@ module.exports = {
     },
 
     // Polygon zkEVM Chain
-    zkEVMTestnet: {
-      url: "https://rpc.public.zkevm-test.net	",
+    polygonZkEVMTestnet: {
+      url: "https://rpc.cardona.zkevm-rpc.com/",
       accounts: [process.env.PRIVATE]
 
     },
@@ -204,6 +204,7 @@ module.exports = {
       fuseSpark: process.env.FUSE_API,
       arbitrumSepolia:process.env.ARBISCAN_API,
       optimismSepolia :process.env.OPTIMISM_API,
+      polygonZkEVMTestnet: process.env.POLYGONzkEVMSCAN_API,
       berachainTestnet: "apiNotRequired",
       polygonAmoy:"OKLINK",
       X1: "Not required"
@@ -285,6 +286,14 @@ module.exports = {
         urls: {
             apiURL: "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/x1_test",
             browserURL: "https://www.oklink.com/x1-test"
+        }
+      },
+      {
+        network: "polygonZkEVMTestnet",
+        chainId: 2442,
+        urls: {
+            apiURL: "https://api-zkevm.polygonscan.com/api",
+            browserURL: "https://cardona-zkevm.polygonscan.com/"
         }
       }
     ],
