@@ -15,7 +15,7 @@ contract Push is Ownable{
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint256 public totalSupply = 100_000_000e18; // 100 million PUSH //@audit - MIGHT NEED TO REMOVE MAX SUPPLY CAP, since token is mintable
+    uint256 public totalSupply; // 100 million PUSH MAX Cap
 
     /// @notice block number when tokens came into circulation
     uint256 public born;
@@ -104,9 +104,6 @@ contract Push is Ownable{
      * @param account The initial account to grant all the tokens
      */
     constructor(address account) Ownable(account){
-        balances[account] = uint96(totalSupply); //@audit - MIGHT NEED TO REMOVE MAX SUPPLY CAP, since token is mintable
-        emit Transfer(address(0), account, totalSupply);
-
         // holder weight initial adjustments
         holderWeight[account] = block.number;
         born = block.number;
@@ -132,6 +129,7 @@ contract Push is Ownable{
         uint96 _amount = safe96(rawAmount, "Push::mint: amount exceeds 96 bits");
 
         totalSupply = totalSupply + _amount;
+        require(totalSupply <= 100_000_000e18, "Push::mint: total supply exceeds MAX CAP");
         balances[account] = balances[account] + _amount;
 
         emit Transfer(address(0), account, _amount);
