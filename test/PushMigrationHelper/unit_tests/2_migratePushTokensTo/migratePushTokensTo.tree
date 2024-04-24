@@ -1,0 +1,15 @@
+migratePushTokensTo.t.sol
+├── when contract is Paused
+│   └── it REVERT - EnforcedPause()
+└── when contract is not Paused
+    ├── when allowance of oldToken to migration contract is less than _amount passed
+    │   └── it REVERT - Push::transferFrom: transfer amount exceeds spender allowance
+    └── when allowance of oldToken to migration contract is more than equal to _amount passed
+        ├── when balance of the caller is less than _amount passed
+        │   └── it REVERT - Push::_transferTokens: transfer amount exceeds balance
+        └── when balance of the caller is more than equal to _amount passed
+            ├── when passed _recipient is zero address
+            │   └── it REVERT - InvalidArgument_WrongAddress(_recipient)
+            └── when passed _recipient is not zero address
+                ├── it should receive oldTokens and send newTokens to the caller
+                └── it should emit event TokenMigrated(msg.sender, _recipient, _amount)
