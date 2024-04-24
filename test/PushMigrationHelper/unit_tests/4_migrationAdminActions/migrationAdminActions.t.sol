@@ -8,8 +8,8 @@ contract MigrationAdminActions_Test is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        vm.prank(actor.admin);
-        pushNttToken.transfer(address(pushMigrationHelperProxy), 1_000_000 ether);
+        vm.prank(actor.governance);
+        pushNttToken.mint(address(pushMigrationHelperProxy), 1_000_000 ether);
         vm.prank(tokenDistributor);
         pushToken.transfer(address(pushMigrationHelperProxy), 1_000_000 ether);
     }

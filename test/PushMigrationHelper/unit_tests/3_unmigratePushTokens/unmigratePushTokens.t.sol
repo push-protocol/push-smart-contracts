@@ -13,8 +13,8 @@ contract MigratePushTokens_Test is BaseTest {
         vm.prank(actor.admin);
         pushMigrationHelperProxy.setNewPushToken(address(pushNttToken));
 
-        vm.prank(actor.admin);
-        pushNttToken.transfer(address(pushMigrationHelperProxy), 1_000_000 ether);
+        vm.prank(actor.governance);
+        pushNttToken.mint(address(pushMigrationHelperProxy), 1_000_000 ether);
     }
 
     modifier whenUnMigrationIsAllowed() {

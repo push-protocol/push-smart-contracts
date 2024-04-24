@@ -64,4 +64,15 @@ library Errors {
     /// @notice PushStaking Contract Error: Reverts only when the Epoch is less than actually required for a partcular
     /// staking-related action.
     error PushStaking_InvalidEpoch_LessThanExpected();
+
+    /* ***************
+        Push NTT Token Errors
+    *************** */
+    /// @notice Error when the caller is not the minter.
+    /// @dev Selector 0x5fb5729e.
+    /// @param caller The caller of the function.
+    error CallerNotMinter(address caller);
+    /// @notice Error when the minter is the zero address.
+    /// @dev Selector 0x04a208c7.
+    error InvalidMinterZeroAddress();
 }

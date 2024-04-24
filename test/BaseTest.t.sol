@@ -94,6 +94,9 @@ abstract contract BaseTest is Test, Constants, Events {
         pushMigrationHelperProxy = PushMigrationHelper(
             address(pushMigrationProxy)
         );
+        // set governance as minter of ntt token
+        vm.prank(actor.admin);
+        pushNttToken.setMinter(actor.governance);
 
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(

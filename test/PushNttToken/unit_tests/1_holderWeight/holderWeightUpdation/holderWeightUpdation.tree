@@ -1,0 +1,11 @@
+HolderWeightUpdation_Test
+├── when owner deploys the token contract
+│   ├── born and holderWeight of owner should be same initially
+│   └── born should be equal to the block number of contract deployment
+├── when token is transferred
+│   ├── it should update the holderWeight of the receiver address equal to source if balance is zero
+│   ├── it should update the holderWeight when token is transferred back
+│   └── it should update the holderWeight on multiple transfers
+└── when returnHolderDelegation is called
+    ├── it should return false for unauthorized delegator of caller
+    └── it should return true for authorized delegator of caller

@@ -40,4 +40,9 @@ abstract contract MigrationEvents {
     event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
 }
 
-abstract contract Events is CoreEvents, CommEvents, ProxyEvents, MigrationEvents { }
+abstract contract PushTokenEvents {
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event NewMinter(address indexed newMinter);
+}
+
+abstract contract Events is CoreEvents, CommEvents, ProxyEvents, PushTokenEvents, MigrationEvents { }

@@ -1,0 +1,11 @@
+burn.t.sol
+├── when amount passed exceeds 96 bits
+│   └── it REVERT - Push::burn: amount exceeds 96 bits
+└── when amount passed doesn't exceed 96 bits
+    ├── when amount passed is more than the balance of caller
+    │   └── it REVERT - Push::burn: burn amount exceeds balance
+    └── when amount passed is not more than the balance of caller
+        ├── when amount passed is more than totalSupply
+        │   └── it REVERT - Push::burn: supply underflow
+        └── when amount passed is not more than totalSupply
+            └── it should update balance of the caller and totalSupply and emit event Transfer(account, address(0), amount)
