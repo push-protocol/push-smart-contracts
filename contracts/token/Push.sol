@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Push is Ownable{
     /// @notice EIP-20 token name for this token
-    string public constant name = "Push Protocol";
+    string public constant name = "Ethereum Push Notification Service";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "PUSH";
@@ -15,7 +15,7 @@ contract Push is Ownable{
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint256 public totalSupply = 100_000_000e18; // 100 million PUSH //@audit - MIGHT NEED TO REMOVE MAX SUPPLY CAP, since token is mintable
+    uint256 public totalSupply; // 100 million PUSH MAX Cap
 
     /// @notice block number when tokens came into circulation
     uint256 public born;
@@ -104,9 +104,6 @@ contract Push is Ownable{
      * @param account The initial account to grant all the tokens
      */
     constructor(address account) Ownable(account){
-        balances[account] = uint96(totalSupply); //@audit - MIGHT NEED TO REMOVE MAX SUPPLY CAP, since token is mintable
-        emit Transfer(address(0), account, totalSupply);
-
         // holder weight initial adjustments
         holderWeight[account] = block.number;
         born = block.number;
@@ -124,17 +121,18 @@ contract Push is Ownable{
     }
 
     /// NOTE: the `mint` method is added for INttToken Interface support.
-    /// @notice Mints `_amount` tokens to `_account`, only callable by the minter.
-    /// @param _account The address to receive the minted tokens.
+    /// @notice Mints `_amount` tokens to `account`, only callable by the minter.
+    /// @param account The address to receive the minted tokens.
     /// @param rawAmount The amount of tokens to mint.
-    function mint(address _account, uint256 rawAmount) external onlyMinter {
-        require(_account != address(0), "Push::_mint: cannot mint tokens to the zero address");
-        uint96 _amount = safe96(rawAmount, "Push::burn: amount exceeds 96 bits");
+    function mint(address account, uint256 rawAmount) external onlyMinter {
+        require(account != address(0), "Push::mint: cannot mint tokens to the zero address");
+        uint96 _amount = safe96(rawAmount, "Push::mint: amount exceeds 96 bits");
 
         totalSupply = totalSupply + _amount;
-        balances[_account] = balances[_account] + _amount;
+        require(totalSupply <= 100_000_000e18, "Push::mint: total supply exceeds MAX CAP");
+        balances[account] = balances[account] + _amount;
 
-        emit Transfer(address(0), _account, _amount);
+        emit Transfer(address(0), account, _amount);
     }
 
     /**
@@ -310,7 +308,7 @@ contract Push is Ownable{
         uint96 amount = safe96(rawAmount, "Push::burn: amount exceeds 96 bits");
 
         balances[account] = sub96(balance, amount, "Push::burn: burn amount exceeds balance");
-        totalSupply = sub256(totalSupply, rawAmount, "Push::burn: supply underflow");
+        totalSupply -= amount;
         emit Transfer(account, address(0), amount);
     }
 
