@@ -158,8 +158,7 @@ contract Push is Ownable{
         if (rawAmount >= type(uint96).max) {
             amount = type(uint96).max;
         } else {
-            amount = uint96(rawAmount);
-            require(amount == rawAmount, "Push::approve: amount exceeds 96 bits");
+            amount = safe96(rawAmount, "Push::approve: amount exceeds 96 bits");
         }
 
         allowances[msg.sender][spender] = amount;
@@ -192,8 +191,7 @@ contract Push is Ownable{
         if (rawAmount == type(uint256).max) {
             amount = type(uint96).max;
         } else {
-            require(rawAmount < type(uint96).max, "Push::permit: amount exceeds 96 bits");
-            amount = uint96(rawAmount);
+            amount = safe96(rawAmount, "Push::permit: amount exceeds 96 bits");
         }
 
         bytes32 domainSeparator =
