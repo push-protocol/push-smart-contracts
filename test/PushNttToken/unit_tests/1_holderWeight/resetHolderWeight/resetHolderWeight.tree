@@ -1,0 +1,12 @@
+resetHolderWeight_Test
+├── when caller is EOA
+│   ├── when caller is unauthorized delegator
+│   │   └── it REVERT - Push::resetHolderWeight: unauthorized
+│   └── when caller is authorized delegator or msg.sender itself
+│       ├── it should reset the holderWeight to current block number
+│       └── it should set the holderWeight accurately on transfer after reset
+└── when caller is external contract
+    ├── when call is unauthorized
+    │   └── it REVERT - Push::resetHolderWeight: unauthorized
+    └── when call is authorized
+        └── it should reset the holderWeight to current block number
