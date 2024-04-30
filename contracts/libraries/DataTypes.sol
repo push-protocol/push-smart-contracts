@@ -92,6 +92,16 @@ library CommTypes {
         uint256 timestamp;
         uint256 amountDeposited;
     }
+
+    struct RequestPayload {
+        bytes4 functionSig;
+        uint256 depositAmount;
+        uint256 feeAmount;
+        uint8 feeId;
+        address amountRecipient;
+        uint8 channelExpiry;
+        bytes32 channelIdentity;
+    }
 }
 
 library StakingTypes {
