@@ -27,6 +27,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
+import "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
+
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
     using SafeERC20 for IERC20;
 
