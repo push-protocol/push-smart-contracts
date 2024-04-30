@@ -35,7 +35,7 @@ interface IPushCommV2 {
         string _chainName,
         uint256 indexed _chainID,
         address indexed _channelOwnerAddress,
-        string _ethereumChannelAddress
+        string _baseChannelAddress
     );
 
     /// @notice emits whenever a user initiates an incentivized chat
