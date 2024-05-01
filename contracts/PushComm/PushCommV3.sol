@@ -28,6 +28,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import "../interfaces/wormhole/INttManager.sol";
+import "../interfaces/wormhole/ITransceiver.sol";
 import "../interfaces/wormhole/IWormholeTransceiver.sol";
 import "../libraries/wormhole-lib/TransceiverStructs.sol";
 import "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
@@ -544,22 +545,26 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
     ***************************** */
     IERC20 public PUSH_NTT;
-    INttManager public NTT_MANAGER;
-    IWormholeTransceiver public TRANSCEIVER;
+    address public NTT_MANAGER;
+    ITransceiver public TRANSCEIVER;
+    IWormholeTransceiver public WORMHOLE_TRANSCEIVER;
     IWormholeRelayer public WORMHOLE_RELAYER;
 
+    uint16 public recipientChain = 10002; // Wormhole's Sepolia Chain ID
     uint256 constant GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
 
 
     function initializeBridgeContracts(
         address _pushNTT,
         address _nttManager,
-        address _transceiver,
-        address _wormholeRelayerAddress
+        ITransceiver _transceiver,
+        IWormholeTransceiver _wormholeTransceiver,
+        IWormholeRelayer _wormholeRelayerAddress
     ) external onlyPushChannelAdmin {
         PUSH_NTT = IERC20(_pushNTT);
-        NTT_MANAGER = INttManager(_nttManager);
-        TRANSCEIVER = IWormholeTransceiver(_transceiver);
+        NTT_MANAGER = _nttManager;
+        TRANSCEIVER = ITransceiver(_transceiver);
+        WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
 
     }
@@ -569,10 +574,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         view
         returns (TransceiverStructs.TransceiverInstruction memory)
     {
-        IWormholeTransceiver wormholeTransceiverBSC = IWormholeTransceiver(TRANSCEIVER);
+        IWormholeTransceiver wormholeTransceiver = IWormholeTransceiver(WORMHOLE_TRANSCEIVER);
 
         IWormholeTransceiver.WormholeTransceiverInstruction memory instruction = IWormholeTransceiver.WormholeTransceiverInstruction(relayer_off);
-        bytes memory instructionData = wormholeTransceiverBSC.encodeWormholeTransceiverInstruction(instruction);
+        bytes memory instructionData = wormholeTransceiver.encodeWormholeTransceiverInstruction(instruction);
        
         return TransceiverStructs.TransceiverInstruction({
             index: 0,
@@ -580,8 +585,40 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         });
     }
 
-    function quoteCrossChainGreeting(uint16 targetChain) public view returns (uint256 cost) {
+    function quoteMsgRelayCost(uint16 targetChain) public view returns (uint256 cost) {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
+    }
+
+    function createCrossChainRequest(uint256 _amount, CommTypes.RequestPayload memory reqData ) public payable{
+        bytes32 recipient =  bytes32(uint256(uint160(EPNSCoreAddress)));       
+
+        //  Calculate MSG bridge cost and Token Bridge cost
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain);
+        uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(recipientChain, buildTransceiverInstruction(false));
+
+        if(msg.value < (messageBridgeCost + tokenBridgeCost)){
+            revert Errors.InsufficientFunds();
+        }
+        // Relay the RequestData Payload
+        WORMHOLE_RELAYER.sendPayloadToEvm{value: messageBridgeCost}(
+            recipientChain,
+            EPNSCoreAddress,
+            abi.encode(reqData, msg.sender), // payload
+            0, // no receiver value needed since we're just passing a message
+            GAS_LIMIT,
+            recipientChain, 
+            msg.sender // Refund address is of the sender 
+        );
+    
+        // Approve and Initiate NTT Transfer
+        INttManager ntt = INttManager(NTT_MANAGER);
+
+        PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
+
+        PUSH_NTT.approve(NTT_MANAGER, _amount);
+
+        ntt.transfer{value:tokenBridgeCost}(_amount, recipientChain, recipient);
+
     }
 
 }

@@ -26,6 +26,8 @@ library Errors {
     error EnforcedPause();
     /// @notice The caller account is not authorized to perform an operation.
     error OwnableUnauthorizedAccount(address account);
+    /// @notice The msg.value sent is not enough to perform the operation.
+    error InsufficientFunds();
 
     /* ***************
         CORE Errors
