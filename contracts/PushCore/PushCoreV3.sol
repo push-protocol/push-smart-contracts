@@ -15,7 +15,7 @@ import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
-import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
+import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
