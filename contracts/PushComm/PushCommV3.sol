@@ -27,7 +27,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
+import "../interfaces/IWormholeTransceiver.sol";
 import "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
+import "../libraries/wormhole-lib/TransceiverStructs.sol";
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
     using SafeERC20 for IERC20;
@@ -534,5 +536,47 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
 
         emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
+    }
+    /* *****************************
+
+         WORMHOLE CROSS-CHAIN Functions
+
+    ***************************** */
+    address public PUSH_NTT;
+    address public NTT_MANAGER;
+    address public TRANSCEIVER;
+    address public WORMHOLE_RELAYER;
+
+    function initializeBridgeContracts(
+        address _pushNTT,
+        address _nttManager,
+        address _transceiver,
+        address _wormholeRelayerAddress
+    ) external onlyPushChannelAdmin {
+        PUSH_NTT = _pushNTT;
+        NTT_MANAGER = _nttManager;
+        TRANSCEIVER = _transceiver;
+        WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
+
+    }
+
+    function buildTransceiverInstruction(bool relayer_off)
+        public
+        view
+        returns (TransceiverStructs.TransceiverInstruction memory)
+    {
+        IWormholeTransceiver wormholeTransceiverBSC = IWormholeTransceiver(TRANSCEIVER);
+
+        IWormholeTransceiver.WormholeTransceiverInstruction memory instruction = IWormholeTransceiver.WormholeTransceiverInstruction(relayer_off);
+        bytes memory instructionData = wormholeTransceiverBSC.encodeWormholeTransceiverInstruction(instruction);
+       
+        return TransceiverStructs.TransceiverInstruction({
+            index: 0,
+            payload: instructionData
+        });
+    }
+
+    function quoteCrossChainGreeting(uint16 targetChain) public view returns (uint256 cost) {
+        (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
     }
 }
