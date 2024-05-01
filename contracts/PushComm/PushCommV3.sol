@@ -545,7 +545,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
     address public PUSH_NTT;
     address public NTT_MANAGER;
     address public TRANSCEIVER;
-    address public WORMHOLE_RELAYER;
+    IWormholeRelayer public WORMHOLE_RELAYER;
+
+    uint256 constant GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
+
 
     function initializeBridgeContracts(
         address _pushNTT,
