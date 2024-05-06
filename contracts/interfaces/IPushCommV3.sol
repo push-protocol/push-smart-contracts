@@ -30,6 +30,14 @@ interface IPushCommV2 {
         address indexed _channelOwnerAddress,
         string _ethereumChannelAddress
     );
+
+    event RemoveChannelAlias(  
+        string _chainName,
+        uint256 indexed _chainID,
+        address indexed _channelOwnerAddress,
+        string _baseChannelAddress
+    );
+
     /// @notice emits whenever a user initiates an incentivized chat
     event IncentivizeChatReqInitiated(
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp

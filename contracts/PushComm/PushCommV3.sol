@@ -80,6 +80,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
+    function removeChannelAlias(string memory _channelAddress) external {
+        emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
+    }
+
     function completeMigration() external onlyPushChannelAdmin {
         isMigrationComplete = true;
     }
