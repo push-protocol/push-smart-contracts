@@ -31,7 +31,7 @@ interface IPushCommV2 {
         string _ethereumChannelAddress
     );
 
-    event UnverifyChannelAlias(  
+    event RemoveChannelAlias(  
         string _chainName,
         uint256 indexed _chainID,
         address indexed _channelOwnerAddress,
