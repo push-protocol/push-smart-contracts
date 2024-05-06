@@ -17,7 +17,7 @@ pragma solidity ^0.8.20;
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
-import { IPushCommV2 } from "../interfaces/IPushCommV2.sol";
+import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
@@ -27,7 +27,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
+contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -113,7 +113,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     ***************************** */
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function isUserSubscribed(address _channel, address _user) public view returns (bool) {
         CommTypes.User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
@@ -121,13 +121,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function subscribe(address _channel) external returns (bool) {
         _subscribe(_channel, msg.sender);
         return true;
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function batchSubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
         for (uint256 i = 0; i < channelListLength;) {
@@ -211,7 +211,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function subscribeBySig(
         address channel,
         address subscriber,
@@ -255,7 +255,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         _subscribe(channel, subscriber);
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function subscribeViaCore(address _channel, address _user) external onlyPushCore returns (bool) {
         _subscribe(_channel, _user);
         return true;
@@ -267,14 +267,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     ***************************** */
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
         return true;
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function batchUnsubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
         for (uint256 i = 0; i < channelListLength;) {
@@ -313,7 +313,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         }
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function unsubscribeBySig(
         address channel,
         address subscriber,
@@ -356,7 +356,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         _unsubscribe(channel, subscriber);
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function unSubscribeViaCore(address _channel, address _user) external onlyPushCore returns (bool) {
         _unsubscribe(_channel, _user);
         return true;
@@ -387,14 +387,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
 
     ***************************** */
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
         _subscribe(msg.sender, _delegate);
         emit AddDelegate(msg.sender, _delegate);
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function removeDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = false;
         emit RemoveDelegate(msg.sender, _delegate);
@@ -422,7 +422,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         return false;
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function sendNotification(address _channel, address _recipient, bytes memory _identity) external returns (bool) {
         bool success = _checkNotifReq(_channel, _recipient);
         if (success) {
@@ -464,7 +464,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         return false;
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function sendNotifBySig(
         address _channel,
         address _recipient,
@@ -506,7 +506,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV2 {
         return success;
     }
 
-    /// @inheritdoc IPushCommV2
+    /// @inheritdoc  IPushCommV3
     function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external {
         if (!isUserSubscribed(_channel, msg.sender)) {
             revert Errors.Comm_InvalidSubscriber();

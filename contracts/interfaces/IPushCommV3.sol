@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-interface IPushCommV2 {
+interface IPushCommV3 {
     /* *****************************
 
        EVENTS
