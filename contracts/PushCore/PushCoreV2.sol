@@ -10,6 +10,8 @@ pragma experimental ABIEncoderV2;
  * The EPNS Core is more inclined towards the storing and handling the Channel related
  * Functionalties.
  **/
+ import "hardhat/console.sol";
+
 import "./PushCoreStorageV1_5.sol";
 import "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
@@ -177,19 +179,19 @@ contract PushCoreV2 is
         epnsCommunicator = _commAddress;
     }
 
-    function setGovernanceAddress(address _governanceAddress) external {
-        onlyPushChannelAdmin();
-        governance = _governanceAddress;
-    }
+    // function setGovernanceAddress(address _governanceAddress) external {
+    //     onlyPushChannelAdmin();
+    //     governance = _governanceAddress;
+    // }
 
-    function setFeeAmount(uint256 _newFees) external {
-        onlyGovernance();
-        require(
-            _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
-            "PushCoreV2::setFeeAmount: Invalid Fee"
-        );
-        FEE_AMOUNT = _newFees;
-    }
+    // function setFeeAmount(uint256 _newFees) external {
+    //     onlyGovernance();
+    //     require(
+    //         _newFees > 0 && _newFees < ADD_CHANNEL_MIN_FEES,
+    //         "PushCoreV2::setFeeAmount: Invalid Fee"
+    //     );
+    //     FEE_AMOUNT = _newFees;
+    // }
 
     function setMinPoolContribution(uint256 _newAmount) external {
         onlyGovernance();
@@ -200,15 +202,15 @@ contract PushCoreV2 is
         MIN_POOL_CONTRIBUTION = _newAmount;
     }
 
-    function pauseContract() external {
-        onlyGovernance();
-        _pause();
-    }
+    // function pauseContract() external {
+    //     onlyGovernance();
+    //     _pause();
+    // }
 
-    function unPauseContract() external {
-        onlyGovernance();
-        _unpause();
-    }
+    // function unPauseContract() external {
+    //     onlyGovernance();
+    //     _unpause();
+    // }
 
     /**
      * @notice Allows to set the Minimum amount threshold for Creating Channels
@@ -826,15 +828,54 @@ contract PushCoreV2 is
         emit Staked(msg.sender, _amount);
     }
 
+    function stakeNew(uint256 _amount) external {
+        _stakeNew(msg.sender, _amount);
+        emit Staked(msg.sender, _amount);
+    }
+
     function _stake(address _staker, uint256 _amount) private {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 blockNumberToConsider = genesisEpoch.add(
             epochDuration.mul(currentEpoch)
         );
+
         uint256 userWeight = _returnPushTokenWeight(
             _staker,
             _amount,
             blockNumberToConsider
+        );
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
+
+        userFeesInfo[_staker].stakedAmount =
+            userFeesInfo[_staker].stakedAmount +
+            _amount;
+        userFeesInfo[_staker].lastClaimedBlock = userFeesInfo[_staker]
+            .lastClaimedBlock == 0
+            ? genesisEpoch
+            : userFeesInfo[_staker].lastClaimedBlock;
+        totalStakedAmount += _amount;
+        // Adjust user and total rewards, piggyback method
+        _adjustUserAndTotalStake(_staker, userWeight);
+    }
+
+    function _stakeNew(address _staker, uint256 _amount) private {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 blockNumberToConsider = genesisEpoch.add(
+            epochDuration.mul(currentEpoch)
+        );
+
+        uint256 userWeight = _returnPushTokenWeight(
+            _staker,
+            _amount,
+            blockNumberToConsider
+        );
+
+        uint256 holdlerWeightAlcie = IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(
+            _staker
         );
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
@@ -842,6 +883,8 @@ contract PushCoreV2 is
             address(this),
             _amount
         );
+
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_staker);
 
         userFeesInfo[_staker].stakedAmount =
             userFeesInfo[_staker].stakedAmount +
@@ -889,19 +932,6 @@ contract PushCoreV2 is
     }
 
     /**
-     * @notice Allows users to harvest/claim their earned rewards from the protocol
-     * @dev    Computes nextFromEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
-     *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
-     *         Once calculated, user's total claimed rewards and nextFromEpoch details is updated.
-     **/
-    function harvestAll() public {
-        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-
-        uint256 rewards = harvest(msg.sender, currentEpoch - 1);
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
-    }
-
-    /**
      * @notice Allows paginated harvests for users between a particular number of epochs.
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    _tillEpoch should never be equal to currentEpoch.
@@ -925,6 +955,33 @@ contract PushCoreV2 is
     }
 
     /**
+     * @notice Allows users to harvest/claim their earned rewards from the protocol
+     * @dev    Computes nextFromEpoch and currentEpoch and uses them as startEPoch and endEpoch respectively.
+     *         Rewards are claculated from start epoch till endEpoch(currentEpoch - 1).
+     *         Once calculated, user's total claimed rewards and nextFromEpoch details is updated.
+     **/
+    function harvestAll() public {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+
+        uint256 rewards = harvest(msg.sender, currentEpoch - 1);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+    }
+
+    function harvestAllNewCoreReset() public {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+
+        uint256 rewards = harvestCoreReset(msg.sender, currentEpoch - 1);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+    }
+
+    function harvestAllNewStake() public {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+
+        uint256 rewards = harvestWithNewStake(msg.sender, currentEpoch - 1);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, rewards);
+    }
+
+    /**
      * @notice Internal harvest function that is called for all types of harvest procedure.
      * @param  _user       - The user address for which the rewards will be calculated.
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
@@ -935,6 +992,7 @@ contract PushCoreV2 is
         internal
         returns (uint256 rewards)
     {
+        // console.log("Block Number now is", block.number);
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
         _adjustUserAndTotalStake(_user, 0);
 
@@ -957,6 +1015,79 @@ contract PushCoreV2 is
             rewards = rewards.add(claimableReward);
         }
 
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
+        // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
+        uint256 _epoch_to_block_number = genesisEpoch +
+            _tillEpoch *
+            epochDuration;
+        userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
+
+        emit RewardsHarvested(_user, rewards, nextFromEpoch, _tillEpoch);
+    }
+
+    function harvestWithNewStake(address _user, uint256 _tillEpoch)
+        internal
+        returns (uint256 rewards)
+    {
+
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+        _adjustUserAndTotalStake(_user, 0);
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 nextFromEpoch = lastEpochRelative(
+            genesisEpoch,
+            userFeesInfo[_user].lastClaimedBlock
+        );
+
+        require(
+            currentEpoch > _tillEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
+        );
+        require(
+            _tillEpoch >= nextFromEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
+        );
+        for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(_user, i);
+            rewards = rewards.add(claimableReward);
+        }
+
+        usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
+        // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
+        uint256 _epoch_to_block_number = genesisEpoch +
+            _tillEpoch *
+            epochDuration;
+        userFeesInfo[_user].lastClaimedBlock = _epoch_to_block_number;
+
+        emit RewardsHarvested(_user, rewards, nextFromEpoch, _tillEpoch);
+    }
+
+    function harvestCoreReset(address _user, uint256 _tillEpoch)
+        internal
+        returns (uint256 rewards)
+    {
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+        _adjustUserAndTotalStake(_user, 0);
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 nextFromEpoch = lastEpochRelative(
+            genesisEpoch,
+            userFeesInfo[_user].lastClaimedBlock
+        );
+
+        require(
+            currentEpoch > _tillEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t currentEpoch"
+        );
+        require(
+            _tillEpoch >= nextFromEpoch,
+            "PushCoreV2::harvestPaginated::Invalid _tillEpoch w.r.t nextFromEpoch"
+        );
+        for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(_user, i);
+            rewards = rewards.add(claimableReward);
+        }
+    
         usersRewardsClaimed[_user] = usersRewardsClaimed[_user].add(rewards);
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch +
@@ -1138,4 +1269,20 @@ contract PushCoreV2 is
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
     }
+
+    function getUserStakeWeight(address _user) external view returns (uint256) {
+        UserFessInfo memory userFees = userFeesInfo[_user];
+        uint256 stakedWeight = userFees.stakedWeight;
+        return stakedWeight;
+    }
+
+    function getUserEpochToStakeWeight(address _user, uint256 epochId) external view returns (uint256) {
+        UserFessInfo storage userFees = userFeesInfo[_user];
+        uint256 epochToStakeWeight = userFees.epochToUserStakedWeight[epochId];
+        return epochToStakeWeight;
+    }
+
+    // function getPushHolderWeight(address _user) external view returns(uint256 weight) {
+    //     weight = IPUSH(PUSH_TOKEN_ADDRESS).holderWeight(_user);
+    // }
 }

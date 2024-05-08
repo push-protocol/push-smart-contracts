@@ -1,6 +1,14 @@
 const { tokensBN } = require("../../helpers/utils");
 const { ethers } = require("hardhat");
 
+
+
+const passBlockNumers = async (blockNumber) => {
+  blockNumber = `0x${blockNumber.toString(16)}`;
+  await ethers.provider.send("hardhat_mine", [blockNumber]);
+};
+
+
 const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 const ADAI = "0xfC1E690f61EFd961294b3e1Ce3313fBD8aa4f85d";
 const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
@@ -21,6 +29,7 @@ const epnsContractFixture = async ([adminSigner, others]) => {
   ROUTER = await ethers.getContractAt("IUniswapV2Router", UNISWAP_ROUTER);
 
   // deploy dummy push token
+  await passBlockNumers(12222104);
   let PushToken = await ethers.getContractFactory("EPNS");
   PushToken = await PushToken.deploy(ADMIN);
 
