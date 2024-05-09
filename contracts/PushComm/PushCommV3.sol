@@ -91,8 +91,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
           walletToPGP[_addr] = _pgp;
           PGPToWallet[_pgp] = _addr;
           uint fee = FEE_AMOUNT;
-           IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-           PROTOCOL_POOL_FEE += fee;
+          IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+          PROTOCOL_POOL_FEE += fee;
           emit UserAddedPGP(_pgp,_addr);
        }
     }
@@ -100,9 +100,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     function addWalletToUser(string calldata _nft,uint _id, string calldata _pgp) public {
        string memory _addr = Strings.toHexString(msg.sender);
 
-       if(bytes(NFTToPGP[_nft][_id]).length !=0){
-         removeWalletFromUser(_nft,_id);
-       }
+        if(bytes(NFTToPGP[_nft][_id]).length !=0){
+          removeWalletFromUser(_nft,_id);
+        }
         NFTToPGP[_nft][_id] = _pgp;
         PGPToWallet[_pgp] = _nft;
         uint fee = FEE_AMOUNT;
@@ -112,10 +112,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     function removeWalletFromUser(string calldata _nft, uint _id) public {
-       string memory _addr = Strings.toHexString(msg.sender);
+        string memory _addr = Strings.toHexString(msg.sender);
         string memory pgp = NFTToPGP[_nft][_id];
-             delete NFTToPGP[_nft][_id];
-             delete PGPToWallet[pgp];
+        delete NFTToPGP[_nft][_id];
+        delete PGPToWallet[pgp];
         uint fee = FEE_AMOUNT;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
         PROTOCOL_POOL_FEE += fee;
@@ -123,9 +123,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     function removeWalletFromUser(string calldata _wallet) public {
-                   string memory pgp = walletToPGP[_wallet];
-             delete walletToPGP[_wallet];
-             delete PGPToWallet[pgp];
+        string memory pgp = walletToPGP[_wallet];
+        delete walletToPGP[_wallet];
+        delete PGPToWallet[pgp];
         uint fee = FEE_AMOUNT;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
         PROTOCOL_POOL_FEE += fee;
