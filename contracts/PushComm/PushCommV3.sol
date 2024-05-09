@@ -25,6 +25,7 @@ import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
@@ -82,6 +83,55 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
     function removeChannelAlias(string memory _channelAddress) external {
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
+    }
+
+    function addWalletToUser(string calldata _addr, string calldata _pgp) public {
+
+       if(bytes(walletToPGP[_addr]).length ==0){
+          walletToPGP[_addr] = _pgp;
+          PGPToWallet[_pgp] = _addr;
+          uint fee = FEE_AMOUNT;
+           IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+           PROTOCOL_POOL_FEE += fee;
+          emit UserAddedPGP(_pgp,_addr);
+       }
+    }
+
+    function addWalletToUser(string calldata _nft,uint _id, string calldata _pgp) public {
+       string memory _addr = Strings.toHexString(msg.sender);
+
+       if(bytes(NFTToPGP[_nft][_id]).length !=0){
+         removeWalletFromUser(_nft,_id);
+       }
+        NFTToPGP[_nft][_id] = _pgp;
+        PGPToWallet[_pgp] = _nft;
+        uint fee = FEE_AMOUNT;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        PROTOCOL_POOL_FEE += fee;
+        emit UserAddedPGP(_pgp,_addr,_nft, _id);
+    }
+
+    function removeWalletFromUser(string calldata _nft, uint _id) public {
+       string memory _addr = Strings.toHexString(msg.sender);
+        string memory pgp = NFTToPGP[_nft][_id];
+             delete NFTToPGP[_nft][_id];
+             delete PGPToWallet[pgp];
+        uint fee = FEE_AMOUNT;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        PROTOCOL_POOL_FEE += fee;
+        emit UserRemovedPGP( pgp ,  _addr,  _nft,  _id);
+    }
+
+    function removeWalletFromUser(string calldata _wallet) public {
+                   string memory pgp = walletToPGP[_wallet];
+             delete walletToPGP[_wallet];
+             delete PGPToWallet[pgp];
+        uint fee = FEE_AMOUNT;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        PROTOCOL_POOL_FEE += fee;
+        emit UserRemovedPGP( pgp ,  _wallet);
+
+        
     }
 
     function completeMigration() external onlyPushChannelAdmin {
