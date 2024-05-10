@@ -14,7 +14,7 @@ pragma solidity ^0.8.20;
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
+import { PushCommStorageV3 } from "./PushCommStorageV3.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
@@ -33,7 +33,7 @@ import "../interfaces/wormhole/IWormholeTransceiver.sol";
 import "../libraries/wormhole-lib/TransceiverStructs.sol";
 import "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
+contract PushCommV3 is Initializable, PushCommStorageV3, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -544,16 +544,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
          WORMHOLE CROSS-CHAIN Functions
 
     ***************************** */
-    IERC20 public PUSH_NTT;
-    address public NTT_MANAGER;
-    ITransceiver public TRANSCEIVER;
-    IWormholeTransceiver public WORMHOLE_TRANSCEIVER;
-    IWormholeRelayer public WORMHOLE_RELAYER;
-
-    uint16 public recipientChain = 10002; // Wormhole's Sepolia Chain ID
-    uint256 constant GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
-
-
     function initializeBridgeContracts(
         address _pushNTT,
         address _nttManager,
@@ -566,9 +556,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         TRANSCEIVER = ITransceiver(_transceiver);
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
-
     }
 
+    // ToDo: check if this can be removed
     function buildTransceiverInstruction(bool relayer_off)
         public
         view
@@ -589,24 +579,25 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
     }
 
-    function createCrossChainRequest(uint256 _amount, CommTypes.RequestPayload memory reqData ) public payable{
+    function createCrossChainRequest(uint256 _amount, CommTypes.RequestPayload memory reqData) public payable{
         bytes32 recipient =  bytes32(uint256(uint160(EPNSCoreAddress)));       
 
-        //  Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain);
-        uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(recipientChain, buildTransceiverInstruction(false));
+        // Calculate MSG bridge cost and Token Bridge cost
+        // ToDo: Getter functions for total cost that needs to be sent in this fn
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN);
+        uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, buildTransceiverInstruction(false));
 
         if(msg.value < (messageBridgeCost + tokenBridgeCost)){
             revert Errors.InsufficientFunds();
         }
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{value: messageBridgeCost}(
-            recipientChain,
+            WORMHOLE_RECIPIENT_CHAIN,
             EPNSCoreAddress,
             abi.encode(reqData, msg.sender), // payload
             0, // no receiver value needed since we're just passing a message
             GAS_LIMIT,
-            recipientChain, 
+            WORMHOLE_RECIPIENT_CHAIN, 
             msg.sender // Refund address is of the sender 
         );
     
@@ -617,8 +608,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
         PUSH_NTT.approve(NTT_MANAGER, _amount);
 
-        ntt.transfer{value:tokenBridgeCost}(_amount, recipientChain, recipient);
+        ntt.transfer{value:tokenBridgeCost}(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
 
     }
-
 }
