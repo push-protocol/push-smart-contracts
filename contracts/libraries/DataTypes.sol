@@ -92,16 +92,6 @@ library CommTypes {
         uint256 timestamp;
         uint256 amountDeposited;
     }
-
-    struct RequestPayload {
-        bytes4 functionSig;
-        uint256 depositAmount;
-        uint256 feeAmount;
-        uint8 feeId;
-        address amountRecipient;
-        uint8 channelExpiry;
-        bytes32 channelIdentity;
-    }
 }
 
 library StakingTypes {
@@ -117,5 +107,17 @@ library StakingTypes {
         uint256 lastClaimedBlock;
         ///@notice Weight of staked amount of a user w.r.t total staked in a single epoch
         mapping(uint256 => uint256) epochToUserStakedWeight;
+    }
+}
+
+library CrossChainRequestTypes {
+    struct RequestPayload {
+        bytes4 functionSig;
+        uint256 depositAmount;
+        uint256 feeAmount;
+        uint8 feeId;
+        address amountRecipient;
+        uint8 channelExpiry;
+        bytes32 channelIdentity;
     }
 }

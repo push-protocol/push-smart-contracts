@@ -46,6 +46,8 @@ interface IPushCoreV3 {
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
     event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    /// @notice emits when arbitray cross chain request is received
+    event ArbitraryRequest(address indexed sender, address indexed receiver, uint256 amount, uint256 feeId);
 
     /* *****************************
 

@@ -13,18 +13,20 @@ pragma solidity ^0.8.20;
  */
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
+import { PushCoreStorageV3 } from "./PushCoreStorageV3.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "../interfaces/wormhole/IWormholeReceiver.sol";
 
-contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV3 {
+contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, PushCoreStorageV3, IPushCoreV3, IWormholeReceiver {
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -755,5 +757,85 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
+    }
+
+    /* *****************************
+         WORMHOLE CROSS-CHAIN Functions
+    ***************************** */
+    modifier isRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) {
+        require(registeredSenders[sourceChain] == sourceAddress, "Not registered sender");
+        _;
+    }
+
+    /**
+     * Sets the registered address for 'sourceChain' to 'sourceAddress'
+     * So that for messages from 'sourceChain', only ones from 'sourceAddress' are valid
+     *
+     * Assumes only one sender per chain is valid
+     * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
+     */
+    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) public {
+        onlyPushChannelAdmin();
+        registeredSenders[sourceChain] = sourceAddress;
+    }
+
+    function setWormholeRelayer(address _wormholeRelayer) public {
+        onlyPushChannelAdmin();
+        wormholeRelayer = _wormholeRelayer;
+    }
+
+    function onlyWormholeRelayer() private view {
+        if (msg.sender != wormholeRelayer) {
+            revert Errors.CallerNotAdmin();
+        }
+    }
+
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory, // additionalVaas
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    )
+        public
+        payable
+        override
+        isRegisteredSender(sourceChain, sourceAddress)
+    {
+        onlyWormholeRelayer();
+        // Decode the payload
+        (CrossChainRequestTypes.RequestPayload memory reqPayload, address sender) = 
+            abi.decode(payload, (CrossChainRequestTypes.RequestPayload, address));
+
+         // Execute function selector
+        if(reqPayload.functionSig != bytes4(0)) {
+            routeCrossChainRequest(reqPayload, sender);
+        }
+    }
+
+    function routeCrossChainRequest (CrossChainRequestTypes.RequestPayload memory reqPayload, address sender) internal {
+        // Accessing struct members explicitly
+        bytes4 functionSig = reqPayload.functionSig;
+        uint256 depositAmount = reqPayload.depositAmount;
+        uint256 feeAmount = reqPayload.feeAmount;
+        uint8 feeId = reqPayload.feeId;
+        address amountRecipient = reqPayload.amountRecipient;
+        uint8 channelExpiry = reqPayload.channelExpiry;
+        bytes32 channelIdentity = reqPayload.channelIdentity;
+
+        // createChannelPush
+        // ToDo: enable createChannelPush to take user address that's creating channel or adjust _createChannel 
+        // ToDo: Channel type is also needed in request payload
+        if (functionSig == 0xa90521c3) {
+            (bool success, ) = address(this).call(abi.encodeWithSelector(functionSig, 1, channelIdentity, depositAmount+feeAmount, channelExpiry));
+            require(success, "Internal Function Execution failed");
+        } else if (functionSig == 0x2d57f936) { // ToDo: sig to be updated
+            // createIncentivizedReq -> function sig for handleRequestData
+            (bool success, ) = address(this).call(abi.encodeWithSelector(functionSig, sender, amountRecipient, feeAmount + depositAmount));
+            require(success, "Internal Function Execution failed");
+        } else {
+            PROTOCOL_POOL_FEES += feeAmount;
+            emit ArbitraryRequest(sender, amountRecipient, depositAmount, feeId);
+        }
     }
 }

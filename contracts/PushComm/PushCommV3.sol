@@ -14,12 +14,13 @@ pragma solidity ^0.8.20;
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
+import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { PushCommStorageV3 } from "./PushCommStorageV3.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
-import { CommTypes } from "../libraries/DataTypes.sol";
+import { CommTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -30,10 +31,10 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 import "../interfaces/wormhole/INttManager.sol";
 import "../interfaces/wormhole/ITransceiver.sol";
 import "../interfaces/wormhole/IWormholeTransceiver.sol";
+import "../interfaces/wormhole/IWormholeRelayer.sol";
 import "../libraries/wormhole-lib/TransceiverStructs.sol";
-import "wormhole-solidity-sdk/interfaces/IWormholeRelayer.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV3, IPushCommV3 {
+contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -549,13 +550,15 @@ contract PushCommV3 is Initializable, PushCommStorageV3, IPushCommV3 {
         address _nttManager,
         ITransceiver _transceiver,
         IWormholeTransceiver _wormholeTransceiver,
-        IWormholeRelayer _wormholeRelayerAddress
+        IWormholeRelayer _wormholeRelayerAddress,
+        uint16 _recipientChain
     ) external onlyPushChannelAdmin {
         PUSH_NTT = IERC20(_pushNTT);
         NTT_MANAGER = _nttManager;
         TRANSCEIVER = ITransceiver(_transceiver);
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
+        WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
 
     // ToDo: check if this can be removed
@@ -579,7 +582,7 @@ contract PushCommV3 is Initializable, PushCommStorageV3, IPushCommV3 {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
     }
 
-    function createCrossChainRequest(uint256 _amount, CommTypes.RequestPayload memory reqData) public payable{
+    function createCrossChainRequest(uint256 _amount, CrossChainRequestTypes.RequestPayload memory reqData) public payable{
         bytes32 recipient =  bytes32(uint256(uint160(EPNSCoreAddress)));       
 
         // Calculate MSG bridge cost and Token Bridge cost
