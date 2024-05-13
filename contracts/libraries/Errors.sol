@@ -51,6 +51,8 @@ library Errors {
     error Comm_InvalidSignature_FromEOA();
     /// @notice Comm Contract Error: Reverts whenever the signature is invalid from EIP-1271 perspective.
     error Comm_InvalidSignature_FromContract();
+    ///@notice Comm contract Error: Reverts whenever user tries to add PGP to a wallet with already existing pgp.
+    error Comm_InvalidArguments();
 
     /* ***************
         Push STAKING Errors

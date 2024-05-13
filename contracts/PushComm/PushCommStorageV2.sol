@@ -36,11 +36,9 @@ contract PushCommStorageV2 {
     address public PUSH_TOKEN_ADDRESS;
 
     mapping(address => CommTypes.ChatDetails) public userChatData;
-    mapping(string => string) public walletToPGP;
-
-    mapping(string => string) public PGPToWallet;
-    mapping(string => mapping(uint => string)) public NFTToPGP;
-
+    mapping(bytes => string) public walletToPGP;
+    mapping(string => bytes[]) public PGPToWallet;
+    mapping(bytes => uint) public counter;
     uint256 PROTOCOL_POOL_FEE;
     uint256 FEE_AMOUNT;
 }
