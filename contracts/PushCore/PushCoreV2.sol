@@ -935,7 +935,8 @@ contract PushCoreV2 is
         internal
         returns (uint256 rewards)
     {
-        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
+        IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(address(this));
+        
         _adjustUserAndTotalStake(_user, 0);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
