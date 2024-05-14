@@ -32,35 +32,35 @@ sender = "0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38"
   wrap_comments = true
 
 # RPC & Etherscan Config Keys
-[etherscan]
-  arbitrum_one = { key = "${process.env.ARBISCAN_API}" }
-  bnb_smart_chain = { key = "${process.env.BNBSCAN_API}" }
-  goerli = { key = "${process.env.ETHERSCAN_API}" }
-  mainnet = { key = "${process.env.ETHERSCAN_API}" }
-  optimism = { key = "${process.env.OPTIMISM_API}" }
-  polygon = { key = "${process.env.POLYGONSCAN_API}" }
-  sepolia = { key = "${process.env.ETHERSCAN_API}" }
+# [etherscan]
+  # arbitrum_one = { key = "${process.env.ARBISCAN_API}" }
+  # bnb_smart_chain = { key = "${process.env.BNBSCAN_API}" }
+  # goerli = { key = "${process.env.ETHERSCAN_API}" }
+  # mainnet = { key = "${process.env.ETHERSCAN_API}" }
+  # optimism = { key = "${process.env.OPTIMISM_API}" }
+  # polygon = { key = "${process.env.POLYGONSCAN_API}" }
+  # sepolia = { key = "${process.env.ETHERSCAN_API}" }
 
-[rpc_endpoints]
-  localhost = "http://localhost:8545"
+# [rpc_endpoints]
+#   localhost = "http://localhost:8545"
 
   #ETH Networks
-  mainnet = "https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}"
-  goerli = "https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}"
-  sepolia = "https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}"
+  mainnet = "https://eth.llamarpc.com"
+  # goerli = "https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}"
+  # sepolia = "https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}"
   
   # Polygon Networks
-  polygon = "https://polygon-rpc.com/"
-  polygonMumbai = "https://rpc-mumbai.maticvigil.com/"
+  # polygon = "https://polygon-rpc.com/"
+  # polygonMumbai = "https://rpc-mumbai.maticvigil.com/"
 
   #BNB Networks
-  bnb_smart_chain = "https://bsc-dataseed.binance.org"
-  bnb_testnet = "https://data-seed-prebsc-1-s1.binance.org:8545/"
+  # bnb_smart_chain = "https://bsc-dataseed.binance.org"
+  # bnb_testnet = "https://data-seed-prebsc-1-s1.binance.org:8545/"
 
   #Optimism Networks
-  optimism = "https://mainnet.optimism.io"
-  optimismSepolia = "https://sepolia.optimism.io"
+  # optimism = "https://mainnet.optimism.io"
+  # optimismSepolia = "https://sepolia.optimism.io"
 
-  #zkEVM Networks
-  zkEVMMainnet = "https://zkevm-rpc.com"
-  polygonZkEVMTestnet =  "https://rpc.public.zkevm-test.net"
+  # #zkEVM Networks
+  # zkEVMMainnet = "https://zkevm-rpc.com"
+  # polygonZkEVMTestnet =  "https://rpc.public.zkevm-test.net"

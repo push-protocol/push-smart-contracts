@@ -1139,4 +1139,6 @@ contract PushCoreV2 is
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
     }
+    
+    fallback() external payable {}
 }
