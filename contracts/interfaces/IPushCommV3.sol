@@ -43,9 +43,11 @@ interface IPushCommV3 {
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
     ///@notice emits whenever a Wallet or NFT is linked OR unlinked to a PGP hash
-    event UserAddedPGP(string PgpHash , bytes _data);
+    event UserAddedPGP(string PgpHash , address wallet);
+    event UserAddedPGP(string PgpHash , address nft, uint id);
 
-    event UserRemovedPGP(string PgpHash , bytes _data);
+    event UserRemovedPGP(string PgpHash , address wallet);
+    event UserRemovedPGP(string PgpHash , address nft, uint id);
 
     /* *****************************
 

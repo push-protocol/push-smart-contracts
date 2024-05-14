@@ -99,16 +99,17 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             if(bytes(walletToPGP[_data]).length !=0 || _wallet != msg.sender){
                revert Errors.Comm_InvalidArguments();
             } 
+            emit UserAddedPGP(_pgp,_wallet);
         } else{
               (, , , address _nft, uint _id, ) =
              abi.decode(_data,(string, string, uint, address, uint, uint));
             require(IERC721(_nft).ownerOf(_id) == msg.sender,"NFT not owned");
+            emit UserAddedPGP(_pgp,_nft, _id);
             if(bytes(walletToPGP[_data]).length !=0){
                 uint _count = counter[_data];
                 string memory _previousPgp = walletToPGP[_data];
                 delete PGPToWallet[_previousPgp][_count - 1];
             }
-               
         }
         walletToPGP[_data] = _pgp;
         PGPToWallet[_pgp].push(_data);
@@ -116,7 +117,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         uint fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-        emit UserAddedPGP(_pgp,_data);
 
     }
 
@@ -126,10 +126,12 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             if(_wallet != msg.sender){
                revert Errors.Comm_InvalidArguments();
             }
+             emit UserRemovedPGP( pgp ,  _wallet);      
         } else {
             (, , , address _nft, uint _id, ) =
              abi.decode(_data,(string, string, uint, address, uint, uint));
             require(IERC721(_nft).ownerOf(_id) == msg.sender,"NFT not owned");
+             emit UserRemovedPGP( pgp , _nft, _id);      
         }
         if(bytes(walletToPGP[_data]).length ==0){
             revert("Nothing to delete");     
@@ -142,7 +144,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
              uint fee = FEE_AMOUNT;
              IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
              PROTOCOL_POOL_FEE += fee;
-             emit UserRemovedPGP( pgp ,  _data);      
     }
 
     function completeMigration() external onlyPushChannelAdmin {
