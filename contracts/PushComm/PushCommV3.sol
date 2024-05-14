@@ -580,8 +580,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         }
 
         uint256 fee = FEE_AMOUNT;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
         PROTOCOL_POOL_FEE += fee;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
 
         string memory pgp = walletToPGP[_data];
 
