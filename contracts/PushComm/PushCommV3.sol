@@ -121,6 +121,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     function removeWalletFromUser( bytes calldata _data, bool _isNFT) public {
+        string memory pgp = walletToPGP[_data];
         if(!_isNFT){
             (,address _wallet) = abi.decode(_data,(string, address));
             if(_wallet != msg.sender){
@@ -136,7 +137,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         if(bytes(walletToPGP[_data]).length ==0){
             revert("Nothing to delete");     
         }
-             string memory pgp = walletToPGP[_data];
              uint _count = counter[_data];
              delete walletToPGP[_data];
              delete PGPToWallet[pgp][_count - 1];
