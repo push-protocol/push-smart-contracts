@@ -47,7 +47,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Comm_InvalidArguments.selector));
         changePrank(actor.alice_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, false);
+        commProxy.registerUserPGP(_data, pgp1, false);
     }
 
     function test_WhenEOAIsOwnedAndDoesntHaveAPGP() external whenAUserTriesToAddAnEOAToPGP {
@@ -55,7 +55,7 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, false);
+        commProxy.registerUserPGP(_data, pgp1, false);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
@@ -70,7 +70,7 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, false);
+        commProxy.registerUserPGP(_data, pgp1, false);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
@@ -79,7 +79,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Comm_InvalidArguments.selector));
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp2, false);
+        commProxy.registerUserPGP(_data, pgp2, false);
 
         bytes memory _storedData1 = getPGPToWallet(pgp1, 0);
         string memory _storedPgp1 = getWalletToPgp(_data);
@@ -102,7 +102,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         vm.expectRevert("NFT not owned");
         changePrank(actor.alice_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, true);
+        commProxy.registerUserPGP(_data, pgp1, true);
         vm.expectRevert();
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
@@ -116,7 +116,7 @@ contract walletPGP_Test is BasePushCommTest {
           bytes memory _data = getEncodedData(address(erc721), 0);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, true);
+        commProxy.registerUserPGP(_data, pgp1, true);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
@@ -131,7 +131,7 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(address(erc721), 0);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, true);
+        commProxy.registerUserPGP(_data, pgp1, true);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
@@ -140,7 +140,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         erc721.transferFrom(actor.bob_channel_owner,actor.alice_channel_owner,0);
         changePrank(actor.alice_channel_owner);
-        commProxy.addWalletToUser(_data, pgp2, true);
+        commProxy.registerUserPGP(_data, pgp2, true);
         bytes memory _storedDataAlice = getPGPToWallet(pgp2, 0);
         string memory _storedPgpAlice = getWalletToPgp(_data);
         assertEq(_storedDataAlice, _data);
@@ -162,6 +162,8 @@ contract walletPGP_Test is BasePushCommTest {
     function test_WhenTheCallerIsNotOwner() external whenAUserTriesToRemoveAnEOAFromPGP {
         // it REVERTS
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
+        changePrank(actor.bob_channel_owner);
+        commProxy.registerUserPGP(_data, pgp1, false);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Comm_InvalidArguments.selector));
         changePrank(actor.alice_channel_owner);
@@ -173,7 +175,7 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, false);
+        commProxy.registerUserPGP(_data, pgp1, false);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
@@ -207,6 +209,8 @@ contract walletPGP_Test is BasePushCommTest {
     function test_WhenTheNFTIsNotOwnedByTheCaller() external whenAUserTriesToRemoveAnNFTFromPGP {
         // it REVERTS
         bytes memory _data = getEncodedData(address(erc721), 0);
+        changePrank(actor.bob_channel_owner);
+        commProxy.registerUserPGP(_data, pgp1, true);
 
         vm.expectRevert("NFT not owned");
         changePrank(actor.alice_channel_owner);
@@ -219,7 +223,7 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(address(erc721), 0);
 
         changePrank(actor.bob_channel_owner);
-        commProxy.addWalletToUser(_data, pgp1, true);
+        commProxy.registerUserPGP(_data, pgp1, true);
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
