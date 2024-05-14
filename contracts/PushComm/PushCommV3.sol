@@ -93,7 +93,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     function addWalletToUser(bytes calldata _data,string calldata _pgp, bool _isNFT) external {
-        uint length =  PGPToWallet[_pgp].length;
         if(!_isNFT){
             (,address _wallet) = abi.decode(_data,(string, address));
 
@@ -102,7 +101,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             } else {
                walletToPGP[_data] = _pgp;
                PGPToWallet[_pgp].push(_data);
-               counter[_data]=length+1;
+               counter[_data]=PGPToWallet[_pgp].length;
             }
         } else{
               (, , , address _nft, uint _id, ) =
@@ -115,7 +114,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             }
                walletToPGP[_data] = _pgp;
                PGPToWallet[_pgp].push(_data);
-               counter[_data]= length+1;
+               counter[_data]= PGPToWallet[_pgp].length;
         }
         uint fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
