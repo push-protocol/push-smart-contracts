@@ -38,7 +38,7 @@ contract PushCommStorageV2 {
     mapping(address => CommTypes.ChatDetails) public userChatData;
     mapping(bytes => string) public walletToPGP;
     mapping(string => bytes[]) public PGPToWallet;
-    mapping(bytes => uint) public counter;
+    mapping(bytes => uint256) public counter;
     uint256 PROTOCOL_POOL_FEE;
     uint256 FEE_AMOUNT;
 }

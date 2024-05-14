@@ -31,11 +31,8 @@ interface IPushCommV3 {
         string _ethereumChannelAddress
     );
 
-    event RemoveChannelAlias(  
-        string _chainName,
-        uint256 indexed _chainID,
-        address indexed _channelOwnerAddress,
-        string _baseChannelAddress
+    event RemoveChannelAlias(
+        string _chainName, uint256 indexed _chainID, address indexed _channelOwnerAddress, string _baseChannelAddress
     );
 
     /// @notice emits whenever a user initiates an incentivized chat
@@ -43,11 +40,11 @@ interface IPushCommV3 {
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
     ///@notice emits whenever a Wallet or NFT is linked OR unlinked to a PGP hash
-    event UserAddedPGP(string PgpHash , address wallet);
-    event UserAddedPGP(string PgpHash , address nft, uint id);
+    event UserPGPRegistered(string PgpHash, address wallet);
+    event UserPGPRegistered(string PgpHash, address nft, uint256 id);
 
-    event UserRemovedPGP(string PgpHash , address wallet);
-    event UserRemovedPGP(string PgpHash , address nft, uint id);
+    event UserPGPRemoved(string PgpHash, address wallet);
+    event UserPGPRemoved(string PgpHash, address nft, uint256 id);
 
     /* *****************************
 
