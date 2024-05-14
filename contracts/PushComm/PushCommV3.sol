@@ -98,11 +98,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
             if(bytes(walletToPGP[_data]).length !=0 || _wallet != msg.sender){
                revert Errors.Comm_InvalidArguments();
-            } else {
-               walletToPGP[_data] = _pgp;
-               PGPToWallet[_pgp].push(_data);
-               counter[_data]=PGPToWallet[_pgp].length;
-            }
+            } 
         } else{
               (, , , address _nft, uint _id, ) =
              abi.decode(_data,(string, string, uint, address, uint, uint));
@@ -112,10 +108,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
                 string memory _previousPgp = walletToPGP[_data];
                 delete PGPToWallet[_previousPgp][_count - 1];
             }
-               walletToPGP[_data] = _pgp;
-               PGPToWallet[_pgp].push(_data);
-               counter[_data]= PGPToWallet[_pgp].length;
+               
         }
+        walletToPGP[_data] = _pgp;
+        PGPToWallet[_pgp].push(_data);
+        counter[_data]= PGPToWallet[_pgp].length;
         uint fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
