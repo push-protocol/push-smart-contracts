@@ -545,7 +545,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         FEE_AMOUNT = _feeAmount;
     }
 
-    function registerWalletToUser(bytes calldata _data, string calldata _pgp, bool _isNFT) external {
+    function registerUserPGP(bytes calldata _data, string calldata _pgp, bool _isNFT) external {
         uint256 fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
