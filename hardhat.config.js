@@ -200,6 +200,7 @@ module.exports = {
       mainnet: process.env.ETHERSCAN_API,
       polygon: process.env.POLYGONSCAN_API,
       sepolia:process.env.ETHERSCAN_API,
+      bscTestnet: process.env.BNBSCAN_API,
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
       arbitrumSepolia:process.env.ARBISCAN_API,
