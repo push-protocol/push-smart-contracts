@@ -74,6 +74,12 @@ const deploy = {
     },
     X1:{
       version: 1
+    },
+    cyberTestnet:{
+      version: 1
+    },
+    cyberMainnet:{
+      version: 1
     }
   },
   args: {

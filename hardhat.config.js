@@ -192,6 +192,15 @@ module.exports = {
     X1: {
       url: "https://testrpc.x1.tech",
       accounts:[process.env.PRIVATE]
+    },
+    cyberTestnet: {
+      url: "https://cyber-testnet.alt.technology/",
+      accounts:[process.env.PRIVATE]
+    },
+    cyberMainnet: {
+      url: "https://cyber.alt.technology/",
+      chainId: 7560,
+      accounts:[process.env.PRIVATE]
     }
   },
   etherscan: {
@@ -207,7 +216,9 @@ module.exports = {
       polygonZkEVMTestnet: process.env.POLYGONzkEVMSCAN_API,
       berachainTestnet: "apiNotRequired",
       polygonAmoy:"OKLINK",
-      X1: "Not required"
+      X1: "Not required",
+      cyber_testnet: "Not Required",
+      cyber:"Not Required"
     },
     customChains: [
       {
@@ -294,6 +305,22 @@ module.exports = {
         urls: {
             apiURL: "https://api-zkevm.polygonscan.com/api",
             browserURL: "https://cardona-zkevm.polygonscan.com/"
+        }
+      },
+      {
+        network: "cyber_testnet",
+        chainId: 111557560,
+        urls: {
+          apiURL: "https://testnet.cyberscan.co/api",
+          browserURL: "https://testnet.cyberscan.co"
+        }
+      },
+      {
+        network: "cyber",
+        chainId: 7560,
+        urls: {
+          apiURL: "https://cyberscan.co/api",
+          browserURL: "https://cyberscan.co"
         }
       }
     ],

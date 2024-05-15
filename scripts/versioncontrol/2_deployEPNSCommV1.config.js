@@ -48,10 +48,10 @@ const deploy = {
     berachainTestnet: {
       version: 1
     },
-    polygonAmoy:{
+    polygonAmoy: {
       version: 1
     },
-    X1:{
+    X1: {
       version: 1
     },
     lineaMainnet: {
@@ -62,10 +62,16 @@ const deploy = {
     },
     polygonZkEVMTestnet: {
       version: 1
+    },
+    cyberTestnet: {
+      version: 1
+    },
+    cyberMainnet: {
+      version: 1
     }
   },
   args: {
-    chainName: "Polygon_zkEVM_Cardona_Testnet"
+    chainName: null
   }
 }
 
