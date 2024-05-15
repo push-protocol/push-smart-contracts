@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title  PushCore v2.5
+ * @title  PushCore V3
  * @author Push Protocol
  * @notice Push Core is the main protocol that deals with the imperative
  *         features and functionalities like Channel Creation, pushChannelAdmin etc.
@@ -15,7 +15,6 @@ import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
-import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes } from "../libraries/DataTypes.sol";
 
@@ -68,9 +67,9 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         emit AddSubGraph(msg.sender, _subGraphData);
     }
 
-    function setEpnsCommunicatorAddress(address _commAddress) external {
+    function setPushCommunicatorAddress(address _commAddress) external {
         onlyPushChannelAdmin();
-        epnsCommunicator = _commAddress;
+        pushCommunicator = _commAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external {
@@ -203,7 +202,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details
      * about the Channel being created
      * @dev    -Initializes the Channel Struct
-     *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
+     *         -Subscribes the Channel's Owner to Imperative Push Channels as well as their Own Channels
      *         - Updates the CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
      *
      * @param _channel         address of the channel being Created
@@ -436,7 +435,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     }
 
     /**
-     * Core-V2: Stake and Claim Functions
+     * Core-V3: Stake and Claim Functions
      */
 
     /// @notice Allows caller to add pool_fees at any given epoch
@@ -731,7 +730,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
-        if (msg.sender != epnsCommunicator) {
+        if (msg.sender != pushCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         uint256 poolFeeAmount = FEE_AMOUNT;

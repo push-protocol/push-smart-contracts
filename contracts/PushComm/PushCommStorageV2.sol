@@ -20,9 +20,9 @@ contract PushCommStorageV2 {
     uint256 public chainID;
     uint256 public usersCount;
     bool public isMigrationComplete;
-    address public EPNSCoreAddress;
+    address public PushCoreAddress;
     string public chainName;
-    string public constant name = "EPNS COMM V1";
+    string public constant name = "Push COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));
     bytes32 public constant DOMAIN_TYPEHASH =
         keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");

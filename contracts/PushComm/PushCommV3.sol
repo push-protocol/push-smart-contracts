@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
- * @title PushComm v2.5
+ * @title PushComm V3
  * @author Push Protocol
  * @notice Push Communicator, as the name suggests, is more of a Communictation Layer
  *         between END USERS and Push Core Protocol.
@@ -51,7 +51,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     modifier onlyPushCore() {
-        if (msg.sender != EPNSCoreAddress) {
+        if (msg.sender != PushCoreAddress) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         _;
@@ -88,8 +88,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         isMigrationComplete = true;
     }
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
-        EPNSCoreAddress = _coreAddress;
+    function setPushCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+        PushCoreAddress = _coreAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
@@ -521,7 +521,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             revert Errors.InvalidArg_LessThanExpected(1, amount);
         }
         address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
+        address coreContract = PushCoreAddress;
         // Transfer incoming PUSH Token to core contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
 

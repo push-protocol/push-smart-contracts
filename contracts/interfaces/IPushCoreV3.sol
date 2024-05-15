@@ -98,7 +98,7 @@ interface IPushCoreV3 {
      * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
      * @dev    Only allows users to Create One Channel for a specific address.
      *         Only allows a Valid Channel Type to be assigned for the Channel Being created.
-     *         Validates and Transfers the amount of PUSH  from the Channel Creator to the EPNS Core Contract
+     *         Validates and Transfers the amount of PUSH  from the Channel Creator to the Push Core Contract
      *
      * @param  _channelType the type of the Channel Being created
      * @param  _identity the bytes value of the identity of the Channel
@@ -116,13 +116,13 @@ interface IPushCoreV3 {
 
     /**
      * @notice Function that allows Channel Owners to Destroy their Time-Bound Channels
-     * @dev    - Can only be called the owner of the Channel or by the EPNS Governance/Admin.
-     *         - EPNS Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
+     * @dev    - Can only be called the owner of the Channel or by the Push Governance/Admin.
+     *         - Push Governance/Admin can only destory a channel after 14 Days of its expriation timestamp.
      *         - Can only be called if the Channel is of type - TimeBound
      *         - Can only be called after the Channel Expiry time is up.
      *         - If Channel Owner destroys the channel after expiration, he/she recieves back refundable amount &
      * CHANNEL_POOL_FUNDS decreases.
-     *         - If Channel is destroyed by EPNS Governance/Admin, No refunds for channel owner. Refundable Push tokens
+     *         - If Channel is destroyed by Push Governance/Admin, No refunds for channel owner. Refundable Push tokens
      * are added to PROTOCOL_POOL_FEES.
      *         - Deletes the Channel completely
      *         - It transfers back refundable tokenAmount back to the USER.

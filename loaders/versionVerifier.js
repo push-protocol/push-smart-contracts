@@ -13,7 +13,7 @@ function upgradeVersion(paramatersToVerify) {
 }
 
 function versionControl(upgradeVersion, paramatersToVerify) {
-  // Get actual coEPNSnfig
+  // Get actual config
   const configMeta = getConfigMeta(false) // true for version history
 
   // check if file exists
