@@ -15,7 +15,6 @@ pragma solidity ^0.8.20;
  *
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
-import { PushCommStorageV3 } from "./PushCommStorageV3.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
@@ -34,7 +33,7 @@ import "../interfaces/wormhole/IWormholeTransceiver.sol";
 import "../interfaces/wormhole/IWormholeRelayer.sol";
 import "../libraries/wormhole-lib/TransceiverStructs.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPushCommV3, PausableUpgradeable {
+contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUpgradeable {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -612,10 +611,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
         // Calculate MSG bridge cost and Token Bridge cost
         // ToDo: Getter functions for total cost that needs to be sent in this fn
         uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN);
-        TransceiverStructs.TransceiverInstruction memory transceiverInstruction = TransceiverStructs.TransceiverInstruction({
-            index: 0,
-            payload: abi.encodePacked(false)
-        });
+        TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
+            TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
         uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
@@ -634,7 +631,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
 
         PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{value:tokenBridgeCost}(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
     }
 
     // WORMHOLE SETTER FUNCTIONS

@@ -13,7 +13,6 @@ pragma solidity ^0.8.20;
  */
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
-import { PushCoreStorageV3 } from "./PushCoreStorageV3.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
@@ -31,7 +30,6 @@ contract PushCoreV3 is
     PushCoreStorageV1_5,
     PausableUpgradeable,
     PushCoreStorageV2,
-    PushCoreStorageV3,
     IPushCoreV3,
     IWormholeReceiver
 {
