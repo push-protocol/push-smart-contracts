@@ -35,7 +35,7 @@ contract MigratePushTokensTo_Test is BaseTest {
     }
 
     function test_Revertwhen_RecipientZeroAddress() public whenNotPaused {
-        approveTokens(actor.dan_push_holder, address(pushMigrationHelperProxy), 5_000 ether);
+        approveTokens(actor.dan_push_holder, address(pushMigrationHelperProxy), 5000 ether);
 
         vm.prank(actor.dan_push_holder);
         vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArgument_WrongAddress.selector, address(0)));
@@ -43,7 +43,7 @@ contract MigratePushTokensTo_Test is BaseTest {
     }
 
     function test_MigratePushTokensTo() public whenNotPaused {
-        uint256 migrationTokenAmount = 5_000 ether;
+        uint256 migrationTokenAmount = 5000 ether;
         address recipient = actor.tim_push_holder;
         approveTokens(actor.dan_push_holder, address(pushMigrationHelperProxy), migrationTokenAmount);
 
@@ -66,9 +66,13 @@ contract MigratePushTokensTo_Test is BaseTest {
         uint256 recipientNewPushTokenBalanceAfter = pushNttToken.balanceOf(recipient);
 
         assertEq(danOldPushTokenBalanceBefore - danOldPushTokenBalanceAfter, migrationTokenAmount);
-        assertEq(migrationHelperOldPushTokenBalanceAfter - migrationHelperOldPushTokenBalanceBefore, migrationTokenAmount);
+        assertEq(
+            migrationHelperOldPushTokenBalanceAfter - migrationHelperOldPushTokenBalanceBefore, migrationTokenAmount
+        );
         assertEq(danNewPushTokenBalanceAfter, danNewPushTokenBalanceBefore);
-        assertEq(migrationHelperNewPushTokenBalanceBefore - migrationHelperNewPushTokenBalanceAfter, migrationTokenAmount);
+        assertEq(
+            migrationHelperNewPushTokenBalanceBefore - migrationHelperNewPushTokenBalanceAfter, migrationTokenAmount
+        );
         assertEq(recipientNewPushTokenBalanceAfter - recipientNewPushTokenBalanceBefore, migrationTokenAmount);
     }
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache 2
 pragma solidity ^0.8.20;
 
-
 interface IWormholeTransceiver {
     /// @notice The instruction for the WormholeTransceiver contract
     ///         to skip delivery via the relayer.

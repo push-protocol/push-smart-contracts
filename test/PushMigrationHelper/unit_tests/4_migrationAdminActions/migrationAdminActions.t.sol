@@ -78,7 +78,7 @@ contract MigrationAdminActions_Test is BaseTest {
     function test_Revertwhen_NonAdminCalls_BurnOldTokens() public onlyOwner {
         vm.prank(actor.dan_push_holder);
         vm.expectRevert(abi.encodeWithSelector(Errors.OwnableUnauthorizedAccount.selector, actor.dan_push_holder));
-        pushMigrationHelperProxy.burnOldTokens(1_000 ether);
+        pushMigrationHelperProxy.burnOldTokens(1000 ether);
     }
 
     function test_Revertwhen_BurnOldTokens_AmountMoreThanBalance() public onlyOwner {

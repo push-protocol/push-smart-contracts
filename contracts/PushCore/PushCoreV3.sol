@@ -17,14 +17,22 @@ import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "../interfaces/wormhole/IWormholeReceiver.sol";
 
-contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV3 {
+contract PushCoreV3 is
+    Initializable,
+    PushCoreStorageV1_5,
+    PausableUpgradeable,
+    PushCoreStorageV2,
+    IPushCoreV3,
+    IWormholeReceiver
+{
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -730,7 +738,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     }
 
     /// @inheritdoc IPushCoreV3
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -755,5 +763,124 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
+    }
+
+    /* *****************************
+         WORMHOLE CROSS-CHAIN Functions
+    ***************************** */
+    modifier isRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) {
+        require(registeredSenders[sourceChain] == sourceAddress, "Not registered sender");
+        _;
+    }
+
+    /**
+     * Sets the registered address for 'sourceChain' to 'sourceAddress'
+     * So that for messages from 'sourceChain', only ones from 'sourceAddress' are valid
+     *
+     * Assumes only one sender per chain is valid
+     * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
+     */
+    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) public {
+        onlyPushChannelAdmin();
+        registeredSenders[sourceChain] = sourceAddress;
+    }
+
+    function setWormholeRelayer(address _wormholeRelayer) public {
+        onlyPushChannelAdmin();
+        wormholeRelayer = _wormholeRelayer;
+    }
+
+    function onlyWormholeRelayer() private view {
+        if (msg.sender != wormholeRelayer) {
+            revert Errors.CallerNotAdmin();
+        }
+    }
+
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory, // additionalVaas
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    )
+        public
+        payable
+        override
+        isRegisteredSender(sourceChain, sourceAddress)
+    {
+        onlyWormholeRelayer();
+        if (processedMessages[deliveryHash]) {
+            revert Errors.Payload_Duplicacy_Error();
+        }
+        // Check Request Type
+        (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
+
+        if (requestType == 0) {
+            // Specific Req Type
+            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload, address sender,) =
+                abi.decode(payload, (CrossChainRequestTypes.SpecificRequestPayload, address, uint8));
+
+            // ROUTE to SPECIFIC REQUEST ROUTING Function
+            routeSpecificRequest(reqPayload, sender);
+        } else {
+            // Arbitrary Req Type
+            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload, address sender,) =
+                abi.decode(payload, (CrossChainRequestTypes.ArbitraryRequestPayload, address, uint8));
+
+            // Directly call ARBITRARY REQUEST FUNCTION
+            handleRequestWithFeeID(reqPayload, sender);
+        }
+
+        processedMessages[deliveryHash] = true;
+    }
+
+    function routeSpecificRequest(
+        CrossChainRequestTypes.SpecificRequestPayload memory reqPayload,
+        address sender
+    )
+        internal
+    {
+        // Accessing struct members explicitly
+        bytes4 functionSig = reqPayload.functionSig;
+
+        if (functionSig == this.createChannelWithPUSH.selector) {
+            //ToDo: Update createChannelWithPUSH to handle incoming cross Chain Request (channel being string - MAJOR
+            // CHANGE)
+            uint256 amount = reqPayload.amount;
+            CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
+            bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
+            uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
+
+            emit AddChannel(sender, _channelType, _channelIdentity);
+            _createChannel(sender, _channelType, amount, channelExpiryTime);
+        } else if (functionSig == this.handleChatRequestData.selector) {
+            //ToDo: Update handleChatRequest to handle incoming cross Chain Request
+            uint256 amount = reqPayload.amount;
+            address requestReceiver = reqPayload.amountRecipient;
+
+            handleChatRequestData(sender, requestReceiver, amount);
+        } else {
+            revert("Invalid Function Signature");
+        }
+    }
+
+    function handleRequestWithFeeID(
+        CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload,
+        address sender
+    )
+        internal
+    {
+        // Decode payload
+        uint8 feeID = reqPayload.feeId;
+        uint256 amount = reqPayload.amount;
+        address recipient = reqPayload.amountRecipient;
+        uint256 feePercentage = reqPayload.feePercentage;
+
+        //ToDo: Fetch amount split for Protocol_pool_funds vs arbitraryReqFees
+        // USE A helper library to calculate the fee amount based on feePercentage
+
+        // Update states based on Fee calculation
+
+        emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }
 }

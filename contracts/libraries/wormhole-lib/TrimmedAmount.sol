@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 /// @dev 8 bits: [64 - 72] decimals
 type TrimmedAmount is uint72;
 
-using {gt as >, lt as <, sub as -, add as +, eq as ==, min, unwrap} for TrimmedAmount global;
+using { gt as >, lt as <, sub as -, add as +, eq as ==, min, unwrap } for TrimmedAmount global;
 
 function minUint8(uint8 a, uint8 b) pure returns (uint8) {
     return a < b ? a : b;
@@ -67,8 +67,7 @@ function sub(TrimmedAmount a, TrimmedAmount b) pure returns (TrimmedAmount) {
     checkDecimals(a, b);
 
     return packTrimmedAmount(
-        TrimmedAmountLib.getAmount(a) - TrimmedAmountLib.getAmount(b),
-        TrimmedAmountLib.getDecimals(a)
+        TrimmedAmountLib.getAmount(a) - TrimmedAmountLib.getAmount(b), TrimmedAmountLib.getDecimals(a)
     );
 }
 
@@ -76,8 +75,7 @@ function add(TrimmedAmount a, TrimmedAmount b) pure returns (TrimmedAmount) {
     checkDecimals(a, b);
 
     return packTrimmedAmount(
-        TrimmedAmountLib.getAmount(a) + TrimmedAmountLib.getAmount(b),
-        TrimmedAmountLib.getDecimals(b)
+        TrimmedAmountLib.getAmount(a) + TrimmedAmountLib.getAmount(b), TrimmedAmountLib.getDecimals(b)
     );
 }
 
@@ -110,10 +108,7 @@ library TrimmedAmountLib {
         return (getAmount(a) == 0 && getDecimals(a) == 0);
     }
 
-    function saturatingAdd(
-        TrimmedAmount a,
-        TrimmedAmount b
-    ) internal pure returns (TrimmedAmount) {
+    function saturatingAdd(TrimmedAmount a, TrimmedAmount b) internal pure returns (TrimmedAmount) {
         checkDecimals(a, b);
 
         uint256 saturatedSum;
@@ -128,11 +123,7 @@ library TrimmedAmountLib {
     }
 
     /// @dev scale the amount from original decimals to target decimals (base 10)
-    function scale(
-        uint256 amount,
-        uint8 fromDecimals,
-        uint8 toDecimals
-    ) internal pure returns (uint256) {
+    function scale(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
         if (fromDecimals == toDecimals) {
             return amount;
         }
@@ -147,8 +138,7 @@ library TrimmedAmountLib {
     function shift(TrimmedAmount amount, uint8 toDecimals) internal pure returns (TrimmedAmount) {
         uint8 actualToDecimals = minUint8(TRIMMED_DECIMALS, toDecimals);
         return packTrimmedAmount(
-            SafeCast.toUint64(scale(getAmount(amount), getDecimals(amount), actualToDecimals)),
-            actualToDecimals
+            SafeCast.toUint64(scale(getAmount(amount), getDecimals(amount), actualToDecimals)), actualToDecimals
         );
     }
 
@@ -165,11 +155,7 @@ library TrimmedAmountLib {
     /// @param fromDecimals the original decimals of the amount
     /// @param toDecimals the target decimals of the amount
     /// @return TrimmedAmount uint72 value type bit-packed with decimals
-    function trim(
-        uint256 amt,
-        uint8 fromDecimals,
-        uint8 toDecimals
-    ) internal pure returns (TrimmedAmount) {
+    function trim(uint256 amt, uint8 fromDecimals, uint8 toDecimals) internal pure returns (TrimmedAmount) {
         uint8 actualToDecimals = minUint8(minUint8(TRIMMED_DECIMALS, fromDecimals), toDecimals);
         uint256 amountScaled = scale(amt, fromDecimals, actualToDecimals);
 
