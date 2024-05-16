@@ -1,14 +1,14 @@
 {
-  "name": "epns-protocol-staging",
+  "name": "push-protocol-staging",
   "version": "1.0.0",
-  "description": "Staging Smart Contracts of EPNS Protocol",
+  "description": "Smart Contracts of Push Protocol",
   "main": "app.js",
-  "author": "Ethereum Push Notification Service",
+  "author": "Push Protocol",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ethereum-push-notification-service/epns-protocol-staging/issues"
+    "url": "https://github.com/push-protocol/push-smart-contracts/issues"
   },
-  "homepage": "https://github.com/ethereum-push-notification-service/epns-protocol-staging#readme",
+  "homepage": "https://github.com/push-protocol/push-smart-contracts/#readme",
   "scripts": {
     "start": "node app.js",
     "chain": "hardhat node --network hardhat",
