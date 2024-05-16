@@ -9,7 +9,7 @@ contract BaseIncentivizedChatRequest is BasePushCoreTest {
         BasePushCoreTest.setUp();
 
         vm.startPrank(actor.admin);
-        commProxy.setEPNSCoreAddress(address(coreProxy));
+        commProxy.setPushCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
         vm.stopPrank();
     }

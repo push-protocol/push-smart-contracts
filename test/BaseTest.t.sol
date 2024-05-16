@@ -144,9 +144,9 @@ abstract contract BaseTest is Test, Constants, Events {
 
         // Set-up Core Address in Comm & Vice-Versa
         vm.startPrank(actor.admin);
-        commProxy.setEPNSCoreAddress(address(coreProxy));
+        commProxy.setPushCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
-        coreProxy.setEpnsCommunicatorAddress(address(commProxy));
+        coreProxy.setPushCommunicatorAddress(address(commProxy));
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address
