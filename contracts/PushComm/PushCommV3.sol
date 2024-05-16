@@ -549,7 +549,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
         onlyPushChannelAdmin
     {
         PUSH_NTT = IERC20(_pushNTT);
-        NTT_MANAGER = _nttManager;
+        NTT_MANAGER = INttManager(_nttManager);
         TRANSCEIVER = ITransceiver(_transceiver);
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
@@ -602,21 +602,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
         createCrossChainRequest(requestPayload, _amount);
     }
 
-    // ToDo: check if this can be removed
-    function buildTransceiverInstruction(bool relayer_off)
-        public
-        view
-        returns (TransceiverStructs.TransceiverInstruction memory)
-    {
-        IWormholeTransceiver wormholeTransceiver = IWormholeTransceiver(WORMHOLE_TRANSCEIVER);
-
-        IWormholeTransceiver.WormholeTransceiverInstruction memory instruction =
-            IWormholeTransceiver.WormholeTransceiverInstruction(relayer_off);
-        bytes memory instructionData = wormholeTransceiver.encodeWormholeTransceiverInstruction(instruction);
-
-        return TransceiverStructs.TransceiverInstruction({ index: 0, payload: instructionData });
-    }
-
     function quoteMsgRelayCost(uint16 targetChain) public view returns (uint256 cost) {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
     }
@@ -627,8 +612,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
         // Calculate MSG bridge cost and Token Bridge cost
         // ToDo: Getter functions for total cost that needs to be sent in this fn
         uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN);
-        uint256 tokenBridgeCost =
-            TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, buildTransceiverInstruction(false));
+        TransceiverStructs.TransceiverInstruction memory transceiverInstruction = TransceiverStructs.TransceiverInstruction({
+            index: 0,
+            payload: abi.encodePacked(false)
+        });
+        uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
@@ -644,13 +632,33 @@ contract PushCommV3 is Initializable, PushCommStorageV2, PushCommStorageV3, IPus
             msg.sender // Refund address is of the sender
         );
 
-        // Approve and Initiate NTT Transfer
-        INttManager ntt = INttManager(NTT_MANAGER);
-
         PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
+        PUSH_NTT.approve(address(NTT_MANAGER), _amount);
+        NTT_MANAGER.transfer{value:tokenBridgeCost}(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+    }
 
-        PUSH_NTT.approve(NTT_MANAGER, _amount);
+    // WORMHOLE SETTER FUNCTIONS
+    function setPushNTTAddress(address _pushNTTAddress) external onlyPushChannelAdmin {
+        PUSH_NTT = IERC20(_pushNTTAddress);
+    }
 
-        ntt.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+    function setNttManagerAddress(address _nttManagerAddress) external onlyPushChannelAdmin {
+        NTT_MANAGER = INttManager(_nttManagerAddress);
+    }
+
+    function setTransceiverAddress(address _transceiverAddress) external onlyPushChannelAdmin {
+        TRANSCEIVER = ITransceiver(_transceiverAddress);
+    }
+
+    function setWormholeTransceiverAddress(address _wormholeTransceiverAddress) external onlyPushChannelAdmin {
+        WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiverAddress);
+    }
+
+    function setWormholeRelayerAddress(address _wormholeRelayerAddress) external onlyPushChannelAdmin {
+        WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
+    }
+
+    function setWormholeRecipientChain(uint16 _recipientChain) external onlyPushChannelAdmin {
+        WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
 }
