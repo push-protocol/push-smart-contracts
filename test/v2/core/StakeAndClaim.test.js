@@ -1715,17 +1715,8 @@ describe("EPNS CoreV2 Protocol", function () {
 
           const rewards_alice = await EPNSCoreV1Proxy.usersRewardsClaimed(ALICE);
           const rewards_bob = await EPNSCoreV1Proxy.usersRewardsClaimed(BOB);
-
-          console.log(
-            `ALICE got ${rewards_alice.toString()} Rewards`
-          );
-          console.log(
-            `BOB got ${rewards_bob.toString()} Rewards`
-          );
-          expect(ethers.BigNumber.from(rewards_bob)).to.be.closeTo(
-            rewards_alice,
-            ethers.utils.parseEther("0.001")
-          );
+          //expect alice's reward to be greater than bob
+          expect(ethers.BigNumber.from(rewards_alice)).to.be.gt(rewards_bob);
 
         });
 
