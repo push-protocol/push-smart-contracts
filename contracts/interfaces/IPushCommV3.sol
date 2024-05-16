@@ -35,6 +35,10 @@ interface IPushCommV3 {
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
 
+    event RemoveChannelAlias(
+        string _chainName, uint256 indexed _chainID, address indexed _channelOwnerAddress, string _baseChannelAddress
+    );
+
     /* *****************************
 
         READ-ONLY FUNCTIONS  

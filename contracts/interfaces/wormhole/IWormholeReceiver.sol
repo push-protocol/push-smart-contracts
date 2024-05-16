@@ -22,7 +22,8 @@ interface IWormholeReceiver {
      *   specified by the send requester, this delivery will result in a `ReceiverFailure`.
      *
      * @param payload - an arbitrary message which was included in the delivery by the
-     *     requester. This message's signature will already have been verified (as long as msg.sender is the Wormhole Relayer contract)
+     *     requester. This message's signature will already have been verified (as long as msg.sender is the Wormhole
+     * Relayer contract)
      * @param additionalMessages - Additional messages which were requested to be included in this delivery.
      *      Note: There are no contract-level guarantees that the messages in this array are what was requested
      *      so **you should verify any sensitive information given here!**
@@ -47,5 +48,7 @@ interface IWormholeReceiver {
         bytes32 sourceAddress,
         uint16 sourceChain,
         bytes32 deliveryHash
-    ) external payable;
+    )
+        external
+        payable;
 }

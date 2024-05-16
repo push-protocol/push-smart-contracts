@@ -36,7 +36,7 @@ contract MigratePushTokens_Test is BaseTest {
     }
 
     function test_UnMigrateTokens() public whenUnMigrationIsAllowed {
-        uint256 migrationTokenAmount = 5_000 ether;
+        uint256 migrationTokenAmount = 5000 ether;
         // migrate tokens
         approveTokens(actor.dan_push_holder, address(pushMigrationHelperProxy), migrationTokenAmount);
         vm.prank(actor.dan_push_holder);
@@ -60,8 +60,12 @@ contract MigratePushTokens_Test is BaseTest {
         uint256 migrationHelperNewPushTokenBalanceAfter = pushNttToken.balanceOf(address(pushMigrationHelperProxy));
 
         assertEq(danOldPushTokenBalanceAfter - danOldPushTokenBalanceBefore, migrationTokenAmount);
-        assertEq(migrationHelperOldPushTokenBalanceBefore - migrationHelperOldPushTokenBalanceAfter, migrationTokenAmount);
+        assertEq(
+            migrationHelperOldPushTokenBalanceBefore - migrationHelperOldPushTokenBalanceAfter, migrationTokenAmount
+        );
         assertEq(danNewPushTokenBalanceBefore - danNewPushTokenBalanceAfter, migrationTokenAmount);
-        assertEq(migrationHelperNewPushTokenBalanceAfter - migrationHelperNewPushTokenBalanceBefore, migrationTokenAmount);
+        assertEq(
+            migrationHelperNewPushTokenBalanceAfter - migrationHelperNewPushTokenBalanceBefore, migrationTokenAmount
+        );
     }
 }

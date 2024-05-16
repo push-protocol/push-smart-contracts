@@ -28,6 +28,8 @@ library Errors {
     error OwnableUnauthorizedAccount(address account);
     /// @notice The msg.value sent is not enough to perform the operation.
     error InsufficientFunds();
+    /// @notice The Payload being passed has already been processed.
+    error Payload_Duplicacy_Error();
 
     /* ***************
         CORE Errors

@@ -47,7 +47,13 @@ interface IPushCoreV3 {
     /// Blocked or Deleted
     event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
-    event ArbitraryRequest(address indexed sender, address indexed receiver, uint256 amount, uint256 feeId);
+    event ArbitraryRequest(
+        address indexed sender,
+        address indexed receiver,
+        uint256 amountDeposited,
+        uint256 feePercent,
+        uint256 indexed feeId
+    );
 
     /* *****************************
 

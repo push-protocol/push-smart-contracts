@@ -111,13 +111,30 @@ library StakingTypes {
 }
 
 library CrossChainRequestTypes {
-    struct RequestPayload {
-        bytes4 functionSig;
-        uint256 depositAmount;
-        uint256 feeAmount;
-        uint8 feeId;
-        address amountRecipient;
+    enum RequestType {
+        SpecificReq,
+        ArbitraryReq
+    }
+
+    struct ChannelPayload {
+        string channelAddress;
+        CoreTypes.ChannelType channelType;
         uint8 channelExpiry;
-        bytes32 channelIdentity;
+        bytes channelIdentity;
+    }
+
+    struct SpecificRequestPayload {
+        bytes4 functionSig;
+        address amountRecipient;
+        uint256 amount;
+        ChannelPayload channelData;
+    }
+
+    struct ArbitraryRequestPayload {
+        bytes4 functionSig;
+        uint8 feeId;
+        uint8 feePercentage;
+        address amountRecipient;
+        uint256 amount;
     }
 }

@@ -26,7 +26,15 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "../interfaces/wormhole/IWormholeReceiver.sol";
 
-contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, PushCoreStorageV3, IPushCoreV3, IWormholeReceiver {
+contract PushCoreV3 is
+    Initializable,
+    PushCoreStorageV1_5,
+    PausableUpgradeable,
+    PushCoreStorageV2,
+    PushCoreStorageV3,
+    IPushCoreV3,
+    IWormholeReceiver
+{
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -732,7 +740,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     }
 
     /// @inheritdoc IPushCoreV3
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -803,39 +811,78 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         isRegisteredSender(sourceChain, sourceAddress)
     {
         onlyWormholeRelayer();
-        // Decode the payload
-        (CrossChainRequestTypes.RequestPayload memory reqPayload, address sender) = 
-            abi.decode(payload, (CrossChainRequestTypes.RequestPayload, address));
+        if (processedMessages[deliveryHash]) {
+            revert Errors.Payload_Duplicacy_Error();
+        }
+        // Check Request Type
+        (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
 
-         // Execute function selector
-        if(reqPayload.functionSig != bytes4(0)) {
-            routeCrossChainRequest(reqPayload, sender);
+        if (requestType == 0) {
+            // Specific Req Type
+            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload, address sender,) =
+                abi.decode(payload, (CrossChainRequestTypes.SpecificRequestPayload, address, uint8));
+
+            // ROUTE to SPECIFIC REQUEST ROUTING Function
+            routeSpecificRequest(reqPayload, sender);
+        } else {
+            // Arbitrary Req Type
+            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload, address sender,) =
+                abi.decode(payload, (CrossChainRequestTypes.ArbitraryRequestPayload, address, uint8));
+
+            // Directly call ARBITRARY REQUEST FUNCTION
+            handleRequestWithFeeID(reqPayload, sender);
+        }
+
+        processedMessages[deliveryHash] = true;
+    }
+
+    function routeSpecificRequest(
+        CrossChainRequestTypes.SpecificRequestPayload memory reqPayload,
+        address sender
+    )
+        internal
+    {
+        // Accessing struct members explicitly
+        bytes4 functionSig = reqPayload.functionSig;
+
+        if (functionSig == this.createChannelWithPUSH.selector) {
+            //ToDo: Update createChannelWithPUSH to handle incoming cross Chain Request (channel being string - MAJOR
+            // CHANGE)
+            uint256 amount = reqPayload.amount;
+            CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
+            bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
+            uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
+
+            emit AddChannel(sender, _channelType, _channelIdentity);
+            _createChannel(sender, _channelType, amount, channelExpiryTime);
+        } else if (functionSig == this.handleChatRequestData.selector) {
+            //ToDo: Update handleChatRequest to handle incoming cross Chain Request
+            uint256 amount = reqPayload.amount;
+            address requestReceiver = reqPayload.amountRecipient;
+
+            handleChatRequestData(sender, requestReceiver, amount);
+        } else {
+            revert("Invalid Function Signature");
         }
     }
 
-    function routeCrossChainRequest (CrossChainRequestTypes.RequestPayload memory reqPayload, address sender) internal {
-        // Accessing struct members explicitly
-        bytes4 functionSig = reqPayload.functionSig;
-        uint256 depositAmount = reqPayload.depositAmount;
-        uint256 feeAmount = reqPayload.feeAmount;
-        uint8 feeId = reqPayload.feeId;
-        address amountRecipient = reqPayload.amountRecipient;
-        uint8 channelExpiry = reqPayload.channelExpiry;
-        bytes32 channelIdentity = reqPayload.channelIdentity;
+    function handleRequestWithFeeID(
+        CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload,
+        address sender
+    )
+        internal
+    {
+        // Decode payload
+        uint8 feeID = reqPayload.feeId;
+        uint256 amount = reqPayload.amount;
+        address recipient = reqPayload.amountRecipient;
+        uint256 feePercentage = reqPayload.feePercentage;
 
-        // createChannelPush
-        // ToDo: enable createChannelPush to take user address that's creating channel or adjust _createChannel 
-        // ToDo: Channel type is also needed in request payload
-        if (functionSig == 0xa90521c3) {
-            (bool success, ) = address(this).call(abi.encodeWithSelector(functionSig, 1, channelIdentity, depositAmount+feeAmount, channelExpiry));
-            require(success, "Internal Function Execution failed");
-        } else if (functionSig == 0x2d57f936) { // ToDo: sig to be updated
-            // createIncentivizedReq -> function sig for handleRequestData
-            (bool success, ) = address(this).call(abi.encodeWithSelector(functionSig, sender, amountRecipient, feeAmount + depositAmount));
-            require(success, "Internal Function Execution failed");
-        } else {
-            PROTOCOL_POOL_FEES += feeAmount;
-            emit ArbitraryRequest(sender, amountRecipient, depositAmount, feeId);
-        }
+        //ToDo: Fetch amount split for Protocol_pool_funds vs arbitraryReqFees
+        // USE A helper library to calculate the fee amount based on feePercentage
+
+        // Update states based on Fee calculation
+
+        emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }
 }
