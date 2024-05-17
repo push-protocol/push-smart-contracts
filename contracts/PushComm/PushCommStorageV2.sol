@@ -1,6 +1,7 @@
 pragma solidity ^0.8.20;
 
 import { CommTypes } from "../libraries/DataTypes.sol";
+import { EnumerableSet } from "../libraries/EnumerableSet.sol";
 
 contract PushCommStorageV2 {
     /**
@@ -37,8 +38,7 @@ contract PushCommStorageV2 {
 
     mapping(address => CommTypes.ChatDetails) public userChatData;
     mapping(bytes => string) public walletToPGP;
-    mapping(string => bytes[]) public PGPToWallet;
-    mapping(bytes => uint256) public counter;
+    mapping(string => EnumerableSet.bytesSet) internal PGPToWallet;
     uint256 PROTOCOL_POOL_FEE;
     uint256 FEE_AMOUNT;
 }

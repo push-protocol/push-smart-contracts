@@ -21,6 +21,7 @@ import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
+import { EnumerableSet } from "../libraries/EnumerableSet.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -30,6 +31,7 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.bytesSet;
 
     /* *****************************
 
@@ -562,16 +564,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
 
             if (bytes(walletToPGP[_data]).length != 0) {
-                uint256 _count = counter[_data];
                 string memory _previousPgp = walletToPGP[_data];
-                delete PGPToWallet[_previousPgp][_count - 1];
+                 PGPToWallet[_previousPgp].remove(_data);
                 emit UserPGPRemoved(_previousPgp, _nft, _id);
             }
             emit UserPGPRegistered(_pgp, _nft, _id);
         }
         walletToPGP[_data] = _pgp;
-        PGPToWallet[_pgp].push(_data);
-        counter[_data] = PGPToWallet[_pgp].length;
+        PGPToWallet[_pgp].add(_data);
     }
 
     function removeWalletFromUser(bytes calldata _data, bool _isNFT) public {
@@ -598,9 +598,32 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
             emit UserPGPRemoved(pgp, _nft, _id);
         }
-        uint256 _count = counter[_data];
-        delete walletToPGP[_data];
-        delete PGPToWallet[pgp][_count - 1];
-        counter[_data] = 0;
+          delete walletToPGP[_data];
+         PGPToWallet[pgp].remove(_data);
+    }
+
+    function containsValue(string memory key,bytes memory value) external view returns (bool) {
+        return PGPToWallet[key].contains(value);
+    }
+
+    // Function to get the count of values in the set associated with a string key
+    function getCount(string memory key) external view returns (uint256) {
+        return PGPToWallet[key].length();
+    }
+
+    // Function to get the value at a specific index in the set associated with a string key
+    function getValueAtIndex(string memory key, uint256 index) external view returns (bytes memory) {
+        require(index < PGPToWallet[key].length(), "Index out of bounds");
+        return PGPToWallet[key].at(index);
+    }
+
+    // Function to enumerate over the values in the set associated with a string key
+    function enumerateValues(string memory key) external view returns (bytes[] memory) {
+        uint256 count = PGPToWallet[key].length();
+        bytes[] memory values = new bytes[](count);
+        for (uint256 i = 0; i < count; i++) {
+            values[i] = PGPToWallet[key].at(i);
+        }
+        return values;
     }
 }

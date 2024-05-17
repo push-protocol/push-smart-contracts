@@ -60,7 +60,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
@@ -75,7 +74,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Comm_InvalidArguments.selector));
         changePrank(actor.bob_channel_owner);
@@ -85,7 +83,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp1 = getWalletToPgp(_data);
         assertEq(_storedData1, _data);
         assertEq(_storedPgp1, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
 
@@ -107,7 +104,6 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, "");
-        assertEq(commProxy.counter(_data), 0);
     }
 
     function test_WhenCallerOwnsAnNFTThatsNotAlreadyAttached() external whenAUserTriesToAddAnNFTToPGP {
@@ -121,7 +117,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
 
@@ -136,7 +131,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         erc721.transferFrom(actor.bob_channel_owner,actor.alice_channel_owner,0);
         changePrank(actor.alice_channel_owner);
@@ -145,11 +139,9 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgpAlice = getWalletToPgp(_data);
         assertEq(_storedDataAlice, _data);
         assertEq(_storedPgpAlice, pgp2);
-        assertEq(commProxy.counter(_data), 1);
-
+        vm.expectRevert();
         bytes memory _storedDataBob = getPGPToWallet(pgp1, 0);
         assertEq(_storedDataBob, "");
-        assertEq(commProxy.counter(_data), 1);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
 
@@ -180,15 +172,13 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         commProxy.removeWalletFromUser(_data, false);
-        // vm.expectRevert();
+        vm.expectRevert();
         bytes memory _storedDataAfter = getPGPToWallet(pgp1, 0);
         string memory _storedPgpAfter = getWalletToPgp(_data);
         assertEq(_storedDataAfter, "");
         assertEq(_storedPgpAfter, "");
-        assertEq(commProxy.counter(_data), 0);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
     }
@@ -228,15 +218,13 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedData, _data);
         assertEq(_storedPgp, pgp1);
-        assertEq(commProxy.counter(_data), 1);
 
         commProxy.removeWalletFromUser(_data, true);
-        // vm.expectRevert();
+        vm.expectRevert();
         bytes memory _storedDataAfter = getPGPToWallet(pgp1, 0);
         string memory _storedPgpAfter = getWalletToPgp(_data);
         assertEq(_storedDataAfter, "");
         assertEq(_storedPgpAfter, "");
-        assertEq(commProxy.counter(_data), 0);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
     }
@@ -257,7 +245,7 @@ contract walletPGP_Test is BasePushCommTest {
     }
 
     function getPGPToWallet(string memory _pgp, uint256 _count) internal view returns (bytes memory) {
-        return commProxy.PGPToWallet(_pgp, _count);
+        return commProxy.getValueAtIndex(_pgp, _count);
     }
 
     function getEncodedData(address _wallet) internal pure returns (bytes memory _data) {
