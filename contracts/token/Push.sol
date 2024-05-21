@@ -6,7 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 contract Push is OwnableUpgradeable {
     /// @notice EIP-20 token name for this token
-    string public constant name = "Ethereum Push Notification Service";
+    string public constant name = "Push Protocol";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "PUSH";
