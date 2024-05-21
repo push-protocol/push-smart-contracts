@@ -140,50 +140,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     /**
-     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
-     *
-     * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
-     * false
-     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
-     *
-     * @param _startIndex  starting Index for the LOOP
-     * @param _endIndex    Last Index for the LOOP
-     * @param _channelList array of addresses of the channels
-     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     *
-     */
-    // function migrateSubscribeData(
-    //     uint256 _startIndex,
-    //     uint256 _endIndex,
-    //     address[] calldata _channelList,
-    //     address[] calldata _usersList
-    // )
-    //     external
-    //     onlyPushChannelAdmin
-    //     returns (bool)
-    // {
-    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
-    //         revert Errors.InvalidArg_ArrayLengthMismatch();
-    //     }
-
-    //     for (uint256 i = _startIndex; i < _endIndex;) {
-    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
-    //             unchecked {
-    //                 i++;
-    //             }
-    //             continue;
-    //         } else {
-    //             _subscribe(_channelList[i], _usersList[i]);
-    //         }
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     return true;
-    // }
-
-    /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
      *
      * @dev Initializes the User Struct with crucial details about the Channel Subscription
@@ -514,27 +470,5 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
-        }
-        address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
-
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
-        }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
-
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
-
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
     }
 }
