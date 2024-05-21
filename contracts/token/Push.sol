@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.20;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Push is Ownable {
+contract Push is OwnableUpgradeable {
     /// @notice EIP-20 token name for this token
-    string public constant name = "Ethereum Push Notification Service";
+    string public constant name = "Push Protocol";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "PUSH";
@@ -100,13 +100,12 @@ contract Push is Ownable {
     }
 
     /**
-     * @notice Construct a new PUSH token
-     * @param account The initial account to grant all the tokens
+     * @notice Initialize the token contract
      */
-    constructor(address account) Ownable(account) {
-        // holder weight initial adjustments
-        holderWeight[account] = block.number;
+    function initialize() external initializer {
         born = block.number;
+
+        __Ownable_init(msg.sender);
     }
 
     /// NOTE: the `setMinter` method is added for INttToken Interface support.

@@ -21,6 +21,7 @@ import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
+    Push public pushNtt;
     Push public pushNttToken;
     EPNS public pushToken;
     PushCoreMock public coreMock;
@@ -35,6 +36,7 @@ abstract contract BaseTest is Test, Constants, Events {
     PushMigrationHelper public pushMigrationHelper;
     PushMigrationHelper public pushMigrationHelperProxy;
     TransparentUpgradeableProxy public pushMigrationProxy;
+    TransparentUpgradeableProxy public pushNttProxy;
 
     /* ***************
         Main Actors in Test
@@ -77,7 +79,14 @@ abstract contract BaseTest is Test, Constants, Events {
             tim_push_holder: createActor("tim_push_holder")
         });
 
-        pushNttToken = new Push(actor.admin);
+        pushNtt = new Push();
+        vm.prank(actor.admin);
+        pushNttProxy = new TransparentUpgradeableProxy(
+            address(pushNtt),
+            actor.admin,
+            abi.encodeWithSignature("initialize()")
+        );
+        pushNttToken = Push(address(pushNttProxy));
 
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
