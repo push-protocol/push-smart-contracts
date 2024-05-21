@@ -1,6 +1,0 @@
-claimChatIncentives.t.sol
-├── when claimable funds of caller is less than amount asked
-│   └── it REVERT - InvalidArg_MoreThanExpected(claimable funds, _amount)
-└── when claimable funds of caller is more than or equal to amount asked
-    ├── it should update claimable funds of caller and emit ChatIncentiveClaimed(msg.sender, _amount)
-    └── it should transfer PUSH token equal to _amount passed
