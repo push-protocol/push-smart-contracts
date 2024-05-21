@@ -21,7 +21,7 @@ import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
-import { EnumerableSet } from "../libraries/EnumerableSet.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -31,7 +31,7 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.bytesSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     /* *****************************
 
@@ -551,11 +551,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         uint256 fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-
+        bytes32 hash = keccak256(_data);
         if (!_isNFT) {
             (, address _wallet) = abi.decode(_data, (string, address));
 
-            if (bytes(walletToPGP[_data]).length != 0 || _wallet != msg.sender) {
+            if (bytes(walletToPGP[hash]).length != 0 || _wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
             }
             emit UserPGPRegistered(_pgp, _wallet);
@@ -563,19 +563,21 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             (,,, address _nft, uint256 _id,) = abi.decode(_data, (string, string, uint256, address, uint256, uint256));
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
 
-            if (bytes(walletToPGP[_data]).length != 0) {
-                string memory _previousPgp = walletToPGP[_data];
-                 PGPToWallet[_previousPgp].remove(_data);
+            if (bytes(walletToPGP[hash]).length != 0) {
+                string memory _previousPgp = walletToPGP[hash];
+                 PGPToWallet[_previousPgp].remove(hash);
                 emit UserPGPRemoved(_previousPgp, _nft, _id);
             }
             emit UserPGPRegistered(_pgp, _nft, _id);
         }
-        walletToPGP[_data] = _pgp;
-        PGPToWallet[_pgp].add(_data);
+        walletToPGP[hash] = _pgp;
+        PGPToWallet[_pgp].add(hash);
+        bytes32ToBytes[hash] = _data;
     }
 
     function removeWalletFromUser(bytes calldata _data, bool _isNFT) public {
-        if (bytes(walletToPGP[_data]).length == 0) {
+        bytes32 hash = keccak256(_data);
+        if (bytes(walletToPGP[hash]).length == 0) {
             revert("Nothing to delete");
         }
 
@@ -583,7 +585,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
 
-        string memory pgp = walletToPGP[_data];
+        string memory pgp = walletToPGP[hash];
 
         if (!_isNFT) {
             (, address _wallet) = abi.decode(_data, (string, address));
@@ -598,11 +600,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
             emit UserPGPRemoved(pgp, _nft, _id);
         }
-          delete walletToPGP[_data];
-         PGPToWallet[pgp].remove(_data);
+         delete walletToPGP[hash];
+         PGPToWallet[pgp].remove(hash);
     }
 
-    function containsValue(string memory key,bytes memory value) external view returns (bool) {
+    function containsValue(string memory key,bytes32 value) external view returns (bool) {
         return PGPToWallet[key].contains(value);
     }
 
@@ -612,15 +614,15 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     // Function to get the value at a specific index in the set associated with a string key
-    function getValueAtIndex(string memory key, uint256 index) external view returns (bytes memory) {
+    function getValueAtIndex(string memory key, uint256 index) external view returns (bytes32) {
         require(index < PGPToWallet[key].length(), "Index out of bounds");
         return PGPToWallet[key].at(index);
     }
 
     // Function to enumerate over the values in the set associated with a string key
-    function enumerateValues(string memory key) external view returns (bytes[] memory) {
+    function enumerateValues(string memory key) external view returns (bytes32[] memory) {
         uint256 count = PGPToWallet[key].length();
-        bytes[] memory values = new bytes[](count);
+        bytes32[] memory values = new bytes32[](count);
         for (uint256 i = 0; i < count; i++) {
             values[i] = PGPToWallet[key].at(i);
         }

@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 import { CommTypes } from "../libraries/DataTypes.sol";
-import { EnumerableSet } from "../libraries/EnumerableSet.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract PushCommStorageV2 {
     /**
@@ -37,8 +37,9 @@ contract PushCommStorageV2 {
     address public PUSH_TOKEN_ADDRESS;
 
     mapping(address => CommTypes.ChatDetails) public userChatData;
-    mapping(bytes => string) public walletToPGP;
-    mapping(string => EnumerableSet.bytesSet) internal PGPToWallet;
+    mapping(bytes32 => string) public walletToPGP;
+    mapping(string => EnumerableSet.Bytes32Set) internal PGPToWallet;
+    mapping(bytes32 => bytes) public bytes32ToBytes;
     uint256 PROTOCOL_POOL_FEE;
     uint256 FEE_AMOUNT;
 }
