@@ -56,10 +56,11 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, false);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
+        assertEq(_data, commProxy.bytes32ToBytes(_storedData));
 
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
@@ -70,18 +71,18 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, false);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.Comm_InvalidArguments.selector));
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp2, false);
 
-        bytes memory _storedData1 = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData1 = getPGPToWallet(pgp1, 0);
         string memory _storedPgp1 = getWalletToPgp(_data);
-        assertEq(_storedData1, _data);
+        assertEq(_storedData1, keccak256(_data));
         assertEq(_storedPgp1, pgp1);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
@@ -101,7 +102,7 @@ contract walletPGP_Test is BasePushCommTest {
         changePrank(actor.alice_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, true);
         vm.expectRevert();
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, "");
     }
@@ -113,9 +114,9 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, true);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
@@ -127,20 +128,20 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, true);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
 
         erc721.transferFrom(actor.bob_channel_owner,actor.alice_channel_owner,0);
         changePrank(actor.alice_channel_owner);
         commProxy.registerUserPGP(_data, pgp2, true);
-        bytes memory _storedDataAlice = getPGPToWallet(pgp2, 0);
+        bytes32 _storedDataAlice = getPGPToWallet(pgp2, 0);
         string memory _storedPgpAlice = getWalletToPgp(_data);
-        assertEq(_storedDataAlice, _data);
+        assertEq(_storedDataAlice, keccak256(_data));
         assertEq(_storedPgpAlice, pgp2);
         vm.expectRevert();
-        bytes memory _storedDataBob = getPGPToWallet(pgp1, 0);
+        bytes32 _storedDataBob = getPGPToWallet(pgp1, 0);
         assertEq(_storedDataBob, "");
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
@@ -168,14 +169,14 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, false);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
 
         commProxy.removeWalletFromUser(_data, false);
         vm.expectRevert();
-        bytes memory _storedDataAfter = getPGPToWallet(pgp1, 0);
+        bytes32 _storedDataAfter = getPGPToWallet(pgp1, 0);
         string memory _storedPgpAfter = getWalletToPgp(_data);
         assertEq(_storedDataAfter, "");
         assertEq(_storedPgpAfter, "");
@@ -214,14 +215,14 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, true);
-        bytes memory _storedData = getPGPToWallet(pgp1, 0);
+        bytes32 _storedData = getPGPToWallet(pgp1, 0);
         string memory _storedPgp = getWalletToPgp(_data);
-        assertEq(_storedData, _data);
+        assertEq(_storedData, keccak256(_data));
         assertEq(_storedPgp, pgp1);
 
         commProxy.removeWalletFromUser(_data, true);
         vm.expectRevert();
-        bytes memory _storedDataAfter = getPGPToWallet(pgp1, 0);
+        bytes32 _storedDataAfter = getPGPToWallet(pgp1, 0);
         string memory _storedPgpAfter = getWalletToPgp(_data);
         assertEq(_storedDataAfter, "");
         assertEq(_storedPgpAfter, "");
@@ -241,10 +242,10 @@ contract walletPGP_Test is BasePushCommTest {
     //Helper Functions
 
     function getWalletToPgp(bytes memory _data) internal view returns (string memory) {
-        return commProxy.walletToPGP(_data);
+        return commProxy.walletToPGP(keccak256(_data));
     }
 
-    function getPGPToWallet(string memory _pgp, uint256 _count) internal view returns (bytes memory) {
+    function getPGPToWallet(string memory _pgp, uint256 _count) internal view returns (bytes32) {
         return commProxy.getValueAtIndex(_pgp, _count);
     }
 
