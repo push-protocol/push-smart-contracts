@@ -10,8 +10,8 @@ contract MockERC721 is ERC721 {
         _id++;
     }
 
-    function mint(address _ad) external {
-        _mint(_ad,_id);
+    function mint() external {
+        _mint(msg.sender,_id);
         _id++;
     }
 }
