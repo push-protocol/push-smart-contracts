@@ -565,14 +565,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
             if (bytes(walletToPGP[hash]).length != 0) {
                 string memory _previousPgp = walletToPGP[hash];
-                 PGPToWallet[_previousPgp].remove(hash);
                 emit UserPGPRemoved(_previousPgp, _nft, _id);
             }
             emit UserPGPRegistered(_pgp, _nft, _id);
         }
         walletToPGP[hash] = _pgp;
-        PGPToWallet[_pgp].add(hash);
-        bytes32ToBytes[hash] = _data;
     }
 
     function removeWalletFromUser(bytes calldata _data, bool _isNFT) public {
@@ -601,31 +598,5 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
             emit UserPGPRemoved(pgp, _nft, _id);
         }
          delete walletToPGP[hash];
-         PGPToWallet[pgp].remove(hash);
-    }
-
-    function containsValue(string memory key,bytes32 value) external view returns (bool) {
-        return PGPToWallet[key].contains(value);
-    }
-
-    // Function to get the count of values in the set associated with a string key
-    function getCount(string memory key) external view returns (uint256) {
-        return PGPToWallet[key].length();
-    }
-
-    // Function to get the value at a specific index in the set associated with a string key
-    function getValueAtIndex(string memory key, uint256 index) external view returns (bytes32) {
-        require(index < PGPToWallet[key].length(), "Index out of bounds");
-        return PGPToWallet[key].at(index);
-    }
-
-    // Function to enumerate over the values in the set associated with a string key
-    function enumerateValues(string memory key) external view returns (bytes32[] memory) {
-        uint256 count = PGPToWallet[key].length();
-        bytes32[] memory values = new bytes32[](count);
-        for (uint256 i = 0; i < count; i++) {
-            values[i] = PGPToWallet[key].at(i);
-        }
-        return values;
     }
 }
