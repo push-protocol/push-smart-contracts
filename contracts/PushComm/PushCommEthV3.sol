@@ -21,17 +21,14 @@ import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
+contract PushCommEthV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     /* *****************************
 
@@ -473,86 +470,5 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
-        }
-        address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
-
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
-        }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
-
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
-
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
-    }
-
-    ///@notice Wallet PGP attach code starts here
-
-    function setFeeAmount(uint256 _feeAmount) external onlyPushChannelAdmin {
-        FEE_AMOUNT = _feeAmount;
-    }
-
-    function registerUserPGP(bytes calldata _data, string calldata _pgp, bool _isNFT) external {
-        uint256 fee = FEE_AMOUNT;
-        PROTOCOL_POOL_FEE += fee;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-        bytes32 hash = keccak256(_data);
-        if (!_isNFT) {
-            (, address _wallet) = abi.decode(_data, (string, address));
-
-            if (bytes(walletToPGP[hash]).length != 0 || _wallet != msg.sender) {
-                revert Errors.Comm_InvalidArguments();
-            }
-            emit UserPGPRegistered(_pgp, _wallet);
-        } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_data, (string, string, uint256, address, uint256, uint256));
-            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
-
-            if (bytes(walletToPGP[hash]).length != 0) {
-                string memory _previousPgp = walletToPGP[hash];
-                emit UserPGPRemoved(_previousPgp, _nft, _id);
-            }
-            emit UserPGPRegistered(_pgp, _nft, _id);
-        }
-        walletToPGP[hash] = _pgp;
-    }
-
-    function removeWalletFromUser(bytes calldata _data, bool _isNFT) public {
-        bytes32 hash = keccak256(_data);
-        if (bytes(walletToPGP[hash]).length == 0) {
-            revert("Nothing to delete");
-        }
-
-        uint256 fee = FEE_AMOUNT;
-        PROTOCOL_POOL_FEE += fee;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-
-        string memory pgp = walletToPGP[hash];
-
-        if (!_isNFT) {
-            (, address _wallet) = abi.decode(_data, (string, address));
-
-            if (_wallet != msg.sender) {
-                revert Errors.Comm_InvalidArguments();
-            }
-            emit UserPGPRemoved(pgp, _wallet);
-        } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_data, (string, string, uint256, address, uint256, uint256));
-            
-            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
-            emit UserPGPRemoved(pgp, _nft, _id);
-        }
-         delete walletToPGP[hash];
     }
 }
