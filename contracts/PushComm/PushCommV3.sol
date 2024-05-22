@@ -475,28 +475,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
     }
 
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
-        }
-        address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
-
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
-        }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
-
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
-
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
-    }
-
     ///@notice Wallet PGP attach code starts here
 
     function setFeeAmount(uint256 _feeAmount) external onlyPushChannelAdmin {
