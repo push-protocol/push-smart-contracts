@@ -218,7 +218,8 @@ contract walletPGP_Test is BasePushCommTest {
     }
     
     function test_multipleAddresses_andFullRun(address _addr1,address _addr2, address _addr3)external {
-        vm.assume(_addr1 != _addr2 &&_addr2 != _addr3 && _addr3 != address(0) && _addr2 != address(0) && _addr1 != address(0));
+        vm.assume(_addr1 != _addr2 &&_addr2 != _addr3 && _addr1 != actor.admin);
+        vm.assume( _addr3 != address(0) && _addr2 != address(0) && _addr1 != address(0));
         bytes memory _dataNft1 = getEncodedData(address(firstERC721), 1);
         bytes memory _dataNft2 = getEncodedData(address(secondERC721), 1);
         bytes memory _dataNft3 = getEncodedData(address(thirdERC721), 1);
