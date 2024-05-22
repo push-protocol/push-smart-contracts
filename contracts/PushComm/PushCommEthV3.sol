@@ -479,7 +479,9 @@ contract PushCommEthV3 is Initializable, PushCommEthStorageV3, IPushCommV3 {
 
     function registerUserPGP(bytes calldata _data, string calldata _pgp, bool _isNFT) external {
         uint256 fee = FEE_AMOUNT;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, EPNSCoreAddress, fee);
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
+        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
         bytes32 hash = keccak256(_data);
         if (!_isNFT) {
             (, address _wallet) = abi.decode(_data, (string, address));
@@ -508,8 +510,9 @@ contract PushCommEthV3 is Initializable, PushCommEthStorageV3, IPushCommV3 {
         }
 
         uint256 fee = FEE_AMOUNT;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, EPNSCoreAddress, fee);
-
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
+        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
         string memory pgp = walletToPGP[hash];
 
         if (!_isNFT) {
