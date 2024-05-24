@@ -22,7 +22,7 @@ import { CoreTypes } from "../libraries/DataTypes.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV3 {
     using SafeERC20 for IERC20;

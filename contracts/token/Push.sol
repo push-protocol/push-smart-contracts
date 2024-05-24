@@ -103,7 +103,7 @@ contract Push is Ownable{
      * @notice Construct a new PUSH token
      * @param account The initial account to grant all the tokens
      */
-    constructor(address account) Ownable(account){
+    constructor(address account) {
         // holder weight initial adjustments
         holderWeight[account] = block.number;
         born = block.number;
