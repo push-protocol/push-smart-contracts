@@ -40,11 +40,11 @@ interface IPushCommV3 {
         address requestSender, address requestReceiver, uint256 amountDeposited, uint256 timestamp
     );
     ///@notice emits whenever a Wallet or NFT is linked OR unlinked to a PGP hash
-    event UserPGPRegistered(string PgpHash, address wallet);
-    event UserPGPRegistered(string PgpHash, address nft, uint256 id);
+    event UserPGPRegistered(string indexed PgpHash, address indexed wallet, string chainName, uint256 chainID);
+    event UserPGPRegistered(string indexed PgpHash, address indexed nft, uint256 nftId, string chainName, uint256 chainID);
 
-    event UserPGPRemoved(string PgpHash, address wallet);
-    event UserPGPRemoved(string PgpHash, address nft, uint256 id);
+    event UserPGPRemoved(string indexed PgpHash, address indexed wallet, string chainName, uint256 chainID);
+    event UserPGPRemoved(string indexed PgpHash, address indexed nft, uint256 nftId, string chainName, uint256 chainID);
 
     /* *****************************
 
