@@ -20,7 +20,7 @@ contract MigrationAdminActions_Test is BaseTest {
 
     function test_Revertwhen_NonAdminCalls_SetNewPushToken() public onlyOwner {
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(abi.encodeWithSelector(Errors.OwnableUnauthorizedAccount.selector, actor.dan_push_holder));
+        vm.expectRevert("Ownable: caller is not the owner");
         pushMigrationHelperProxy.setNewPushToken(address(pushNttToken));
     }
 
@@ -53,7 +53,7 @@ contract MigrationAdminActions_Test is BaseTest {
 
     function test_Revertwhen_NonAdminCalls_ToggleUnMigrationStatus() public onlyOwner {
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(abi.encodeWithSelector(Errors.OwnableUnauthorizedAccount.selector, actor.dan_push_holder));
+        vm.expectRevert("Ownable: caller is not the owner");
         pushMigrationHelperProxy.toggleUnMigrationStatus(true);
     }
 
@@ -77,8 +77,8 @@ contract MigrationAdminActions_Test is BaseTest {
 
     function test_Revertwhen_NonAdminCalls_BurnOldTokens() public onlyOwner {
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(abi.encodeWithSelector(Errors.OwnableUnauthorizedAccount.selector, actor.dan_push_holder));
-        pushMigrationHelperProxy.burnOldTokens(1000 ether);
+        vm.expectRevert("Ownable: caller is not the owner");
+        pushMigrationHelperProxy.burnOldTokens(1_000 ether);
     }
 
     function test_Revertwhen_BurnOldTokens_AmountMoreThanBalance() public onlyOwner {
