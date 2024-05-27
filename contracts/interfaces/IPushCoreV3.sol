@@ -242,5 +242,5 @@ interface IPushCoreV3 {
      */
     function claimChatIncentives(uint256 _amount) external;
 
-    function addPoolFees(uint256 _rewardAmount) external ;
+    function addPoolFees(uint256 _rewardAmount) external;
 }
