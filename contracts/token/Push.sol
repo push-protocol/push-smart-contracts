@@ -105,7 +105,7 @@ contract Push is OwnableUpgradeable {
     function initialize() external initializer {
         born = block.number;
 
-        __Ownable_init(msg.sender);
+        __Ownable_init();
     }
 
     /// NOTE: the `setMinter` method is added for INttToken Interface support.
