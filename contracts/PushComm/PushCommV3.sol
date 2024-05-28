@@ -635,7 +635,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             EPNSCoreAddress,
             _requestPayload,
             0, // no receiver value needed since we're just passing a message
-            GAS_LIMIT,
+            _gasLimit,
             WORMHOLE_RECIPIENT_CHAIN,
             msg.sender // Refund address is of the sender
         );
