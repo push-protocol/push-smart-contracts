@@ -1,6 +1,6 @@
 setMinter.t.sol
 ├── when caller is not owner
-│   └── it REVERT - OwnableUnauthorizedAccount(caller)
+│   └── it REVERT - "Ownable: caller is not the owner"
 └── when caller is owner
     ├── when newMinter passed is zero address
     │   └── it REVERT - InvalidMinterZeroAddress()
