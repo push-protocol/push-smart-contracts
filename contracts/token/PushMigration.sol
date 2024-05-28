@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import { Errors } from "../libraries/Errors.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -20,12 +19,19 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
 
     event TokenMigrated(address indexed _tokenHolder, address indexed _tokenReceiver, uint256 _amountMigrated);
     event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
+    event TokenUnmigrationStatusUpdated(bool _status);
+    event NewPushTokenUpdated(address indexed _newTokenAddress);
 
     modifier whenUnMigrationIsAllowed() {
         if (unMigrationPaused) {
             revert UnmigrationPaused();
         }
         _;
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
     function initialize(address _owner, address _oldToken) external initializer {
@@ -45,6 +51,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
 
     function toggleUnMigrationStatus(bool _unMigrationFlag) external onlyOwner {
         unMigrationPaused = _unMigrationFlag;
+        emit TokenUnmigrationStatusUpdated(_unMigrationFlag);e
     }
 
     /// @notice Allows setting up the new PUSH Token
@@ -54,6 +61,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
             revert Errors.InvalidArgument_WrongAddress(_newToken);
         }
         newPushToken = IERC20(_newToken);
+        emit NewPushTokenUpdated(_newToken);
     }
 
     /// @notice Allows 1:1 migration of old push token to new Push Tokens
