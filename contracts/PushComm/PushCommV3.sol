@@ -21,7 +21,6 @@ import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -31,7 +30,6 @@ import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     /* *****************************
 
@@ -486,36 +484,36 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
     ***************************** */
 
-    function registerUserPGP(bytes calldata _data, string calldata _pgp, bool _isNFT) external {
+    function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
         uint256 fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
 
-        bytes32 hash = keccak256(_data);
+        bytes32 caipHash = keccak256(_caipData);
 
         if (!_isNFT) {
-            (, address _wallet) = abi.decode(_data, (string, address));
+            (, address _wallet) = abi.decode(_caipData, (string, address));
 
-            if (bytes(walletToPGP[hash]).length != 0 || _wallet != msg.sender) {
+            if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
             }
             emit UserPGPRegistered(_pgp, _wallet, chainName, chainID);
         } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_data, (string, string, uint256, address, uint256, uint256));
+            (,,, address _nft, uint256 _id,) = abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
 
-            if (bytes(walletToPGP[hash]).length != 0) {
-                string memory _previousPgp = walletToPGP[hash];
+            if (bytes(walletToPGP[caipHash]).length != 0) {
+                string memory _previousPgp = walletToPGP[caipHash];
                 emit UserPGPRemoved(_previousPgp, _nft, _id, chainName, chainID);
             }
             emit UserPGPRegistered(_pgp, _nft, _id, chainName, chainID);
         }
-        walletToPGP[hash] = _pgp;
+        walletToPGP[caipHash] = _pgp;
     }
 
-    function removeWalletFromUser(bytes calldata _data, bool _isNFT) public {
-        bytes32 hash = keccak256(_data);
-        if (bytes(walletToPGP[hash]).length == 0) {
+    function removeWalletFromUser(bytes calldata _caipData, bool _isNFT) public {
+        bytes32 caipHash = keccak256(_caipData);
+        if (bytes(walletToPGP[caipHash]).length == 0) {
             revert("Invalid Call");
         }
 
@@ -523,21 +521,21 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         PROTOCOL_POOL_FEE += fee;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
 
-        string memory pgp = walletToPGP[hash];
+        string memory pgp = walletToPGP[caipHash];
 
         if (!_isNFT) {
-            (, address _wallet) = abi.decode(_data, (string, address));
+            (, address _wallet) = abi.decode(_caipData, (string, address));
 
             if (_wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
             }
             emit UserPGPRemoved(pgp, _wallet, chainName, chainID);
         } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_data, (string, string, uint256, address, uint256, uint256));
+            (,,, address _nft, uint256 _id,) = abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
 
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
             emit UserPGPRemoved(pgp, _nft, _id, chainName, chainID);
         }
-        delete walletToPGP[hash];
+        delete walletToPGP[caipHash];
     }
 }
