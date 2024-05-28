@@ -16,6 +16,7 @@ import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 
@@ -784,7 +785,7 @@ contract PushCoreV3 is
         onlyPushChannelAdmin();
         registeredSenders[sourceChain] = sourceAddress;
     }
-
+ 
     function setWormholeRelayer(address _wormholeRelayer) public {
         onlyPushChannelAdmin();
         wormholeRelayer = _wormholeRelayer;
@@ -878,8 +879,11 @@ contract PushCoreV3 is
 
         //ToDo: Fetch amount split for Protocol_pool_funds vs arbitraryReqFees
         // USE A helper library to calculate the fee amount based on feePercentage
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
 
         // Update states based on Fee calculation
+        PROTOCOL_POOL_FEES += feeAmount;
+        arbitraryReqFees[recipient] += amount - feeAmount;
 
         emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }

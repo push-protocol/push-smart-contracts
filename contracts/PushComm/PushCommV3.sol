@@ -563,6 +563,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         uint256 _amount
     )
         external
+        payable
         whenNotPaused
     {
         if (_amount < ADD_CHANNEL_MIN_FEES) {
@@ -579,6 +580,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         uint256 _amount
     )
         external
+        payable
         whenNotPaused
     {
         require(_amount > 0, "Invalid Amount");
@@ -593,9 +595,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         uint256 _amount
     )
         external
+        payable
         whenNotPaused
     {
         require(_amount > 0, "Invalid Amount");
+        require(_payload.feePercentage <= 100, "Invalid Fee Percentage");
 
         bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
         createCrossChainRequest(requestPayload, _amount);
