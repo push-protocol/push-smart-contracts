@@ -560,7 +560,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     function createChannel(
         CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _gasLimit
     )
         external
         payable
@@ -571,13 +572,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
 
         bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount);
+        createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
     // Cross Chain Request: Create Incentivized Chat
 
     function createIncentivizedChatRequest(
         CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _gasLimit
     )
         external
         payable
@@ -586,13 +588,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         require(_amount > 0, "Invalid Amount");
 
         bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount);
+        createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
 
     // Cross Chain Request: Arbitrary Request
     function createRequestWithFeeId(
         CrossChainRequestTypes.ArbitraryRequestPayload memory _payload,
-        uint256 _amount
+        uint256 _amount,
+        uint256 _gasLimit
     )
         external
         payable
@@ -602,22 +605,26 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         require(_payload.feePercentage <= 100, "Invalid Fee Percentage");
 
         bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
-        createCrossChainRequest(requestPayload, _amount);
+        createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
 
-    function quoteMsgRelayCost(uint16 targetChain) public view returns (uint256 cost) {
-        (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, GAS_LIMIT);
+    function quoteTokenBridgingCost() public view returns (uint256 cost) {
+        TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
+            TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
+        cost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
     }
 
-    function createCrossChainRequest(bytes memory _requestPayload, uint256 _amount) public payable {
+    function quoteMsgRelayCost(uint16 targetChain, uint256 gasLimit) public view returns (uint256 cost) {
+        (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
+    }
+
+    function createCrossChainRequest(bytes memory _requestPayload, uint256 _amount, uint256 _gasLimit) public payable {
         bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
 
         // Calculate MSG bridge cost and Token Bridge cost
         // ToDo: Getter functions for total cost that needs to be sent in this fn
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN);
-        TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
-            TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
-        uint256 tokenBridgeCost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, _gasLimit);
+        uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
@@ -636,6 +643,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+    }
+
+    function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
+        ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
     }
 
     // WORMHOLE SETTER FUNCTIONS
