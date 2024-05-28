@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import { PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable{
     using SafeERC20 for IERC20;
@@ -32,7 +32,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable{
     function initialize(address _owner, address _oldToken) external initializer {
         oldPushToken = IERC20(_oldToken);
 
-        __Ownable_init(_owner);
+        __Ownable_init();
     }
     
     function pauseContract() external onlyOwner{
