@@ -51,7 +51,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
 
     function toggleUnMigrationStatus(bool _unMigrationFlag) external onlyOwner {
         unMigrationPaused = _unMigrationFlag;
-        emit TokenUnmigrationStatusUpdated(_unMigrationFlag);e
+        emit TokenUnmigrationStatusUpdated(_unMigrationFlag);
     }
 
     /// @notice Allows setting up the new PUSH Token
