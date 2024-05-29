@@ -18,4 +18,27 @@ library BaseHelper {
         }
         return size > 0;
     }
+
+    /**
+     * @notice This function can be used to calculate percentage of a given amount
+     * @dev This function performs a simple percentage calculation.
+     *      It multiplies the amount by the percentage and divides the result by 100.
+     * @param _amount The amount for which the percentage is calculated
+     * @param _percentage The percentage to be calculated (must be between 0 and 100)
+     * @return uint256 The calculated percentage value
+     */
+    function calcPercentage(uint256 _amount, uint256 _percentage) internal pure returns (uint256) {
+        return _amount * _percentage / 100;
+    }
+
+    /**
+     * @notice This function converts an address to a bytes32 value
+     * @dev This function performs type casting to convert an address to a bytes32.
+     *      It first converts the address to a uint160, then to a uint256, and finally to a bytes32.
+     * @param _addr The EVM address to be converted to bytes32
+     * @return bytes32 The bytes32 representation of the address
+     */
+    function addressToBytes32(address _addr) internal pure returns (bytes32) {
+        return bytes32(uint256(uint160(_addr)));
+    }
 }
