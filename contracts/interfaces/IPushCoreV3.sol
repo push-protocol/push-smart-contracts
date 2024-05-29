@@ -10,7 +10,7 @@ interface IPushCoreV3 {
     ***************************** */
 
     /// @notice emits whenever a channel updates its metadata
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
+    event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
     event ChannelVerified(address indexed channel, address indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel

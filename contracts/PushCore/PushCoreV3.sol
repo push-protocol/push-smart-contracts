@@ -69,7 +69,9 @@ contract PushCoreV3 is
     }
 
     function onlyActivatedChannels(address _channel) private view {
-        if (channels[_channel].channelState != 1) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        if (channelInfo[_channelBytesID].channelState != 1) {
             revert Errors.Core_InvalidChannel();
         }
     }
@@ -156,14 +158,17 @@ contract PushCoreV3 is
 
     **************************************/
     ///@inheritdoc IPushCoreV3
+    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private function
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyActivatedChannels(_channel);
 
         if (msg.sender != _channel) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
+        
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
-        uint256 updateCounter = channelUpdateCounter[_channel] + 1;
+        uint256 updateCounter = channelUpdateCounterInfo[_channelBytesID] + 1;
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
         if (_amount < requiredFees) {
@@ -171,11 +176,11 @@ contract PushCoreV3 is
         }
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
-        channelUpdateCounter[_channel] = updateCounter;
-        channels[_channel].channelUpdateBlock = block.number;
+        channelUpdateCounterInfo[_channelBytesID] = updateCounter;
+        channelInfo[_channelBytesID].channelUpdateBlock = block.number;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
-        emit UpdateChannel(_channel, _newIdentity, _amount);
+        emit UpdateChannel(_channelBytesID, _newIdentity, _amount);
     }
 
     /// @inheritdoc IPushCoreV3
@@ -191,9 +196,9 @@ contract PushCoreV3 is
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
-        bytes32 _channel = BaseHelper.addressToBytes32(msg.sender);
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
-        if (channelInfo[_channel].channelState != 0) {
+        if (channelInfo[_channelBytesID].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
         if (
@@ -209,8 +214,8 @@ contract PushCoreV3 is
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
         
         // Convert channel to bytes32        
-        emit ChannelCreated(_channel, _channelType, _identity);
-        _createChannel(_channel, _channelType, _amount, _channelExpiryTime);
+        emit ChannelCreated(_channelBytesID, _channelType, _identity);
+        _createChannel(_channelBytesID, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -276,8 +281,8 @@ contract PushCoreV3 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
         
-        bytes32 _channel = BaseHelper.addressToBytes32(msg.sender);
-        _createSettings(_channel, _notifOptions, _notifSettings, _notifDescription);
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        _createSettings(_channelBytesID, _notifOptions, _notifSettings, _notifDescription);
     }
 
     function _createSettings(
