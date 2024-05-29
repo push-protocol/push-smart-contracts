@@ -271,7 +271,6 @@ contract PushCoreV3 is
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
-        channelNotifSettings[msg.sender] = notifSetting;
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
