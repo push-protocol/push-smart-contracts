@@ -191,7 +191,9 @@ contract PushCoreV3 is
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
-        if (channels[msg.sender].channelState != 0) {
+        bytes32 _channel = BaseHelper.addressToBytes32(msg.sender);
+
+        if (channelInfo[_channel].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
         if (
@@ -204,10 +206,11 @@ contract PushCoreV3 is
             revert Errors.Core_InvalidChannelType();
         }
 
-        emit AddChannel(msg.sender, _channelType, _identity);
-
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-        _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
+        
+        // Convert channel to bytes32        
+        emit ChannelCreated(_channel, _channelType, _identity);
+        _createChannel(_channel, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -224,28 +227,28 @@ contract PushCoreV3 is
      *
      */
     function _createChannel(
-        address _channel,
+        bytes32 _channel,
         CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
-        private
+        private 
+    
     {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
-
         // Calculate channel weight
         uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
         // Next create the channel and mark user as channellized
-        channels[_channel].channelState = 1;
-        channels[_channel].poolContribution = poolFundAmount;
-        channels[_channel].channelType = _channelType;
-        channels[_channel].channelStartBlock = block.number;
-        channels[_channel].channelUpdateBlock = block.number;
-        channels[_channel].channelWeight = _channelWeight;
+        channelInfo[_channel].channelState = 1;
+        channelInfo[_channel].poolContribution = poolFundAmount;
+        channelInfo[_channel].channelType = _channelType;
+        channelInfo[_channel].channelStartBlock = block.number;
+        channelInfo[_channel].channelUpdateBlock = block.number;
+        channelInfo[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         channelsCount = channelsCount + 1;
 
@@ -253,7 +256,7 @@ contract PushCoreV3 is
             if (_channelExpiryTime <= block.timestamp) {
                 revert Errors.Core_InvalidExpiryTime();
             }
-            channels[_channel].expiryTime = _channelExpiryTime;
+            channelInfo[_channel].expiryTime = _channelExpiryTime;
         }
     }
 
@@ -865,9 +868,10 @@ contract PushCoreV3 is
             CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
             bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
             uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
-
-            emit AddChannel(sender, _channelType, _channelIdentity);
-            _createChannel(sender, _channelType, amount, channelExpiryTime);
+            
+            bytes32 _channel = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channel, _channelType, _channelIdentity);
+            _createChannel(_channel, _channelType, amount, channelExpiryTime);
         } else if (functionSig == this.handleChatRequestData.selector) {
             //ToDo: Update handleChatRequest to handle incoming cross Chain Request
             uint256 amount = reqPayload.amount;

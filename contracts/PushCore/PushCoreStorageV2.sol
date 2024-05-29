@@ -47,6 +47,6 @@ contract PushCoreStorageV2 {
     mapping(uint16 => bytes32) public registeredSenders;
     mapping(address => uint256) public arbitraryReqFees;
 
-    mapping(address => CoreTypes.Channel) public channelInfo;
+    mapping(bytes32 => CoreTypes.Channel) public channelInfo;
     
 }

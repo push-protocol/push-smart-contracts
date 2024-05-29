@@ -17,8 +17,10 @@ interface IPushCoreV3 {
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(address indexed channel);
+    /// @notice emits whenever a new channel is created - ToDo: Remove this event
+    event AddChannel(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a new channel is created
-    event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    event ChannelCreated(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a channel changes the notification settings
     event ChannelNotifcationSettingsAdded(
         bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
