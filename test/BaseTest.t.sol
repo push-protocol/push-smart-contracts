@@ -20,6 +20,8 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
+import { ChannelCreators } from "./utils/ChannelCreators.sol";
+import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNttToken;
@@ -42,6 +44,7 @@ abstract contract BaseTest is Test, Constants, Events {
         Main Actors in Test
      *************** */
     Actors internal actor;
+    ChannelCreators internal channelCreators;
     address tokenDistributor;
 
     /* ***************
@@ -78,6 +81,19 @@ abstract contract BaseTest is Test, Constants, Events {
             dan_push_holder: createActor("dan_push_holder"),
             tim_push_holder: createActor("tim_push_holder")
         });
+
+        // Initialize channel creators with bytes32
+        channelCreators = ChannelCreators({
+            admin_Bytes32: createChannelCreatorsID(actor.admin),
+            governance_Bytes32: createChannelCreatorsID(actor.governance),
+            bob_channel_owner_Bytes32: createChannelCreatorsID(actor.bob_channel_owner),
+            alice_channel_owner_Bytes32: createChannelCreatorsID(actor.alice_channel_owner),
+            charlie_channel_owner_Bytes32: createChannelCreatorsID(actor.charlie_channel_owner),
+            tony_channel_owner_Bytes32: createChannelCreatorsID(actor.tony_channel_owner),
+            dan_push_holder_Bytes32: createChannelCreatorsID(actor.dan_push_holder),
+            tim_push_holder_Bytes32: createChannelCreatorsID(actor.tim_push_holder)
+        });
+
         changePrank(actor.admin);
         pushNttToken = new Push(actor.admin);
         pushProxyAdmin = new ProxyAdmin();
@@ -181,5 +197,9 @@ abstract contract BaseTest is Test, Constants, Events {
         vm.prank(tokenDistributor);
         pushToken.transfer(_actor, 50_000 ether);
         return _actor;
+    }
+
+    function createChannelCreatorsID(address _actor) internal pure returns (bytes32 _channelCreatorBytes32) {
+        _channelCreatorBytes32 = BaseHelper.addressToBytes32(_actor);
     }
 }
