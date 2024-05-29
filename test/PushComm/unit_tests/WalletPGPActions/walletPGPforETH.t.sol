@@ -193,7 +193,7 @@ contract walletPGP_Test is BasePushCommTest {
         // it should REVERT
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
-        vm.expectRevert("Nothing to delete");
+        vm.expectRevert("Invalid Call");
         changePrank(actor.bob_channel_owner);
         commProxyEth.removeWalletFromUser(_data, false);
     }
@@ -234,7 +234,7 @@ contract walletPGP_Test is BasePushCommTest {
         uint coreBalanceBefore = pushToken.balanceOf(address(coreProxy));
         bytes memory _data = getEncodedData(address(firstERC721), 0);
 
-        vm.expectRevert("Nothing to delete");
+        vm.expectRevert("Invalid Call");
         changePrank(actor.bob_channel_owner);
         commProxyEth.removeWalletFromUser(_data, true);
     }

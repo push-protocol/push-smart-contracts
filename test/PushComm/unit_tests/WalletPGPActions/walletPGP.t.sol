@@ -171,7 +171,7 @@ contract walletPGP_Test is BasePushCommTest {
         // it should REVERT
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
-        vm.expectRevert("Nothing to delete");
+        vm.expectRevert("Invalid Call");
         changePrank(actor.bob_channel_owner);
         commProxy.removeWalletFromUser(_data, false);
     }
@@ -212,7 +212,7 @@ contract walletPGP_Test is BasePushCommTest {
         // it should REVERT
         bytes memory _data = getEncodedData(address(firstERC721), 0);
 
-        vm.expectRevert("Nothing to delete");
+        vm.expectRevert("Invalid Call");
         changePrank(actor.bob_channel_owner);
         commProxy.removeWalletFromUser(_data, true);
     }
