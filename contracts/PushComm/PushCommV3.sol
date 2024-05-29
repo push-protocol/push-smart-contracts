@@ -622,7 +622,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
 
         // Calculate MSG bridge cost and Token Bridge cost
-        // ToDo: Getter functions for total cost that needs to be sent in this fn
         uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, _gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 

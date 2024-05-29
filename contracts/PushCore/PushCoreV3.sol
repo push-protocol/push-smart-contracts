@@ -877,11 +877,9 @@ contract PushCoreV3 is
         address recipient = reqPayload.amountRecipient;
         uint256 feePercentage = reqPayload.feePercentage;
 
-        //ToDo: Fetch amount split for Protocol_pool_funds vs arbitraryReqFees
-        // USE A helper library to calculate the fee amount based on feePercentage
         uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
 
-        // Update states based on Fee calculation
+        // Update states based on Fee Percentage calculation
         PROTOCOL_POOL_FEES += feeAmount;
         arbitraryReqFees[recipient] += amount - feeAmount;
 
