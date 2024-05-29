@@ -756,4 +756,112 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
     }
+    
+   /*
+     *  Fee Pool Split Function:
+     * 1. name: updateFeePools()
+     * 2. Can be called by governance.
+     * 3. Takes the percentage param to decide what percentage of Protocol_POOL_FEE Goes to Holder_Fee_Pool vs Wallet_Fee_Pool
+     * 4. Based on this calculation, it also updates Holder_Fee_Pool and Wallet_Fee_Pool
+     * 5. Emits out an event.
+    */
+//TODO logic yet to be finalized
+   function updateFeePools(uint _walletFeePercent, uint _holderFeePercent) external {
+     onlyGovernance();
+   }
+
+   /*
+     * Fetching shares for a wallet 
+     * 1. Internal helper function
+     * 2. helps in getting the shares to be assigned for a wallet based on params passed in this function
+   */ 
+    function getSharesAmount(
+        uint256 _totalShares,
+        CoreTypes.Percentage memory _percentage
+    )
+        public
+        pure
+        returns (uint256 sharesToBeAllocated)
+    {
+        if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100) revert Errors.InvalidArg_MoreThanExpected( 99,_percentage.decimalPlaces);
+        sharesToBeAllocated = (_percentage.percentageNumber * _totalShares) 
+            / ((100 * (10 ** _percentage.decimalPlaces)) - _percentage.percentageNumber);
+    }
+
+   /*
+     * Adding Wallet Share to a Wallet
+     * 1. addWalletShare(address wallet, uint256 percentageOfShares)
+     * 2. Can be called by governance.
+     * 3. Uses the formulae to derive the percent of shares to be assigned to a specific wallet
+     * 4. Updates WALLET_TOTAL_SHARES
+     * 5. Updates WalletToShares mapping
+     * 6. Emits out an event.
+     * 7. If a wallet has 
+    */  
+    function addWalletShare(address _walletAddress, CoreTypes.Percentage memory _percentage) public {
+        onlyGovernance();
+        uint oldTotalShare = WALLET_TOTAL_SHARES;
+        uint currentWalletShare = WalletToShares[_walletAddress];
+        uint newTotalShare;
+        
+        if( currentWalletShare != 0) {
+            newTotalShare = oldTotalShare - currentWalletShare;
+        }else{
+            newTotalShare = oldTotalShare;
+        }
+        uint256 sharesToBeAllocated = getSharesAmount(newTotalShare, _percentage);
+         if (sharesToBeAllocated < currentWalletShare) revert Errors.InvalidArg_LessThanExpected(currentWalletShare, sharesToBeAllocated);
+        WALLET_TOTAL_SHARES = newTotalShare + sharesToBeAllocated;
+        WalletToShares[_walletAddress] = sharesToBeAllocated;
+    }
+   /*
+     * Removing Wallet Share from a Wallet
+     * 1. removes the shares from a wallet completely
+     * 2. Can be called by governance.
+     * 3. Updates WALLET_TOTAL_SHARES
+     * 4. Emits out an event.
+   */
+    function removeWalletShare(address _walletAddress) public {
+        onlyGovernance();
+        WalletToShares[FOUNDATION] += WalletToShares[_walletAddress];
+        WalletToShares[_walletAddress] = 0;
+    }
+
+    function decreaseWalletShare(address _walletAddress, CoreTypes.Percentage memory _percentage) external {
+        onlyGovernance();
+        removeWalletShare(_walletAddress);
+        addWalletShare( _walletAddress, _percentage);
+
+    }
+
+    /*
+     *Reward Calculation for a Given Wallet
+     * 1. calculateWalletRewards(address wallet)
+     * 2. public helper function
+     * 3. Helps in calculating rewards for a specific wallet based on
+       * a. Their Wallet Share 
+        * b. Total Wallet Shares
+        * c. Total Rewards available in WALLET_TOTAL_SHARES
+     * 4. Once calculated rewards for a sepcific wallet can be updated in WalletToRewards mapping
+     * 5. Reward can be calculated for wallets similar they are calculated for Token holders in a specific epoch.
+
+        * Reward for a Given Wallet X = ( Wallet Share of X / WALLET_TOTAL_SHARES) * WALLET_FEE_POOL
+    */
+   //TODO logic yet to be finalized
+   function calculateWalletRewards(address _wallet) public returns(uint) {
+       return ( WalletToShares[_wallet] / WALLET_TOTAL_SHARES) * WALLET_FEE_POOL;
+   }
+
+    /*
+    *Claim Rewards
+    * 1. claimWalletRewards()
+    * 2. No time delays or epochs required.
+    * 3. Simply allows claiming rewards for the caller if they have any.
+    * 4. Emits out an event
+    */
+   //TODO logic yet to be finalized
+   function claimWalletRewards () external {
+
+   }
+
 }

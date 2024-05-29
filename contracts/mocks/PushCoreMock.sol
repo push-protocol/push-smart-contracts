@@ -42,7 +42,7 @@ contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         // setup addresses
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin; // Will be changed on-Chain governance Address later
-        daiAddress = _daiAddress;
+        FOUNDATION = _pushChannelAdmin;
         aDaiAddress = _aDaiAddress;
         WETH_ADDRESS = _wethAddress;
         REFERRAL_CODE = _referralCode;
@@ -55,9 +55,8 @@ contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         ADD_CHANNEL_MIN_FEES = 50 ether; // can never be below MIN_POOL_CONTRIBUTION
 
         ADJUST_FOR_FLOAT = 10 ** 7;
-        groupLastUpdate = block.number;
-        groupNormalizedWeight = ADJUST_FOR_FLOAT; // Always Starts with 1 * ADJUST FOR FLOAT
-
+        WALLET_TOTAL_SHARES =100_000 * 1e18;
+        WalletToShares[FOUNDATION] = WALLET_TOTAL_SHARES;
         // Create Channel
         success = true;
     }
