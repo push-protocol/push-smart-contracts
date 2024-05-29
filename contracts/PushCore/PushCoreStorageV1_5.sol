@@ -20,7 +20,7 @@ contract PushCoreStorageV1_5 {
 
     address public pushChannelAdmin;
     address public governance;
-    address public daiAddress;
+    address public FOUNDATION;// RE-USE STORAGE
     address public aDaiAddress;
     address public WETH_ADDRESS;
     address public epnsCommunicator;
@@ -33,9 +33,9 @@ contract PushCoreStorageV1_5 {
     uint256 public channelsCount;
 
     ///  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
-    uint256 public groupNormalizedWeight;
-    uint256 public groupHistoricalZ;
-    uint256 public groupLastUpdate;
+    uint256 public HOLDER_FEE_POOL;// RE-USE STORAGE
+    uint256 public WALLET_FEE_POOL;// RE-USE STORAGE
+    uint256 public WALLET_TOTAL_SHARES;// RE-USE STORAGE
     uint256 public groupFairShareCount;
 
     /// @notice Necessary variables for Keeping track of Funds and Fees

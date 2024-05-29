@@ -36,6 +36,7 @@ contract PushCoreStorageV2 {
      */
     mapping(address => uint256) public celebUserFunds;
 
-    /* *** v2.5 State variables *** */
-    address public feePoolStakingContract;
+    /* *** v3 State variables *** */
+    mapping(address wallet => uint256 sharesAmount) public WalletToShares ;
+    mapping(address wallet => uint256 sharesAmount) public WalletToRewards ;
 }

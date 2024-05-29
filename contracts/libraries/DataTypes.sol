@@ -58,6 +58,10 @@ library CoreTypes {
         /// @notice The Expiry TimeStamp in case of TimeBound Channel Types
         uint256 expiryTime;
     }
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
+    }
 }
 
 library CommTypes {
