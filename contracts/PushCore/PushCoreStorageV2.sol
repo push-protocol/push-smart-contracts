@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { StakingTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes,StakingTypes } from "../libraries/DataTypes.sol";
 
 contract PushCoreStorageV2 {
     /* *** V2 State variables *** */
@@ -46,4 +46,7 @@ contract PushCoreStorageV2 {
     mapping(bytes32 => bool) public processedMessages;
     mapping(uint16 => bytes32) public registeredSenders;
     mapping(address => uint256) public arbitraryReqFees;
+
+    mapping(address => CoreTypes.Channel) public channelInfo;
+    
 }
