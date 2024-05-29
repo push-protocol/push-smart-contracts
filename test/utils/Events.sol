@@ -4,6 +4,7 @@ import { CoreTypes } from "../../contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    event ChannelCreated(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);

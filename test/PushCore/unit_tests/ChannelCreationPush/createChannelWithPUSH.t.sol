@@ -1,5 +1,6 @@
 pragma solidity ^0.8.20;
 
+import { BaseHelper } from "../../../../../contracts/libraries/BaseHelper.sol";
 import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
@@ -92,6 +93,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
         uint256 expectedChannelExpiryTime = 0;
         uint256 expectedProtocolPoolFees = FEE_AMOUNT;
 
+        bytes32 _channelBobBytes = BaseHelper.addressToBytes32(actor.bob_channel_owner);
         (
             ,
             uint8 actualChannelState,
@@ -104,7 +106,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
             uint256 actualChannelUpdateBlock,
             uint256 actualChannelWeight,
             uint256 actualExpiryTime
-        ) = coreProxy.channels(actor.bob_channel_owner);
+        ) = coreProxy.channelInfo(_channelBobBytes);
 
         assertEq(expectedPoolContribution, coreProxy.CHANNEL_POOL_FUNDS());
         assertEq(expectedChannelsCount, coreProxy.channelsCount());
@@ -146,8 +148,9 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
     }
 
     function test_EmitRelevantEvents() public whenNotPaused {
+        bytes32 _channelBytes = BaseHelper.addressToBytes32(actor.bob_channel_owner);
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit AddChannel(actor.bob_channel_owner, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity);
+        emit ChannelCreated(_channelBytes, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity);
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
