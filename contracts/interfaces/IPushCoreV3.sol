@@ -21,7 +21,7 @@ interface IPushCoreV3 {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a channel changes the notification settings
     event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
+        bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     /// @notice emits whenever a subgraph is added(handled by backend)
     event AddSubGraph(address indexed channel, bytes _subGraphData);

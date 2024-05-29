@@ -270,11 +270,24 @@ contract PushCoreV3 is
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
-        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
-
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
-        emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
+        
+        bytes32 _channel = BaseHelper.addressToBytes32(msg.sender);
+        _createSettings(_channel, _notifOptions, _notifSettings, _notifDescription);
+    }
+
+    function _createSettings(
+        bytes32 _channel,
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription
+    ) 
+        private
+    {
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
+        
+        emit ChannelNotifcationSettingsAdded(_channel, _notifOptions, notifSetting, _notifDescription);
     }
 
     /// @inheritdoc IPushCoreV3
