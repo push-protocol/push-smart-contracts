@@ -796,7 +796,8 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
      * 4. Updates WALLET_TOTAL_SHARES
      * 5. Updates WalletToShares mapping
      * 6. Emits out an event.
-     * 7. If a wallet has 
+     * 7. If a wallet has already has a share, then it acts as a "increase share" function. And the percenatge passed
+     *    should be greater than the already assigned percentge.
     */  
     function addWalletShare(address _walletAddress, CoreTypes.Percentage memory _percentage) public {
         onlyGovernance();
