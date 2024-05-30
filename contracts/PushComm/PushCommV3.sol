@@ -492,7 +492,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         bytes32 caipHash = keccak256(_caipData);
 
         if (!_isNFT) {
-            (, address _wallet) = abi.decode(_caipData, (string, address));
+            (,uint _chainId, address _wallet) = abi.decode(_caipData, (string,uint,address));
 
             if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
@@ -524,7 +524,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         string memory pgp = walletToPGP[caipHash];
 
         if (!_isNFT) {
-            (, address _wallet) = abi.decode(_caipData, (string, address));
+            (,uint _chainId, address _wallet) = abi.decode(_caipData, (string,uint,address));
 
             if (_wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();

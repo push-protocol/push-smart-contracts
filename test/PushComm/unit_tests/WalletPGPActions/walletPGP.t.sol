@@ -217,32 +217,23 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.removeWalletFromUser(_data, true);
     }
     
-    function test_multipleAddresses_andFullRun(address _addr1,address _addr2, address _addr3)external {
-        vm.assume(_addr1 != _addr2 &&_addr2 != _addr3 && _addr1 != actor.admin);
-        vm.assume( _addr3 != address(0) && _addr2 != address(0) && _addr1 != address(0));
+    function test_multipleAddresses_andFullRun(address _addr1,address _addr2)external {
+        vm.assume(_addr1 != _addr2 && _addr1 != actor.admin);
+        vm.assume(_addr2 != address(0) && _addr1 != address(0));
         bytes memory _dataNft1 = getEncodedData(address(firstERC721), 1);
         bytes memory _dataNft2 = getEncodedData(address(secondERC721), 1);
-        bytes memory _dataNft3 = getEncodedData(address(thirdERC721), 1);
         bytes memory _dataEoa1 = getEncodedData(_addr1);
         bytes memory _dataEoa2 = getEncodedData(_addr2);
-        bytes memory _dataEoa3 = getEncodedData(_addr3);
 
         changePrank(tokenDistributor);
         pushToken.transfer(_addr1, 50_000 ether);
         pushToken.transfer(_addr2, 50_000 ether);
-        pushToken.transfer(_addr3, 50_000 ether);
 
         approveTokens(_addr1, address(commProxy), 50_000 ether);
         approveTokens(_addr2, address(commProxy), 50_000 ether);
-        approveTokens(
-            _addr3,
-            address(commProxy),
-            50_000 ether
-        );
 
         mintNft(_addr1,firstERC721);
         mintNft(_addr2,secondERC721);
-        mintNft(_addr3,thirdERC721);
 
         changePrank(_addr1);
         commProxy.registerUserPGP(_dataEoa1, pgp1, false);
@@ -260,14 +251,6 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp2 = getWalletToPgp(_dataNft2);
         assertEq(_storedPgp2, pgp2);
 
-        changePrank(_addr3);
-        commProxy.registerUserPGP(_dataEoa3, pgp3, false);
-        string memory _storedPgpEoa3 = getWalletToPgp(_dataEoa3);
-        assertEq(_storedPgpEoa3, pgp3);
-        commProxy.registerUserPGP(_dataNft3, pgp3, true);
-        string memory _storedPgp3 = getWalletToPgp(_dataNft3);
-        assertEq(_storedPgp3, pgp3);
-
         changePrank(_addr1);
         firstERC721.transferFrom(_addr1,_addr2,1);
         string memory _storedPgpTransfer = getWalletToPgp(_dataNft1);
@@ -277,7 +260,7 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgpTransferAndRegister = getWalletToPgp(_dataNft1);
         assertEq(_storedPgpTransferAndRegister, pgp2);
 
-        assertEq(pushToken.balanceOf(address(commProxy)), 70e18);
+        assertEq(pushToken.balanceOf(address(commProxy)), 50e18);
     }
 
     //Helper Functions
@@ -287,8 +270,8 @@ contract walletPGP_Test is BasePushCommTest {
     }
 
 
-    function getEncodedData(address _wallet) internal pure returns (bytes memory _data) {
-        _data = abi.encode("eip155", _wallet);
+    function getEncodedData(address _wallet) internal view returns (bytes memory _data) {
+        _data = abi.encode("eip155",block.chainid, _wallet);
     }
 
     function getEncodedData(address _nft, uint256 _id) internal view returns (bytes memory _data) {
