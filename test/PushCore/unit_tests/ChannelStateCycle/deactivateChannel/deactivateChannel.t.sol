@@ -55,7 +55,7 @@ contract DeactivateChannel_Test is BasePushCoreTest {
         uint256 expectedRefundAmount = ADD_CHANNEL_MIN_FEES - FEE_AMOUNT - MIN_POOL_CONTRIBUTION;
         vm.expectEmit(true, true, false, false, address(coreProxy));
 
-        emit ChannelStateUpdate(actor.bob_channel_owner, expectedRefundAmount, 0);
+        emit ChannelStateUpdate(channelCreators.bob_channel_owner_Bytes32, expectedRefundAmount, 0);
 
         coreProxy.updateChannelState(0);
 

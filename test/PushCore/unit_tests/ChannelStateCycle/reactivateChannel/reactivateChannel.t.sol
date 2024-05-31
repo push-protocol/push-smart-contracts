@@ -47,7 +47,7 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         coreProxy.updateChannelState(0);
 
         vm.expectEmit(true, true, false, false, address(coreProxy));
-        emit ChannelStateUpdate(actor.bob_channel_owner, 0, ADD_CHANNEL_MIN_FEES);
+        emit ChannelStateUpdate(channelCreators.bob_channel_owner_Bytes32, 0, ADD_CHANNEL_MIN_FEES);
 
         coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
 
