@@ -295,8 +295,8 @@ contract walletPGP_Test is BasePushCommTest {
     }
 
 
-    function getEncodedData(address _wallet) internal pure returns (bytes memory _data) {
-        _data = abi.encode("eip155", _wallet);
+    function getEncodedData(address _wallet) internal view returns (bytes memory _data) {
+        _data = abi.encode("eip155", block.chainid, _wallet);
     }
 
     function getEncodedData(address _nft, uint256 _id) internal view returns (bytes memory _data) {
