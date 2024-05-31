@@ -50,7 +50,7 @@ library EnumerableSet {
 
     struct Set {
         // Storage of set values
-        bytes [] _values;
+        bytes[] _values;
         // Position is the index of the value in the `values` array plus 1.
         // Position 0 is used to mean a value is not in the set.
         mapping(bytes value => uint256) _positions;
@@ -94,7 +94,7 @@ library EnumerableSet {
             uint256 lastIndex = set._values.length - 1;
 
             if (valueIndex != lastIndex) {
-                bytes  memory lastValue = set._values[lastIndex];
+                bytes memory lastValue = set._values[lastIndex];
 
                 // Move the lastValue to the index where the value to delete is
                 set._values[valueIndex] = lastValue;
@@ -138,7 +138,7 @@ library EnumerableSet {
      *
      * - `index` must be strictly less than {length}.
      */
-    function _at(Set storage set, uint256 index) private view returns (bytes memory ) {
+    function _at(Set storage set, uint256 index) private view returns (bytes memory) {
         return set._values[index];
     }
 
@@ -150,7 +150,7 @@ library EnumerableSet {
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
      */
-    function _values(Set storage set) private view returns (bytes [] memory) {
+    function _values(Set storage set) private view returns (bytes[] memory) {
         return set._values;
     }
 
@@ -204,7 +204,7 @@ library EnumerableSet {
      *
      * - `index` must be strictly less than {length}.
      */
-    function at(bytesSet storage set, uint256 index) internal view returns (bytes memory  ) {
+    function at(bytesSet storage set, uint256 index) internal view returns (bytes memory) {
         return _at(set._inner, index);
     }
 
@@ -216,9 +216,9 @@ library EnumerableSet {
      * this function has an unbounded cost, and using it as part of a state-changing function may render the function
      * uncallable if the set grows to a point where copying to memory consumes too much gas to fit in a block.
      */
-    function values(bytesSet storage set) internal view returns (bytes [] memory) {
-        bytes [] memory store = _values(set._inner);
-        bytes [] memory result;
+    function values(bytesSet storage set) internal view returns (bytes[] memory) {
+        bytes[] memory store = _values(set._inner);
+        bytes[] memory result;
 
         /// @solidity memory-safe-assembly
         assembly {
@@ -227,5 +227,4 @@ library EnumerableSet {
 
         return result;
     }
-
 }

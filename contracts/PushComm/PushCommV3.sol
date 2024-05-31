@@ -492,14 +492,15 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         bytes32 caipHash = keccak256(_caipData);
 
         if (!_isNFT) {
-            (,uint _chainId, address _wallet) = abi.decode(_caipData, (string,uint,address));
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
 
             if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
             }
             emit UserPGPRegistered(_pgp, _wallet, chainName, chainID);
         } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
 
             if (bytes(walletToPGP[caipHash]).length != 0) {
@@ -524,14 +525,15 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         string memory pgp = walletToPGP[caipHash];
 
         if (!_isNFT) {
-            (,uint _chainId, address _wallet) = abi.decode(_caipData, (string,uint,address));
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
 
             if (_wallet != msg.sender) {
                 revert Errors.Comm_InvalidArguments();
             }
             emit UserPGPRemoved(pgp, _wallet, chainName, chainID);
         } else {
-            (,,, address _nft, uint256 _id,) = abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
 
             require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
             emit UserPGPRemoved(pgp, _nft, _id, chainName, chainID);

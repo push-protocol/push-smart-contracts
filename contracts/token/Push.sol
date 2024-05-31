@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Push is Ownable{
+contract Push is Ownable {
     /// @notice EIP-20 token name for this token
     string public constant name = "Ethereum Push Notification Service";
 
@@ -103,7 +103,7 @@ contract Push is Ownable{
      * @notice Construct a new PUSH token
      * @param account The initial account to grant all the tokens
      */
-    constructor(address account) Ownable(){
+    constructor(address account) Ownable() {
         // holder weight initial adjustments
         holderWeight[account] = block.number;
         born = block.number;

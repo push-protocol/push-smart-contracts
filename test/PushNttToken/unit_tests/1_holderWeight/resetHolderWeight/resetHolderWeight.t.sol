@@ -14,9 +14,7 @@ contract ResetHolderWeight_Test is BaseTest {
 
     function test_Revertwhen_UnauthorisedDelegator() public {
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(
-            bytes("Push::resetHolderWeight: unauthorized")
-        );
+        vm.expectRevert(bytes("Push::resetHolderWeight: unauthorized"));
         pushNttToken.resetHolderWeight(actor.tim_push_holder);
     }
 
@@ -58,10 +56,8 @@ contract ResetHolderWeight_Test is BaseTest {
         MockTempProtocol tempProtocol = new MockTempProtocol();
 
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(
-            bytes("Push::resetHolderWeight: unauthorized")
-        );
-        
+        vm.expectRevert(bytes("Push::resetHolderWeight: unauthorized"));
+
         tempProtocol.claimReward(address(pushNttToken));
     }
 

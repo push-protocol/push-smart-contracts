@@ -17,28 +17,19 @@ contract walletPGP_Test is BasePushCommTest {
 
     function setUp() public override {
         BasePushCommTest.setUp();
+
         changePrank(actor.admin);
         commProxy.setFeeAmount(10e18);
+        // minting 3 NFTs
         firstERC721 = new MockERC721(actor.bob_channel_owner);
         secondERC721 = new MockERC721(actor.bob_channel_owner);
         thirdERC721 = new MockERC721(actor.bob_channel_owner);
+        // minting 10 push tokens to the commProxy
         approveTokens(actor.admin, address(commProxy), 50_000 ether);
         approveTokens(actor.governance, address(commProxy), 50_000 ether);
-        approveTokens(
-            actor.bob_channel_owner,
-            address(commProxy),
-            50_000 ether
-        );
-        approveTokens(
-            actor.alice_channel_owner,
-            address(commProxy),
-            50_000 ether
-        );
-        approveTokens(
-            actor.charlie_channel_owner,
-            address(commProxy),
-            50_000 ether
-        );
+        approveTokens(actor.bob_channel_owner, address(commProxy), 50_000 ether);
+        approveTokens(actor.alice_channel_owner, address(commProxy), 50_000 ether);
+        approveTokens(actor.charlie_channel_owner, address(commProxy), 50_000 ether);
         approveTokens(actor.dan_push_holder, address(commProxy), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(commProxy), 50_000 ether);
     }
@@ -56,7 +47,7 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.registerUserPGP(_data, pgp1, false);
     }
 
-    function test_WhenEOAIsOwnedAndDoesntHaveAPGP() external whenAUserTriesToAddAnEOAToPGP {
+    function test_When_EOAIsOwned_AndDoesntHavePGP() external whenAUserTriesToAddAnEOAToPGP {
         // it should execute and set update the mappings
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
@@ -68,7 +59,7 @@ contract walletPGP_Test is BasePushCommTest {
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
 
-    function test_WhenTheEOAIsOwnedButAlreadyHasAPGP() external whenAUserTriesToAddAnEOAToPGP {
+    function test_When_TheEOAIsOwned_ButAlreadyHasAPGP() external whenAUserTriesToAddAnEOAToPGP {
         // it REVERTS
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
@@ -85,14 +76,13 @@ contract walletPGP_Test is BasePushCommTest {
         assertEq(_storedPgp1, pgp1);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
-
     }
 
     modifier whenAUserTriesToAddAnNFTToPGP() {
         _;
     }
 
-    function test_WhenCallerDoesntOwnTheNFT() external whenAUserTriesToAddAnNFTToPGP {
+    function test_WhenCaller_DoesntOwnTheNFT() external whenAUserTriesToAddAnNFTToPGP {
         // it REVERTS
 
         bytes memory _data = getEncodedData(address(firstERC721), 0);
@@ -103,10 +93,10 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
     }
 
-    function test_WhenCallerOwnsAnNFTThatsNotAlreadyAttached() external whenAUserTriesToAddAnNFTToPGP {
+    function test_WhenCaller_OwnsAnNFT_ThatsNotAlreadyRegistered() external whenAUserTriesToAddAnNFTToPGP {
         // it should execute and update mappings
 
-          bytes memory _data = getEncodedData(address(firstERC721), 0);
+        bytes memory _data = getEncodedData(address(firstERC721), 0);
 
         changePrank(actor.bob_channel_owner);
         commProxy.registerUserPGP(_data, pgp1, true);
@@ -125,18 +115,16 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
 
-        firstERC721.transferFrom(actor.bob_channel_owner,actor.alice_channel_owner,0);
+        firstERC721.transferFrom(actor.bob_channel_owner, actor.alice_channel_owner, 0);
         changePrank(actor.alice_channel_owner);
         commProxy.registerUserPGP(_data, pgp2, true);
         string memory _storedPgpAlice = getWalletToPgp(_data);
         assertEq(_storedPgpAlice, pgp2);
 
-
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
-
     }
 
-        modifier whenAUserTriesToRemoveAnEOAFromPGP() {
+    modifier whenAUserTriesToRemoveAnEOAFromPGP() {
         _;
     }
 
@@ -216,8 +204,8 @@ contract walletPGP_Test is BasePushCommTest {
         changePrank(actor.bob_channel_owner);
         commProxy.removeWalletFromUser(_data, true);
     }
-    
-    function test_multipleAddresses_andFullRun(address _addr1,address _addr2)external {
+
+    function test_multipleAddresses_andFullRun(address _addr1, address _addr2) external {
         vm.assume(_addr1 != _addr2 && _addr1 != actor.admin);
         vm.assume(_addr2 != address(0) && _addr1 != address(0));
         bytes memory _dataNft1 = getEncodedData(address(firstERC721), 1);
@@ -232,8 +220,8 @@ contract walletPGP_Test is BasePushCommTest {
         approveTokens(_addr1, address(commProxy), 50_000 ether);
         approveTokens(_addr2, address(commProxy), 50_000 ether);
 
-        mintNft(_addr1,firstERC721);
-        mintNft(_addr2,secondERC721);
+        mintNft(_addr1, firstERC721);
+        mintNft(_addr2, secondERC721);
 
         changePrank(_addr1);
         commProxy.registerUserPGP(_dataEoa1, pgp1, false);
@@ -252,7 +240,7 @@ contract walletPGP_Test is BasePushCommTest {
         assertEq(_storedPgp2, pgp2);
 
         changePrank(_addr1);
-        firstERC721.transferFrom(_addr1,_addr2,1);
+        firstERC721.transferFrom(_addr1, _addr2, 1);
         string memory _storedPgpTransfer = getWalletToPgp(_dataNft1);
         assertEq(_storedPgpTransfer, pgp1);
         changePrank(_addr2);
@@ -269,9 +257,8 @@ contract walletPGP_Test is BasePushCommTest {
         return commProxy.walletToPGP(keccak256(_data));
     }
 
-
     function getEncodedData(address _wallet) internal view returns (bytes memory _data) {
-        _data = abi.encode("eip155",block.chainid, _wallet);
+        _data = abi.encode("eip155", block.chainid, _wallet);
     }
 
     function getEncodedData(address _nft, uint256 _id) internal view returns (bytes memory _data) {
@@ -281,6 +268,5 @@ contract walletPGP_Test is BasePushCommTest {
     function mintNft(address _addr, MockERC721 _nft) internal {
         changePrank(_addr);
         _nft.mint();
-
     }
 }
