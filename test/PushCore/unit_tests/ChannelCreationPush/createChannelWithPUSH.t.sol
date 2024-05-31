@@ -148,7 +148,9 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
 
     function test_EmitRelevantEvents() public whenNotPaused {
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit ChannelCreated(channelCreators.bob_channel_owner_Bytes32, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity);
+        emit ChannelCreated(
+            channelCreators.bob_channel_owner_Bytes32, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity
+        );
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(

@@ -20,6 +20,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
     // Todo - fix updateChannelState function - Test case fails until then
+
     function test_Revertwhen_UpdatingDeactivatedChannel() public whenNotPaused {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
         _createChannel(actor.bob_channel_owner);
@@ -126,7 +127,8 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
             vm.prank(actor.bob_channel_owner);
             coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
 
-            uint256 _channelUpdateCounterAfter = coreProxy.channelUpdateCounterInfo(channelCreators.bob_channel_owner_Bytes32);
+            uint256 _channelUpdateCounterAfter =
+                coreProxy.channelUpdateCounterInfo(channelCreators.bob_channel_owner_Bytes32);
             uint256 _channelUpdateBlock = _getChannelUpdateBlock(actor.bob_channel_owner);
             assertEq(_channelUpdateCounterAfter, i + 1);
             assertEq(_channelUpdateBlock, block.number);
@@ -155,7 +157,9 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
 
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit UpdateChannel(channelCreators.bob_channel_owner_Bytes32, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        emit UpdateChannel(
+            channelCreators.bob_channel_owner_Bytes32, _testChannelUpdatedIdentity, _amountBeingTransferred
+        );
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);

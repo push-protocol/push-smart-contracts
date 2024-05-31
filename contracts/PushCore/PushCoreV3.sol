@@ -158,14 +158,15 @@ contract PushCoreV3 is
 
     **************************************/
     ///@inheritdoc IPushCoreV3
-    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private function
+    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private
+    // function
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyActivatedChannels(_channel);
 
         if (msg.sender != _channel) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
-        
+
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
         uint256 updateCounter = channelUpdateCounterInfo[_channelBytesID] + 1;
@@ -212,8 +213,8 @@ contract PushCoreV3 is
         }
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-        
-        // Convert channel to bytes32        
+
+        // Convert channel to bytes32
         emit ChannelCreated(_channelBytesID, _channelType, _identity);
         _createChannel(_channelBytesID, _channelType, _amount, _channelExpiryTime);
     }
@@ -237,8 +238,7 @@ contract PushCoreV3 is
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
-        private 
-    
+        private
     {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
@@ -280,7 +280,7 @@ contract PushCoreV3 is
         }
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
-        
+
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
         _createSettings(_channelBytesID, _notifOptions, _notifSettings, _notifDescription);
     }
@@ -290,11 +290,11 @@ contract PushCoreV3 is
         uint256 _notifOptions,
         string calldata _notifSettings,
         string calldata _notifDescription
-    ) 
+    )
         private
     {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
-        
+
         emit ChannelNotifcationSettingsAdded(_channel, _notifOptions, notifSetting, _notifDescription);
     }
 
@@ -302,7 +302,7 @@ contract PushCoreV3 is
     function updateChannelState(uint256 _amount) external whenNotPaused {
         // Check channel's current state
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
-        
+
         CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
@@ -881,7 +881,7 @@ contract PushCoreV3 is
             CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
             bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
             uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
-            
+
             bytes32 _channel = BaseHelper.addressToBytes32(sender);
             emit ChannelCreated(_channel, _channelType, _channelIdentity);
             _createChannel(_channel, _channelType, amount, channelExpiryTime);
