@@ -52,6 +52,10 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, actor.bob_channel_owner , commProxy.chainName(), block.chainid); 
+
         commProxy.registerUserPGP(_data, pgp1, false);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
@@ -64,6 +68,9 @@ contract walletPGP_Test is BasePushCommTest {
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
         changePrank(actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, actor.bob_channel_owner , commProxy.chainName(), block.chainid); 
+
         commProxy.registerUserPGP(_data, pgp1, false);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
@@ -93,42 +100,63 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
     }
 
-    function test_WhenCaller_OwnsAnNFT_ThatsNotAlreadyRegistered() external whenAUserTriesToAddAnNFTToPGP {
+    function test_WhenCaller_OwnsAnNFT_ThatsNotRegistered() external whenAUserTriesToAddAnNFTToPGP {
         // it should execute and update mappings
 
         bytes memory _data = getEncodedData(address(firstERC721), 0);
 
         changePrank(actor.bob_channel_owner);
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+
         commProxy.registerUserPGP(_data, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
         assertEq(pushToken.balanceOf(address(commProxy)), 10e18);
     }
 
-    function test_WhenCaller_OwnsAnNFT_ThatsAlreadyAttached() external whenAUserTriesToAddAnNFTToPGP {
+    function test_WhenCaller_OwnsAnNFT_ThatsRegistered() external whenAUserTriesToAddAnNFTToPGP {
         // it should delete old PGP and update new
+        string[] memory pgpArray = new string[](2);
+        pgpArray[0] = pgp1;
+        pgpArray[1] = pgp2;
 
         bytes memory _data = getEncodedData(address(firstERC721), 0);
 
         changePrank(actor.bob_channel_owner);
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+
         commProxy.registerUserPGP(_data, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
 
         firstERC721.transferFrom(actor.bob_channel_owner, actor.alice_channel_owner, 0);
+
         changePrank(actor.alice_channel_owner);
+        
+        for(uint256 i = 0; i < 1; i++) {
+            vm.expectEmit(true, true, false, true);
+            if (i == 0) {
+                emit UserPGPRemoved(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+            } else {
+                emit UserPGPRegistered(pgp2, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+            } 
+        }
         commProxy.registerUserPGP(_data, pgp2, true);
         string memory _storedPgpAlice = getWalletToPgp(_data);
         assertEq(_storedPgpAlice, pgp2);
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
     }
+    
 
     modifier whenAUserTriesToRemoveAnEOAFromPGP() {
         _;
     }
 
-    function test_WhenTheCallerIsNotOwner() external whenAUserTriesToRemoveAnEOAFromPGP {
+    function test_WhenTheCaller_IsNotOwner() external whenAUserTriesToRemoveAnEOAFromPGP {
         // it REVERTS
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
         changePrank(actor.bob_channel_owner);
@@ -139,7 +167,7 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.removeWalletFromUser(_data, false);
     }
 
-    function test_WhenTheEOAIsOwnedAndAlreadyHasAPGP() external whenAUserTriesToRemoveAnEOAFromPGP {
+    function test_WhenTheEOA_IsOwnedAnd_AlreadyHasAPGP() external whenAUserTriesToRemoveAnEOAFromPGP {
         // it Removes the stored data
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
@@ -148,6 +176,10 @@ contract walletPGP_Test is BasePushCommTest {
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
 
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRemoved(pgp1, actor.bob_channel_owner, commProxy.chainName(), block.chainid);
+
         commProxy.removeWalletFromUser(_data, false);
         string memory _storedPgpAfter = getWalletToPgp(_data);
         assertEq(_storedPgpAfter, "");
@@ -155,7 +187,7 @@ contract walletPGP_Test is BasePushCommTest {
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
     }
 
-    function test_WhenEOAIsOwnedButDoesntHaveAPGP() external whenAUserTriesToRemoveAnEOAFromPGP {
+    function test_WhenEOA_IsOwned_ButDoesntHaveAPGP() external whenAUserTriesToRemoveAnEOAFromPGP {
         // it should REVERT
         bytes memory _data = getEncodedData(actor.bob_channel_owner);
 
@@ -168,7 +200,7 @@ contract walletPGP_Test is BasePushCommTest {
         _;
     }
 
-    function test_WhenTheNFTIsNotOwnedByTheCaller() external whenAUserTriesToRemoveAnNFTFromPGP {
+    function test_WhenTheNFT_IsNotOwned_ByTheCaller() external whenAUserTriesToRemoveAnNFTFromPGP {
         // it REVERTS
         bytes memory _data = getEncodedData(address(firstERC721), 0);
         changePrank(actor.bob_channel_owner);
@@ -179,7 +211,7 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.removeWalletFromUser(_data, true);
     }
 
-    function test_WhenTheNFTIsOwnedAndAlreadyHasAPGP() external whenAUserTriesToRemoveAnNFTFromPGP {
+    function test_WhenTheNFT_IsOwned_AndAlreadyHasAPGP() external whenAUserTriesToRemoveAnNFTFromPGP {
         // it renoves the stored data
 
         bytes memory _data = getEncodedData(address(firstERC721), 0);
@@ -188,6 +220,9 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.registerUserPGP(_data, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRemoved(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid);
 
         commProxy.removeWalletFromUser(_data, true);
         string memory _storedPgpAfter = getWalletToPgp(_data);
@@ -223,27 +258,44 @@ contract walletPGP_Test is BasePushCommTest {
         mintNft(_addr1, firstERC721);
         mintNft(_addr2, secondERC721);
 
+        // addr1 registers Wallet and NFT with PGP
         changePrank(_addr1);
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, _addr1, commProxy.chainName(), block.chainid);
         commProxy.registerUserPGP(_dataEoa1, pgp1, false);
         string memory _storedPgpEoa = getWalletToPgp(_dataEoa1);
         assertEq(_storedPgpEoa, pgp1);
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp1, address(firstERC721), 1, commProxy.chainName(), block.chainid);
         commProxy.registerUserPGP(_dataNft1, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_dataNft1);
         assertEq(_storedPgp, pgp1);
 
+        // addr2 registers Wallet and NFT with PGP
         changePrank(_addr2);
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp2, _addr2, commProxy.chainName(), block.chainid);
         commProxy.registerUserPGP(_dataEoa2, pgp2, false);
         string memory _storedPgpEoa2 = getWalletToPgp(_dataEoa2);
         assertEq(_storedPgpEoa2, pgp2);
+
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRegistered(pgp2, address(secondERC721), 1, commProxy.chainName(), block.chainid);
         commProxy.registerUserPGP(_dataNft2, pgp2, true);
         string memory _storedPgp2 = getWalletToPgp(_dataNft2);
         assertEq(_storedPgp2, pgp2);
 
+        // addr1 transfers NFT to addr2 and addr2 registers it with PGP
         changePrank(_addr1);
         firstERC721.transferFrom(_addr1, _addr2, 1);
+
         string memory _storedPgpTransfer = getWalletToPgp(_dataNft1);
         assertEq(_storedPgpTransfer, pgp1);
+
         changePrank(_addr2);
+        vm.expectEmit(true, true, false, true);
+        emit UserPGPRemoved(pgp1, address(firstERC721), 1, commProxy.chainName(), block.chainid);
         commProxy.registerUserPGP(_dataNft1, pgp2, true);
         string memory _storedPgpTransferAndRegister = getWalletToPgp(_dataNft1);
         assertEq(_storedPgpTransferAndRegister, pgp2);
