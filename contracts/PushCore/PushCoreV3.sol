@@ -214,7 +214,6 @@ contract PushCoreV3 is
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Convert channel to bytes32
         emit ChannelCreated(_channelBytesID, _channelType, _identity);
         _createChannel(_channelBytesID, _channelType, _amount, _channelExpiryTime);
     }
@@ -882,9 +881,9 @@ contract PushCoreV3 is
             bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
             uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
 
-            bytes32 _channel = BaseHelper.addressToBytes32(sender);
-            emit ChannelCreated(_channel, _channelType, _channelIdentity);
-            _createChannel(_channel, _channelType, amount, channelExpiryTime);
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channelBytesID, _channelType, _channelIdentity);
+            _createChannel(_channelBytesID, _channelType, amount, channelExpiryTime);
         } else if (functionSig == this.handleChatRequestData.selector) {
             //ToDo: Update handleChatRequest to handle incoming cross Chain Request
             uint256 amount = reqPayload.amount;
