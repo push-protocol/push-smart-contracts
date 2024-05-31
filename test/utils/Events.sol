@@ -18,7 +18,7 @@ abstract contract CoreEvents {
         uint256 timestamp
     );
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
-    event ChannelVerified(address indexed channel, address indexed verifier);
+    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
     event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
 }

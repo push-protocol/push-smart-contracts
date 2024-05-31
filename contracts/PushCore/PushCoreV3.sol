@@ -388,7 +388,9 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
-        address verifiedBy = channels[_channel].verifiedBy;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        address verifiedBy = channelInfo[_channelBytesID].verifiedBy;
         bool logicComplete = false;
 
         // Check if it's primary verification
@@ -406,7 +408,8 @@ contract PushCoreV3 is
                     logicComplete = true;
                 } else {
                     // Upper drill exists, go up
-                    verifiedBy = channels[verifiedBy].verifiedBy;
+                    bytes32 verifiedByChannel = BaseHelper.addressToBytes32(verifiedBy);
+                    verifiedBy = channelInfo[verifiedByChannel].verifiedBy;
                 }
             }
         }
@@ -447,10 +450,11 @@ contract PushCoreV3 is
         }
 
         // Verify channel
-        channels[_channel].verifiedBy = msg.sender;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        channelInfo[_channelBytesID].verifiedBy = msg.sender;
 
         // Emit event
-        emit ChannelVerified(_channel, msg.sender);
+        emit ChannelVerified(_channelBytesID, msg.sender);
     }
 
     /// @inheritdoc IPushCoreV3
@@ -460,10 +464,11 @@ contract PushCoreV3 is
         }
 
         // Unverify channel
-        channels[_channel].verifiedBy = address(0x0);
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        channelInfo[_channelBytesID].verifiedBy = address(0x0);
 
         // Emit Event
-        emit ChannelVerificationRevoked(_channel, msg.sender);
+        emit ChannelVerificationRevoked(_channelBytesID, msg.sender);
     }
 
     /**
