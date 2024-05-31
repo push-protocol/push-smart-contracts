@@ -54,7 +54,7 @@ contract walletPGP_Test is BasePushCommTest {
         changePrank(actor.bob_channel_owner);
 
         vm.expectEmit(true, true, false, true);
-        emit UserPGPRegistered(pgp1, actor.bob_channel_owner , commProxy.chainName(), block.chainid); 
+        emit UserPGPRegistered(pgp1, actor.bob_channel_owner, commProxy.chainName(), block.chainid);
 
         commProxy.registerUserPGP(_data, pgp1, false);
         string memory _storedPgp = getWalletToPgp(_data);
@@ -69,7 +69,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         vm.expectEmit(true, true, false, true);
-        emit UserPGPRegistered(pgp1, actor.bob_channel_owner , commProxy.chainName(), block.chainid); 
+        emit UserPGPRegistered(pgp1, actor.bob_channel_owner, commProxy.chainName(), block.chainid);
 
         commProxy.registerUserPGP(_data, pgp1, false);
         string memory _storedPgp = getWalletToPgp(_data);
@@ -107,7 +107,7 @@ contract walletPGP_Test is BasePushCommTest {
 
         changePrank(actor.bob_channel_owner);
         vm.expectEmit(true, true, false, true);
-        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid);
 
         commProxy.registerUserPGP(_data, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_data);
@@ -126,7 +126,7 @@ contract walletPGP_Test is BasePushCommTest {
         changePrank(actor.bob_channel_owner);
 
         vm.expectEmit(true, true, false, true);
-        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+        emit UserPGPRegistered(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid);
 
         commProxy.registerUserPGP(_data, pgp1, true);
         string memory _storedPgp = getWalletToPgp(_data);
@@ -135,14 +135,14 @@ contract walletPGP_Test is BasePushCommTest {
         firstERC721.transferFrom(actor.bob_channel_owner, actor.alice_channel_owner, 0);
 
         changePrank(actor.alice_channel_owner);
-        
-        for(uint256 i = 0; i < 1; i++) {
+
+        for (uint256 i = 0; i < 1; i++) {
             vm.expectEmit(true, true, false, true);
             if (i == 0) {
-                emit UserPGPRemoved(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
+                emit UserPGPRemoved(pgp1, address(firstERC721), 0, commProxy.chainName(), block.chainid);
             } else {
-                emit UserPGPRegistered(pgp2, address(firstERC721), 0, commProxy.chainName(), block.chainid); 
-            } 
+                emit UserPGPRegistered(pgp2, address(firstERC721), 0, commProxy.chainName(), block.chainid);
+            }
         }
         commProxy.registerUserPGP(_data, pgp2, true);
         string memory _storedPgpAlice = getWalletToPgp(_data);
@@ -150,7 +150,6 @@ contract walletPGP_Test is BasePushCommTest {
 
         assertEq(pushToken.balanceOf(address(commProxy)), 20e18);
     }
-    
 
     modifier whenAUserTriesToRemoveAnEOAFromPGP() {
         _;
@@ -175,7 +174,6 @@ contract walletPGP_Test is BasePushCommTest {
         commProxy.registerUserPGP(_data, pgp1, false);
         string memory _storedPgp = getWalletToPgp(_data);
         assertEq(_storedPgp, pgp1);
-
 
         vm.expectEmit(true, true, false, true);
         emit UserPGPRemoved(pgp1, actor.bob_channel_owner, commProxy.chainName(), block.chainid);

@@ -36,7 +36,6 @@ abstract contract CommEvents {
 
     event UserPGPRemoved(string indexed PgpHash, address indexed wallet, string chainName, uint256 chainID);
     event UserPGPRemoved(string indexed PgpHash, address indexed nft, uint256 nftId, string chainName, uint256 chainID);
-
 }
 
 abstract contract ProxyEvents {
