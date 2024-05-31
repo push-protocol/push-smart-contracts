@@ -572,12 +572,12 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
-
-        bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
+        bytes memory specificReqPayload = abi.encode(_payload);
+        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
         createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
-    // Cross Chain Request: Create Incentivized Chat
 
+    // Cross Chain Request: Create Incentivized Chat
     function createIncentivizedChatRequest(
         CrossChainRequestTypes.SpecificRequestPayload memory _payload,
         uint256 _amount,
@@ -588,8 +588,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         whenNotPaused
     {
         require(_amount > 0, "Invalid Amount");
-
-        bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
+        bytes memory specificReqPayload = abi.encode(_payload);
+        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
         createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
 
@@ -606,7 +606,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         require(_amount > 0, "Invalid Amount");
         require(_payload.feePercentage <= 100, "Invalid Fee Percentage");
 
-        bytes memory requestPayload = abi.encode(_payload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
+        bytes memory arbitraryReqPayload = abi.encode(_payload);
+        bytes memory requestPayload = abi.encode(arbitraryReqPayload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
         createCrossChainRequest(requestPayload, _amount, _gasLimit);
     }
 
