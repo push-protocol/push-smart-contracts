@@ -459,12 +459,12 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function unverifyChannel(address _channel) public {
-        if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        if (!(channelInfo[_channelBytesID].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 
         // Unverify channel
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
         channelInfo[_channelBytesID].verifiedBy = address(0x0);
 
         // Emit Event
