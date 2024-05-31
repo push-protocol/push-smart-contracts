@@ -8,7 +8,7 @@ abstract contract CoreEvents {
     event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelBlocked(address indexed channel);
+    event ChannelBlocked(bytes32 indexed channel);
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     event IncentivizeChatReqReceived(
         address requestSender,

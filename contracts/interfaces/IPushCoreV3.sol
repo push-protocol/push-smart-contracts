@@ -16,7 +16,7 @@ interface IPushCoreV3 {
     /// @notice emits whenever the verification is revoked for a channel
     event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
-    event ChannelBlocked(address indexed channel);
+    event ChannelBlocked(bytes32 indexed channel);
     /// @notice emits whenever a new channel is created - ToDo: Remove this event
     event AddChannel(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a new channel is created
@@ -47,7 +47,7 @@ interface IPushCoreV3 {
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
-    event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
     event ArbitraryRequest(
         address indexed sender,

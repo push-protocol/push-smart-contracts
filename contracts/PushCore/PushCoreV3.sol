@@ -301,7 +301,9 @@ contract PushCoreV3 is
     /// @inheritdoc IPushCoreV3
     function updateChannelState(uint256 _amount) external whenNotPaused {
         // Check channel's current state
-        CoreTypes.Channel storage channelData = channels[msg.sender];
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
         if (channelCurrentState != 1 && channelCurrentState != 2) {
@@ -321,7 +323,7 @@ contract PushCoreV3 is
                 channelData.channelState = 2;
                 channelData.channelWeight = _newChannelWeight;
                 channelData.poolContribution = minPoolContribution;
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             } else {
                 // TIME-BOUND CHANNEL DELETION PHASE
                 if (channelData.expiryTime >= block.timestamp) {
@@ -329,8 +331,8 @@ contract PushCoreV3 is
                 }
                 totalRefundableAmount = channelData.poolContribution;
                 channelsCount = channelsCount - 1;
-                delete channels[msg.sender];
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                delete channelInfo[_channelBytesID];
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             }
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
@@ -353,18 +355,19 @@ contract PushCoreV3 is
             channelData.channelState = 1;
             channelData.poolContribution = _newPoolContribution;
             channelData.channelWeight = _newChannelWeight;
-            emit ChannelStateUpdate(msg.sender, 0, _amount);
+            emit ChannelStateUpdate(_channelBytesID, 0, _amount);
         }
     }
 
     /// @inheritdoc IPushCoreV3
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyGovernance();
-        if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channelAddress);
+        if (((channelInfo[_channelBytesID].channelState == 3) || (channelInfo[_channelBytesID].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        CoreTypes.Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -379,7 +382,7 @@ contract PushCoreV3 is
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = minPoolContribution;
 
-        emit ChannelBlocked(_channelAddress);
+        emit ChannelBlocked(_channelBytesID);
     }
 
     /* **************
