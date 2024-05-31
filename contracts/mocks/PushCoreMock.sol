@@ -16,7 +16,9 @@ import { PushCoreStorageV2 } from "../PushCore/PushCoreStorageV2.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {
+    PausableUpgradeable, Initializable
+} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
     using SafeERC20 for IERC20;

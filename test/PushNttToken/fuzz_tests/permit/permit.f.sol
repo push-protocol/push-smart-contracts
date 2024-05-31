@@ -10,17 +10,26 @@ contract Approve_Test is BaseTest {
     }
 
     // computes the hash of the fully encoded EIP-712 message for the domain, which can be used to recover the signer
-    function getTypedDataHash(address owner, address spender, uint256 amount, uint256 deadline)
+    function getTypedDataHash(
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline
+    )
         public
         view
         returns (bytes32)
     {
-        bytes32 domainSeparator =
-            keccak256(abi.encode(pushNttToken.DOMAIN_TYPEHASH(), keccak256(bytes(pushNttToken.name())), block.chainid, address(pushNttToken)));
-        bytes32 structHash =
-            keccak256(abi.encode(pushNttToken.PERMIT_TYPEHASH(), owner, spender, amount, 0, deadline));
-        return
-            keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                pushNttToken.DOMAIN_TYPEHASH(),
+                keccak256(bytes(pushNttToken.name())),
+                block.chainid,
+                address(pushNttToken)
+            )
+        );
+        bytes32 structHash = keccak256(abi.encode(pushNttToken.PERMIT_TYPEHASH(), owner, spender, amount, 0, deadline));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     }
 
     function test_PermitFuzz(address spender, uint256 rawAmount, uint256 deadline) public {

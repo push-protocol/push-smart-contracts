@@ -241,4 +241,6 @@ interface IPushCoreV3 {
      * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external;
+
+    function addPoolFees(uint256 _rewardAmount) external;
 }
