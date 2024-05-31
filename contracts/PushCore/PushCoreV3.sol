@@ -167,9 +167,7 @@ contract PushCoreV3 is
             revert Errors.UnauthorizedCaller(msg.sender);
         }
 
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
-
-        uint256 updateCounter = channelUpdateCounterInfo[_channelBytesID] + 1;
+        uint256 updateCounter = channelUpdateCounter[_channel] + 1;
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
         if (_amount < requiredFees) {
@@ -177,7 +175,9 @@ contract PushCoreV3 is
         }
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
-        channelUpdateCounterInfo[_channelBytesID] = updateCounter;
+        channelUpdateCounter[_channel] = updateCounter;
+
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
         channelInfo[_channelBytesID].channelUpdateBlock = block.number;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);

@@ -128,7 +128,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
             coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
 
             uint256 _channelUpdateCounterAfter =
-                coreProxy.channelUpdateCounterInfo(channelCreators.bob_channel_owner_Bytes32);
+                coreProxy.channelUpdateCounter(actor.bob_channel_owner);
             uint256 _channelUpdateBlock = _getChannelUpdateBlock(actor.bob_channel_owner);
             assertEq(_channelUpdateCounterAfter, i + 1);
             assertEq(_channelUpdateBlock, block.number);

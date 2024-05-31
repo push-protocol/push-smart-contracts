@@ -10,8 +10,8 @@ contract PushCoreStorageV2 {
         "CreateChannel(ChannelType channelType, bytes identity, uint256 amount, uint256 channelExpiryTime, uint256 nonce, uint256 expiry)"
     );
 
-    mapping(address => uint256) public nonces;
-    mapping(address => uint256) public channelUpdateCounter;
+    mapping(address => uint256) public nonces; // NOT IN USE Anymore
+    mapping(address => uint256) public channelUpdateCounter; // NOT IN USE Anymore
     /**
      * Staking V2 state variables *
      */
@@ -45,7 +45,7 @@ contract PushCoreStorageV2 {
     address public wormholeRelayer;
     mapping(bytes32 => bool) public processedMessages;
     mapping(uint16 => bytes32) public registeredSenders;
-    mapping(address => uint256) public arbitraryReqFees;
+    mapping(address => uint256) public arbitraryReqFees; // ToDo: Could be replaced with nonces(unused) mapping instead of adding new state
 
     mapping(bytes32 => CoreTypes.Channel) public channelInfo;
     mapping(bytes32 => uint256) public channelUpdateCounterInfo;
