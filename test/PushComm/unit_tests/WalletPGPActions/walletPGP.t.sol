@@ -117,9 +117,6 @@ contract walletPGP_Test is BasePushCommTest {
 
     function test_WhenCaller_OwnsAnNFT_ThatsRegistered() external whenAUserTriesToAddAnNFTToPGP {
         // it should delete old PGP and update new
-        string[] memory pgpArray = new string[](2);
-        pgpArray[0] = pgp1;
-        pgpArray[1] = pgp2;
 
         bytes memory _data = getEncodedData(address(firstERC721), 0);
 
