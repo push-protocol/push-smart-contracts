@@ -14,6 +14,9 @@ contract Push is OwnableUpgradeable {
     /// @notice EIP-20 token decimals for this token
     uint8 public constant decimals = 18;
 
+    /// @notice maximum supply of this token
+    uint256 public constant maxSupply = 100_000_000 ether;
+
     /// @notice Total number of tokens in circulation
     uint256 public totalSupply; // 100 million PUSH MAX Cap
 
@@ -99,13 +102,18 @@ contract Push is OwnableUpgradeable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
      * @notice Initialize the token contract
      */
     function initialize() external initializer {
         born = block.number;
 
-        __Ownable_init(msg.sender);
+        __Ownable_init();
     }
 
     /// NOTE: the `setMinter` method is added for INttToken Interface support.
@@ -126,10 +134,12 @@ contract Push is OwnableUpgradeable {
     function mint(address account, uint256 rawAmount) external onlyMinter {
         require(account != address(0), "Push::mint: cannot mint tokens to the zero address");
         uint96 _amount = safe96(rawAmount, "Push::mint: amount exceeds 96 bits");
+        uint256 _totalSupply = totalSupply + _amount;
 
-        totalSupply = totalSupply + _amount;
-        require(totalSupply <= 100_000_000e18, "Push::mint: total supply exceeds MAX CAP");
-        balances[account] = balances[account] + _amount;
+        require(_totalSupply <= maxSupply, "Push::mint: total supply exceeds MAX CAP");
+        balances[account] =  add96(balances[account], _amount, "Push::mint: mint amount overflows");
+        
+        totalSupply = _totalSupply;
 
         emit Transfer(address(0), account, _amount);
     }

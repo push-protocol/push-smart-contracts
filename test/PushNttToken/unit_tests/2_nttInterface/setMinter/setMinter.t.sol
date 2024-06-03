@@ -15,7 +15,7 @@ contract SetMinter_Test is BaseTest {
 
     function test_Revertwhen_CallerNotOwner() public onlyOwner {
         vm.prank(actor.dan_push_holder);
-        vm.expectRevert(abi.encodeWithSelector(Errors.OwnableUnauthorizedAccount.selector, actor.dan_push_holder));
+        vm.expectRevert("Ownable: caller is not the owner");
         pushNttToken.setMinter(actor.admin);
     }
 

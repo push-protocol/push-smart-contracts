@@ -15,6 +15,7 @@ import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
 import { PushMigrationHelper } from "contracts/token/PushMigration.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import { Actors } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
@@ -37,6 +38,8 @@ abstract contract BaseTest is Test, Constants, Events {
     PushMigrationHelper public pushMigrationHelperProxy;
     TransparentUpgradeableProxy public pushMigrationProxy;
     TransparentUpgradeableProxy public pushNttProxy;
+    ProxyAdmin public nttMigrationProxyAdmin;
+    ProxyAdmin public nttProxyAdmin;
 
     /* ***************
         Main Actors in Test
@@ -80,29 +83,32 @@ abstract contract BaseTest is Test, Constants, Events {
         });
 
         pushNtt = new Push();
-        vm.prank(actor.admin);
+        changePrank(actor.admin);
+        nttProxyAdmin = new ProxyAdmin();
         pushNttProxy = new TransparentUpgradeableProxy(
             address(pushNtt),
-            actor.admin,
+            address(nttProxyAdmin),
             abi.encodeWithSignature("initialize()")
         );
         pushNttToken = Push(address(pushNttProxy));
-
+        nttMigrationProxyAdmin = new ProxyAdmin();
+        
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
-            actor.admin,
+            address(nttMigrationProxyAdmin),
             abi.encodeWithSignature("initialize(address,address)", actor.admin, address(pushToken))
         );
         pushMigrationHelperProxy = PushMigrationHelper(address(pushMigrationProxy));
         // set governance as minter of ntt token
-        vm.prank(actor.admin);
+        // vm.prank(actor.admin);
         pushNttToken.setMinter(actor.governance);
+        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
 
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
             address(coreMock),
-            actor.admin,
+            address(epnsCoreProxyAdmin),
             actor.admin,
             address(pushToken),
             address(0), // WETH Address
@@ -112,20 +118,25 @@ abstract contract BaseTest is Test, Constants, Events {
             address(0), // aDai address
             0
         );
-        address admin = address(
-            uint160(
-                uint256(
-                    vm.load(address(epnsCoreProxy), 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
-                )
-            )
-        );
-        vm.prank(actor.admin);
-        EPNSCoreAdmin(admin).upgradeAndCall(
-            ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy), ""
+        // address admin = address(
+        //     uint160(
+        //         uint256(
+        //             vm.load(address(epnsCoreProxy), 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
+        //         )
+        //     )
+        // );
+        // vm.prank(actor.admin);
+        // EPNSCoreAdmin(admin).upgradeAndCall(
+        //     ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy), ""
+        // );
+
+        epnsCoreProxyAdmin.upgrade(
+            ITransparentUpgradeableProxy(address(epnsCoreProxy)),
+            address(coreProxy)
         );
 
         coreProxy = PushCoreV3(address(epnsCoreProxy));
-        vm.prank(tokenDistributor);
+        changePrank(tokenDistributor);
         pushToken.transfer(address(coreProxy), 1 ether);
 
         // Initialize comm proxy admin and commProxy contract

@@ -1,6 +1,6 @@
 createIncentivizeChatRequest.t.sol
     ├── when contract is Paused
-    │   └── it REVERT - EnforcedPause()
+    │   └── it REVERT - "Pausable: paused"
     └── when contract is not Paused
         ├── when amount is not more than 0
         │   └── it REVERT - InvalidArg_LessThanExpected(0, 0)
