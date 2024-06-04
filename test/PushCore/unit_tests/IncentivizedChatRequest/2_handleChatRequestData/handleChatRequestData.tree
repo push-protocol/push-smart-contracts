@@ -1,9 +1,0 @@
-handleChatRequestData.t.sol
-    ├── when contract is Paused
-    │   └── it REVERT - "Pausable: paused"
-    └── when contract is not Paused
-        ├── when function caller is not Comm contract
-        │   └── it REVERT - UnauthorizedCaller(caller)
-        └── when function caller is Comm contract
-            ├── it should update relevant variables
-            └── it should emit IncentivizeChatReqReceived(requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp)

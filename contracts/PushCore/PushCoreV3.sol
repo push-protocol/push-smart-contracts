@@ -16,13 +16,16 @@ import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {
+    PausableUpgradeable, Initializable
+} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "../interfaces/wormhole/IWormholeReceiver.sol";
 
 contract PushCoreV3 is
@@ -876,10 +879,11 @@ contract PushCoreV3 is
         address recipient = reqPayload.amountRecipient;
         uint256 feePercentage = reqPayload.feePercentage;
 
-        //ToDo: Fetch amount split for Protocol_pool_funds vs arbitraryReqFees
-        // USE A helper library to calculate the fee amount based on feePercentage
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
 
-        // Update states based on Fee calculation
+        // Update states based on Fee Percentage calculation
+        PROTOCOL_POOL_FEES += feeAmount;
+        arbitraryReqFees[recipient] += amount - feeAmount;
 
         emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }

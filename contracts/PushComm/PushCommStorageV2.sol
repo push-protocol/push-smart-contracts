@@ -51,7 +51,7 @@ contract PushCommStorageV2 {
     IWormholeRelayer public WORMHOLE_RELAYER;
 
     uint16 public WORMHOLE_RECIPIENT_CHAIN; // Wormhole's Core contract recipient Chain ID
-    uint256 public GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
+    // uint256 public GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
 
     uint256 public ADD_CHANNEL_MIN_FEES;
 }
