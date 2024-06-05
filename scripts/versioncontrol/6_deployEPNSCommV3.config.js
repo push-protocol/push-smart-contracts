@@ -80,6 +80,12 @@ const deploy = {
     },
     cyberMainnet:{
       version: 1
+    },
+    baseSepolia:{
+      version: 1
+    },
+    baseMainnet:{
+      version: 1
     }
   },
   args: {
