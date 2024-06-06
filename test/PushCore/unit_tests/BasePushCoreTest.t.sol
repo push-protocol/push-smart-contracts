@@ -29,36 +29,42 @@ contract BasePushCoreTest is BaseTest {
     }
 
     function _getChannelState(address _channel) internal view returns (uint8 channelState) {
-        (, uint8 actualChannelState,,,,,,,,,) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (, uint8 actualChannelState,,,,,,,,,) = coreProxy.channelInfo(_channelBytesID);
 
         channelState = actualChannelState;
     }
 
     function _getChannelWeight(address _channel) internal view returns (uint256 channelWeight) {
-        (,,,,,,,,, uint256 actualChannelWeight,) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (,,,,,,,,, uint256 actualChannelWeight,) = coreProxy.channelInfo(_channelBytesID);
 
         channelWeight = actualChannelWeight;
     }
 
     function _getChannelExpiryTime(address _channel) internal view returns (uint256 channelExpiryTime) {
-        (,,,,,,,,,, uint256 actualChannelExpiryTime) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (,,,,,,,,,, uint256 actualChannelExpiryTime) = coreProxy.channelInfo(_channelBytesID);
 
         channelExpiryTime = actualChannelExpiryTime;
     }
 
     function _getChannelUpdateBlock(address _channel) internal view returns (uint256 channelUpdateBlock) {
-        (,,,,,,,, uint256 actualChannelUpdateBlock,,) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (,,,,,,,, uint256 actualChannelUpdateBlock,,) = coreProxy.channelInfo(_channelBytesID);
 
         channelUpdateBlock = actualChannelUpdateBlock;
     }
 
     function _getChannelPoolContribution(address _channel) internal view returns (uint256 channelContribution) {
-        (,,, uint256 actualPoolContribution,,,,,,,) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (,,, uint256 actualPoolContribution,,,,,,,) = coreProxy.channelInfo(_channelBytesID);
 
         channelContribution = actualPoolContribution;
     }
 
     function _getVerifiedBy(address _channel) internal view returns (address _verifiedBy) {
-        (,, _verifiedBy,,,,,,,,) = coreProxy.channels(_channel);
+        bytes32 _channelBytesID = createChannelCreatorsID(_channel);
+        (,, _verifiedBy,,,,,,,,) = coreProxy.channelInfo(_channelBytesID);
     }
 }

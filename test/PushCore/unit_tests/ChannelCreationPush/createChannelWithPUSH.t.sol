@@ -104,7 +104,7 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
             uint256 actualChannelUpdateBlock,
             uint256 actualChannelWeight,
             uint256 actualExpiryTime
-        ) = coreProxy.channels(actor.bob_channel_owner);
+        ) = coreProxy.channelInfo(channelCreators.bob_channel_owner_Bytes32);
 
         assertEq(expectedPoolContribution, coreProxy.CHANNEL_POOL_FUNDS());
         assertEq(expectedChannelsCount, coreProxy.channelsCount());
@@ -147,42 +147,13 @@ contract CreateChannelWithPUSH_Test is BasePushCoreTest {
 
     function test_EmitRelevantEvents() public whenNotPaused {
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit AddChannel(actor.bob_channel_owner, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity);
+        emit ChannelCreated(
+            channelCreators.bob_channel_owner_Bytes32, CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity
+        );
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.createChannelWithPUSH(
             CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, ADD_CHANNEL_MIN_FEES, 0
         );
     }
-
-    // Auto-Subscription to Channels - Now Deprecated
-
-    // function test_CoreInteractWithComm() public whenNotPaused {
-    //     vm.startPrank(actor.bob_channel_owner);
-    //     address EPNS_ALERTER = address(0);
-
-    //     bool isChannelSubscribedToOwn_Before =
-    //         commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
-    //     bool isChannelSubscribedToEPNS_Before = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
-    //     bool isAdminSubscribedToChannel_Before = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
-
-    //     coreProxy.createChannelWithPUSH(
-    //         CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, ADD_CHANNEL_MIN_FEES, 0
-    //     );
-
-    //     bool isChannelSubscribedToOwn_After =
-    //         commProxy.isUserSubscribed(actor.bob_channel_owner, actor.bob_channel_owner);
-    //     bool isChannelSubscribedToEPNS_After = commProxy.isUserSubscribed(EPNS_ALERTER, actor.bob_channel_owner);
-    //     bool isAdminSubscribedToChannel_After = commProxy.isUserSubscribed(actor.bob_channel_owner, actor.admin);
-
-    //     assertEq(isChannelSubscribedToOwn_Before, false);
-    //     assertEq(isChannelSubscribedToEPNS_Before, false);
-    //     assertEq(isAdminSubscribedToChannel_Before, false);
-
-    //     assertEq(isChannelSubscribedToOwn_After, true);
-    //     assertEq(isChannelSubscribedToEPNS_After, true);
-    //     assertEq(isAdminSubscribedToChannel_After, true);
-
-    //     vm.stopPrank();
-    // }
 }
