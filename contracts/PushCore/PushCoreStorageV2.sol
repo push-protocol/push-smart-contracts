@@ -45,7 +45,8 @@ contract PushCoreStorageV2 {
     address public wormholeRelayer;
     mapping(bytes32 => bool) public processedMessages;
     mapping(uint16 => bytes32) public registeredSenders;
-    mapping(address => uint256) public arbitraryReqFees; // ToDo: Could be replaced with nonces(unused) mapping instead of adding new state
+    mapping(address => uint256) public arbitraryReqFees; // ToDo: Could be replaced with nonces(unused) mapping instead
+        // of adding new state
 
     mapping(bytes32 => CoreTypes.Channel) public channelInfo;
 }

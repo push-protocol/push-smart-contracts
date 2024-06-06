@@ -19,6 +19,7 @@ struct Actors {
     // Push Token Holder - tim
     address payable tim_push_holder;
 }
+
 struct ChannelCreators {
     // Default admin for all Push Contracts
     bytes32 admin_Bytes32;
