@@ -17,10 +17,9 @@ import { PushMigrationHelper } from "contracts/token/PushMigration.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-import { Actors } from "./utils/Actors.sol";
+import { Actors,ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { ChannelCreators } from "./utils/ChannelCreators.sol";
 import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
