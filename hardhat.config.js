@@ -201,6 +201,14 @@ module.exports = {
       url: "https://cyber.alt.technology/",
       chainId: 7560,
       accounts:[process.env.PRIVATE]
+    },
+    baseMainnet: {
+      url: 'https://mainnet.base.org',
+      accounts: [process.env.PRIVATE],
+    },
+    baseSepolia: {
+      url: 'https://sepolia.base.org',
+      accounts: [process.env.PRIVATE],
     }
   },
   etherscan: {
@@ -219,7 +227,8 @@ module.exports = {
       polygonAmoy:"OKLINK",
       X1: "Not required",
       cyber_testnet: "Not Required",
-      cyber:"Not Required"
+      cyber:"Not Required",
+      "base-sepolia": "PLACEHOLDER_STRING"
     },
     customChains: [
       {
@@ -314,6 +323,14 @@ module.exports = {
         urls: {
           apiURL: "https://testnet.cyberscan.co/api",
           browserURL: "https://testnet.cyberscan.co"
+        }
+      },
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+         apiURL: "https://api-sepolia.basescan.org/api",
+         browserURL: "https://sepolia.basescan.org"
         }
       },
       {
