@@ -916,7 +916,7 @@ contract PushCoreV3 is
         emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }
 
-    function migaretAddresToBytes32(address[] calldata _channels) external whenPaused {
+    function migrateAddresToBytes32(address[] calldata _channels) external whenPaused {
         onlyPushChannelAdmin();
         for(uint i; i < _channels.length; ++i){
            CoreTypes.Channel memory _channelData = channels[_channels[i]];
