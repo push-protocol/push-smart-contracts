@@ -20,7 +20,7 @@ contract DeployPushCore is Test {
     EPNSCoreProxy public epnsCoreProxy;
     EPNSCoreAdmin public epnsCoreProxyAdmin;
 
-    address public pushToken = 0xe1327FE9b457Ad1b4601FdD2afcAdAef198d6BA6; // sepolia token
+    address public pushToken = 0xD763bF4AA5afa5dC4c09ecb3FA95cd29269efC52; // sepolia token
 
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));

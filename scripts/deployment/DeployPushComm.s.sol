@@ -18,9 +18,9 @@ contract DeployPushComm is Test {
     EPNSCommProxy public epnsCommProxy;
     EPNSCommAdmin public epnsCommProxyAdmin;
 
-    address public coreProxy = 0x5B9A5152465921307Ca4da7E572bf53f5FA7B671;
+    address public coreProxy = 0x53a3a61D73Cab3e15594ECEdc3eEEEf7978d7020;
     // address public pushToken = 0x70c3C79d33A9b08F1bc1e7DB113D1588Dad7d8Bc; // arb sepolia token
-    address public pushToken = 0x4c79A13451E7c338aF1798DD15d6e6d8888b9637; // bnb testnet token
+    address public pushToken = 0xff9A15FBa9c0E08683F2599382df551035C1d8C4; // bnb testnet token
 
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
@@ -28,15 +28,15 @@ contract DeployPushComm is Test {
 
         comm = new PushCommV3();
 
-        // epnsCommProxyAdmin = new EPNSCommAdmin(account);
-        // epnsCommProxy =
-        //     new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), account, "arb testnet");
-        // commProxy = PushCommV3(address(epnsCommProxy));
-
         epnsCommProxyAdmin = new EPNSCommAdmin(account);
         epnsCommProxy =
-            new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), account, "bnb testnet");
+            new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), account, "arb testnet");
         commProxy = PushCommV3(address(epnsCommProxy));
+
+        // epnsCommProxyAdmin = new EPNSCommAdmin(account);
+        // epnsCommProxy =
+        //     new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), account, "bnb testnet");
+        // commProxy = PushCommV3(address(epnsCommProxy));
 
         commProxy.setEPNSCoreAddress(coreProxy);
         commProxy.setPushTokenAddress(address(pushToken));
