@@ -95,7 +95,7 @@ contract TimeBoundChannel_Test is BasePushCoreTest {
 
         uint256 actualPoolContribution = _getChannelPoolContribution(actor.bob_channel_owner);
 
-        emit ChannelStateUpdate(actor.bob_channel_owner, actualPoolContribution, 0);
+        emit ChannelStateUpdate(channelCreators.bob_channel_owner_Bytes32, actualPoolContribution, 0);
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
