@@ -2,17 +2,20 @@
 
 pragma solidity ^0.8.20;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Push is Ownable {
+contract Push is OwnableUpgradeable {
     /// @notice EIP-20 token name for this token
-    string public constant name = "Ethereum Push Notification Service";
+    string public constant name = "Push Protocol";
 
     /// @notice EIP-20 token symbol for this token
     string public constant symbol = "PUSH";
 
     /// @notice EIP-20 token decimals for this token
     uint8 public constant decimals = 18;
+
+    /// @notice maximum supply of this token
+    uint256 public constant maxSupply = 100_000_000 ether;
 
     /// @notice Total number of tokens in circulation
     uint256 public totalSupply; // 100 million PUSH MAX Cap
@@ -99,14 +102,18 @@ contract Push is Ownable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
-     * @notice Construct a new PUSH token
-     * @param account The initial account to grant all the tokens
+     * @notice Initialize the token contract
      */
-    constructor(address account) {
-        // holder weight initial adjustments
-        holderWeight[account] = block.number;
+    function initialize() external initializer {
         born = block.number;
+
+        __Ownable_init();
     }
 
     /// NOTE: the `setMinter` method is added for INttToken Interface support.
@@ -127,10 +134,12 @@ contract Push is Ownable {
     function mint(address account, uint256 rawAmount) external onlyMinter {
         require(account != address(0), "Push::mint: cannot mint tokens to the zero address");
         uint96 _amount = safe96(rawAmount, "Push::mint: amount exceeds 96 bits");
+        uint256 _totalSupply = totalSupply + _amount;
 
-        totalSupply = totalSupply + _amount;
-        require(totalSupply <= 100_000_000e18, "Push::mint: total supply exceeds MAX CAP");
-        balances[account] = balances[account] + _amount;
+        require(_totalSupply <= maxSupply, "Push::mint: total supply exceeds MAX CAP");
+        balances[account] =  add96(balances[account], _amount, "Push::mint: mint amount overflows");
+        
+        totalSupply = _totalSupply;
 
         emit Transfer(address(0), account, _amount);
     }
