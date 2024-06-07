@@ -10,18 +10,20 @@ interface IPushCoreV3 {
     ***************************** */
 
     /// @notice emits whenever a channel updates its metadata
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
+    event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
-    event ChannelVerified(address indexed channel, address indexed verifier);
+    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
-    event ChannelBlocked(address indexed channel);
+    event ChannelBlocked(bytes32 indexed channel);
+    /// @notice emits whenever a new channel is created - ToDo: Remove this event
+    event AddChannel(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a new channel is created
-    event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    event ChannelCreated(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a channel changes the notification settings
     event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
+        bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     /// @notice emits whenever a subgraph is added(handled by backend)
     event AddSubGraph(address indexed channel, bytes _subGraphData);
@@ -45,7 +47,7 @@ interface IPushCoreV3 {
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
-    event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
     event ArbitraryRequest(
         address indexed sender,
