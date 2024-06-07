@@ -70,7 +70,7 @@ contract Migration_Test is BasePushCoreTest {
     }
 
     function test_ChannelsState_Migration() external {
-        test_ProtocolPoolFeesCorrectForMultipleChannelsCreation();
+        test_ProtocolPoolFees_IsCorrect_ForMultipleChannelsCreation();
 
         address[] memory _channels = new address[](2);
         _channels[0] = actor.bob_channel_owner;
