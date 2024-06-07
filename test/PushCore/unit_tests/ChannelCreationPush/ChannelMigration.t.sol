@@ -109,10 +109,10 @@ contract Migration_Test is BasePushCoreTest {
         _channelsBytes[1] = channelCreators.charlie_channel_owner_Bytes32;
 
         vm.expectRevert();
-        coreV3.migaretAddresToBytes32(_channels);
+        coreV3.migrateAddresToBytes32(_channels);
 
         coreV3.pauseContract();
-        coreV3.migaretAddresToBytes32(_channels);
+        coreV3.migrateAddresToBytes32(_channels);
         for (uint i; i < _channelsBytes.length; ++i) {
             (
                 ,
