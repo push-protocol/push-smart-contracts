@@ -44,7 +44,7 @@ contract Migration_Test is BasePushCoreTest {
         
     }
 
-    function test_ProtocolPoolFeesCorrectForMultipleChannelsCreation()
+    function test_ProtocolPoolFees_IsCorrect_ForMultipleChannelsCreation()
         public
     {
         changePrank(actor.bob_channel_owner);
@@ -69,7 +69,7 @@ contract Migration_Test is BasePushCoreTest {
         assertEq(expectedChannelPoolFunds, coreV2.CHANNEL_POOL_FUNDS());
     }
 
-    function test_migration() external {
+    function test_ChannelsState_Migration() external {
         test_ProtocolPoolFeesCorrectForMultipleChannelsCreation();
 
         address[] memory _channels = new address[](2);
