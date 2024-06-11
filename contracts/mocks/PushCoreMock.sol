@@ -24,6 +24,7 @@ import {
 
 contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
     using SafeERC20 for IERC20;
+
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
 
     /* ***************
@@ -66,6 +67,7 @@ contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable
         // Create Channel
         success = true;
     }
+
     function createChannelWithPUSH(
         CoreTypes.ChannelType _channelType,
         bytes calldata _identity,
