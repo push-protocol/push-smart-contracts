@@ -11,7 +11,7 @@ solc = "0.8.20"
 optimizer = true
 optimizer_runs = 99999
 auto_detect_solc = false
-emv_version = "paris"
+evm_version = "shanghai"
   
 
 # Test Specific Configs

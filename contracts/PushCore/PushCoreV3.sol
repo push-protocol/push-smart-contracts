@@ -769,7 +769,7 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
-        if (msg.sender != epnsCommunicator) {
+        if (msg.sender != epnsCommunicator || msg.sender == address(this)) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         uint256 poolFeeAmount = FEE_AMOUNT;
@@ -843,19 +843,20 @@ contract PushCoreV3 is
             revert Errors.Payload_Duplicacy_Error();
         }
         // Check Request Type
-        (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
+        // (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
+        (bytes memory structPayload, address sender ,uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
 
         if (requestType == 0) {
             // Specific Req Type
-            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload, address sender,) =
-                abi.decode(payload, (CrossChainRequestTypes.SpecificRequestPayload, address, uint8));
+            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
+                abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
 
             // ROUTE to SPECIFIC REQUEST ROUTING Function
             routeSpecificRequest(reqPayload, sender);
         } else {
             // Arbitrary Req Type
-            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload, address sender,) =
-                abi.decode(payload, (CrossChainRequestTypes.ArbitraryRequestPayload, address, uint8));
+            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload) =
+                abi.decode(structPayload, (CrossChainRequestTypes.ArbitraryRequestPayload));
 
             // Directly call ARBITRARY REQUEST FUNCTION
             handleRequestWithFeeID(reqPayload, sender);
