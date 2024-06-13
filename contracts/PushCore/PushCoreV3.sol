@@ -69,7 +69,9 @@ contract PushCoreV3 is
     }
 
     function onlyActivatedChannels(address _channel) private view {
-        if (channels[_channel].channelState != 1) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        if (channelInfo[_channelBytesID].channelState != 1) {
             revert Errors.Core_InvalidChannel();
         }
     }
@@ -156,6 +158,8 @@ contract PushCoreV3 is
 
     **************************************/
     ///@inheritdoc IPushCoreV3
+    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private
+    // function
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyActivatedChannels(_channel);
 
@@ -172,10 +176,12 @@ contract PushCoreV3 is
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
         channelUpdateCounter[_channel] = updateCounter;
-        channels[_channel].channelUpdateBlock = block.number;
+
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        channelInfo[_channelBytesID].channelUpdateBlock = block.number;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
-        emit UpdateChannel(_channel, _newIdentity, _amount);
+        emit UpdateChannel(_channelBytesID, _newIdentity, _amount);
     }
 
     /// @inheritdoc IPushCoreV3
@@ -191,7 +197,9 @@ contract PushCoreV3 is
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
-        if (channels[msg.sender].channelState != 0) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+
+        if (channelInfo[_channelBytesID].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
         if (
@@ -204,10 +212,10 @@ contract PushCoreV3 is
             revert Errors.Core_InvalidChannelType();
         }
 
-        emit AddChannel(msg.sender, _channelType, _identity);
-
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-        _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
+
+        emit ChannelCreated(_channelBytesID, _channelType, _identity);
+        _createChannel(_channelBytesID, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -224,7 +232,7 @@ contract PushCoreV3 is
      *
      */
     function _createChannel(
-        address _channel,
+        bytes32 _channel,
         CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
@@ -236,16 +244,15 @@ contract PushCoreV3 is
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
-
         // Calculate channel weight
         uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
         // Next create the channel and mark user as channellized
-        channels[_channel].channelState = 1;
-        channels[_channel].poolContribution = poolFundAmount;
-        channels[_channel].channelType = _channelType;
-        channels[_channel].channelStartBlock = block.number;
-        channels[_channel].channelUpdateBlock = block.number;
-        channels[_channel].channelWeight = _channelWeight;
+        channelInfo[_channel].channelState = 1;
+        channelInfo[_channel].poolContribution = poolFundAmount;
+        channelInfo[_channel].channelType = _channelType;
+        channelInfo[_channel].channelStartBlock = block.number;
+        channelInfo[_channel].channelUpdateBlock = block.number;
+        channelInfo[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         channelsCount = channelsCount + 1;
 
@@ -253,7 +260,7 @@ contract PushCoreV3 is
             if (_channelExpiryTime <= block.timestamp) {
                 revert Errors.Core_InvalidExpiryTime();
             }
-            channels[_channel].expiryTime = _channelExpiryTime;
+            channelInfo[_channel].expiryTime = _channelExpiryTime;
         }
     }
 
@@ -270,18 +277,32 @@ contract PushCoreV3 is
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
-        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
-        channelNotifSettings[msg.sender] = notifSetting;
-
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
-        emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
+
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        _createSettings(_channelBytesID, _notifOptions, _notifSettings, _notifDescription);
+    }
+
+    function _createSettings(
+        bytes32 _channel,
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription
+    )
+        private
+    {
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
+
+        emit ChannelNotifcationSettingsAdded(_channel, _notifOptions, notifSetting, _notifDescription);
     }
 
     /// @inheritdoc IPushCoreV3
     function updateChannelState(uint256 _amount) external whenNotPaused {
         // Check channel's current state
-        CoreTypes.Channel storage channelData = channels[msg.sender];
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
         if (channelCurrentState != 1 && channelCurrentState != 2) {
@@ -301,7 +322,7 @@ contract PushCoreV3 is
                 channelData.channelState = 2;
                 channelData.channelWeight = _newChannelWeight;
                 channelData.poolContribution = minPoolContribution;
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             } else {
                 // TIME-BOUND CHANNEL DELETION PHASE
                 if (channelData.expiryTime >= block.timestamp) {
@@ -309,8 +330,8 @@ contract PushCoreV3 is
                 }
                 totalRefundableAmount = channelData.poolContribution;
                 channelsCount = channelsCount - 1;
-                delete channels[msg.sender];
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                delete channelInfo[_channelBytesID];
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             }
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
@@ -333,18 +354,19 @@ contract PushCoreV3 is
             channelData.channelState = 1;
             channelData.poolContribution = _newPoolContribution;
             channelData.channelWeight = _newChannelWeight;
-            emit ChannelStateUpdate(msg.sender, 0, _amount);
+            emit ChannelStateUpdate(_channelBytesID, 0, _amount);
         }
     }
 
     /// @inheritdoc IPushCoreV3
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyGovernance();
-        if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channelAddress);
+        if (((channelInfo[_channelBytesID].channelState == 3) || (channelInfo[_channelBytesID].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        CoreTypes.Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -359,7 +381,7 @@ contract PushCoreV3 is
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = minPoolContribution;
 
-        emit ChannelBlocked(_channelAddress);
+        emit ChannelBlocked(_channelBytesID);
     }
 
     /* **************
@@ -368,7 +390,9 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
-        address verifiedBy = channels[_channel].verifiedBy;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        address verifiedBy = channelInfo[_channelBytesID].verifiedBy;
         bool logicComplete = false;
 
         // Check if it's primary verification
@@ -386,7 +410,8 @@ contract PushCoreV3 is
                     logicComplete = true;
                 } else {
                     // Upper drill exists, go up
-                    verifiedBy = channels[verifiedBy].verifiedBy;
+                    bytes32 verifiedByChannel = BaseHelper.addressToBytes32(verifiedBy);
+                    verifiedBy = channelInfo[verifiedByChannel].verifiedBy;
                 }
             }
         }
@@ -427,23 +452,25 @@ contract PushCoreV3 is
         }
 
         // Verify channel
-        channels[_channel].verifiedBy = msg.sender;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        channelInfo[_channelBytesID].verifiedBy = msg.sender;
 
         // Emit event
-        emit ChannelVerified(_channel, msg.sender);
+        emit ChannelVerified(_channelBytesID, msg.sender);
     }
 
     /// @inheritdoc IPushCoreV3
     function unverifyChannel(address _channel) public {
-        if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        if (!(channelInfo[_channelBytesID].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 
         // Unverify channel
-        channels[_channel].verifiedBy = address(0x0);
+        channelInfo[_channelBytesID].verifiedBy = address(0x0);
 
         // Emit Event
-        emit ChannelVerificationRevoked(_channel, msg.sender);
+        emit ChannelVerificationRevoked(_channelBytesID, msg.sender);
     }
 
     /**
@@ -855,8 +882,9 @@ contract PushCoreV3 is
             bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
             uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
 
-            emit AddChannel(sender, _channelType, _channelIdentity);
-            _createChannel(sender, _channelType, amount, channelExpiryTime);
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channelBytesID, _channelType, _channelIdentity);
+            _createChannel(_channelBytesID, _channelType, amount, channelExpiryTime);
         } else if (functionSig == this.handleChatRequestData.selector) {
             //ToDo: Update handleChatRequest to handle incoming cross Chain Request
             uint256 amount = reqPayload.amount;

@@ -1,6 +1,6 @@
 createChannelWithPUSH.t.sol
     ├── when contract is Paused
-    │   └── it REVERT - EnforcedPause()
+    │   └── it REVERT - "Pausable: paused"
     └── when contract is not Paused
         ├── when push deposit amount is less than min fees required for channel creation
         │   └── it REVERT - PushCoreV2::_createChannelWithPUSH: Insufficient Deposit Amount

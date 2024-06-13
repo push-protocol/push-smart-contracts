@@ -4,10 +4,11 @@ import { CoreTypes } from "../../contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
+    event ChannelCreated(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     event ReactivateChannel(address indexed channel, uint256 indexed amountDeposited);
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
-    event ChannelBlocked(address indexed channel);
+    event ChannelBlocked(bytes32 indexed channel);
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     event IncentivizeChatReqReceived(
         address requestSender,
@@ -17,9 +18,9 @@ abstract contract CoreEvents {
         uint256 timestamp
     );
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
-    event ChannelVerified(address indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
-    event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
+    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
+    event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
 }
 
 abstract contract CommEvents {
