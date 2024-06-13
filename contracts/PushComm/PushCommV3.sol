@@ -674,4 +674,29 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     function setWormholeRecipientChain(uint16 _recipientChain) external onlyPushChannelAdmin {
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
+
+    /**
+     * @notice Function to allow the Push Channel Admin to bridge PROTOCOL_POOL_FEES from Comm to Core
+     * @dev    Can only be called by the Push Channel Admin
+     * @param  _amount Amount to be bridged
+     */
+    // Should be only admin 
+    // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
+    function transferFeePoolToCore(uint256 _amount) external onlyPushChannelAdmin payable{
+        if(PROTOCOL_POOL_FEE < _amount) {
+            revert Errors.InsufficientFunds();
+        }
+        
+        bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
+
+        uint256 tokenBridgeCost = quoteTokenBridgingCost();
+        if (msg.value < (tokenBridgeCost)) {
+            revert Errors.InsufficientFunds();
+        }
+
+        PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - _amount;
+        
+        PUSH_NTT.approve(address(NTT_MANAGER), _amount);
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+    }
 }
