@@ -690,7 +690,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
 
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        if (msg.value < (tokenBridgeCost)) {
+        if (msg.value < tokenBridgeCost) {
             revert Errors.InsufficientFunds();
         }
 
