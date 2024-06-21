@@ -18,9 +18,8 @@ contract DeployPushComm is Test {
     EPNSCommProxy public epnsCommProxy;
     EPNSCommAdmin public epnsCommProxyAdmin;
 
-    address public coreProxy = 0x53a3a61D73Cab3e15594ECEdc3eEEEf7978d7020;
-    // address public pushToken = 0x70c3C79d33A9b08F1bc1e7DB113D1588Dad7d8Bc; // arb sepolia token
-    address public pushToken = 0xff9A15FBa9c0E08683F2599382df551035C1d8C4; // bnb testnet token
+    address public coreProxy = 0x34cd115a35252B0d946fA479B6eCb781dbBD5cef;
+    address public pushToken = 0x527F3692F5C53CfA83F7689885995606F93b6164; // base sepolia testnet token
 
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));

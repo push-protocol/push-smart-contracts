@@ -7,13 +7,14 @@ import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
 import { CrossChainRequestTypes, CoreTypes } from "../../contracts/libraries/DataTypes.sol";
 
 contract CreateChannelFromComm is Test {
-    PushCommV3 public commProxy = PushCommV3(0x96891F643777dF202b153DB9956226112FfA34a9);
+    PushCommV3 public commProxy = PushCommV3(0x69c5560bB765a935C345f507D2adD34253FBe41b);
     // EPNSCommProxy public epnsCommProxy = EPNSCommProxy(payable(0x96891F643777dF202b153DB9956226112FfA34a9));
 
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address account = vm.addr(vm.envUint("PRIVATE_KEY"));
 
+        uint16 _recipientChain = 10004;
         uint256 _amount = 50 ether;
         uint256 _gasLimit = 10_000_000;
         CoreTypes.ChannelType channelType = CoreTypes.ChannelType.InterestBearingOpen;
@@ -26,13 +27,15 @@ contract CreateChannelFromComm is Test {
 
         CrossChainRequestTypes.SpecificRequestPayload memory _payload = CrossChainRequestTypes.SpecificRequestPayload({
             functionSig: 0xa90521c3,
-            amountRecipient: 0x5B9A5152465921307Ca4da7E572bf53f5FA7B671,
+            amountRecipient: 0x34cd115a35252B0d946fA479B6eCb781dbBD5cef,
             amount: _amount,
             channelData: channelData
         });
 
+        uint256 msgFee = commProxy.quoteMsgRelayCost(_recipientChain, _gasLimit);
+        uint256 tokenFee = commProxy.quoteTokenBridgingCost();
 
-        commProxy.createChannel{value: 327242074460000}(_payload, _amount, _gasLimit);
+        commProxy.createChannel{value: msgFee + tokenFee}(_payload, _amount, _gasLimit);
 
         vm.stopBroadcast();
     }
