@@ -56,6 +56,8 @@ interface IPushCoreV3 {
         uint256 feePercent,
         uint256 indexed feeId
     );
+    /// @notice emits whenever a user claims the funds that they got from arbirary request fees
+    event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* *****************************
 
