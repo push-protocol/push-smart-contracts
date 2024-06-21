@@ -769,7 +769,7 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
-        if (msg.sender != epnsCommunicator || msg.sender == address(this)) {
+        if (msg.sender != epnsCommunicator && msg.sender != wormholeRelayer) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         uint256 poolFeeAmount = FEE_AMOUNT;
