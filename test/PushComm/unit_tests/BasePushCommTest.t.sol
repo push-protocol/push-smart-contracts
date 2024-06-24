@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.0;
 
-import { BaseTest } from "../../BaseTest.t.sol";
+import { BasePushCoreTest } from "../../PushCore/unit_tests/BasePushCoreTest.t.sol";
 import { SignatureVerifier } from "contracts/mocks/MockERC1271.sol";
 import { CoreTypes } from "../../../contracts/libraries/DataTypes.sol";
 
-contract BasePushCommTest is BaseTest {
+contract BasePushCommTest is BasePushCoreTest {
     SignatureVerifier verifierContract;
 
     function setUp() public virtual override {
-        BaseTest.setUp();
+        BasePushCoreTest.setUp();
+
         changePrank(actor.tim_push_holder);
         verifierContract = new SignatureVerifier();
 

@@ -29,6 +29,7 @@ abstract contract CommEvents {
     );
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
+    event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel); 
 }
 
 abstract contract ProxyEvents {

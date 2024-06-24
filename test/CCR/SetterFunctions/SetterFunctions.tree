@@ -1,0 +1,11 @@
+SetterFunctions.t.sol
+├── when initializeBridgeContracts function is called
+│   ├── when the caller is not admin
+│   │   └── it should revert
+│   └── when the caller is admin
+│       └── it should proceed and set all the addresses correctly
+└── when rest of the setter functions are called individually
+    ├── when caller is not admin
+    │   └── it should revert
+    └── when caller is admin
+        └── it should proceed and set the correct values

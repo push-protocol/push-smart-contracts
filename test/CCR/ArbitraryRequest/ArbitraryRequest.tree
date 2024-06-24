@@ -1,0 +1,14 @@
+ArbitraryRequest.t.sol
+└── when createRequestWithFeeId is called
+    ├── when contract is paused
+    │   └── it should Revert
+    ├── when amount not greater than zero
+    │   └── it should revert
+    ├── when feePercentage is greater than hundred
+    │   └── it should revert
+    ├── when ether passed is less
+    │   └── it should revert
+    ├── when all checks passes
+    │   └── it should successfully create the CCR
+    └── when the core contract receives accurate data
+        └── it should execute the requested function

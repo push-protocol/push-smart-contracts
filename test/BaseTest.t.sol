@@ -226,7 +226,7 @@ abstract contract BaseTest is Test, Constants, Events {
         // Transfer 50 eth to every actor
         vm.deal({ account: _actor, newBalance: 50 ether });
         // Transfer 50K PUSH Tokens for every actor
-        vm.prank(tokenDistributor);
+        changePrank(tokenDistributor);
         pushToken.transfer(_actor, 50_000 ether);
         return _actor;
     }
