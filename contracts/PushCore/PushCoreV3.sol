@@ -917,6 +917,27 @@ contract PushCoreV3 is
         emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }
 
+    /**
+     * @notice Allows a user to claim a specified amount of arbitrary request fees.
+     * @dev Reverts if the user tries to claim more than their available balance.
+     * @param _amount The amount of arbitrary request fees to claim.
+     * @custom:requires The caller's balance of arbitrary request fees must be greater than or equal to `_amount`.
+     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request fees.
+     * @custom:emits An {ArbitraryRequestFeesClaimed} event.
+    */
+    function claimArbitraryRequestFees(uint256 _amount) external {
+        uint256 userFeesBalance = arbitraryReqFees[msg.sender];
+
+        if (userFeesBalance < _amount) {
+            revert Errors.InvalidArg_MoreThanExpected(userFeesBalance, _amount);
+        }
+
+        arbitraryReqFees[msg.sender] = userFeesBalance - _amount;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
+
+        emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
+    }
+
     function migrateAddresToBytes32(address[] calldata _channels) external whenPaused {
         onlyPushChannelAdmin();
         for (uint256 i; i < _channels.length; ++i) {
