@@ -84,14 +84,24 @@ contract BaseCCRTest is BasePushCommTest {
         pushNttToken = Push(address(PUSH_NTT_DEST));
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(WORMHOLE_RELAYER_SEPOLIA);
-        coreProxy.setRegisteredSender(chainId1,toWormholeFormat(address(commProxy)));
+        coreProxy.setRegisteredSender(chainId1, toWormholeFormat(address(commProxy)));
     }
 
     function toWormholeFormat(address addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(addr)));
     }
 
-    function getPayload() internal returns (bytes memory) {
-        
+    function getPoolFundsAndFees(uint256 _amountDeposited)
+        internal
+        view
+        returns (uint256 CHANNEL_POOL_FUNDS, uint256 PROTOCOL_POOL_FEES)
+    {
+
+        uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
+        uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
+        //store funds in pool_funds & pool_fees
+        CHANNEL_POOL_FUNDS = coreProxy.CHANNEL_POOL_FUNDS() + poolFundAmount;
+        PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES() + poolFeeAmount;
+
     }
 }

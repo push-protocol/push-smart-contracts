@@ -61,9 +61,10 @@ contract CreateChannelCCR is BaseCCRTest {
         commProxy.createChannel(_payload, amount, 10_000_000);
     }
 
-        function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
+    function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
         // it should successfully create the CCR
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(WORMHOLE_RELAYER, 2105, 0, requestPayload, 15);
@@ -78,7 +79,8 @@ contract CreateChannelCCR is BaseCCRTest {
     function test_WhenSenderIsNotRegistered() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         //set sender to zero address
@@ -92,7 +94,8 @@ contract CreateChannelCCR is BaseCCRTest {
     function test_WhenSenderIsNotRelayer() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         coreProxy.setWormholeRelayer(address(0));
@@ -106,7 +109,8 @@ contract CreateChannelCCR is BaseCCRTest {
         test_WhenAllChecksPasses();
 
         setUpChain2(EthSepolia);
-                requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
         changePrank(WORMHOLE_RELAYER_SEPOLIA);
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
@@ -119,15 +123,43 @@ contract CreateChannelCCR is BaseCCRTest {
         test_WhenAllChecksPasses();
 
         setUpChain2(EthSepolia);
+
         changePrank(WORMHOLE_RELAYER_SEPOLIA);
+
+        (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
+
         vm.expectEmit(true, true, false, true);
         emit ChannelCreated(
             toWormholeFormat(actor.bob_channel_owner),
             CoreTypes.ChannelType.InterestBearingMutual,
             _testChannelUpdatedIdentity
         );
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        assertEq(coreProxy.CHANNEL_POOL_FUNDS(), poolFunds);
+        assertEq(coreProxy.PROTOCOL_POOL_FEES(), poolFees);
+
+        (
+            CoreTypes.ChannelType channelType,
+            uint8 channelState,
+            ,
+            uint256 poolContribution,
+            ,
+            ,
+            ,
+            uint256 channelStartBlock,
+            uint256 channelUpdateBlock,
+            uint256 channelWeight,
+        ) = coreProxy.channelInfo(toWormholeFormat(actor.bob_channel_owner));
+
+        assertEq(uint8(channelType), uint8(CoreTypes.ChannelType.InterestBearingMutual),"channel Type");
+        assertEq(channelState, 1,"channel State");
+        assertEq(poolContribution, amount - coreProxy.FEE_AMOUNT(), "Pool Contribution");
+        assertEq(channelStartBlock, block.number, "Channel Start Block");
+        assertEq(channelUpdateBlock, block.number, "Chanel Update Block");
+        assertEq(channelWeight, ((amount - coreProxy.FEE_AMOUNT())* 10 ** 7) / coreProxy.MIN_POOL_CONTRIBUTION(), "Channel Weight");
     }
 }
