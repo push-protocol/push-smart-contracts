@@ -622,7 +622,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
     function createCrossChainRequest(bytes memory _requestPayload, uint256 _amount, uint256 _gasLimit) public payable {
-        bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
+        bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
+        bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
 
         // Calculate MSG bridge cost and Token Bridge cost
         uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, _gasLimit);
@@ -644,7 +645,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1));
     }
 
     function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
