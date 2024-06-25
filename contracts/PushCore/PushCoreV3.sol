@@ -769,9 +769,20 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
-        if (msg.sender != epnsCommunicator && msg.sender != wormholeRelayer) {
+        if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
+        handleIncentivizedChat(requestSender, requestReceiver, amount);
+    }
+
+    /**
+    * @notice Handles the incentivized chat request between a sender and a receiver.
+    * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol fee pool.
+    * @param requestSender The address of the sender initiating the chat request.
+    * @param requestReceiver The address of the receiver who is the target of the chat request.
+    * @param amount The total amount sent by the sender for the incentivized chat.
+    */
+    function handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -890,7 +901,7 @@ contract PushCoreV3 is
             uint256 amount = reqPayload.amount;
             address requestReceiver = reqPayload.amountRecipient;
 
-            handleChatRequestData(sender, requestReceiver, amount);
+            handleIncentivizedChat(sender, requestReceiver, amount);
         } else {
             revert("Invalid Function Signature");
         }
