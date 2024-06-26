@@ -7,7 +7,7 @@ import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 contract CreateChatCCR is BaseCCRTest {
-    bytes4 functionSig = coreProxy.handleIncentivizedChat.selector;
+    bytes4 functionSig = coreProxy.handleChatRequestData.selector;
     address amountRecipient = actor.charlie_channel_owner;
     uint256 amount = 100e18;
     CrossChainRequestTypes.ChannelPayload channelData = CrossChainRequestTypes.ChannelPayload(
