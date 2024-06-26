@@ -7,11 +7,11 @@ import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 contract CreateChatCCR is BaseCCRTest {
-    bytes4 functionSig = coreProxy.handleChatRequestData.selector;
+    bytes4 functionSig = coreProxy.handleIncentivizedChat.selector;
     address amountRecipient = actor.charlie_channel_owner;
     uint256 amount = 100e18;
     CrossChainRequestTypes.ChannelPayload channelData = CrossChainRequestTypes.ChannelPayload(
-        "actor.bob_channel_owner", CoreTypes.ChannelType.InterestBearingMutual, 0, _testChannelUpdatedIdentity
+        "", CoreTypes.ChannelType.InterestBearingMutual, 0, _testChannelUpdatedIdentity
     );
 
     CrossChainRequestTypes.SpecificRequestPayload _payload =
@@ -19,7 +19,6 @@ contract CreateChatCCR is BaseCCRTest {
 
     bytes specificReqPayload = abi.encode(_payload);
     bytes requestPayload;
-        
 
     bytes[] additionalVaas;
     bytes32 sourceAddress;
@@ -29,6 +28,8 @@ contract CreateChatCCR is BaseCCRTest {
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
     }
 
     modifier whenCreateChannelIsCalled() {
@@ -48,9 +49,7 @@ contract CreateChatCCR is BaseCCRTest {
     function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelIsCalled {
         // it should revert
         amount = 49e18;
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES, amount)
-        );
+        vm.expectRevert("Invalid Amount");
         changePrank(actor.bob_channel_owner);
         commProxy.createIncentivizedChatRequest(_payload, amount, 10_000_000);
     }
@@ -64,7 +63,8 @@ contract CreateChatCCR is BaseCCRTest {
 
     function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
         // it should successfully create the CCR
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+        requestPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(WORMHOLE_RELAYER, 2105, 0, requestPayload, 15);
@@ -79,7 +79,6 @@ contract CreateChatCCR is BaseCCRTest {
     function test_WhenSenderIsNotRegistered() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         //set sender to zero address
@@ -93,7 +92,6 @@ contract CreateChatCCR is BaseCCRTest {
     function test_WhenSenderIsNotRelayer() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         coreProxy.setWormholeRelayer(address(0));
@@ -107,7 +105,6 @@ contract CreateChatCCR is BaseCCRTest {
         test_WhenAllChecksPasses();
 
         setUpChain2(EthSepolia);
-                requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
         changePrank(WORMHOLE_RELAYER_SEPOLIA);
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
@@ -120,11 +117,10 @@ contract CreateChatCCR is BaseCCRTest {
         test_WhenAllChecksPasses();
 
         setUpChain2(EthSepolia);
-        requestPayload =abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
-        uint poolFeeAmount = coreProxy.FEE_AMOUNT();
+        uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
         changePrank(WORMHOLE_RELAYER_SEPOLIA);
-        
+
         vm.expectEmit(false, false, false, true);
         emit IncentivizeChatReqReceived(
             actor.bob_channel_owner, actor.charlie_channel_owner, amount, poolFeeAmount, block.timestamp
