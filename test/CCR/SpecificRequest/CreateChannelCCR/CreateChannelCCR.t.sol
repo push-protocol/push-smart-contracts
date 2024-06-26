@@ -7,17 +7,9 @@ import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
-    bytes4 functionSig = coreProxy.createChannelWithPUSH.selector;
-    address amountRecipient = address(0);
     uint256 amount = ADD_CHANNEL_MIN_FEES;
-    CrossChainRequestTypes.ChannelPayload channelData = CrossChainRequestTypes.ChannelPayload(
-        "actor.bob_channel_owner", CoreTypes.ChannelType.InterestBearingMutual, 0, _testChannelUpdatedIdentity
-    );
 
-    CrossChainRequestTypes.SpecificRequestPayload _payload =
-        CrossChainRequestTypes.SpecificRequestPayload(functionSig, amountRecipient, amount, channelData);
-
-    bytes specificReqPayload = abi.encode(_payload);
+    CrossChainRequestTypes.SpecificRequestPayload _payload;
     bytes requestPayload;
 
     bytes[] additionalVaas;
@@ -28,6 +20,9 @@ contract CreateChannelCCR is BaseCCRTest {
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
+        (_payload, requestPayload) = getSpecificPayload(
+            coreProxy.createChannelWithPUSH.selector, address(0), amount, "channleStr"
+        );
     }
 
     modifier whenCreateChannelIsCalled() {
@@ -63,8 +58,6 @@ contract CreateChannelCCR is BaseCCRTest {
 
     function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
         // it should successfully create the CCR
-        requestPayload =
-            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(WORMHOLE_RELAYER, 2105, 0, requestPayload, 15);
@@ -79,8 +72,6 @@ contract CreateChannelCCR is BaseCCRTest {
     function test_WhenSenderIsNotRegistered() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =
-            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         //set sender to zero address
@@ -94,8 +85,6 @@ contract CreateChannelCCR is BaseCCRTest {
     function test_WhenSenderIsNotRelayer() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
         test_WhenAllChecksPasses();
-        requestPayload =
-            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         setUpChain2(EthSepolia);
         coreProxy.setWormholeRelayer(address(0));
@@ -109,8 +98,6 @@ contract CreateChannelCCR is BaseCCRTest {
         test_WhenAllChecksPasses();
 
         setUpChain2(EthSepolia);
-        requestPayload =
-            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
         changePrank(WORMHOLE_RELAYER_SEPOLIA);
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
@@ -135,8 +122,6 @@ contract CreateChannelCCR is BaseCCRTest {
             _testChannelUpdatedIdentity
         );
 
-        requestPayload =
-            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
 
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
         assertEq(coreProxy.CHANNEL_POOL_FUNDS(), poolFunds);
