@@ -54,4 +54,8 @@ contract PushCommStorageV2 {
     // uint256 public GAS_LIMIT = 100_000; //@audit-info Should be checked if really needed
 
     uint256 public ADD_CHANNEL_MIN_FEES;
+    
+    uint256 public FEE_AMOUNT;
+    uint256 public PROTOCOL_POOL_FEE;
+
 }

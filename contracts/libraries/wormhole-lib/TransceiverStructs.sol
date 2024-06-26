@@ -18,7 +18,21 @@ library TransceiverStructs {
     /// @dev Selector 0x56d2569d.
     /// @param prefix The prefix that was found in the encoded message.
     error IncorrectPrefix(bytes4 prefix);
-    error UnorderedInstructions();
+
+    /// @notice Error thrown when the transceiver instructions aren't
+    ///         encoded with strictly increasing indices
+    /// @dev Selector 0x0555a4b9.
+    /// @param lastIndex Last parsed instruction index
+    /// @param instructionIndex The instruction index that was unordered
+    error UnorderedInstructions(uint256 lastIndex, uint256 instructionIndex);
+
+    /// @notice Error thrown when a transceiver instruction index
+    ///         is greater than the number of registered transceivers
+    /// @dev We index from 0 so if providedIndex == numTransceivers then we're out-of-bounds too
+    /// @dev Selector 0x689f5016.
+    /// @param providedIndex The index specified in the instruction
+    /// @param numTransceivers The number of registered transceivers
+    error InvalidInstructionIndex(uint256 providedIndex, uint256 numTransceivers);
 
     /// @dev Prefix for all NativeTokenTransfer payloads
     ///      This is 0x99'N''T''T'
@@ -41,11 +55,18 @@ library TransceiverStructs {
         bytes payload;
     }
 
-    function nttManagerMessageDigest(uint16 sourceChainId, NttManagerMessage memory m) public pure returns (bytes32) {
+    function nttManagerMessageDigest(
+        uint16 sourceChainId,
+        NttManagerMessage memory m
+    ) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(sourceChainId, encodeNttManagerMessage(m)));
     }
 
-    function encodeNttManagerMessage(NttManagerMessage memory m) public pure returns (bytes memory encoded) {
+    function encodeNttManagerMessage(NttManagerMessage memory m)
+        public
+        pure
+        returns (bytes memory encoded)
+    {
         if (m.payload.length > type(uint16).max) {
             revert PayloadTooLong(m.payload.length);
         }
@@ -89,12 +110,21 @@ library TransceiverStructs {
         uint16 toChain;
     }
 
-    function encodeNativeTokenTransfer(NativeTokenTransfer memory m) public pure returns (bytes memory encoded) {
+    function encodeNativeTokenTransfer(NativeTokenTransfer memory m)
+        public
+        pure
+        returns (bytes memory encoded)
+    {
         // The `amount` and `decimals` fields are encoded in reverse order compared to how they are declared in the
         // `TrimmedAmount` type. This is consistent with the Rust NTT implementation.
         TrimmedAmount transferAmount = m.amount;
         return abi.encodePacked(
-            NTT_PREFIX, transferAmount.getDecimals(), transferAmount.getAmount(), m.sourceToken, m.to, m.toChain
+            NTT_PREFIX,
+            transferAmount.getDecimals(),
+            transferAmount.getAmount(),
+            m.sourceToken,
+            m.to,
+            m.toChain
         );
     }
 
@@ -157,11 +187,7 @@ library TransceiverStructs {
     function encodeTransceiverMessage(
         bytes4 prefix,
         TransceiverMessage memory m
-    )
-        public
-        pure
-        returns (bytes memory encoded)
-    {
+    ) public pure returns (bytes memory encoded) {
         if (m.nttManagerPayload.length > type(uint16).max) {
             revert PayloadTooLong(m.nttManagerPayload.length);
         }
@@ -189,11 +215,7 @@ library TransceiverStructs {
         bytes32 recipientNttManagerAddress,
         bytes memory nttManagerMessage,
         bytes memory transceiverPayload
-    )
-        public
-        pure
-        returns (TransceiverMessage memory, bytes memory)
-    {
+    ) public pure returns (TransceiverMessage memory, bytes memory) {
         TransceiverMessage memory transceiverMessage = TransceiverMessage({
             sourceNttManagerAddress: sourceNttManagerAddress,
             recipientNttManagerAddress: recipientNttManagerAddress,
@@ -212,11 +234,7 @@ library TransceiverStructs {
     function parseTransceiverMessage(
         bytes4 expectedPrefix,
         bytes memory encoded
-    )
-        internal
-        pure
-        returns (TransceiverMessage memory transceiverMessage)
-    {
+    ) internal pure returns (TransceiverMessage memory transceiverMessage) {
         uint256 offset = 0;
         bytes4 prefix;
 
@@ -230,10 +248,12 @@ library TransceiverStructs {
         (transceiverMessage.recipientNttManagerAddress, offset) = encoded.asBytes32Unchecked(offset);
         uint16 nttManagerPayloadLength;
         (nttManagerPayloadLength, offset) = encoded.asUint16Unchecked(offset);
-        (transceiverMessage.nttManagerPayload, offset) = encoded.sliceUnchecked(offset, nttManagerPayloadLength);
+        (transceiverMessage.nttManagerPayload, offset) =
+            encoded.sliceUnchecked(offset, nttManagerPayloadLength);
         uint16 transceiverPayloadLength;
         (transceiverPayloadLength, offset) = encoded.asUint16Unchecked(offset);
-        (transceiverMessage.transceiverPayload, offset) = encoded.sliceUnchecked(offset, transceiverPayloadLength);
+        (transceiverMessage.transceiverPayload, offset) =
+            encoded.sliceUnchecked(offset, transceiverPayloadLength);
 
         // Check if the entire byte array has been processed
         encoded.checkLength(offset);
@@ -246,13 +266,10 @@ library TransceiverStructs {
     function parseTransceiverAndNttManagerMessage(
         bytes4 expectedPrefix,
         bytes memory payload
-    )
-        public
-        pure
-        returns (TransceiverMessage memory, NttManagerMessage memory)
-    {
+    ) public pure returns (TransceiverMessage memory, NttManagerMessage memory) {
         // parse the encoded message payload from the Transceiver
-        TransceiverMessage memory parsedTransceiverMessage = parseTransceiverMessage(expectedPrefix, payload);
+        TransceiverMessage memory parsedTransceiverMessage =
+            parseTransceiverMessage(expectedPrefix, payload);
 
         // parse the encoded message payload from the NttManager
         NttManagerMessage memory parsedNttManagerMessage =
@@ -287,11 +304,7 @@ library TransceiverStructs {
     function parseTransceiverInstructionUnchecked(
         bytes memory encoded,
         uint256 offset
-    )
-        public
-        pure
-        returns (TransceiverInstruction memory instruction, uint256 nextOffset)
-    {
+    ) public pure returns (TransceiverInstruction memory instruction, uint256 nextOffset) {
         (instruction.index, nextOffset) = encoded.asUint8Unchecked(offset);
         uint8 instructionLength;
         (instructionLength, nextOffset) = encoded.asUint8Unchecked(nextOffset);
@@ -332,20 +345,17 @@ library TransceiverStructs {
 
     function parseTransceiverInstructions(
         bytes memory encoded,
-        uint256 numEnabledTransceivers
-    )
-        public
-        pure
-        returns (TransceiverInstruction[] memory)
-    {
+        uint256 numRegisteredTransceivers
+    ) public pure returns (TransceiverInstruction[] memory) {
         uint256 offset = 0;
         uint256 instructionsLength;
         (instructionsLength, offset) = encoded.asUint8Unchecked(offset);
 
-        // We allocate an array with the length of the number of enabled transceivers
+        // We allocate an array with the length of the number of registered transceivers
         // This gives us the flexibility to not have to pass instructions for transceivers that
         // don't need them
-        TransceiverInstruction[] memory instructions = new TransceiverInstruction[](numEnabledTransceivers);
+        TransceiverInstruction[] memory instructions =
+            new TransceiverInstruction[](numRegisteredTransceivers);
 
         uint256 lastIndex = 0;
         for (uint256 i = 0; i < instructionsLength; i++) {
@@ -356,8 +366,14 @@ library TransceiverStructs {
 
             // The instructions passed in have to be strictly increasing in terms of transceiver index
             if (i != 0 && instructionIndex <= lastIndex) {
-                revert UnorderedInstructions();
+                revert UnorderedInstructions(lastIndex, instructionIndex);
             }
+
+            // Instruction index is out of bounds
+            if (instructionIndex >= numRegisteredTransceivers) {
+                revert InvalidInstructionIndex(instructionIndex, numRegisteredTransceivers);
+            }
+
             lastIndex = instructionIndex;
 
             instructions[instructionIndex] = instruction;
@@ -376,7 +392,11 @@ library TransceiverStructs {
         uint8 tokenDecimals;
     }
 
-    function encodeTransceiverInit(TransceiverInit memory init) public pure returns (bytes memory) {
+    function encodeTransceiverInit(TransceiverInit memory init)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encodePacked(
             init.transceiverIdentifier,
             init.nttManagerAddress,
@@ -386,7 +406,11 @@ library TransceiverStructs {
         );
     }
 
-    function decodeTransceiverInit(bytes memory encoded) public pure returns (TransceiverInit memory init) {
+    function decodeTransceiverInit(bytes memory encoded)
+        public
+        pure
+        returns (TransceiverInit memory init)
+    {
         uint256 offset = 0;
         (init.transceiverIdentifier, offset) = encoded.asBytes4Unchecked(offset);
         (init.nttManagerAddress, offset) = encoded.asBytes32Unchecked(offset);
@@ -408,7 +432,9 @@ library TransceiverStructs {
         returns (bytes memory)
     {
         return abi.encodePacked(
-            registration.transceiverIdentifier, registration.transceiverChainId, registration.transceiverAddress
+            registration.transceiverIdentifier,
+            registration.transceiverChainId,
+            registration.transceiverAddress
         );
     }
 

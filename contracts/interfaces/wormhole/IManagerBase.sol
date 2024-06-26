@@ -48,7 +48,7 @@ interface IManagerBase {
 
     /// @notice Emitted when an transceiver is removed from the nttManager.
     /// @dev Topic0
-    ///      0xc6289e62021fd0421276d06677862d6b328d9764cdd4490ca5ac78b173f25883.
+    ///      0xf05962b5774c658e85ed80c91a75af9d66d2af2253dda480f90bce78aff5eda5.
     /// @param transceiver The address of the transceiver.
     /// @param transceiversNum The current number of transceivers.
     /// @param threshold The current threshold of transceivers.
@@ -56,7 +56,7 @@ interface IManagerBase {
 
     /// @notice Emitted when an transceiver is removed from the nttManager.
     /// @dev Topic0
-    ///     0x638e631f34d9501a3ff0295873b29f50d0207b5400bf0e48b9b34719e6b1a39e.
+    ///     0x697a3853515b88013ad432f29f53d406debc9509ed6d9313dcfe115250fcd18f.
     /// @param transceiver The address of the transceiver.
     /// @param threshold The current threshold of transceivers.
     event TransceiverRemoved(address transceiver, uint8 threshold);
@@ -116,10 +116,7 @@ interface IManagerBase {
     function quoteDeliveryPrice(
         uint16 recipientChain,
         bytes memory transceiverInstructions
-    )
-        external
-        view
-        returns (uint256[] memory, uint256);
+    ) external view returns (uint256[] memory, uint256);
 
     /// @notice Sets the threshold for the number of attestations required for a message
     /// to be considered valid.
@@ -169,7 +166,10 @@ interface IManagerBase {
     function getThreshold() external view returns (uint8);
 
     /// @notice Returns a boolean indicating if the transceiver has attested to the message.
-    function transceiverAttestedToMessage(bytes32 digest, uint8 index) external view returns (bool);
+    function transceiverAttestedToMessage(
+        bytes32 digest,
+        uint8 index
+    ) external view returns (bool);
 
     /// @notice Returns the number of attestations for a given message.
     function messageAttestations(bytes32 digest) external view returns (uint8 count);

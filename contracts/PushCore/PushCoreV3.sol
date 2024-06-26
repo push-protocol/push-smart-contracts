@@ -769,9 +769,20 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
-        if (msg.sender != epnsCommunicator || msg.sender == address(this)) {
+        if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
+        handleIncentivizedChat(requestSender, requestReceiver, amount);
+    }
+
+    /**
+    * @notice Handles the incentivized chat request between a sender and a receiver.
+    * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol fee pool.
+    * @param requestSender The address of the sender initiating the chat request.
+    * @param requestReceiver The address of the receiver who is the target of the chat request.
+    * @param amount The total amount sent by the sender for the incentivized chat.
+    */
+    function handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -890,7 +901,7 @@ contract PushCoreV3 is
             uint256 amount = reqPayload.amount;
             address requestReceiver = reqPayload.amountRecipient;
 
-            handleChatRequestData(sender, requestReceiver, amount);
+            handleIncentivizedChat(sender, requestReceiver, amount);
         } else {
             revert("Invalid Function Signature");
         }
@@ -915,6 +926,27 @@ contract PushCoreV3 is
         arbitraryReqFees[recipient] += amount - feeAmount;
 
         emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
+    }
+
+    /**
+     * @notice Allows a user to claim a specified amount of arbitrary request fees.
+     * @dev Reverts if the user tries to claim more than their available balance.
+     * @param _amount The amount of arbitrary request fees to claim.
+     * @custom:requires The caller's balance of arbitrary request fees must be greater than or equal to `_amount`.
+     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request fees.
+     * @custom:emits An {ArbitraryRequestFeesClaimed} event.
+    */
+    function claimArbitraryRequestFees(uint256 _amount) external {
+        uint256 userFeesBalance = arbitraryReqFees[msg.sender];
+
+        if (userFeesBalance < _amount) {
+            revert Errors.InvalidArg_MoreThanExpected(userFeesBalance, _amount);
+        }
+
+        arbitraryReqFees[msg.sender] = userFeesBalance - _amount;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
+
+        emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
     }
 
     function migrateAddresToBytes32(address[] calldata _channels) external whenPaused {
