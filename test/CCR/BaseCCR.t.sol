@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import { BasePushCommTest } from "../PushComm/unit_tests/BasePushCommTest.t.sol";
 import { console } from "forge-std/console.sol";
 import "contracts/token/Push.sol";
+import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
 
 import "contracts/interfaces/wormhole/ITransceiver.sol";
 import "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
@@ -96,12 +97,50 @@ contract BaseCCRTest is BasePushCommTest {
         view
         returns (uint256 CHANNEL_POOL_FUNDS, uint256 PROTOCOL_POOL_FEES)
     {
-
         uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = coreProxy.CHANNEL_POOL_FUNDS() + poolFundAmount;
         PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES() + poolFeeAmount;
+    }
 
+    function getSpecificPayload(
+        bytes4 functionSig,
+        address amountRecipient,
+        uint256 amount,
+        string memory channleStr
+    )
+        internal
+        view
+        returns (CrossChainRequestTypes.SpecificRequestPayload memory payload, bytes memory reqPayload)
+    {
+        CrossChainRequestTypes.ChannelPayload memory channelData = CrossChainRequestTypes.ChannelPayload(
+            channleStr, CoreTypes.ChannelType.InterestBearingMutual, 0, _testChannelUpdatedIdentity
+        );
+
+        payload = CrossChainRequestTypes.SpecificRequestPayload(functionSig, amountRecipient, amount, channelData);
+
+        bytes memory specificReqPayload = abi.encode(payload);
+        reqPayload =
+            abi.encode(specificReqPayload, actor.bob_channel_owner, CrossChainRequestTypes.RequestType.SpecificReq);
+    }
+
+    function getArbitraryPayload(
+        bytes4 functionSig,
+        uint8 feeId,
+        uint8 feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        internal
+        view
+        returns (CrossChainRequestTypes.ArbitraryRequestPayload memory _payload, bytes memory requestPayload)
+    {
+        _payload =
+            CrossChainRequestTypes.ArbitraryRequestPayload(functionSig, feeId, feePercentage, amountRecipient, amount);
+
+            
+        bytes memory arbitraryReqPayload = abi.encode(_payload);
+        requestPayload = abi.encode(arbitraryReqPayload,actor.bob_channel_owner, CrossChainRequestTypes.RequestType.ArbitraryReq);
     }
 }
