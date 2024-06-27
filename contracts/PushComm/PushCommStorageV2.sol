@@ -46,7 +46,6 @@ contract PushCommStorageV2 {
     // WORMHOLE CROSS-CHAIN STATE VARIABLES
     IERC20 public PUSH_NTT;
     INttManager public NTT_MANAGER;
-    ITransceiver public TRANSCEIVER;
     IWormholeTransceiver public WORMHOLE_TRANSCEIVER;
     IWormholeRelayer public WORMHOLE_RELAYER;
 
