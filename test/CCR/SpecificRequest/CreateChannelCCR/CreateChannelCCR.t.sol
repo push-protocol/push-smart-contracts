@@ -2,25 +2,17 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
 import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
     uint256 amount = ADD_CHANNEL_MIN_FEES;
 
-    CrossChainRequestTypes.SpecificRequestPayload _payload;
-    bytes requestPayload;
-
-    bytes[] additionalVaas;
-    bytes32 sourceAddress;
-    uint16 sourceChain = chainId1;
-    bytes32 deliveryHash = 0x97f309914aa8b670f4a9212ba06670557b0c92a7ad853b637be8a9a6c2ea6447;
-
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
-        (_payload, requestPayload) = getSpecificPayload(
+        (_specificPayload, requestPayload) = getSpecificPayload(
             coreProxy.createChannelWithPUSH.selector, address(0), amount, "channleStr"
         );
     }
@@ -36,7 +28,7 @@ contract CreateChannelCCR is BaseCCRTest {
         commProxy.pauseContract();
         vm.expectRevert("Pausable: paused");
         changePrank(actor.bob_channel_owner);
-        commProxy.createChannel(_payload, amount, 10_000_000);
+        commProxy.createChannel(_specificPayload, amount, 10_000_000);
     }
 
     function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelIsCalled {
@@ -46,23 +38,23 @@ contract CreateChannelCCR is BaseCCRTest {
             abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES, amount)
         );
         changePrank(actor.bob_channel_owner);
-        commProxy.createChannel(_payload, amount, 10_000_000);
+        commProxy.createChannel(_specificPayload, amount, 10_000_000);
     }
 
     function test_RevertWhen_EtherPassedIsLess() external whenCreateChannelIsCalled {
         // it should revert
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
         changePrank(actor.bob_channel_owner);
-        commProxy.createChannel(_payload, amount, 10_000_000);
+        commProxy.createChannel(_specificPayload, amount, 10_000_000);
     }
 
     function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
         // it should successfully create the CCR
 
         vm.expectEmit(true, false, false, false);
-        emit LogMessagePublished(WORMHOLE_RELAYER, 2105, 0, requestPayload, 15);
+        emit LogMessagePublished(ArbSepolia.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
         changePrank(actor.bob_channel_owner);
-        commProxy.createChannel{ value: 1e18 }(_payload, amount, 10_000_000);
+        commProxy.createChannel{ value: 1e18 }(_specificPayload, amount, 10_000_000);
     }
 
     modifier whenReceiveFunctionIsCalledInCore() {
@@ -73,12 +65,12 @@ contract CreateChannelCCR is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia);
+        setUpChain2(EthSepolia.rpc);
         //set sender to zero address
-        coreProxy.setRegisteredSender(chainId1, toWormholeFormat(address(0)));
+        coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(0)));
 
         vm.expectRevert("Not registered sender");
-        changePrank(WORMHOLE_RELAYER_SEPOLIA);
+        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
     }
 
@@ -86,9 +78,9 @@ contract CreateChannelCCR is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia);
+        setUpChain2(EthSepolia.rpc);
         coreProxy.setWormholeRelayer(address(0));
-        changePrank(WORMHOLE_RELAYER_SEPOLIA);
+        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
     }
@@ -97,8 +89,8 @@ contract CreateChannelCCR is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia);
-        changePrank(WORMHOLE_RELAYER_SEPOLIA);
+        setUpChain2(EthSepolia.rpc);
+        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
         coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
@@ -109,9 +101,9 @@ contract CreateChannelCCR is BaseCCRTest {
 
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia);
+        setUpChain2(EthSepolia.rpc);
 
-        changePrank(WORMHOLE_RELAYER_SEPOLIA);
+        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
 
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
 

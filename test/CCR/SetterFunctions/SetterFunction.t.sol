@@ -22,12 +22,12 @@ contract SetterFunctionstsol is BaseCCRTest {
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
         changePrank(actor.bob_channel_owner);
         commProxy.initializeBridgeContracts(
-            PUSH_NTT_SOURCE,
-            NTT_MANAGER,
-            ITransceiver(TRANSCEIVER),
-            IWormholeTransceiver(WORMHOLE_TRANSCEIVER),
-            IWormholeRelayer(WORMHOLE_RELAYER),
-            WORMHOLE_RECIPIENT_CHAIN
+            ArbSepolia.PUSH_NTT_SOURCE,
+            ArbSepolia.NTT_MANAGER,
+            ITransceiver(ArbSepolia.TRANSCEIVER),
+            ArbSepolia.wormholeTransceiverChain1,
+           IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
+            ArbSepolia.WORMHOLE_RECIPIENT_CHAIN
         );
     }
 
@@ -35,20 +35,20 @@ contract SetterFunctionstsol is BaseCCRTest {
         // it should proceed and set all the addresses correctly
         changePrank(actor.admin);
         commProxy.initializeBridgeContracts(
-            PUSH_NTT_SOURCE,
-            NTT_MANAGER,
-            ITransceiver(TRANSCEIVER),
-            IWormholeTransceiver(WORMHOLE_TRANSCEIVER),
-            IWormholeRelayer(WORMHOLE_RELAYER),
-            WORMHOLE_RECIPIENT_CHAIN
+            ArbSepolia.PUSH_NTT_SOURCE,
+            ArbSepolia.NTT_MANAGER,
+            ITransceiver(ArbSepolia.TRANSCEIVER),
+            ArbSepolia.wormholeTransceiverChain1,
+           IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
+            ArbSepolia.WORMHOLE_RECIPIENT_CHAIN
         );
 
-        assertEq(address(commProxy.PUSH_NTT()), PUSH_NTT_SOURCE);
-        assertEq(address(commProxy.NTT_MANAGER()), NTT_MANAGER);
-        assertEq(address(commProxy.TRANSCEIVER()), TRANSCEIVER);
-        assertEq(address(commProxy.WORMHOLE_TRANSCEIVER()), WORMHOLE_TRANSCEIVER);
-        assertEq(address(commProxy.WORMHOLE_RELAYER()), WORMHOLE_RELAYER);
-        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), WORMHOLE_RECIPIENT_CHAIN);
+        assertEq(address(commProxy.PUSH_NTT()), ArbSepolia.PUSH_NTT_SOURCE);
+        assertEq(address(commProxy.NTT_MANAGER()), ArbSepolia.NTT_MANAGER);
+        assertEq(address(commProxy.TRANSCEIVER()), ArbSepolia.TRANSCEIVER);
+        assertEq(address(commProxy.WORMHOLE_TRANSCEIVER()), ArbSepolia.TRANSCEIVER);
+        assertEq(address(commProxy.WORMHOLE_RELAYER()), ArbSepolia.WORMHOLE_RELAYER_SOURCE);
+        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), ArbSepolia.WORMHOLE_RECIPIENT_CHAIN);
     }
 
     modifier whenRestOfTheSetterFunctionsAreCalledIndividually() {
@@ -66,19 +66,19 @@ contract SetterFunctionstsol is BaseCCRTest {
         commProxy.setPushNTTAddress(address(pushNtt));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        commProxy.setNttManagerAddress(address(NTT_MANAGER));
+        commProxy.setNttManagerAddress(address(ArbSepolia.NTT_MANAGER));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        commProxy.setTransceiverAddress(address(TRANSCEIVER));
+        commProxy.setTransceiverAddress(ArbSepolia.TRANSCEIVER);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        commProxy.setWormholeTransceiverAddress(address(WORMHOLE_TRANSCEIVER));
+        commProxy.setWormholeTransceiverAddress(ArbSepolia.TRANSCEIVER);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        commProxy.setWormholeRelayerAddress(address(WORMHOLE_RELAYER));
+        commProxy.setWormholeRelayerAddress(ArbSepolia.WORMHOLE_RELAYER_SOURCE);
 
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        commProxy.setWormholeRecipientChain(10_003);
+        commProxy.setWormholeRecipientChain(EthSepolia.DestChainId);
     }
 
     function test_WhenCallerIsAdmin() external whenRestOfTheSetterFunctionsAreCalledIndividually {
@@ -92,19 +92,19 @@ contract SetterFunctionstsol is BaseCCRTest {
         commProxy.setPushNTTAddress(address(pushNtt));
         assertEq(address(commProxy.PUSH_NTT()), address(pushNtt));
 
-        commProxy.setNttManagerAddress(address(NTT_MANAGER));
-        assertEq(address(commProxy.NTT_MANAGER()), address(NTT_MANAGER));
+        commProxy.setNttManagerAddress(address(ArbSepolia.NTT_MANAGER));
+        assertEq(address(commProxy.NTT_MANAGER()), ArbSepolia.NTT_MANAGER);
 
-        commProxy.setTransceiverAddress(address(TRANSCEIVER));
-        assertEq(address(commProxy.TRANSCEIVER()), address(TRANSCEIVER));
+        commProxy.setTransceiverAddress(ArbSepolia.TRANSCEIVER);
+        assertEq(address(commProxy.TRANSCEIVER()),ArbSepolia.TRANSCEIVER);
 
-        commProxy.setWormholeTransceiverAddress(address(WORMHOLE_TRANSCEIVER));
-        assertEq(address(commProxy.WORMHOLE_TRANSCEIVER()), address(WORMHOLE_TRANSCEIVER));
+        commProxy.setWormholeTransceiverAddress(ArbSepolia.TRANSCEIVER);
+        assertEq(address(commProxy.WORMHOLE_TRANSCEIVER()),ArbSepolia.TRANSCEIVER);
 
-        commProxy.setWormholeRelayerAddress(address(WORMHOLE_RELAYER));
-        assertEq(address(commProxy.WORMHOLE_RELAYER()), address(WORMHOLE_RELAYER));
+        commProxy.setWormholeRelayerAddress(ArbSepolia.WORMHOLE_RELAYER_SOURCE);
+        assertEq(address(commProxy.WORMHOLE_RELAYER()), ArbSepolia.WORMHOLE_RELAYER_SOURCE);
 
-        commProxy.setWormholeRecipientChain(10_003);
-        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), 10_003);
+        commProxy.setWormholeRecipientChain(EthSepolia.DestChainId);
+        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), EthSepolia.DestChainId);
     }
 }
