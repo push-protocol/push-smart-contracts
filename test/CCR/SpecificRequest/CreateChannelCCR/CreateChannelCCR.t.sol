@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes} from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
@@ -12,9 +12,8 @@ contract CreateChannelCCR is BaseCCRTest {
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
-        (_specificPayload, requestPayload) = getSpecificPayload(
-            coreProxy.createChannelWithPUSH.selector, address(0), amount, "channleStr"
-        );
+        (_specificPayload, requestPayload) =
+            getSpecificPayload(coreProxy.createChannelWithPUSH.selector, address(0), amount, "channleStr");
     }
 
     modifier whenCreateChannelIsCalled() {
@@ -58,52 +57,40 @@ contract CreateChannelCCR is BaseCCRTest {
     }
 
     modifier whenReceiveFunctionIsCalledInCore() {
+        test_WhenAllChecksPasses();
+
+        setUpChain2(EthSepolia.rpc);
         _;
     }
 
     function test_WhenSenderIsNotRegistered() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
-        test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
         //set sender to zero address
         coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(0)));
 
         vm.expectRevert("Not registered sender");
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
-        coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        receiveWormholeMessage(requestPayload);
     }
 
     function test_WhenSenderIsNotRelayer() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
-        test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
         coreProxy.setWormholeRelayer(address(0));
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
-        coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        receiveWormholeMessage(requestPayload);
     }
 
     function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
-        test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
-        coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        receiveWormholeMessage(requestPayload);
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
-        coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        receiveWormholeMessage(requestPayload);
     }
 
     function test_WhenAllChecksPass() external whenReceiveFunctionIsCalledInCore {
         // it should emit event and create Channel
-
-        test_WhenAllChecksPasses();
-
-        setUpChain2(EthSepolia.rpc);
-
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
 
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
 
@@ -114,8 +101,7 @@ contract CreateChannelCCR is BaseCCRTest {
             _testChannelUpdatedIdentity
         );
 
-
-        coreProxy.receiveWormholeMessages(requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
+        receiveWormholeMessage(requestPayload);
         assertEq(coreProxy.CHANNEL_POOL_FUNDS(), poolFunds);
         assertEq(coreProxy.PROTOCOL_POOL_FEES(), poolFees);
 
@@ -132,11 +118,15 @@ contract CreateChannelCCR is BaseCCRTest {
             uint256 channelWeight,
         ) = coreProxy.channelInfo(toWormholeFormat(actor.bob_channel_owner));
 
-        assertEq(uint8(channelType), uint8(CoreTypes.ChannelType.InterestBearingMutual),"channel Type");
-        assertEq(channelState, 1,"channel State");
+        assertEq(uint8(channelType), uint8(CoreTypes.ChannelType.InterestBearingMutual), "channel Type");
+        assertEq(channelState, 1, "channel State");
         assertEq(poolContribution, amount - coreProxy.FEE_AMOUNT(), "Pool Contribution");
         assertEq(channelStartBlock, block.number, "Channel Start Block");
         assertEq(channelUpdateBlock, block.number, "Chanel Update Block");
-        assertEq(channelWeight, ((amount - coreProxy.FEE_AMOUNT())* 10 ** 7) / coreProxy.MIN_POOL_CONTRIBUTION(), "Channel Weight");
+        assertEq(
+            channelWeight,
+            ((amount - coreProxy.FEE_AMOUNT()) * 10 ** 7) / coreProxy.MIN_POOL_CONTRIBUTION(),
+            "Channel Weight"
+        );
     }
 }
