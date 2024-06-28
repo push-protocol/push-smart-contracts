@@ -30,7 +30,6 @@ import {
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import "../interfaces/wormhole/INttManager.sol";
-import "../interfaces/wormhole/ITransceiver.sol";
 import "../interfaces/wormhole/IWormholeTransceiver.sol";
 import "../interfaces/wormhole/IWormholeRelayer.sol";
 import "../libraries/wormhole-lib/TransceiverStructs.sol";
@@ -538,10 +537,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     ***************************** */
 
-    function initializeBridgeContracts(
+    function setBridgeConfig(
         address _pushNTT,
         address _nttManager,
-        ITransceiver _transceiver,
         IWormholeTransceiver _wormholeTransceiver,
         IWormholeRelayer _wormholeRelayerAddress,
         uint16 _recipientChain
@@ -551,15 +549,12 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     {
         PUSH_NTT = IERC20(_pushNTT);
         NTT_MANAGER = INttManager(_nttManager);
-        TRANSCEIVER = ITransceiver(_transceiver);
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
-        ADD_CHANNEL_MIN_FEES = 50 ether;
     }
 
     // Cross Chain Request: Create Channel
-
     function createChannel(
         CrossChainRequestTypes.SpecificRequestPayload memory _payload,
         uint256 _amount,
@@ -614,7 +609,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     function quoteTokenBridgingCost() public view returns (uint256 cost) {
         TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
             TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
-        cost = TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
+        cost = WORMHOLE_TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
     }
 
     function quoteMsgRelayCost(uint16 targetChain, uint256 gasLimit) public view returns (uint256 cost) {
@@ -650,31 +645,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
-    }
-
-    // WORMHOLE SETTER FUNCTIONS
-    function setPushNTTAddress(address _pushNTTAddress) external onlyPushChannelAdmin {
-        PUSH_NTT = IERC20(_pushNTTAddress);
-    }
-
-    function setNttManagerAddress(address _nttManagerAddress) external onlyPushChannelAdmin {
-        NTT_MANAGER = INttManager(_nttManagerAddress);
-    }
-
-    function setTransceiverAddress(address _transceiverAddress) external onlyPushChannelAdmin {
-        TRANSCEIVER = ITransceiver(_transceiverAddress);
-    }
-
-    function setWormholeTransceiverAddress(address _wormholeTransceiverAddress) external onlyPushChannelAdmin {
-        WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiverAddress);
-    }
-
-    function setWormholeRelayerAddress(address _wormholeRelayerAddress) external onlyPushChannelAdmin {
-        WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
-    }
-
-    function setWormholeRecipientChain(uint16 _recipientChain) external onlyPushChannelAdmin {
-        WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
 
     /**

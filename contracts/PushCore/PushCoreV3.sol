@@ -821,12 +821,12 @@ contract PushCoreV3 is
      * Assumes only one sender per chain is valid
      * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
      */
-    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) public {
+    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) external {
         onlyPushChannelAdmin();
         registeredSenders[sourceChain] = sourceAddress;
     }
 
-    function setWormholeRelayer(address _wormholeRelayer) public {
+    function setWormholeRelayer(address _wormholeRelayer) external {
         onlyPushChannelAdmin();
         wormholeRelayer = _wormholeRelayer;
     }
