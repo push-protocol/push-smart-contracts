@@ -554,58 +554,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
 
-    // Cross Chain Request: Create Channel
-    function createChannel(
-        CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        if (_amount < ADD_CHANNEL_MIN_FEES) {
-            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
-        }
-        bytes memory specificReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
-    }
-
-    // Cross Chain Request: Create Incentivized Chat
-    function createIncentivizedChatRequest(
-        CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        require(_amount > 0, "Invalid Amount");
-        bytes memory specificReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
-    }
-
-    // Cross Chain Request: Arbitrary Request
-    function createRequestWithFeeId(
-        CrossChainRequestTypes.ArbitraryRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        require(_amount > 0, "Invalid Amount");
-        require(_payload.feePercentage <= 100, "Invalid Fee Percentage");
-
-        bytes memory arbitraryReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(arbitraryReqPayload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
-    }
-
     function quoteTokenBridgingCost() public view returns (uint256 cost) {
         TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
             TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
@@ -616,31 +564,67 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
     }
 
-    function createCrossChainRequest(bytes memory _requestPayload, uint256 _amount, uint256 _gasLimit) public payable {
-        bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
-        bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
+    function createCrossChain(
+        CrossChainRequestTypes.CrossChainFunction functionType,
+        bytes memory payload,
+        uint256 amount,
+        uint256 gasLimit
+    ) external payable whenNotPaused {
+        // Implement restrictions based on functionType
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
+            if (amount < ADD_CHANNEL_MIN_FEES) {
+                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            if (amount == 0) {
+                revert Errors.InvalidArg_LessThanExpected(1, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            // Additional checks for ArbitraryRequest can be added here
+        } else {
+            revert Errors.Comm_InvalidCrossChain_Function();
+        }
 
         // Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, _gasLimit);
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
+
+        // Call the internal function to create the cross-chain request
+        _createCrossChainRequest(CrossChainRequestTypes.CrossChainRequest({
+            functionType: functionType,
+            payload: payload
+        }), amount, gasLimit);
+    }
+
+    function _createCrossChainRequest(
+        CrossChainRequestTypes.CrossChainRequest memory request,
+        uint256 amount,
+        uint256 gasLimit
+    ) internal {
+        bytes memory requestPayload = abi.encode(request.functionType, request.payload, msg.sender);
+        bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
+        bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
+        
+        PUSH_NTT.transferFrom(msg.sender, address(this), amount);
+        PUSH_NTT.approve(address(NTT_MANAGER), amount);
+        NTT_MANAGER.transfer{value: quoteTokenBridgingCost()}(
+            amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1)
+        );
+
         // Relay the RequestData Payload
-        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
+        WORMHOLE_RELAYER.sendPayloadToEvm{value: quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit)}(
             WORMHOLE_RECIPIENT_CHAIN,
             EPNSCoreAddress,
-            _requestPayload,
+            requestPayload,
             0, // no receiver value needed since we're just passing a message
-            _gasLimit,
+            gasLimit,
             WORMHOLE_RECIPIENT_CHAIN,
             msg.sender // Refund address is of the sender
         );
-
-        PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
-        PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1));
     }
 
     function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
