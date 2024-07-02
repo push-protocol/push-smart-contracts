@@ -542,7 +542,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         address _nttManager,
         IWormholeTransceiver _wormholeTransceiver,
         IWormholeRelayer _wormholeRelayerAddress,
-        uint16 _recipientChain
+        uint16 _recipientChain,
+        uint16 _sourceChain
     )
         external
         onlyPushChannelAdmin
@@ -552,6 +553,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
+        WORMHOLE_SOURCE_CHAIN = _sourceChain;
     }
 
     function quoteTokenBridgingCost() public view returns (uint256 cost) {
@@ -605,7 +607,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         uint256 amount,
         uint256 gasLimit
     ) internal {
-        bytes memory requestPayload = abi.encode(request.functionType, request.payload, msg.sender);
+        bytes memory requestPayload = abi.encode(request.functionType, request.payload, amount, msg.sender);
         bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
         bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
         

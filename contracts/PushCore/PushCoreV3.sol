@@ -854,80 +854,37 @@ contract PushCoreV3 is
             revert Errors.Payload_Duplicacy_Error();
         }
 
-        (CrossChainRequestTypes.CrossChainFunction functionType, bytes memory structPayload, address sender) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, address));
+        (CrossChainRequestTypes.CrossChainFunction functionType, bytes memory structPayload, uint256 amount, address sender) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
 
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
-            // Specific Request: Add Channel
-            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
-                abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
-            routeSpecificRequest(reqPayload, sender);
+            // Add Channel
+            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) = 
+                abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
+            _createChannel(_channelBytesID, channelType, amount, channelExpiry);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
-            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
-                abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
-            routeSpecificRequest(reqPayload, sender);
+            (address amountRecipient) = 
+                abi.decode(structPayload, (address));
+            handleIncentivizedChat(sender, amountRecipient, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload) =
-                abi.decode(structPayload, (CrossChainRequestTypes.ArbitraryRequestPayload));
-            handleRequestWithFeeID(reqPayload, sender);
+            (uint8 feeId, uint8 feePercentage, address amountRecipient) = 
+                abi.decode(structPayload, (uint8, uint8, address));
+            
+            uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
+
+            // Update states based on Fee Percentage calculation
+            PROTOCOL_POOL_FEES += feeAmount;
+            arbitraryReqFees[amountRecipient] += amount - feeAmount;
+
+            emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
         } else {
             revert("Invalid Function Type");
         }
 
         processedMessages[deliveryHash] = true;
-    }
-
-    function routeSpecificRequest(
-        CrossChainRequestTypes.SpecificRequestPayload memory reqPayload,
-        address sender
-    )
-        internal
-    {
-        // Accessing struct members explicitly
-        bytes4 functionSig = reqPayload.functionSig;
-
-        if (functionSig == this.createChannelWithPUSH.selector) {
-            //ToDo: Update createChannelWithPUSH to handle incoming cross Chain Request (channel being string - MAJOR
-            // CHANGE)
-            uint256 amount = reqPayload.amount;
-            CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
-            bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
-            uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
-
-            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
-            emit ChannelCreated(_channelBytesID, _channelType, _channelIdentity);
-            _createChannel(_channelBytesID, _channelType, amount, channelExpiryTime);
-        } else if (functionSig == this.handleChatRequestData.selector) {
-            //ToDo: Update handleChatRequest to handle incoming cross Chain Request
-            uint256 amount = reqPayload.amount;
-            address requestReceiver = reqPayload.amountRecipient;
-
-            handleIncentivizedChat(sender, requestReceiver, amount);
-        } else {
-            revert("Invalid Function Signature");
-        }
-    }
-
-    function handleRequestWithFeeID(
-        CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload,
-        address sender
-    )
-        internal
-    {
-        // Decode payload
-        uint8 feeID = reqPayload.feeId;
-        uint256 amount = reqPayload.amount;
-        address recipient = reqPayload.amountRecipient;
-        uint256 feePercentage = reqPayload.feePercentage;
-
-        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
-
-        // Update states based on Fee Percentage calculation
-        PROTOCOL_POOL_FEES += feeAmount;
-        arbitraryReqFees[recipient] += amount - feeAmount;
-
-        emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
     }
 
     /**
