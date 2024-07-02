@@ -853,24 +853,26 @@ contract PushCoreV3 is
         if (processedMessages[deliveryHash]) {
             revert Errors.Payload_Duplicacy_Error();
         }
-        // Check Request Type
-        // (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
-        (bytes memory structPayload, address sender ,uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
 
-        if (requestType == 0) {
-            // Specific Req Type
+        (CrossChainRequestTypes.CrossChainFunction functionType, bytes memory structPayload, address sender) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, address));
+
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
+            // Specific Request: Add Channel
             (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
                 abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
-
-            // ROUTE to SPECIFIC REQUEST ROUTING Function
             routeSpecificRequest(reqPayload, sender);
-        } else {
-            // Arbitrary Req Type
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            // Specific Request: Incentivized Chat
+            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
+                abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
+            routeSpecificRequest(reqPayload, sender);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            // Arbitrary Request
             (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload) =
                 abi.decode(structPayload, (CrossChainRequestTypes.ArbitraryRequestPayload));
-
-            // Directly call ARBITRARY REQUEST FUNCTION
             handleRequestWithFeeID(reqPayload, sender);
+        } else {
+            revert("Invalid Function Type");
         }
 
         processedMessages[deliveryHash] = true;
