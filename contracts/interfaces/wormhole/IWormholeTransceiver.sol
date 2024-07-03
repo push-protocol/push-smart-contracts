@@ -15,4 +15,15 @@ interface IWormholeTransceiver {
         external
         pure
         returns (bytes memory);
+
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory additionalMessages,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    ) external payable;
+
+    function setWormholePeer(uint16 chainId, bytes32 peerContract) external payable;
+    function setIsWormholeEvmChain(uint16 chainId, bool isEvm) external;
 }

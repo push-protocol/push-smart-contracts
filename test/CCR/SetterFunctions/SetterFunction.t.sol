@@ -27,7 +27,7 @@ contract SetterFunctionstsol is BaseCCRTest {
             ITransceiver(ArbSepolia.TRANSCEIVER),
             ArbSepolia.wormholeTransceiverChain1,
            IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
-            ArbSepolia.WORMHOLE_RECIPIENT_CHAIN
+            EthSepolia.DestChainId
         );
     }
 
@@ -40,7 +40,7 @@ contract SetterFunctionstsol is BaseCCRTest {
             ITransceiver(ArbSepolia.TRANSCEIVER),
             ArbSepolia.wormholeTransceiverChain1,
            IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
-            ArbSepolia.WORMHOLE_RECIPIENT_CHAIN
+            EthSepolia.DestChainId
         );
 
         assertEq(address(commProxy.PUSH_NTT()), ArbSepolia.PUSH_NTT_SOURCE);
@@ -48,7 +48,7 @@ contract SetterFunctionstsol is BaseCCRTest {
         assertEq(address(commProxy.TRANSCEIVER()), ArbSepolia.TRANSCEIVER);
         assertEq(address(commProxy.WORMHOLE_TRANSCEIVER()), ArbSepolia.TRANSCEIVER);
         assertEq(address(commProxy.WORMHOLE_RELAYER()), ArbSepolia.WORMHOLE_RELAYER_SOURCE);
-        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), ArbSepolia.WORMHOLE_RECIPIENT_CHAIN);
+        assertEq(commProxy.WORMHOLE_RECIPIENT_CHAIN(), EthSepolia.DestChainId);
     }
 
     modifier whenRestOfTheSetterFunctionsAreCalledIndividually() {

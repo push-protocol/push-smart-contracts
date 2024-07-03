@@ -46,7 +46,7 @@ contract Helper is BasePushCommTest, CCRConfig{
             ITransceiver(ArbSepolia.TRANSCEIVER),
             ArbSepolia.wormholeTransceiverChain1,
            IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
-            ArbSepolia.WORMHOLE_RECIPIENT_CHAIN
+            EthSepolia.DestChainId
         );
     }
 
