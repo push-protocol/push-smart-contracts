@@ -537,6 +537,16 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     ***************************** */
 
+    /**
+     * @notice Sets the configuration for the bridge
+     * @dev This function can only be called by the Push Channel Admin
+     * @param _pushNTT The address of the PUSH NTT token
+     * @param _nttManager The address of the NTT Manager contract
+     * @param _wormholeTransceiver The Wormhole Transceiver contract interface
+     * @param _wormholeRelayerAddress The Wormhole Relayer contract interface
+     * @param _recipientChain The recipient chain ID for the Wormhole
+     * @param _sourceChain The source chain ID for the Wormhole
+     */
     function setBridgeConfig(
         address _pushNTT,
         address _nttManager,
@@ -556,16 +566,36 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         WORMHOLE_SOURCE_CHAIN = _sourceChain;
     }
 
+    /**
+     * @notice Quotes the cost of bridging tokens to the recipient chain
+     * @dev Calls the Wormhole Transceiver to get the delivery price
+     * @return cost The cost of bridging tokens
+     */
     function quoteTokenBridgingCost() public view returns (uint256 cost) {
         TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
             TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
         cost = WORMHOLE_TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
     }
 
+    /**
+     * @notice Quotes the cost of relaying a message to the target chain with the specified gas limit
+     * @dev Calls the Wormhole Relayer to get the EVM delivery price
+     * @param targetChain The chain to which the message is being relayed
+     * @param gasLimit The gas limit for the message relay
+     * @return cost The cost of relaying the message
+     */
     function quoteMsgRelayCost(uint16 targetChain, uint256 gasLimit) public view returns (uint256 cost) {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
     }
 
+    /**
+     * @notice Creates a cross-chain request based on the specified function type and payload
+     * @dev Implements restrictions and calls the internal function to create the cross-chain request
+     * @param functionType The type of cross-chain function to execute
+     * @param payload The payload data for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
     function createCrossChain(
         CrossChainRequestTypes.CrossChainFunction functionType,
         bytes calldata payload,
@@ -593,6 +623,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         _createCrossChainRequest(requestPayload, amount, gasLimit);
     }
 
+    /**
+     * @notice Internal function to create a cross-chain request
+     * @dev Calculates the message bridge cost and token bridge cost, transfers tokens, and sends the payload
+     * @param requestPayload The encoded payload for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
     function _createCrossChainRequest(
         bytes memory requestPayload,
         uint256 amount,
@@ -627,6 +664,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         );
     }
 
+    /**
+     * @notice Sets the configuration for core fees
+     * @dev Can only be called by the Push Channel Admin
+     * @param _minChannelCreationFee The minimum fee for creating a channel
+     * @param _protocolPoolFee The fee for the protocol pool
+     * @param _feeAmount The amount of the fee
+     */
     function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _protocolPoolFee, uint256 _feeAmount) external onlyPushChannelAdmin {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
