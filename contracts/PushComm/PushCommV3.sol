@@ -587,14 +587,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             revert Errors.Comm_InvalidCrossChain_Function();
         }
 
-        // Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
-        uint256 tokenBridgeCost = quoteTokenBridgingCost();
-
-        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
-            revert Errors.InsufficientFunds();
-        }
-
         // Call the internal function to create the cross-chain request
         _createCrossChainRequest(functionType, payload, amount, gasLimit);
     }
@@ -605,18 +597,25 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         uint256 amount,
         uint256 gasLimit
     ) internal {
+         // Calculate MSG bridge cost and Token Bridge cost
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
+        uint256 tokenBridgeCost = quoteTokenBridgingCost();
+
+        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
+            revert Errors.InsufficientFunds();
+        }
         bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
         bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
         bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
         
         PUSH_NTT.transferFrom(msg.sender, address(this), amount);
         PUSH_NTT.approve(address(NTT_MANAGER), amount);
-        NTT_MANAGER.transfer{value: quoteTokenBridgingCost()}(
+        NTT_MANAGER.transfer{value: tokenBridgeCost}(
             amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1)
         );
 
         // Relay the RequestData Payload
-        WORMHOLE_RELAYER.sendPayloadToEvm{value: quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit)}(
+        WORMHOLE_RELAYER.sendPayloadToEvm{value: messageBridgeCost}(
             WORMHOLE_RECIPIENT_CHAIN,
             EPNSCoreAddress,
             requestPayload,
