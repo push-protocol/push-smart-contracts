@@ -587,13 +587,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             revert Errors.Comm_InvalidCrossChain_Function();
         }
 
+        bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
+
         // Call the internal function to create the cross-chain request
-        _createCrossChainRequest(functionType, payload, amount, gasLimit);
+        _createCrossChainRequest(requestPayload, amount, gasLimit);
     }
 
     function _createCrossChainRequest(
-        CrossChainRequestTypes.CrossChainFunction functionType,
-        bytes calldata payload,
+        bytes memory requestPayload,
         uint256 amount,
         uint256 gasLimit
     ) internal {
@@ -604,7 +605,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
-        bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
+        
         bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
         bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
         
