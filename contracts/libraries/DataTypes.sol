@@ -117,14 +117,4 @@ library CrossChainRequestTypes {
         IncentivizedChat,
         ArbitraryRequest
     }
-
-    struct CrossChainRequest {
-        CrossChainFunction functionType;
-        bytes payload;
-    }
-
-    enum RequestType {
-        SpecificReq,
-        ArbitraryReq
-    }
 }
