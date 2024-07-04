@@ -568,7 +568,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     function createCrossChain(
         CrossChainRequestTypes.CrossChainFunction functionType,
-        bytes memory payload,
+        bytes calldata payload,
         uint256 amount,
         uint256 gasLimit
     ) external payable whenNotPaused {
@@ -596,18 +596,16 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
 
         // Call the internal function to create the cross-chain request
-        _createCrossChainRequest(CrossChainRequestTypes.CrossChainRequest({
-            functionType: functionType,
-            payload: payload
-        }), amount, gasLimit);
+        _createCrossChainRequest(functionType, payload, amount, gasLimit);
     }
 
     function _createCrossChainRequest(
-        CrossChainRequestTypes.CrossChainRequest memory request,
+        CrossChainRequestTypes.CrossChainFunction functionType,
+        bytes calldata payload,
         uint256 amount,
         uint256 gasLimit
     ) internal {
-        bytes memory requestPayload = abi.encode(request.functionType, request.payload, amount, msg.sender);
+        bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
         bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
         bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
         
