@@ -199,19 +199,6 @@ contract PushCoreV3 is
         }
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
-        if (channelInfo[_channelBytesID].channelState != 0) {
-            revert Errors.Core_InvalidChannel();
-        }
-        if (
-            !(
-                _channelType == CoreTypes.ChannelType.InterestBearingOpen
-                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
-            )
-        ) {
-            revert Errors.Core_InvalidChannelType();
-        }
-
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
         emit ChannelCreated(_channelBytesID, _channelType, _identity);
@@ -239,6 +226,26 @@ contract PushCoreV3 is
     )
         private
     {
+        if (channelInfo[_channel].channelState != 0) {
+            revert Errors.Core_InvalidChannel();
+        }
+        if (
+            !(
+                _channelType == CoreTypes.ChannelType.InterestBearingOpen
+                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
+            )
+        ) {
+            revert Errors.Core_InvalidChannelType();
+        }
+
+        if (_channelType == CoreTypes.ChannelType.TimeBound) {
+            if (_channelExpiryTime <= block.timestamp) {
+                revert Errors.Core_InvalidExpiryTime();
+            }
+            channelInfo[_channel].expiryTime = _channelExpiryTime;
+        }
+
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
@@ -255,13 +262,6 @@ contract PushCoreV3 is
         channelInfo[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         channelsCount = channelsCount + 1;
-
-        if (_channelType == CoreTypes.ChannelType.TimeBound) {
-            if (_channelExpiryTime <= block.timestamp) {
-                revert Errors.Core_InvalidExpiryTime();
-            }
-            channelInfo[_channel].expiryTime = _channelExpiryTime;
-        }
     }
 
     /// @inheritdoc IPushCoreV3

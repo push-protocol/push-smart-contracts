@@ -627,8 +627,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         );
     }
 
-    function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
+    function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _protocolPoolFee, uint256 _feeAmount) external onlyPushChannelAdmin {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
+        FEE_AMOUNT = _feeAmount;
+        PROTOCOL_POOL_FEE = _protocolPoolFee;
     }
 
     /**
