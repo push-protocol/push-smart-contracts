@@ -116,7 +116,10 @@ interface IManagerBase {
     function quoteDeliveryPrice(
         uint16 recipientChain,
         bytes memory transceiverInstructions
-    ) external view returns (uint256[] memory, uint256);
+    )
+        external
+        view
+        returns (uint256[] memory, uint256);
 
     /// @notice Sets the threshold for the number of attestations required for a message
     /// to be considered valid.
@@ -166,10 +169,7 @@ interface IManagerBase {
     function getThreshold() external view returns (uint8);
 
     /// @notice Returns a boolean indicating if the transceiver has attested to the message.
-    function transceiverAttestedToMessage(
-        bytes32 digest,
-        uint8 index
-    ) external view returns (bool);
+    function transceiverAttestedToMessage(bytes32 digest, uint8 index) external view returns (bool);
 
     /// @notice Returns the number of attestations for a given message.
     function messageAttestations(bytes32 digest) external view returns (uint8 count);

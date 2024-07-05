@@ -137,8 +137,8 @@ contract Push is OwnableUpgradeable {
         uint256 _totalSupply = totalSupply + _amount;
 
         require(_totalSupply <= maxSupply, "Push::mint: total supply exceeds MAX CAP");
-        balances[account] =  add96(balances[account], _amount, "Push::mint: mint amount overflows");
-        
+        balances[account] = add96(balances[account], _amount, "Push::mint: mint amount overflows");
+
         totalSupply = _totalSupply;
 
         emit Transfer(address(0), account, _amount);
