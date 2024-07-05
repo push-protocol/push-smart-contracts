@@ -46,7 +46,10 @@ interface ITransceiver {
     function quoteDeliveryPrice(
         uint16 recipientChain,
         TransceiverStructs.TransceiverInstruction memory instruction
-    ) external view returns (uint256);
+    )
+        external
+        view
+        returns (uint256);
 
     /// @dev Send a message to another chain.
     /// @param recipientChain The Wormhole chain ID of the recipient.
@@ -59,7 +62,9 @@ interface ITransceiver {
         bytes memory nttManagerMessage,
         bytes32 recipientNttManagerAddress,
         bytes32 refundAddress
-    ) external payable;
+    )
+        external
+        payable;
 
     /// @notice Upgrades the transceiver to a new implementation.
     function upgrade(address newImplementation) external;

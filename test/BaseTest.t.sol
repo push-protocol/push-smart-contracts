@@ -21,7 +21,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors, ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
@@ -106,13 +106,11 @@ abstract contract BaseTest is Test, Constants, Events {
         changePrank(actor.admin);
         nttProxyAdmin = new ProxyAdmin();
         pushNttProxy = new TransparentUpgradeableProxy(
-            address(pushNtt),
-            address(nttProxyAdmin),
-            abi.encodeWithSignature("initialize()")
+            address(pushNtt), address(nttProxyAdmin), abi.encodeWithSignature("initialize()")
         );
         pushNttToken = Push(address(pushNttProxy));
         nttMigrationProxyAdmin = new ProxyAdmin();
-        
+
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
@@ -141,7 +139,8 @@ abstract contract BaseTest is Test, Constants, Events {
         // address admin = address(
         //     uint160(
         //         uint256(
-        //             vm.load(address(epnsCoreProxy), 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
+        //             vm.load(address(epnsCoreProxy),
+        // 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
         //         )
         //     )
         // );
@@ -150,10 +149,7 @@ abstract contract BaseTest is Test, Constants, Events {
         //     ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy), ""
         // );
 
-        epnsCoreProxyAdmin.upgrade(
-            ITransparentUpgradeableProxy(address(epnsCoreProxy)),
-            address(coreProxy)
-        );
+        epnsCoreProxyAdmin.upgrade(ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy));
 
         coreProxy = PushCoreV3(address(epnsCoreProxy));
         changePrank(tokenDistributor);

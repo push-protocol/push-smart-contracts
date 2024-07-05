@@ -537,6 +537,15 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     ***************************** */
 
+    /**
+     * @notice Sets the configuration for the bridge
+     * @dev This function can only be called by the Push Channel Admin
+     * @param _pushNTT The address of the PUSH NTT token
+     * @param _nttManager The address of the NTT Manager contract
+     * @param _wormholeTransceiver The Wormhole Transceiver contract interface
+     * @param _wormholeRelayerAddress The Wormhole Relayer contract interface
+     * @param _recipientChain The recipient chain ID for the Wormhole
+     */
     function setBridgeConfig(
         address _pushNTT,
         address _nttManager,
@@ -554,97 +563,126 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
     }
 
-    // Cross Chain Request: Create Channel
-    function createChannel(
-        CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
+    /**
+     * @notice Sets the configuration for core fees
+     * @dev Can only be called by the Push Channel Admin
+     * @param _minChannelCreationFee The minimum fee for creating a channel
+     * @param _protocolPoolFee The fee for the protocol pool
+     * @param _feeAmount The amount of the fee
+     */
+    function setCoreFeeConfig(
+        uint256 _minChannelCreationFee,
+        uint256 _protocolPoolFee,
+        uint256 _feeAmount
     )
         external
-        payable
-        whenNotPaused
+        onlyPushChannelAdmin
     {
-        if (_amount < ADD_CHANNEL_MIN_FEES) {
-            revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
-        }
-        bytes memory specificReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
+        ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
+        FEE_AMOUNT = _feeAmount;
+        PROTOCOL_POOL_FEE = _protocolPoolFee;
     }
 
-    // Cross Chain Request: Create Incentivized Chat
-    function createIncentivizedChatRequest(
-        CrossChainRequestTypes.SpecificRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        require(_amount > 0, "Invalid Amount");
-        bytes memory specificReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(specificReqPayload, msg.sender, CrossChainRequestTypes.RequestType.SpecificReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
-    }
-
-    // Cross Chain Request: Arbitrary Request
-    function createRequestWithFeeId(
-        CrossChainRequestTypes.ArbitraryRequestPayload memory _payload,
-        uint256 _amount,
-        uint256 _gasLimit
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        require(_amount > 0, "Invalid Amount");
-        require(_payload.feePercentage <= 100, "Invalid Fee Percentage");
-
-        bytes memory arbitraryReqPayload = abi.encode(_payload);
-        bytes memory requestPayload = abi.encode(arbitraryReqPayload, msg.sender, CrossChainRequestTypes.RequestType.ArbitraryReq);
-        createCrossChainRequest(requestPayload, _amount, _gasLimit);
-    }
-
+    /**
+     * @notice Quotes the cost of bridging tokens to the recipient chain
+     * @dev Calls the Wormhole Transceiver to get the delivery price
+     * @return cost The cost of bridging tokens
+     */
     function quoteTokenBridgingCost() public view returns (uint256 cost) {
         TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
             TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
         cost = WORMHOLE_TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
     }
 
+    /**
+     * @notice Quotes the cost of relaying a message to the target chain with the specified gas limit
+     * @dev Calls the Wormhole Relayer to get the EVM delivery price
+     * @param targetChain The chain to which the message is being relayed
+     * @param gasLimit The gas limit for the message relay
+     * @return cost The cost of relaying the message
+     */
     function quoteMsgRelayCost(uint16 targetChain, uint256 gasLimit) public view returns (uint256 cost) {
         (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
     }
 
-    function createCrossChainRequest(bytes memory _requestPayload, uint256 _amount, uint256 _gasLimit) public payable {
-        bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
-        bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
+    /**
+     * @notice Creates a cross-chain request based on the specified function type and payload
+     * @dev Implements restrictions and calls the internal function to create the cross-chain request
+     * @param functionType The type of cross-chain function to execute
+     * @param payload The payload data for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
+    function createCrossChainRequest(
+        CrossChainRequestTypes.CrossChainFunction functionType,
+        bytes calldata payload,
+        uint256 amount,
+        uint256 gasLimit
+    )
+        external
+        payable
+        whenNotPaused
+    {
+        // Implement restrictions based on functionType
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
+            if (amount < ADD_CHANNEL_MIN_FEES) {
+                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            if (amount < FEE_AMOUNT) {
+                revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            if (amount == 0) {
+                revert Errors.InvalidArg_LessThanExpected(1, amount);
+            }
+        } else {
+            revert Errors.Comm_InvalidCrossChain_Function();
+        }
 
+        bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
+
+        // Call the internal function to create the cross-chain request
+        _createCrossChainRequest(requestPayload, amount, gasLimit);
+    }
+
+    /**
+     * @notice Internal function to create a cross-chain request
+     * @dev Calculates the message bridge cost and token bridge cost, transfers tokens, and sends the payload
+     * @param requestPayload The encoded payload for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
+    function _createCrossChainRequest(bytes memory requestPayload, uint256 amount, uint256 gasLimit) internal {
         // Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, _gasLimit);
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
+
+        PUSH_NTT.transferFrom(msg.sender, address(this), amount);
+        PUSH_NTT.approve(address(NTT_MANAGER), amount);
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(
+            amount,
+            WORMHOLE_RECIPIENT_CHAIN,
+            BaseHelper.addressToBytes32(EPNSCoreAddress),
+            BaseHelper.addressToBytes32(msg.sender),
+            false,
+            new bytes(1)
+        );
+
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
             WORMHOLE_RECIPIENT_CHAIN,
             EPNSCoreAddress,
-            _requestPayload,
+            requestPayload,
             0, // no receiver value needed since we're just passing a message
-            _gasLimit,
+            gasLimit,
             WORMHOLE_RECIPIENT_CHAIN,
             msg.sender // Refund address is of the sender
         );
-
-        PUSH_NTT.transferFrom(msg.sender, address(this), _amount);
-        PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1));
-    }
-
-    function seMinChannelCreationFee(uint256 _minChannelCreationFee) external onlyPushChannelAdmin {
-        ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
     }
 
     /**
@@ -652,13 +690,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @dev    Can only be called by the Push Channel Admin
      * @param  _amount Amount to be bridged
      */
-    // Should be only admin 
+    // Should be only admin
     // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
-    function transferFeePoolToCore(uint256 _amount) external onlyPushChannelAdmin payable{
-        if(PROTOCOL_POOL_FEE < _amount) {
+    function transferFeePoolToCore(uint256 _amount) external payable onlyPushChannelAdmin {
+        if (PROTOCOL_POOL_FEE < _amount) {
             revert Errors.InsufficientFunds();
         }
-        
+
         bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
 
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
@@ -667,7 +705,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
 
         PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - _amount;
-        
+
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
     }
