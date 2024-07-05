@@ -594,7 +594,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param amount The amount of tokens to be transferred
      * @param gasLimit The gas limit for the cross-chain request
      */
-    function createCrossChain(
+    function createCrossChainRequest(
         CrossChainRequestTypes.CrossChainFunction functionType,
         bytes calldata payload,
         uint256 amount,
