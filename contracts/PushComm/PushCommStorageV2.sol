@@ -56,5 +56,4 @@ contract PushCommStorageV2 {
 
     uint256 public FEE_AMOUNT;
     uint256 public PROTOCOL_POOL_FEE;
-    uint16 public WORMHOLE_SOURCE_CHAIN; // // Wormhole's Core contract source Chain ID
 }

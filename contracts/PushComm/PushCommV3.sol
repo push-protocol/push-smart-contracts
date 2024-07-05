@@ -552,8 +552,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         address _nttManager,
         IWormholeTransceiver _wormholeTransceiver,
         IWormholeRelayer _wormholeRelayerAddress,
-        uint16 _recipientChain,
-        uint16 _sourceChain
+        uint16 _recipientChain
     )
         external
         onlyPushChannelAdmin
@@ -563,7 +562,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
         WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
         WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
-        WORMHOLE_SOURCE_CHAIN = _sourceChain;
     }
 
     /**
