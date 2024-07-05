@@ -601,7 +601,11 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         bytes calldata payload,
         uint256 amount,
         uint256 gasLimit
-    ) external payable whenNotPaused {
+    )
+        external
+        payable
+        whenNotPaused
+    {
         // Implement restrictions based on functionType
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             if (amount < ADD_CHANNEL_MIN_FEES) {
@@ -612,7 +616,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
                 revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
             }
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
-            // Additional checks for ArbitraryRequest can be added here
+            if (amount == 0 && amount < FEE_AMOUNT) {
+                revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
+            }
         } else {
             revert Errors.Comm_InvalidCrossChain_Function();
         }
@@ -630,30 +636,26 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param amount The amount of tokens to be transferred
      * @param gasLimit The gas limit for the cross-chain request
      */
-    function _createCrossChainRequest(
-        bytes memory requestPayload,
-        uint256 amount,
-        uint256 gasLimit
-    ) internal {
-         // Calculate MSG bridge cost and Token Bridge cost
+    function _createCrossChainRequest(bytes memory requestPayload, uint256 amount, uint256 gasLimit) internal {
+        // Calculate MSG bridge cost and Token Bridge cost
         uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
-        
+
         bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
         bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
-        
+
         PUSH_NTT.transferFrom(msg.sender, address(this), amount);
         PUSH_NTT.approve(address(NTT_MANAGER), amount);
-        NTT_MANAGER.transfer{value: tokenBridgeCost}(
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(
             amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1)
         );
 
         // Relay the RequestData Payload
-        WORMHOLE_RELAYER.sendPayloadToEvm{value: messageBridgeCost}(
+        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
             WORMHOLE_RECIPIENT_CHAIN,
             EPNSCoreAddress,
             requestPayload,
@@ -671,7 +673,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param _protocolPoolFee The fee for the protocol pool
      * @param _feeAmount The amount of the fee
      */
-    function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _protocolPoolFee, uint256 _feeAmount) external onlyPushChannelAdmin {
+    function setCoreFeeConfig(
+        uint256 _minChannelCreationFee,
+        uint256 _protocolPoolFee,
+        uint256 _feeAmount
+    )
+        external
+        onlyPushChannelAdmin
+    {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
         PROTOCOL_POOL_FEE = _protocolPoolFee;
@@ -682,13 +691,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @dev    Can only be called by the Push Channel Admin
      * @param  _amount Amount to be bridged
      */
-    // Should be only admin 
+    // Should be only admin
     // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
-    function transferFeePoolToCore(uint256 _amount) external onlyPushChannelAdmin payable{
-        if(PROTOCOL_POOL_FEE < _amount) {
+    function transferFeePoolToCore(uint256 _amount) external payable onlyPushChannelAdmin {
+        if (PROTOCOL_POOL_FEE < _amount) {
             revert Errors.InsufficientFunds();
         }
-        
+
         bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
 
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
@@ -697,7 +706,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
 
         PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - _amount;
-        
+
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
     }
