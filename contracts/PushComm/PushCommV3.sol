@@ -616,8 +616,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
                 revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
             }
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
-            if (amount == 0 && amount < FEE_AMOUNT) {
-                revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
+            if (amount == 0 ) {
+                revert Errors.InvalidArg_LessThanExpected(1, amount);
             }
         } else {
             revert Errors.Comm_InvalidCrossChain_Function();
