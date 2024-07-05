@@ -633,7 +633,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
                 revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
             }
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
-            if (amount == 0 ) {
+            if (amount == 0) {
                 revert Errors.InvalidArg_LessThanExpected(1, amount);
             }
         } else {
@@ -662,13 +662,15 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             revert Errors.InsufficientFunds();
         }
 
-        bytes32 recipient = BaseHelper.addressToBytes32(EPNSCoreAddress);
-        bytes32 sender = BaseHelper.addressToBytes32(msg.sender);
-
         PUSH_NTT.transferFrom(msg.sender, address(this), amount);
         PUSH_NTT.approve(address(NTT_MANAGER), amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(
-            amount, WORMHOLE_RECIPIENT_CHAIN, recipient, sender, false, new bytes(1)
+            amount,
+            WORMHOLE_RECIPIENT_CHAIN,
+            BaseHelper.addressToBytes32(EPNSCoreAddress),
+            BaseHelper.addressToBytes32(msg.sender),
+            false,
+            new bytes(1)
         );
 
         // Relay the RequestData Payload
