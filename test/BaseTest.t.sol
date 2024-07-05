@@ -21,7 +21,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors, ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
