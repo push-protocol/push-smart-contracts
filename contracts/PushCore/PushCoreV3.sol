@@ -776,12 +776,13 @@ contract PushCoreV3 is
     }
 
     /**
-    * @notice Handles the incentivized chat request between a sender and a receiver.
-    * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol fee pool.
-    * @param requestSender The address of the sender initiating the chat request.
-    * @param requestReceiver The address of the receiver who is the target of the chat request.
-    * @param amount The total amount sent by the sender for the incentivized chat.
-    */
+     * @notice Handles the incentivized chat request between a sender and a receiver.
+     * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol
+     * fee pool.
+     * @param requestSender The address of the sender initiating the chat request.
+     * @param requestReceiver The address of the receiver who is the target of the chat request.
+     * @param amount The total amount sent by the sender for the incentivized chat.
+     */
     function handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
@@ -854,25 +855,29 @@ contract PushCoreV3 is
             revert Errors.Payload_Duplicacy_Error();
         }
 
-        (CrossChainRequestTypes.CrossChainFunction functionType, bytes memory structPayload, uint256 amount, address sender) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
+        (
+            CrossChainRequestTypes.CrossChainFunction functionType,
+            bytes memory structPayload,
+            uint256 amount,
+            address sender
+        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
 
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
-            // Add Channel
-            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) = 
+            // Specific Request: Add Channel
+            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
                 abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
             bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
             emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
             _createChannel(_channelBytesID, channelType, amount, channelExpiry);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
-            (address amountRecipient) = 
-                abi.decode(structPayload, (address));
+            (address amountRecipient) = abi.decode(structPayload, (address));
             handleIncentivizedChat(sender, amountRecipient, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (uint8 feeId, uint8 feePercentage, address amountRecipient) = 
+            (uint8 feeId, uint8 feePercentage, address amountRecipient) =
                 abi.decode(structPayload, (uint8, uint8, address));
-            
+
             uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
 
             // Update states based on Fee Percentage calculation
@@ -892,9 +897,10 @@ contract PushCoreV3 is
      * @dev Reverts if the user tries to claim more than their available balance.
      * @param _amount The amount of arbitrary request fees to claim.
      * @custom:requires The caller's balance of arbitrary request fees must be greater than or equal to `_amount`.
-     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request fees.
+     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request
+     * fees.
      * @custom:emits An {ArbitraryRequestFeesClaimed} event.
-    */
+     */
     function claimArbitraryRequestFees(uint256 _amount) external {
         uint256 userFeesBalance = arbitraryReqFees[msg.sender];
 
