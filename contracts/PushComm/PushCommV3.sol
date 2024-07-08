@@ -567,12 +567,10 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @notice Sets the configuration for core fees
      * @dev Can only be called by the Push Channel Admin
      * @param _minChannelCreationFee The minimum fee for creating a channel
-     * @param _protocolPoolFee The fee for the protocol pool
      * @param _feeAmount The amount of the fee
      */
     function setCoreFeeConfig(
         uint256 _minChannelCreationFee,
-        uint256 _protocolPoolFee,
         uint256 _feeAmount
     )
         external
@@ -580,7 +578,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
-        PROTOCOL_POOL_FEE = _protocolPoolFee;
     }
 
     /**
