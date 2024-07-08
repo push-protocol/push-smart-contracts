@@ -14,7 +14,7 @@ pragma solidity ^0.8.20;
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
+import { PushCommEthStorageV2 } from "./PushCommEthStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
@@ -27,7 +27,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommETHV3 is Initializable, PushCommStorageV2, IPushCommV3 {
+contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
