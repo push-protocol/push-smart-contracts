@@ -91,9 +91,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
+    // function completeMigration() external onlyPushChannelAdmin {
+    //     isMigrationComplete = true;
+    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
@@ -652,7 +652,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      */
     function _createCrossChainRequest(bytes memory requestPayload, uint256 amount, uint256 gasLimit) internal {
         // Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
+        uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
@@ -663,7 +664,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         PUSH_NTT.approve(address(NTT_MANAGER), amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(
             amount,
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             BaseHelper.addressToBytes32(EPNSCoreAddress),
             BaseHelper.addressToBytes32(msg.sender),
             false,
@@ -672,12 +673,12 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             EPNSCoreAddress,
             requestPayload,
             0, // no receiver value needed since we're just passing a message
             gasLimit,
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             msg.sender // Refund address is of the sender
         );
     }

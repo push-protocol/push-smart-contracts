@@ -84,9 +84,9 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
+    // function completeMigration() external onlyPushChannelAdmin {
+    //     isMigrationComplete = true;
+    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
