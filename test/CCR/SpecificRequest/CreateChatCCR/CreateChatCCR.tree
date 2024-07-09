@@ -1,0 +1,19 @@
+CreateChatCCR.t.sol
+├── when CreateChatCCR is called
+│   ├── when contract is paused
+│   │   └── it should Revert
+│   ├── when amount is less than minimum fees
+│   │   └── it should revert
+│   ├── when ether passed is less
+│   │   └── it should revert
+│   ├── when all checks passes
+│   │   └── it should successfully create the CCR
+└── when receive function is called in core
+    ├── when sender is not registered
+    │   └── it should Revert
+    ├── when sender is not relayer
+    │   └── it should Revert
+    ├── when deliveryHash is used already
+    │   └── it should Revert
+    └── when all checks pass
+        └── it should emit event and update storage

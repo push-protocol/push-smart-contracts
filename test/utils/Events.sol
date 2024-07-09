@@ -21,6 +21,14 @@ abstract contract CoreEvents {
     event ChannelVerified(bytes32 indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    event ArbitraryRequest(
+        address indexed sender,
+        address indexed receiver,
+        uint256 amountDeposited,
+        uint256 feePercent,
+        uint256 indexed feeId
+    );
+    event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
 }
 
 abstract contract CommEvents {
@@ -29,6 +37,7 @@ abstract contract CommEvents {
     );
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
+    event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel); 
 }
 
 abstract contract ProxyEvents {
