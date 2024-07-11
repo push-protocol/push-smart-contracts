@@ -118,3 +118,10 @@ library CrossChainRequestTypes {
         ArbitraryRequest
     }
 }
+
+library GenericTypes {
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
+    }
+}
