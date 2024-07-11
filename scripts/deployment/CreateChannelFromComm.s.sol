@@ -4,38 +4,40 @@ pragma solidity ^0.8.20;
 import {Test, console2} from "forge-std/Test.sol";
 
 import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
+import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 import { CrossChainRequestTypes, CoreTypes } from "../../contracts/libraries/DataTypes.sol";
 
 contract CreateChannelFromComm is Test {
-    PushCommV3 public commProxy = PushCommV3(0x69c5560bB765a935C345f507D2adD34253FBe41b);
+    PushCommV3 public commProxy = PushCommV3(0x2ddB499C3a35a60c809d878eFf5Fa248bb5eAdbd);
+    PushCoreV3 public coreProxy = PushCoreV3(0x09676C46aaE81a2E0e13ce201040400765BFe329);
     // EPNSCommProxy public epnsCommProxy = EPNSCommProxy(payable(0x96891F643777dF202b153DB9956226112FfA34a9));
 
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address account = vm.addr(vm.envUint("PRIVATE_KEY"));
 
-        uint16 _recipientChain = 10004;
+        uint16 _recipientChain = 10003;
         uint256 _amount = 50 ether;
-        uint256 _gasLimit = 10_000_000;
-        CoreTypes.ChannelType channelType = CoreTypes.ChannelType.InterestBearingOpen;
-        CrossChainRequestTypes.ChannelPayload memory channelData = CrossChainRequestTypes.ChannelPayload({
-            channelAddress: toAsciiString(account),
-            channelType: channelType,
-            channelExpiry: 0,
-            channelIdentity: hex"63b2e80cc302c7a13f5c3b0c1e9ef25c46c7f2de90b7ddbe933f8f518374c6f6"
-        });
-
-        CrossChainRequestTypes.SpecificRequestPayload memory _payload = CrossChainRequestTypes.SpecificRequestPayload({
-            functionSig: 0xa90521c3,
-            amountRecipient: 0x34cd115a35252B0d946fA479B6eCb781dbBD5cef,
-            amount: _amount,
-            channelData: channelData
-        });
-
+        uint256 _gasLimit = 500_000;
+        
         uint256 msgFee = commProxy.quoteMsgRelayCost(_recipientChain, _gasLimit);
         uint256 tokenFee = commProxy.quoteTokenBridgingCost();
 
-        commProxy.createChannel{value: msgFee + tokenFee}(_payload, _amount, _gasLimit);
+        CoreTypes.ChannelType channelType = CoreTypes.ChannelType.InterestBearingOpen;
+        bytes memory channelIdentity = hex"63b2e80cc302c7a13f5c3b0c1e9ef25c46c7f2de90b7ddbe933f8f518374c6f6";
+        uint256 channelExpiry = 0;
+
+         // Encode the payload
+        bytes memory payload = abi.encode(channelType, channelIdentity, channelExpiry);
+
+        commProxy.createCrossChainRequest{value: msgFee + tokenFee}(CrossChainRequestTypes.CrossChainFunction.AddChannel, payload, _amount, _gasLimit);
+
+        // vm.prank(0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470);
+        // bytes memory requestPayload = abi.encode(CrossChainRequestTypes.CrossChainFunction.AddChannel, payload, msg.sender);
+        // bytes32 sourceAddress = BaseHelper.addressToBytes32(0x2ddB499C3a35a60c809d878eFf5Fa248bb5eAdbd);
+        // bytes[] memory arr;
+        // coreProxy.receiveWormholeMessages(requestPayload, arr, sourceAddress, 10004, sourceAddress);
 
         vm.stopBroadcast();
     }

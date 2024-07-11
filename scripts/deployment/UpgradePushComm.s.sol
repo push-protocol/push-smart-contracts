@@ -12,8 +12,8 @@ contract UpgradePushComm is Test {
     EPNSCommAdmin public epnsCommProxyAdmin;
     ITransparentUpgradeableProxy public proxyComm;
 
-    address commProxy = 0x96891F643777dF202b153DB9956226112FfA34a9; // arb comm proxy 
-    address proxyAdmin = 0x9589262b17A99288Ee575C24a723Ad124cd9e875; // arb proxy admin
+    address commProxy = 0x2ddB499C3a35a60c809d878eFf5Fa248bb5eAdbd; // arb comm proxy 
+    address proxyAdmin = 0x90bFeD13b1D7db6243Dfb554c336b0254F099596; // arb proxy admin
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address account = vm.addr(vm.envUint("PRIVATE_KEY"));
