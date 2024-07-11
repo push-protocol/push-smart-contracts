@@ -17,8 +17,9 @@ import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
+import { PercentageLib } from "../libraries/PercentageLib.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -875,10 +876,10 @@ contract PushCoreV3 is
             handleIncentivizedChat(sender, amountRecipient, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (uint8 feeId, uint8 feePercentage, address amountRecipient) =
-                abi.decode(structPayload, (uint8, uint8, address));
+            (uint8 feeId, GenericTypes.Percentage memory feePercentage, address amountRecipient) =
+                abi.decode(structPayload, (uint8, GenericTypes.Percentage, address));
 
-            uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
+            uint256 feeAmount = PercentageLib.calcPercentage(amount, feePercentage);
 
             // Update states based on Fee Percentage calculation
             PROTOCOL_POOL_FEES += feeAmount;
