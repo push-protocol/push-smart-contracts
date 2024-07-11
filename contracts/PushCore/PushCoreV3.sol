@@ -199,19 +199,6 @@ contract PushCoreV3 is
         }
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
-        if (channelInfo[_channelBytesID].channelState != 0) {
-            revert Errors.Core_InvalidChannel();
-        }
-        if (
-            !(
-                _channelType == CoreTypes.ChannelType.InterestBearingOpen
-                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
-            )
-        ) {
-            revert Errors.Core_InvalidChannelType();
-        }
-
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
 
         emit ChannelCreated(_channelBytesID, _channelType, _identity);
@@ -239,6 +226,26 @@ contract PushCoreV3 is
     )
         private
     {
+        if (channelInfo[_channel].channelState != 0) {
+            revert Errors.Core_InvalidChannel();
+        }
+        if (
+            !(
+                _channelType == CoreTypes.ChannelType.InterestBearingOpen
+                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
+                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
+            )
+        ) {
+            revert Errors.Core_InvalidChannelType();
+        }
+
+        if (_channelType == CoreTypes.ChannelType.TimeBound) {
+            if (_channelExpiryTime <= block.timestamp) {
+                revert Errors.Core_InvalidExpiryTime();
+            }
+            channelInfo[_channel].expiryTime = _channelExpiryTime;
+        }
+
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
@@ -255,13 +262,6 @@ contract PushCoreV3 is
         channelInfo[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         channelsCount = channelsCount + 1;
-
-        if (_channelType == CoreTypes.ChannelType.TimeBound) {
-            if (_channelExpiryTime <= block.timestamp) {
-                revert Errors.Core_InvalidExpiryTime();
-            }
-            channelInfo[_channel].expiryTime = _channelExpiryTime;
-        }
     }
 
     /// @inheritdoc IPushCoreV3
@@ -769,9 +769,21 @@ contract PushCoreV3 is
 
     /// @inheritdoc IPushCoreV3
     function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
-        if (msg.sender != epnsCommunicator || msg.sender == address(this)) {
+        if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
+        handleIncentivizedChat(requestSender, requestReceiver, amount);
+    }
+
+    /**
+     * @notice Handles the incentivized chat request between a sender and a receiver.
+     * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol
+     * fee pool.
+     * @param requestSender The address of the sender initiating the chat request.
+     * @param requestReceiver The address of the receiver who is the target of the chat request.
+     * @param amount The total amount sent by the sender for the incentivized chat.
+     */
+    function handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -810,12 +822,12 @@ contract PushCoreV3 is
      * Assumes only one sender per chain is valid
      * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
      */
-    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) public {
+    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) external {
         onlyPushChannelAdmin();
         registeredSenders[sourceChain] = sourceAddress;
     }
 
-    function setWormholeRelayer(address _wormholeRelayer) public {
+    function setWormholeRelayer(address _wormholeRelayer) external {
         onlyPushChannelAdmin();
         wormholeRelayer = _wormholeRelayer;
     }
@@ -842,78 +854,73 @@ contract PushCoreV3 is
         if (processedMessages[deliveryHash]) {
             revert Errors.Payload_Duplicacy_Error();
         }
-        // Check Request Type
-        // (,, uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
-        (bytes memory structPayload, address sender ,uint8 requestType) = abi.decode(payload, (bytes, address, uint8));
 
-        if (requestType == 0) {
-            // Specific Req Type
-            (CrossChainRequestTypes.SpecificRequestPayload memory reqPayload) =
-                abi.decode(structPayload, (CrossChainRequestTypes.SpecificRequestPayload));
+        (
+            CrossChainRequestTypes.CrossChainFunction functionType,
+            bytes memory structPayload,
+            uint256 amount,
+            address sender
+        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
 
-            // ROUTE to SPECIFIC REQUEST ROUTING Function
-            routeSpecificRequest(reqPayload, sender);
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
+            // Specific Request: Add Channel
+            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
+                abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
+            _createChannel(_channelBytesID, channelType, amount, channelExpiry);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            // Specific Request: Incentivized Chat
+            (address amountRecipient) = abi.decode(structPayload, (address));
+            handleIncentivizedChat(sender, amountRecipient, amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            // Arbitrary Request
+            (uint8 feeId, uint8 feePercentage, address amountRecipient) =
+                abi.decode(structPayload, (uint8, uint8, address));
+
+            uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
+
+            // Update states based on Fee Percentage calculation
+            PROTOCOL_POOL_FEES += feeAmount;
+            arbitraryReqFees[amountRecipient] += amount - feeAmount;
+
+            emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
         } else {
-            // Arbitrary Req Type
-            (CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload) =
-                abi.decode(structPayload, (CrossChainRequestTypes.ArbitraryRequestPayload));
-
-            // Directly call ARBITRARY REQUEST FUNCTION
-            handleRequestWithFeeID(reqPayload, sender);
+            revert("Invalid Function Type");
         }
 
         processedMessages[deliveryHash] = true;
     }
 
-    function routeSpecificRequest(
-        CrossChainRequestTypes.SpecificRequestPayload memory reqPayload,
-        address sender
-    )
-        internal
-    {
-        // Accessing struct members explicitly
-        bytes4 functionSig = reqPayload.functionSig;
+    /**
+     * @notice Allows a user to claim a specified amount of arbitrary request fees.
+     * @dev Reverts if the user tries to claim more than their available balance.
+     * @param _amount The amount of arbitrary request fees to claim.
+     * @custom:requires The caller's balance of arbitrary request fees must be greater than or equal to `_amount`.
+     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request
+     * fees.
+     * @custom:emits An {ArbitraryRequestFeesClaimed} event.
+     */
+    function claimArbitraryRequestFees(uint256 _amount) external {
+        uint256 userFeesBalance = arbitraryReqFees[msg.sender];
 
-        if (functionSig == this.createChannelWithPUSH.selector) {
-            //ToDo: Update createChannelWithPUSH to handle incoming cross Chain Request (channel being string - MAJOR
-            // CHANGE)
-            uint256 amount = reqPayload.amount;
-            CoreTypes.ChannelType _channelType = reqPayload.channelData.channelType;
-            bytes memory _channelIdentity = reqPayload.channelData.channelIdentity;
-            uint256 channelExpiryTime = reqPayload.channelData.channelExpiry;
-
-            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
-            emit ChannelCreated(_channelBytesID, _channelType, _channelIdentity);
-            _createChannel(_channelBytesID, _channelType, amount, channelExpiryTime);
-        } else if (functionSig == this.handleChatRequestData.selector) {
-            //ToDo: Update handleChatRequest to handle incoming cross Chain Request
-            uint256 amount = reqPayload.amount;
-            address requestReceiver = reqPayload.amountRecipient;
-
-            handleChatRequestData(sender, requestReceiver, amount);
-        } else {
-            revert("Invalid Function Signature");
+        if (userFeesBalance < _amount) {
+            revert Errors.InvalidArg_MoreThanExpected(userFeesBalance, _amount);
         }
+
+        arbitraryReqFees[msg.sender] = userFeesBalance - _amount;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
+
+        emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
     }
 
-    function handleRequestWithFeeID(
-        CrossChainRequestTypes.ArbitraryRequestPayload memory reqPayload,
-        address sender
-    )
-        internal
-    {
-        // Decode payload
-        uint8 feeID = reqPayload.feeId;
-        uint256 amount = reqPayload.amount;
-        address recipient = reqPayload.amountRecipient;
-        uint256 feePercentage = reqPayload.feePercentage;
-
-        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
-
-        // Update states based on Fee Percentage calculation
-        PROTOCOL_POOL_FEES += feeAmount;
-        arbitraryReqFees[recipient] += amount - feeAmount;
-
-        emit ArbitraryRequest(sender, recipient, amount, feePercentage, feeID);
+    function migrateAddresToBytes32(address[] calldata _channels) external whenPaused {
+        onlyPushChannelAdmin();
+        for (uint256 i; i < _channels.length; ++i) {
+            CoreTypes.Channel memory _channelData = channels[_channels[i]];
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channels[i]);
+            channelInfo[_channelBytesID] = _channelData;
+            delete channels[_channels[i]];
+        }
     }
 }

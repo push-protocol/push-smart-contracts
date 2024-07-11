@@ -15,13 +15,17 @@ interface INttManager is IManagerBase {
 
     /// @notice Emitted when a message is sent from the nttManager.
     /// @dev Topic0
-    ///      0x9716fe52fe4e02cf924ae28f19f5748ef59877c6496041b986fbad3dae6a8ecf
+    ///      0xe54e51e42099622516fa3b48e9733581c9dbdcb771cafb093f745a0532a35982.
     /// @param recipient The recipient of the message.
+    /// @param refundAddress The address on the destination chain to which the
+    ///                      refund of unused gas will be paid
     /// @param amount The amount transferred.
     /// @param fee The amount of ether sent along with the tx to cover the delivery fee.
     /// @param recipientChain The chain ID of the recipient.
     /// @param msgSequence The unique sequence ID of the message.
-    event TransferSent(bytes32 recipient, uint256 amount, uint256 fee, uint16 recipientChain, uint64 msgSequence);
+    event TransferSent(
+        bytes32 recipient, bytes32 refundAddress, uint256 amount, uint256 fee, uint16 recipientChain, uint64 msgSequence
+    );
 
     /// @notice Emitted when the peer contract is updated.
     /// @dev Topic0
@@ -45,6 +49,14 @@ interface INttManager is IManagerBase {
     ///      0x504e6efe18ab9eed10dc6501a417f5b12a2f7f2b1593aed9b89f9bce3cf29a91.
     /// @param digest The digest of the message.
     event TransferRedeemed(bytes32 indexed digest);
+
+    /// @notice Emitted when an outbound transfer has been cancelled
+    /// @dev Topic0
+    ///      0xf80e572ae1b63e2449629b6c7d783add85c36473926f216077f17ee002bcfd07.
+    /// @param sequence The sequence number being cancelled
+    /// @param recipient The canceller and recipient of the funds
+    /// @param amount The amount of the transfer being cancelled
+    event OutboundTransferCancelled(uint256 sequence, address recipient, uint256 amount);
 
     /// @notice The transfer has some dust.
     /// @dev Selector 0x71f0634a
@@ -72,6 +84,10 @@ interface INttManager is IManagerBase {
     /// @dev Selector 0x9c8d2cd2.
     error InvalidRecipient();
 
+    /// @notice Error when the recipient is invalid.
+    /// @dev Selector 0xe2fe2726.
+    error InvalidRefundAddress();
+
     /// @notice Error when the amount burned is different than the balance difference,
     ///         since NTT does not support burn fees.
     /// @dev Selector 0x02156a8f.
@@ -95,6 +111,24 @@ interface INttManager is IManagerBase {
 
     /// @notice Peer cannot have zero decimals.
     error InvalidPeerDecimals();
+
+    /// @notice Staticcall reverted
+    /// @dev Selector 0x1222cd83
+    error StaticcallFailed();
+
+    /// @notice Error when someone other than the original sender tries to cancel a queued outbound transfer.
+    /// @dev Selector 0xceb40a85.
+    /// @param canceller The address trying to cancel the transfer.
+    /// @param sender The original sender that initiated the transfer that was queued.
+    error CancellerNotSender(address canceller, address sender);
+
+    /// @notice An unexpected msg.value was passed with the call
+    /// @dev Selector 0xbd28e889.
+    error UnexpectedMsgValue();
+
+    /// @notice Peer cannot be on the same chain
+    /// @dev Selector 0x20371f2a.
+    error InvalidPeerSameChainId();
 
     /// @notice Transfer a given amount to a recipient on a given chain. This function is called
     ///         by the user to send the token cross-chain. This function will either lock or burn the
@@ -120,12 +154,14 @@ interface INttManager is IManagerBase {
     /// @param amount The amount to transfer.
     /// @param recipientChain The chain ID for the destination.
     /// @param recipient The recipient address.
+    /// @param refundAddress The address to which a refund for unussed gas is issued on the recipient chain.
     /// @param shouldQueue Whether the transfer should be queued if the outbound limit is hit.
     /// @param encodedInstructions Additional instructions to be forwarded to the recipient chain.
     function transfer(
         uint256 amount,
         uint16 recipientChain,
         bytes32 recipient,
+        bytes32 refundAddress,
         bool shouldQueue,
         bytes memory encodedInstructions
     )
@@ -138,6 +174,11 @@ interface INttManager is IManagerBase {
     /// @param queueSequence The sequence of the message in the queue.
     /// @return msgSequence The sequence of the message.
     function completeOutboundQueuedTransfer(uint64 queueSequence) external payable returns (uint64 msgSequence);
+
+    /// @notice Cancels an outbound transfer that's been queued.
+    /// @dev This method is called by the client to cancel an outbound transfer that's been queued.
+    /// @param queueSequence The sequence of the message in the queue.
+    function cancelOutboundQueuedTransfer(uint64 queueSequence) external;
 
     /// @notice Complete an inbound queued transfer.
     /// @param digest The digest of the message to complete.

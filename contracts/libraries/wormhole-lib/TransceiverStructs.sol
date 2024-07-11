@@ -18,7 +18,21 @@ library TransceiverStructs {
     /// @dev Selector 0x56d2569d.
     /// @param prefix The prefix that was found in the encoded message.
     error IncorrectPrefix(bytes4 prefix);
-    error UnorderedInstructions();
+
+    /// @notice Error thrown when the transceiver instructions aren't
+    ///         encoded with strictly increasing indices
+    /// @dev Selector 0x0555a4b9.
+    /// @param lastIndex Last parsed instruction index
+    /// @param instructionIndex The instruction index that was unordered
+    error UnorderedInstructions(uint256 lastIndex, uint256 instructionIndex);
+
+    /// @notice Error thrown when a transceiver instruction index
+    ///         is greater than the number of registered transceivers
+    /// @dev We index from 0 so if providedIndex == numTransceivers then we're out-of-bounds too
+    /// @dev Selector 0x689f5016.
+    /// @param providedIndex The index specified in the instruction
+    /// @param numTransceivers The number of registered transceivers
+    error InvalidInstructionIndex(uint256 providedIndex, uint256 numTransceivers);
 
     /// @dev Prefix for all NativeTokenTransfer payloads
     ///      This is 0x99'N''T''T'
@@ -332,7 +346,7 @@ library TransceiverStructs {
 
     function parseTransceiverInstructions(
         bytes memory encoded,
-        uint256 numEnabledTransceivers
+        uint256 numRegisteredTransceivers
     )
         public
         pure
@@ -342,10 +356,10 @@ library TransceiverStructs {
         uint256 instructionsLength;
         (instructionsLength, offset) = encoded.asUint8Unchecked(offset);
 
-        // We allocate an array with the length of the number of enabled transceivers
+        // We allocate an array with the length of the number of registered transceivers
         // This gives us the flexibility to not have to pass instructions for transceivers that
         // don't need them
-        TransceiverInstruction[] memory instructions = new TransceiverInstruction[](numEnabledTransceivers);
+        TransceiverInstruction[] memory instructions = new TransceiverInstruction[](numRegisteredTransceivers);
 
         uint256 lastIndex = 0;
         for (uint256 i = 0; i < instructionsLength; i++) {
@@ -356,8 +370,14 @@ library TransceiverStructs {
 
             // The instructions passed in have to be strictly increasing in terms of transceiver index
             if (i != 0 && instructionIndex <= lastIndex) {
-                revert UnorderedInstructions();
+                revert UnorderedInstructions(lastIndex, instructionIndex);
             }
+
+            // Instruction index is out of bounds
+            if (instructionIndex >= numRegisteredTransceivers) {
+                revert InvalidInstructionIndex(instructionIndex, numRegisteredTransceivers);
+            }
+
             lastIndex = instructionIndex;
 
             instructions[instructionIndex] = instruction;

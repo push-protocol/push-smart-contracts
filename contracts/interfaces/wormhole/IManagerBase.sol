@@ -48,7 +48,7 @@ interface IManagerBase {
 
     /// @notice Emitted when an transceiver is removed from the nttManager.
     /// @dev Topic0
-    ///      0xc6289e62021fd0421276d06677862d6b328d9764cdd4490ca5ac78b173f25883.
+    ///      0xf05962b5774c658e85ed80c91a75af9d66d2af2253dda480f90bce78aff5eda5.
     /// @param transceiver The address of the transceiver.
     /// @param transceiversNum The current number of transceivers.
     /// @param threshold The current threshold of transceivers.
@@ -56,7 +56,7 @@ interface IManagerBase {
 
     /// @notice Emitted when an transceiver is removed from the nttManager.
     /// @dev Topic0
-    ///     0x638e631f34d9501a3ff0295873b29f50d0207b5400bf0e48b9b34719e6b1a39e.
+    ///     0x697a3853515b88013ad432f29f53d406debc9509ed6d9313dcfe115250fcd18f.
     /// @param transceiver The address of the transceiver.
     /// @param threshold The current threshold of transceivers.
     event TransceiverRemoved(address transceiver, uint8 threshold);
