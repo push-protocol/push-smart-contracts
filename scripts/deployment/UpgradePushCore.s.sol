@@ -12,12 +12,23 @@ contract UpgradePushCore is Test {
     EPNSCoreAdmin public epnsCoreProxyAdmin;
     ITransparentUpgradeableProxy public proxyCore;
     address coreProxy = 0x5B9A5152465921307Ca4da7E572bf53f5FA7B671; // sepolia core proxy
-    address proxyAdmin = 0x888cb0Ef91c5260C1661803782c45c857521570D; // sepolia proxy admin
+    
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         address account = vm.addr(vm.envUint("PRIVATE_KEY"));
 
         core = new PushCoreV3();
+
+        address proxyAdmin = address(
+            uint160(
+                uint256(
+                    vm.load(
+                        coreProxy,
+                        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+                    )
+                )
+            )
+        );
 
         epnsCoreProxyAdmin = EPNSCoreAdmin(payable(proxyAdmin));
         proxyCore = ITransparentUpgradeableProxy(payable(coreProxy));
