@@ -179,6 +179,7 @@ abstract contract BaseTest is Test, Constants, Events {
         approveTokens(actor.bob_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.alice_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.charlie_channel_owner, address(coreProxy), 50_000 ether);
+        approveTokens(actor.tony_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
         vm.warp(DEC_27_2021);
