@@ -569,13 +569,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param _minChannelCreationFee The minimum fee for creating a channel
      * @param _feeAmount The amount of the fee
      */
-    function setCoreFeeConfig(
-        uint256 _minChannelCreationFee,
-        uint256 _feeAmount
-    )
-        external
-        onlyPushChannelAdmin
-    {
+    function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _feeAmount) external onlyPushChannelAdmin {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
     }

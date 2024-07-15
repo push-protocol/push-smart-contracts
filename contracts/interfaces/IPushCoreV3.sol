@@ -253,4 +253,28 @@ interface IPushCoreV3 {
      * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external;
+
+    /**
+     * @notice Allows users to claim their earned fees from arbitrary requests.
+     * @dev Only accessible if the user has a non-zero balance in the contract for arbitrary request fees.
+     * @param _amount Amount of PUSH tokens to be claimed.
+     */
+    function claimArbitraryRequestFees(uint256 _amount) external;
+
+    /**
+     * @notice Handles arbitrary request data by transferring tokens and processing the request.
+     * @dev Transfers the specified amount from the caller to the contract and calls the private function to process the
+     * request.
+     * @param feeId The fee ID associated with the request.
+     * @param feePercentage The fee percentage to be deducted.
+     * @param amountRecipient The address of the recipient.
+     * @param amount The total amount sent by the sender for the arbitrary request.
+     */
+    function handleArbitraryRequestData(
+        uint8 feeId,
+        uint8 feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        external;
 }

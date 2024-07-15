@@ -768,11 +768,11 @@ contract PushCoreV3 is
     }
 
     /// @inheritdoc IPushCoreV3
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) public {
+    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
-        handleIncentivizedChat(requestSender, requestReceiver, amount);
+        _handleIncentivizedChat(requestSender, requestReceiver, amount);
     }
 
     /**
@@ -783,7 +783,7 @@ contract PushCoreV3 is
      * @param requestReceiver The address of the receiver who is the target of the chat request.
      * @param amount The total amount sent by the sender for the incentivized chat.
      */
-    function handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
+    function _handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -872,24 +872,63 @@ contract PushCoreV3 is
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
             (address amountRecipient) = abi.decode(structPayload, (address));
-            handleIncentivizedChat(sender, amountRecipient, amount);
+            _handleIncentivizedChat(sender, amountRecipient, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, uint8 feePercentage, address amountRecipient) =
                 abi.decode(structPayload, (uint8, uint8, address));
 
-            uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
-
-            // Update states based on Fee Percentage calculation
-            PROTOCOL_POOL_FEES += feeAmount;
-            arbitraryReqFees[amountRecipient] += amount - feeAmount;
-
-            emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
+            _handleArbitraryRequest(sender, feeId, feePercentage, amountRecipient, amount);
         } else {
             revert("Invalid Function Type");
         }
 
         processedMessages[deliveryHash] = true;
+    }
+
+    /// @inheritdoc IPushCoreV3
+    function handleArbitraryRequestData(
+        uint8 feeId,
+        uint8 feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        external
+    {
+        // Transfer tokens from the caller to the contract
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Call the private function to process the arbitrary request
+        _handleArbitraryRequest(msg.sender, feeId, feePercentage, amountRecipient, amount);
+    }
+
+    /**
+     * @notice Handles the arbitrary request.
+     * @dev Calculates the fee, updates the state variables, and emits an event.
+     * @param sender The address of the sender initiating the arbitrary request.
+     * @param feeId The fee ID associated with the request.
+     * @param feePercentage The fee percentage to be deducted.
+     * @param amountRecipient The address of the recipient.
+     * @param amount The total amount sent by the sender for the arbitrary request.
+     */
+    function _handleArbitraryRequest(
+        address sender,
+        uint8 feeId,
+        uint8 feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        private
+    {
+        // Calculate the fee amount
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
+
+        // Update states based on Fee Percentage calculation
+        PROTOCOL_POOL_FEES += feeAmount;
+        arbitraryReqFees[amountRecipient] += amount - feeAmount;
+
+        // Emit an event for the arbitrary request
+        emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
     }
 
     /**
@@ -914,7 +953,7 @@ contract PushCoreV3 is
         emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
     }
 
-    function migrateAddresToBytes32(address[] calldata _channels) external whenPaused {
+    function migrateAddressToBytes32(address[] calldata _channels) external whenPaused {
         onlyPushChannelAdmin();
         for (uint256 i; i < _channels.length; ++i) {
             CoreTypes.Channel memory _channelData = channels[_channels[i]];
