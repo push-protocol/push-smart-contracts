@@ -689,21 +689,33 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      */
     // Should be only admin
     // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
-    function transferFeePoolToCore(uint256 _amount) external payable onlyPushChannelAdmin {
+    function transferFeePoolToCore(CrossChainRequestTypes.CrossChainFunction functionType, uint256 _amount, uint256 gasLimit) external payable onlyPushChannelAdmin {
         if (PROTOCOL_POOL_FEE < _amount) {
             revert Errors.InsufficientFunds();
         }
-
-        bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
-
+        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        if (msg.value < tokenBridgeCost) {
+
+        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
 
         PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - _amount;
 
         PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, BaseHelper.addressToBytes32(EPNSCoreAddress), BaseHelper.addressToBytes32(msg.sender), false, new bytes(1));
+        
+        bytes memory requestPayload = abi.encode(functionType, bytes(""), _amount, msg.sender);
+
+         // Relay the RequestData Payload
+        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
+            WORMHOLE_RECIPIENT_CHAIN,
+            EPNSCoreAddress,
+            requestPayload,
+            0, // no receiver value needed since we're just passing a message
+            gasLimit,
+            WORMHOLE_RECIPIENT_CHAIN,
+            msg.sender // Refund address is of the sender
+        );
     }
 }

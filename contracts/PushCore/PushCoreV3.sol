@@ -885,6 +885,10 @@ contract PushCoreV3 is
             arbitraryReqFees[amountRecipient] += amount - feeAmount;
 
             emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
+        } else if( functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee ){
+            // Admin Request
+            PROTOCOL_POOL_FEES += amount;
+
         } else {
             revert("Invalid Function Type");
         }

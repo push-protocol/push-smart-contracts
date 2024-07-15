@@ -115,6 +115,7 @@ library CrossChainRequestTypes {
     enum CrossChainFunction {
         AddChannel,
         IncentivizedChat,
-        ArbitraryRequest
+        ArbitraryRequest,
+        AdminRequest_AddPoolFee
     }
 }
