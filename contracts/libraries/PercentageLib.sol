@@ -25,6 +25,6 @@ library PercentageLib {
     function calcPercentage(uint256 _amount, GenericTypes.Percentage memory _percentage) internal pure returns (uint256) {
         uint256 divisor = 10 ** _percentage.decimalPlaces;
         require(_percentage.percentageNumber <= 100 * divisor, "Percentage exceeds 100%");
-        return (_amount * _percentage.percentageNumber) / divisor;
+        return (_amount * _percentage.percentageNumber) / ( divisor * 100);
     }
 }
