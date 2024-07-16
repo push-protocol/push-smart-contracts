@@ -569,13 +569,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param _minChannelCreationFee The minimum fee for creating a channel
      * @param _feeAmount The amount of the fee
      */
-    function setCoreFeeConfig(
-        uint256 _minChannelCreationFee,
-        uint256 _feeAmount
-    )
-        external
-        onlyPushChannelAdmin
-    {
+    function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _feeAmount) external onlyPushChannelAdmin {
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
     }
@@ -652,7 +646,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      */
     function _createCrossChainRequest(bytes memory requestPayload, uint256 amount, uint256 gasLimit) internal {
         // Calculate MSG bridge cost and Token Bridge cost
-        uint256 messageBridgeCost = quoteMsgRelayCost(WORMHOLE_RECIPIENT_CHAIN, gasLimit);
+        uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
+
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
 
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
@@ -663,7 +659,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         PUSH_NTT.approve(address(NTT_MANAGER), amount);
         NTT_MANAGER.transfer{ value: tokenBridgeCost }(
             amount,
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             BaseHelper.addressToBytes32(EPNSCoreAddress),
             BaseHelper.addressToBytes32(msg.sender),
             false,
@@ -672,12 +668,12 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             EPNSCoreAddress,
             requestPayload,
             0, // no receiver value needed since we're just passing a message
             gasLimit,
-            WORMHOLE_RECIPIENT_CHAIN,
+            recipientChain,
             msg.sender // Refund address is of the sender
         );
     }
@@ -685,25 +681,51 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     /**
      * @notice Function to allow the Push Channel Admin to bridge PROTOCOL_POOL_FEES from Comm to Core
      * @dev    Can only be called by the Push Channel Admin
-     * @param  _amount Amount to be bridged
+     * @param  amount Amount to be bridged
      */
     // Should be only admin
     // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
-    function transferFeePoolToCore(uint256 _amount) external payable onlyPushChannelAdmin {
-        if (PROTOCOL_POOL_FEE < _amount) {
+    function transferFeePoolToCore(uint256 amount, uint256 gasLimit) external payable onlyPushChannelAdmin {
+        uint256 protocolPoolFee = PROTOCOL_POOL_FEE;
+        if (protocolPoolFee < amount) {
             revert Errors.InsufficientFunds();
         }
-
-        bytes32 recipient = bytes32(uint256(uint160(EPNSCoreAddress)));
-
+        address coreAddress = EPNSCoreAddress;
+        uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        if (msg.value < tokenBridgeCost) {
+
+        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
 
-        PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - _amount;
+        protocolPoolFee = protocolPoolFee - amount;
+        PROTOCOL_POOL_FEE = protocolPoolFee;
 
-        PUSH_NTT.approve(address(NTT_MANAGER), _amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(_amount, WORMHOLE_RECIPIENT_CHAIN, recipient);
+        INttManager NttManager = NTT_MANAGER;
+
+        PUSH_NTT.approve(address(NttManager), amount);
+        NttManager.transfer{ value: tokenBridgeCost }(
+            amount,
+            recipientChain,
+            BaseHelper.addressToBytes32(coreAddress),
+            BaseHelper.addressToBytes32(msg.sender),
+            false,
+            new bytes(1)
+        );
+
+        bytes memory requestPayload =
+            abi.encode(CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee, bytes(""), amount, msg.sender);
+
+        // Relay the RequestData Payload
+        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
+            recipientChain,
+            coreAddress,
+            requestPayload,
+            0, // no receiver value needed since we're just passing a message
+            gasLimit,
+            recipientChain,
+            msg.sender // Refund address is of the sender
+        );
     }
 }
