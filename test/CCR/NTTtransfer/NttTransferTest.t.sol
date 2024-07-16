@@ -20,7 +20,7 @@ contract CreateChannelCCR is BaseCCRTest {
 
     }
     function test_tokenTransferSuccessful() external {
-        setUpDestChain(EthSepolia.rpc);
+        setUpChain2(EthSepolia.rpc);
 
 
         bytes[] memory a;
@@ -47,14 +47,14 @@ contract CreateChannelCCR is BaseCCRTest {
             tokenTransferMessage
         );
         bytes32 hash = TransceiverStructs.nttManagerMessageDigest(
-            10003, nttManagerMessage
+            ArbSepolia.SourceChainId, nttManagerMessage
         );
         changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         EthSepolia.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
             a, // Should be zero
             bytes32(uint256(uint160(address(ArbSepolia.wormholeTransceiverChain1)))), // Must be a wormhole peers
-            10003, // ChainID from the call
+            ArbSepolia.SourceChainId, // ChainID from the call
             hash // Hash of the VAA being used
         );
 

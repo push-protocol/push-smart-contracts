@@ -117,7 +117,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         );
     }
 
-    function test_WhenAllChecksPass() public whenReceiveFunctionIsCalledInCore {
+    function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
         // it should emit event and update storage
         test_WhenAllChecksPasses();
 
@@ -143,7 +143,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     }
 
     function test_whenTokensAreTransferred() external {
-        test_WhenAllChecksPass();
+        test_whenReceiveChecksPass();
 
         bytes[] memory a;
         TrimmedAmount _amt = _trimTransferAmount(amount);

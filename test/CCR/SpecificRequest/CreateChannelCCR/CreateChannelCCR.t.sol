@@ -100,7 +100,7 @@ contract CreateChannelCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
     }
 
-    function test_WhenAllChecksPass() public whenReceiveFunctionIsCalledInCore {
+    function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
         // it should emit event and create Channel
 
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
@@ -142,7 +142,7 @@ contract CreateChannelCCR is BaseCCRTest {
     }
 
     function test_whenTokensAreTransferred() external {
-        test_WhenAllChecksPass();
+        test_whenReceiveChecksPass();
 
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
