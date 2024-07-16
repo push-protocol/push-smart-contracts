@@ -21,6 +21,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 sourceAddress;
     uint16 sourceChain = ArbSepolia.SourceChainId;
     GenericTypes.Percentage percentage; 
+    uint256 s = 10_000_000;
 
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;

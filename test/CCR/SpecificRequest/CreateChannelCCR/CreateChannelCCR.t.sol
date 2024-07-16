@@ -31,7 +31,7 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.expectRevert("Pausable: paused");
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, 10_000_000
+            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
         );
     }
 
@@ -43,7 +43,7 @@ contract CreateChannelCCR is BaseCCRTest {
         );
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, 10_000_000
+            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
         );
     }
 
@@ -52,7 +52,7 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, 10_000_000
+            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
         );
     }
 
@@ -63,7 +63,7 @@ contract CreateChannelCCR is BaseCCRTest {
         emit LogMessagePublished(ArbSepolia.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, 10_000_000
+            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
         );
     }
 
