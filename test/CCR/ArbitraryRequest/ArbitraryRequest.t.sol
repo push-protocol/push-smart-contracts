@@ -78,7 +78,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpDestChain(DestChain.rpc);
+        setUpDestChain();
         //set sender to zero address
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(0)));
 
@@ -93,7 +93,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpDestChain(DestChain.rpc);
+        setUpDestChain();
         coreProxy.setWormholeRelayer(address(0));
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
@@ -105,7 +105,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
 
-        setUpDestChain(DestChain.rpc);
+        setUpDestChain();
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(
@@ -121,7 +121,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should emit event and update storage
         test_WhenAllChecksPasses();
 
-        setUpDestChain(DestChain.rpc);
+        setUpDestChain();
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);

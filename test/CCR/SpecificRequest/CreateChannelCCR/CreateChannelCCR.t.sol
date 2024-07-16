@@ -70,7 +70,7 @@ contract CreateChannelCCR is BaseCCRTest {
     modifier whenReceiveFunctionIsCalledInCore() {
         test_WhenAllChecksPasses();
 
-        setUpDestChain(DestChain.rpc);
+        setUpDestChain();
         _;
     }
 

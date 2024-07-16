@@ -24,7 +24,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes[] additionalVaas;
     bytes32 deliveryHash = 0x97f309914aa8b670f4a9212ba06670557b0c92a7ad853b637be8a9a6c2ea6447;
     bytes32 sourceAddress;
-    uint16 sourceChain = ArbSepolia.SourceChainId;
+    uint16 sourceChain = SourceChain.SourceChainId;
     GenericTypes.Percentage percentage; 
     uint256 GasLimit = 10_000_000;
 
@@ -36,39 +36,39 @@ contract Helper is BasePushCommTest, CCRConfig {
     }
 
     function getPushTokenOnfork(address _addr, uint256 _amount) public {
-        changePrank(ArbSepolia.PushHolder);
+        changePrank(SourceChain.PushHolder);
         pushNttToken.transfer(_addr, _amount);
 
         changePrank(_addr);
         pushNttToken.approve(address(commProxy), type(uint256).max);
     }
 
-    function setUpSourceChain(string memory url) internal {
-        switchChains(url);
+    function setUpSourceChain() internal {
+        switchChains(SourceChain.rpc);
         BasePushCommTest.setUp();
-        pushNttToken = Push(ArbSepolia.PUSH_NTT_SOURCE);
+        pushNttToken = Push(SourceChain.PUSH_NTT_SOURCE);
 
         getPushTokenOnfork(actor.bob_channel_owner, 1000e18);
         getPushTokenOnfork(actor.charlie_channel_owner, 1000e18);
 
         changePrank(actor.admin);
         commProxy.setBridgeConfig(
-            ArbSepolia.PUSH_NTT_SOURCE,
-            ArbSepolia.NTT_MANAGER,
-            ArbSepolia.wormholeTransceiverChain1,
-            IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
+            SourceChain.PUSH_NTT_SOURCE,
+            SourceChain.NTT_MANAGER,
+            SourceChain.wormholeTransceiverChain1,
+            IWormholeRelayer(SourceChain.WORMHOLE_RELAYER_SOURCE),
             DestChain.DestChainId
         );
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT);
     }
 
-    function setUpDestChain(string memory url) internal {
-        switchChains(url);
+    function setUpDestChain() internal {
+        switchChains(DestChain.rpc);
         BasePushCommTest.setUp();
         pushNttToken = Push(DestChain.PUSH_NTT_DEST);
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
-        coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(commProxy)));
+        coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 
     function toWormholeFormat(address addr) internal pure returns (bytes32) {
@@ -148,7 +148,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         // Source fork has id 0 and corresponds to chain 1
         if (vm.activeFork() == 0) {
             encodedInstructionWormhole =
-                ArbSepolia.wormholeTransceiverChain1.encodeWormholeTransceiverInstruction(instruction);
+                SourceChain.wormholeTransceiverChain1.encodeWormholeTransceiverInstruction(instruction);
         } else {
             encodedInstructionWormhole =
                 DestChain.wormholeTransceiverChain2.encodeWormholeTransceiverInstruction(instruction);

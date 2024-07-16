@@ -15,7 +15,7 @@ contract BaseCCRTest is Helper {
     /// approving the tokens then initializing the Comm contract with already deployed
     /// bridge related contracts.
     function setUp() public virtual override {
-        setUpSourceChain(SourceChain.rpc);
+        setUpSourceChain();
         sourceAddress = toWormholeFormat(address(commProxy));
     }
 }
