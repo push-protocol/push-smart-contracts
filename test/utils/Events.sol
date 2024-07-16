@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes } from "../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes  } from "../../contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
@@ -25,7 +25,7 @@ abstract contract CoreEvents {
         address indexed sender,
         address indexed receiver,
         uint256 amountDeposited,
-        uint256 feePercent,
+        GenericTypes.Percentage feePercent,
         uint256 indexed feeId
     );
     event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);

@@ -20,7 +20,7 @@ contract CreateChatCCR is BaseCCRTest {
             actor.charlie_channel_owner,
             amount,
             0,
-            0,
+            percentage,
             actor.bob_channel_owner
         );
     }
@@ -72,7 +72,7 @@ contract CreateChatCCR is BaseCCRTest {
 
     modifier whenReceiveFunctionIsCalledInCore() {
         test_WhenAllChecksPasses();
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
         _;
     }
 

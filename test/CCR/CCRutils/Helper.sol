@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes  } from "../../../../contracts/libraries/DataTypes.sol";
 
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
@@ -20,6 +20,8 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 deliveryHash = 0x97f309914aa8b670f4a9212ba06670557b0c92a7ad853b637be8a9a6c2ea6447;
     bytes32 sourceAddress;
     uint16 sourceChain = ArbSepolia.SourceChainId;
+    GenericTypes.Percentage percentage; 
+
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;
 
@@ -35,7 +37,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         pushNttToken.approve(address(commProxy), type(uint256).max);
     }
 
-    function setUpChain1(string memory url) internal {
+    function setUpSourceChain(string memory url) internal {
         switchChains(url);
         BasePushCommTest.setUp();
         pushNttToken = Push(ArbSepolia.PUSH_NTT_SOURCE);
@@ -54,7 +56,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT);
     }
 
-    function setUpChain2(string memory url) internal {
+    function setUpDestChain(string memory url) internal {
         switchChains(url);
         BasePushCommTest.setUp();
         pushNttToken = Push(EthSepolia.PUSH_NTT_DEST);
@@ -84,11 +86,11 @@ contract Helper is BasePushCommTest, CCRConfig {
         address amountRecipient,
         uint256 amount,
         uint8 _feeId,
-        uint8 _feePercentage,
+        GenericTypes.Percentage memory _percentage,
         address sender
     )
         internal
-        view
+        pure
         returns (bytes memory payload, bytes memory reqPayload)
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
@@ -100,7 +102,7 @@ contract Helper is BasePushCommTest, CCRConfig {
 
             reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
-            payload = abi.encode(_feeId, _feePercentage, amountRecipient);
+            payload = abi.encode(_feeId, _percentage, amountRecipient);
 
             reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         }

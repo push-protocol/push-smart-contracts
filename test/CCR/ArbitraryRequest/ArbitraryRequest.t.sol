@@ -4,22 +4,25 @@ pragma solidity ^0.8.0;
 import { BaseCCRTest } from "../BaseCCR.t.sol";
 import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes, GenericTypes  } from "../../../../contracts/libraries/DataTypes.sol";
 
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
+import {BaseHelper} from "./../../../contracts/libraries/BaseHelper.sol";
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
-
     function setUp() public override {
         BaseCCRTest.setUp();
+
+        percentage = GenericTypes.Percentage(2322, 2); 
+
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest,
             actor.charlie_channel_owner,
             amount,
             1,
-            20,
+            percentage,
             actor.bob_channel_owner
         );
     }
@@ -75,7 +78,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
         //set sender to zero address
         coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(0)));
 
@@ -90,7 +93,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
         coreProxy.setWormholeRelayer(address(0));
         changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
@@ -102,7 +105,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
 
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
 
         changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(
@@ -118,7 +121,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should emit event and update storage
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
         changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
@@ -126,13 +129,13 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
 
         vm.expectEmit(true, true, false, true);
-        emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, 20, 1);
+        emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, percentage, 1);
 
         coreProxy.receiveWormholeMessages(
             requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
         );
 
-        uint256 feeAmount = amount * 20 / 100;
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
 
         // Update states based on Fee Percentage calculation
         assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + feeAmount);
@@ -141,8 +144,6 @@ contract ArbitraryRequesttsol is BaseCCRTest {
 
     function test_whenTokensAreTransferred() external {
         test_WhenAllChecksPass();
-
-        console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
         TrimmedAmount _amt = _trimTransferAmount(amount);

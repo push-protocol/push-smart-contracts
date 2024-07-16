@@ -20,7 +20,7 @@ contract CreateChannelCCR is BaseCCRTest {
 
     }
     function test_tokenTransferSuccessful() external {
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
 
 
         bytes[] memory a;

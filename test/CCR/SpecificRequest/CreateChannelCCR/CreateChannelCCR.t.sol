@@ -15,7 +15,7 @@ contract CreateChannelCCR is BaseCCRTest {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, address(0), amount, 0, 0, actor.charlie_channel_owner
+            CrossChainRequestTypes.CrossChainFunction.AddChannel, address(0), amount, 0, percentage, actor.charlie_channel_owner
         );
     }
 
@@ -70,7 +70,7 @@ contract CreateChannelCCR is BaseCCRTest {
     modifier whenReceiveFunctionIsCalledInCore() {
         test_WhenAllChecksPasses();
 
-        setUpChain2(EthSepolia.rpc);
+        setUpDestChain(EthSepolia.rpc);
         _;
     }
 
