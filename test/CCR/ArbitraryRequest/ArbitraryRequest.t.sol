@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import { BaseCCRTest } from "../BaseCCR.t.sol";
 import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { CrossChainRequestTypes, GenericTypes  } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
 
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
-import {BaseHelper} from "./../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "./../../../contracts/libraries/BaseHelper.sol";
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
     function setUp() public override {
@@ -143,29 +143,14 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     }
 
     function test_whenTokensAreTransferred() external {
+        vm.recordLogs();
         test_whenReceiveChecksPass();
-
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
         bytes[] memory a;
-        TrimmedAmount _amt = _trimTransferAmount(amount);
-        bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
-            TransceiverStructs.NativeTokenTransfer({
-                amount: _amt,
-                sourceToken: toWormholeFormat(address(SourceChain.PUSH_NTT_SOURCE)),
-                to: toWormholeFormat(address(coreProxy)),
-                toChain: DestChain.DestChainId
-            })
-        );
+        
+        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
-        bytes memory transceiverMessage;
-        TransceiverStructs.NttManagerMessage memory nttManagerMessage;
-        (nttManagerMessage, transceiverMessage) = buildTransceiverMessageWithNttManagerPayload(
-            0,
-            toWormholeFormat(address(SourceChain.PushHolder)),
-            toWormholeFormat(SourceChain.NTT_MANAGER),
-            toWormholeFormat(DestChain.NTT_MANAGER),
-            tokenTransferMessage
-        );
-        bytes32 hash = TransceiverStructs.nttManagerMessageDigest(10_003, nttManagerMessage);
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified

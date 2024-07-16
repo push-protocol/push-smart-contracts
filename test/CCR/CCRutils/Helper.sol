@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes} from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
 
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
+import { Vm } from "forge-std/Vm.sol";
 
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
@@ -25,9 +26,8 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 deliveryHash = 0x97f309914aa8b670f4a9212ba06670557b0c92a7ad853b637be8a9a6c2ea6447;
     bytes32 sourceAddress;
     uint16 sourceChain = SourceChain.SourceChainId;
-    GenericTypes.Percentage percentage; 
+    GenericTypes.Percentage percentage;
     uint256 GasLimit = 10_000_000;
-
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;
 
@@ -183,5 +183,43 @@ contract Helper is BasePushCommTest, CCRConfig {
             TEST_TRANSCEIVER_PAYLOAD_PREFIX, sourceNttManager, recipientNttManager, nttManagerMessage, new bytes(0)
         );
         return (m, transceiverMessage);
+    }
+
+    function getMessagefromLog(Vm.Log[] memory logs)
+        internal
+        pure
+        returns (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain)
+    {
+        bytes memory data;
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == keccak256("TransferSent(bytes32,bytes32,uint256,uint256,uint16,uint64)")) {
+                data = logs[i].data;
+                sourceNttManager = logs[i].emitter;
+            }
+        }
+        (recipient,, _amount,, recipientChain,) = abi.decode(data, (bytes32, bytes32, uint256, uint256, uint16, uint64));
+    }
+
+    function getRequestPayload(uint256 _amount, bytes32 recipient, uint16 recipientChain, address sourceNttManager) internal view returns(bytes memory transceiverMessage, bytes32 hash) {
+
+    TrimmedAmount _amt = _trimTransferAmount(_amount);
+        bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
+            TransceiverStructs.NativeTokenTransfer({
+                amount: _amt,
+                sourceToken: toWormholeFormat(address(SourceChain.PUSH_NTT_SOURCE)),
+                to: recipient,
+                toChain: recipientChain
+            })
+        );
+
+        TransceiverStructs.NttManagerMessage memory nttManagerMessage;
+        (nttManagerMessage, transceiverMessage) = buildTransceiverMessageWithNttManagerPayload(
+            0,
+            toWormholeFormat(address(SourceChain.PushHolder)),
+            toWormholeFormat(sourceNttManager),
+            toWormholeFormat(DestChain.NTT_MANAGER),
+            tokenTransferMessage
+        );
+        hash = TransceiverStructs.nttManagerMessageDigest(10_003, nttManagerMessage);
     }
 }

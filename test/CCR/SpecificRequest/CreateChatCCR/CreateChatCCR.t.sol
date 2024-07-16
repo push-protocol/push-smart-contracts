@@ -121,31 +121,16 @@ contract CreateChatCCR is BaseCCRTest {
     }
 
     function test_whenTokensAreTransferred() external {
+        vm.recordLogs();
         test_whenReceiveChecksPass();
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        TrimmedAmount _amt = _trimTransferAmount(amount);
-        bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
-            TransceiverStructs.NativeTokenTransfer({
-                amount: _amt,
-                sourceToken: toWormholeFormat(address(SourceChain.PUSH_NTT_SOURCE)),
-                to: toWormholeFormat(address(coreProxy)),
-                toChain: DestChain.DestChainId
-            })
-        );
+        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
-        bytes memory transceiverMessage;
-        TransceiverStructs.NttManagerMessage memory nttManagerMessage;
-        (nttManagerMessage, transceiverMessage) = buildTransceiverMessageWithNttManagerPayload(
-            0,
-            toWormholeFormat(address(SourceChain.PushHolder)),
-            toWormholeFormat(SourceChain.NTT_MANAGER),
-            toWormholeFormat(DestChain.NTT_MANAGER),
-            tokenTransferMessage
-        );
-        bytes32 hash = TransceiverStructs.nttManagerMessageDigest(10_003, nttManagerMessage);
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
