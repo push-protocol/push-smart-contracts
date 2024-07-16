@@ -686,7 +686,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     // Should be only admin
     // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
     function transferFeePoolToCore(uint256 amount, uint256 gasLimit) external payable onlyPushChannelAdmin {
-        if (PROTOCOL_POOL_FEE < amount) {
+        uint256 protocolPoolFee = PROTOCOL_POOL_FEE;
+        if (protocolPoolFee < amount) {
             revert Errors.InsufficientFunds();
         }
         address coreAddress = EPNSCoreAddress;
@@ -698,10 +699,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             revert Errors.InsufficientFunds();
         }
 
-        PROTOCOL_POOL_FEE = PROTOCOL_POOL_FEE - amount;
+        protocolPoolFee = protocolPoolFee - amount;
+        PROTOCOL_POOL_FEE = protocolPoolFee;
 
-        PUSH_NTT.approve(address(NTT_MANAGER), amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(
+        INttManager NttManager = NTT_MANAGER;
+
+        PUSH_NTT.approve(address(NttManager), amount);
+        NttManager.transfer{ value: tokenBridgeCost }(
             amount,
             recipientChain,
             BaseHelper.addressToBytes32(coreAddress),
