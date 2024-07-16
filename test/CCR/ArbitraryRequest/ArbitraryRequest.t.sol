@@ -63,7 +63,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     function test_WhenAllChecksPasses() public whencreateCrossChainRequestIsCalled {
         // it should successfully create the CCR
         vm.expectEmit(true, false, false, false);
-        emit LogMessagePublished(ArbSepolia.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
+        emit LogMessagePublished(SourceChain.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, amount, GasLimit
@@ -78,14 +78,14 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpDestChain(EthSepolia.rpc);
+        setUpDestChain(DestChain.rpc);
         //set sender to zero address
-        coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(0)));
+        coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(0)));
 
         vm.expectRevert("Not registered sender");
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(
-            requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
     }
 
@@ -93,27 +93,27 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should Revert
         test_WhenAllChecksPasses();
 
-        setUpDestChain(EthSepolia.rpc);
+        setUpDestChain(DestChain.rpc);
         coreProxy.setWormholeRelayer(address(0));
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         vm.expectRevert(abi.encodeWithSelector(Errors.CallerNotAdmin.selector));
         coreProxy.receiveWormholeMessages(
-            requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
     }
 
     function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
 
-        setUpDestChain(EthSepolia.rpc);
+        setUpDestChain(DestChain.rpc);
 
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(
-            requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
         vm.expectRevert(abi.encodeWithSelector(Errors.Payload_Duplicacy_Error.selector));
         coreProxy.receiveWormholeMessages(
-            requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
     }
 
@@ -121,10 +121,10 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         // it should emit event and update storage
         test_WhenAllChecksPasses();
 
-        setUpDestChain(EthSepolia.rpc);
+        setUpDestChain(DestChain.rpc);
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
 
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
 
@@ -132,7 +132,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, percentage, 1);
 
         coreProxy.receiveWormholeMessages(
-            requestPayload, additionalVaas, sourceAddress, ArbSepolia.SourceChainId, deliveryHash
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
 
         uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
@@ -150,9 +150,9 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
             TransceiverStructs.NativeTokenTransfer({
                 amount: _amt,
-                sourceToken: toWormholeFormat(address(ArbSepolia.PUSH_NTT_SOURCE)),
+                sourceToken: toWormholeFormat(address(SourceChain.PUSH_NTT_SOURCE)),
                 to: toWormholeFormat(address(coreProxy)),
-                toChain: EthSepolia.DestChainId
+                toChain: DestChain.DestChainId
             })
         );
 
@@ -160,17 +160,17 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         TransceiverStructs.NttManagerMessage memory nttManagerMessage;
         (nttManagerMessage, transceiverMessage) = buildTransceiverMessageWithNttManagerPayload(
             0,
-            toWormholeFormat(address(ArbSepolia.PushHolder)),
-            toWormholeFormat(ArbSepolia.NTT_MANAGER),
-            toWormholeFormat(EthSepolia.NTT_MANAGER),
+            toWormholeFormat(address(SourceChain.PushHolder)),
+            toWormholeFormat(SourceChain.NTT_MANAGER),
+            toWormholeFormat(DestChain.NTT_MANAGER),
             tokenTransferMessage
         );
         bytes32 hash = TransceiverStructs.nttManagerMessageDigest(10_003, nttManagerMessage);
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
-        EthSepolia.wormholeTransceiverChain2.receiveWormholeMessages(
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
+        DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
             a, // Should be zero
-            bytes32(uint256(uint160(address(ArbSepolia.wormholeTransceiverChain1)))), // Must be a wormhole peers
+            bytes32(uint256(uint160(address(SourceChain.wormholeTransceiverChain1)))), // Must be a wormhole peers
             10_003, // ChainID from the call
             hash // Hash of the VAA being used
         );

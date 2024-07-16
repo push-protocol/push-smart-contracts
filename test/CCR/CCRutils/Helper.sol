@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes  } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes} from "../../../../contracts/libraries/DataTypes.sol";
 
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
@@ -12,6 +12,11 @@ import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 
 contract Helper is BasePushCommTest, CCRConfig {
+    // Set Source and dest chains
+
+    SourceConfig SourceChain = ArbSepolia;
+    DestConfig DestChain = EthSepolia;
+
     bytes _payload;
 
     bytes requestPayload;
@@ -21,7 +26,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 sourceAddress;
     uint16 sourceChain = ArbSepolia.SourceChainId;
     GenericTypes.Percentage percentage; 
-    uint256 s = 10_000_000;
+    uint256 GasLimit = 10_000_000;
 
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;
@@ -52,7 +57,7 @@ contract Helper is BasePushCommTest, CCRConfig {
             ArbSepolia.NTT_MANAGER,
             ArbSepolia.wormholeTransceiverChain1,
             IWormholeRelayer(ArbSepolia.WORMHOLE_RELAYER_SOURCE),
-            EthSepolia.DestChainId
+            DestChain.DestChainId
         );
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT);
     }
@@ -60,9 +65,9 @@ contract Helper is BasePushCommTest, CCRConfig {
     function setUpDestChain(string memory url) internal {
         switchChains(url);
         BasePushCommTest.setUp();
-        pushNttToken = Push(EthSepolia.PUSH_NTT_DEST);
+        pushNttToken = Push(DestChain.PUSH_NTT_DEST);
         changePrank(actor.admin);
-        coreProxy.setWormholeRelayer(EthSepolia.WORMHOLE_RELAYER_DEST);
+        coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.setRegisteredSender(ArbSepolia.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 
@@ -110,7 +115,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     }
 
     function receiveWormholeMessage(bytes memory _requestPayload) internal {
-        changePrank(EthSepolia.WORMHOLE_RELAYER_DEST);
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.receiveWormholeMessages(_requestPayload, additionalVaas, sourceAddress, sourceChain, deliveryHash);
     }
 
@@ -146,7 +151,7 @@ contract Helper is BasePushCommTest, CCRConfig {
                 ArbSepolia.wormholeTransceiverChain1.encodeWormholeTransceiverInstruction(instruction);
         } else {
             encodedInstructionWormhole =
-                EthSepolia.wormholeTransceiverChain2.encodeWormholeTransceiverInstruction(instruction);
+                DestChain.wormholeTransceiverChain2.encodeWormholeTransceiverInstruction(instruction);
         }
         return TransceiverStructs.TransceiverInstruction({ index: 0, payload: encodedInstructionWormhole });
     }
