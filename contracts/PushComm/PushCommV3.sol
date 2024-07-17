@@ -91,9 +91,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
+    // function completeMigration() external onlyPushChannelAdmin {
+    //     isMigrationComplete = true;
+    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
@@ -650,17 +650,20 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-
         if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
 
-        PUSH_NTT.transferFrom(msg.sender, address(this), amount);
-        PUSH_NTT.approve(address(NTT_MANAGER), amount);
-        NTT_MANAGER.transfer{ value: tokenBridgeCost }(
+        IERC20  PushNtt = PUSH_NTT;
+        INttManager NttManager = NTT_MANAGER;
+        address coreAddress = EPNSCoreAddress;
+
+        PushNtt.transferFrom(msg.sender, address(this), amount);
+        PushNtt.approve(address(NttManager), amount);
+        NttManager.transfer{ value: tokenBridgeCost }(
             amount,
             recipientChain,
-            BaseHelper.addressToBytes32(EPNSCoreAddress),
+            BaseHelper.addressToBytes32(coreAddress),
             BaseHelper.addressToBytes32(msg.sender),
             false,
             new bytes(1)
@@ -669,7 +672,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
             recipientChain,
-            EPNSCoreAddress,
+            coreAddress,
             requestPayload,
             0, // no receiver value needed since we're just passing a message
             gasLimit,

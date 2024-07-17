@@ -21,7 +21,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors, ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
@@ -106,11 +106,13 @@ abstract contract BaseTest is Test, Constants, Events {
         changePrank(actor.admin);
         nttProxyAdmin = new ProxyAdmin();
         pushNttProxy = new TransparentUpgradeableProxy(
-            address(pushNtt), address(nttProxyAdmin), abi.encodeWithSignature("initialize()")
+            address(pushNtt),
+            address(nttProxyAdmin),
+            abi.encodeWithSignature("initialize()")
         );
         pushNttToken = Push(address(pushNttProxy));
         nttMigrationProxyAdmin = new ProxyAdmin();
-
+        
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
@@ -136,20 +138,11 @@ abstract contract BaseTest is Test, Constants, Events {
             address(0), // aDai address
             0
         );
-        // address admin = address(
-        //     uint160(
-        //         uint256(
-        //             vm.load(address(epnsCoreProxy),
-        // 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103)
-        //         )
-        //     )
-        // );
-        // vm.prank(actor.admin);
-        // EPNSCoreAdmin(admin).upgradeAndCall(
-        //     ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy), ""
-        // );
 
-        epnsCoreProxyAdmin.upgrade(ITransparentUpgradeableProxy(address(epnsCoreProxy)), address(coreProxy));
+        epnsCoreProxyAdmin.upgrade(
+            ITransparentUpgradeableProxy(address(epnsCoreProxy)),
+            address(coreProxy)
+        );
 
         coreProxy = PushCoreV3(address(epnsCoreProxy));
         changePrank(tokenDistributor);
@@ -186,6 +179,7 @@ abstract contract BaseTest is Test, Constants, Events {
         approveTokens(actor.bob_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.alice_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.charlie_channel_owner, address(coreProxy), 50_000 ether);
+        approveTokens(actor.tony_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
         vm.warp(DEC_27_2021);
@@ -222,7 +216,7 @@ abstract contract BaseTest is Test, Constants, Events {
         // Transfer 50 eth to every actor
         vm.deal({ account: _actor, newBalance: 50 ether });
         // Transfer 50K PUSH Tokens for every actor
-        vm.prank(tokenDistributor);
+        changePrank(tokenDistributor);
         pushToken.transfer(_actor, 50_000 ether);
         return _actor;
     }

@@ -229,12 +229,9 @@ contract PushCoreV3 is
         if (channelInfo[_channel].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
+        
         if (
-            !(
-                _channelType == CoreTypes.ChannelType.InterestBearingOpen
-                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
-            )
+            uint8(_channelType) < 2
         ) {
             revert Errors.Core_InvalidChannelType();
         }

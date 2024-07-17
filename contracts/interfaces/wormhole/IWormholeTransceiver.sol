@@ -17,4 +17,12 @@ interface IWormholeTransceiver is ITransceiver {
         external
         pure
         returns (bytes memory);
+        
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory additionalMessages,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    ) external payable;
 }
