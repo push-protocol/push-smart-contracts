@@ -18,7 +18,7 @@ import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -875,10 +875,13 @@ contract PushCoreV3 is
             _handleIncentivizedChat(sender, amountRecipient, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (uint8 feeId, uint8 feePercentage, address amountRecipient) =
-                abi.decode(structPayload, (uint8, uint8, address));
+            (uint8 feeId, GenericTypes.Percentage memory feePercentage, address amountRecipient) =
+                abi.decode(structPayload, (uint8, GenericTypes.Percentage, address));
 
             _handleArbitraryRequest(sender, feeId, feePercentage, amountRecipient, amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
+            // Admin Request
+            PROTOCOL_POOL_FEES += amount;
         } else {
             revert("Invalid Function Type");
         }
@@ -889,7 +892,7 @@ contract PushCoreV3 is
     /// @inheritdoc IPushCoreV3
     function handleArbitraryRequestData(
         uint8 feeId,
-        uint8 feePercentage,
+        GenericTypes.Percentage calldata feePercentage,
         address amountRecipient,
         uint256 amount
     )
@@ -914,7 +917,7 @@ contract PushCoreV3 is
     function _handleArbitraryRequest(
         address sender,
         uint8 feeId,
-        uint8 feePercentage,
+        GenericTypes.Percentage memory feePercentage,
         address amountRecipient,
         uint256 amount
     )

@@ -115,6 +115,14 @@ library CrossChainRequestTypes {
     enum CrossChainFunction {
         AddChannel,
         IncentivizedChat,
-        ArbitraryRequest
+        ArbitraryRequest,
+        AdminRequest_AddPoolFee
+    }
+}
+
+library GenericTypes {
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
     }
 }
