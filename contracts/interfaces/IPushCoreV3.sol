@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 interface IPushCoreV3 {
     /* *****************************
@@ -53,7 +53,7 @@ interface IPushCoreV3 {
         address indexed sender,
         address indexed receiver,
         uint256 amountDeposited,
-        uint256 feePercent,
+        GenericTypes.Percentage feePercent,
         uint256 indexed feeId
     );
     /// @notice emits whenever a user claims the funds that they got from arbirary request fees
