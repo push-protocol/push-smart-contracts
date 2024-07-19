@@ -15,7 +15,12 @@ contract CreateChannelCCR is BaseCCRTest {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, address(0), amount, 0, percentage, actor.charlie_channel_owner
+            CrossChainRequestTypes.CrossChainFunction.AddChannel,
+            address(0),
+            amount,
+            0,
+            percentage,
+            actor.charlie_channel_owner
         );
     }
 
@@ -145,16 +150,14 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.recordLogs();
         test_whenReceiveChecksPass();
 
-         (            
-            address sourceNttManager,
-            bytes32 recipient,
-            uint256 _amount,
-            uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(

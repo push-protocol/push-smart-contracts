@@ -28,19 +28,19 @@ contract CreateChannelCCR is BaseCCRTest {
         changePrank(SourceChain.PushHolder);
         pushNttToken.approve(address(SourceChain.NTT_MANAGER), 100e18);
 
-        INttManager(SourceChain.NTT_MANAGER).transfer{ value: 12_260_834_040_000 }(
+        uint256 costOfTransfer = commProxy.quoteTokenBridgingCost();
+
+        INttManager(SourceChain.NTT_MANAGER).transfer{ value: costOfTransfer }(
             100e18, DestChain.DestChainId, toWormholeFormat(actor.bob_channel_owner)
         );
-         (            
-            address sourceNttManager,
-            bytes32 recipient,
-            uint256 _amount,
-            uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         setUpDestChain();
         bytes[] memory a;
 
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
@@ -52,6 +52,5 @@ contract CreateChannelCCR is BaseCCRTest {
         );
 
         console.log(pushNttToken.balanceOf(actor.bob_channel_owner));
-
     }
 }

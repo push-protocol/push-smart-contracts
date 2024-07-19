@@ -72,28 +72,33 @@ contract CCRConfig {
     //     "https://sepolia.base.org"
     // );
 
+    /// NEWEST DEPLOYED CONTRACT ///
 
-                  /// NEWEST DEPLOYED CONTRACT ///
+    // SourceConfig ArbSepolia = SourceConfig(
+    //         IWormhole(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35),
+    //         IWormholeTransceiver(0x4F532db1ce4f33170b21F6a97A8973e9499BbD75),
+    //         0x5e1989B8681C91A90F33A82b22cf51210a7C31C0,
+    //         0x4F532db1ce4f33170b21F6a97A8973e9499BbD75,
+    //         0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470,
+    //         0x70c3C79d33A9b08F1bc1e7DB113D1588Dad7d8Bc,
+    //         0x778D3206374f8AC265728E18E3fE2Ae6b93E4ce4,
+    //         10_003,
+    //         "https://sepolia-rollup.arbitrum.io/rpc"
+    //     );
 
-// SourceConfig ArbSepolia = SourceConfig(
-//         IWormhole(0x6b9C8671cdDC8dEab9c719bB87cBd3e782bA6a35),
-//         IWormholeTransceiver(0x4F532db1ce4f33170b21F6a97A8973e9499BbD75),
-//         0x5e1989B8681C91A90F33A82b22cf51210a7C31C0,
-//         0x4F532db1ce4f33170b21F6a97A8973e9499BbD75,
-//         0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470,
-//         0x70c3C79d33A9b08F1bc1e7DB113D1588Dad7d8Bc,
-//         0x778D3206374f8AC265728E18E3fE2Ae6b93E4ce4,
-//         10_003,
-//         "https://sepolia-rollup.arbitrum.io/rpc"
-//     );
+    //     DestConfig EthSepolia = DestConfig(
+    //         IWormhole(0x4a8bc80Ed5a4067f1CCf107057b8270E0cC11A78),
+    //         IWormholeTransceiver(0x3cc5553e0ABfF03743c9c2cc785D184e72D45852),
+    //         0x76c636cb502Aa7eed6784Fde38b955bC15CC6bc1,
+    //         0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470,
+    //         0xe1327FE9b457Ad1b4601FdD2afcAdAef198d6BA6,
+    //         10_002,
+    //         "https://eth-sepolia.public.blastapi.io"
+    //     );
 
-//     DestConfig EthSepolia = DestConfig(
-//         IWormhole(0x4a8bc80Ed5a4067f1CCf107057b8270E0cC11A78),
-//         IWormholeTransceiver(0x3cc5553e0ABfF03743c9c2cc785D184e72D45852),
-//         0x76c636cb502Aa7eed6784Fde38b955bC15CC6bc1,
-//         0x7B1bD7a6b4E61c2a123AC6BC2cbfC614437D0470,
-//         0xe1327FE9b457Ad1b4601FdD2afcAdAef198d6BA6,
-//         10_002,
-//         "https://eth-sepolia.public.blastapi.io"
-//     );
+    // chain agnostic constants
+    // ToDo: to be changed
+    uint256 public constant MAX_WINDOW = 100_000_000_000_000_000_000_000; // considering both inbound and outbound
+        // limits are same
+    uint256 public constant RATE_LIMIT_DURATION = 900;
 }

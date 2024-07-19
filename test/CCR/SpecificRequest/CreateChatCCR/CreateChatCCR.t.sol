@@ -7,6 +7,7 @@ import { console } from "forge-std/console.sol";
 
 import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
 contract CreateChatCCR is BaseCCRTest {
@@ -129,7 +130,8 @@ contract CreateChatCCR is BaseCCRTest {
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
@@ -141,5 +143,18 @@ contract CreateChatCCR is BaseCCRTest {
         );
 
         assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+    }
+
+    function test_revertWhen_OutboundQueueDisabled() external whenCreateChatIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, transferTooLarge, GasLimit
+        );
     }
 }
