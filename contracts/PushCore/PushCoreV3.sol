@@ -895,6 +895,9 @@ contract PushCoreV3 is
     )
         external
     {
+        if (amount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, amount);
+        }
         // Transfer tokens from the caller to the contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
 
