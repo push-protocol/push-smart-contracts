@@ -104,7 +104,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
     function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
-        PUSH_TOKEN_ADDRESS = _tokenAddress;
+        PUSH_NTT = IERC20(_tokenAddress);
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {

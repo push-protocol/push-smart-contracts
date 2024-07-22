@@ -39,12 +39,11 @@ contract PushCommStorageV2 {
     bytes32 public constant SEND_NOTIFICATION_TYPEHASH =
         keccak256("SendNotification(address channel,address recipient,bytes identity,uint256 nonce,uint256 expiry)");
     // New State Variables
-    address public PUSH_TOKEN_ADDRESS;
+    IERC20 public PUSH_NTT;
 
     mapping(address => CommTypes.ChatDetails) public userChatData;
 
     // WORMHOLE CROSS-CHAIN STATE VARIABLES
-    IERC20 public PUSH_NTT;
     INttManager public NTT_MANAGER;
     IWormholeTransceiver public WORMHOLE_TRANSCEIVER;
     IWormholeRelayer public WORMHOLE_RELAYER;
