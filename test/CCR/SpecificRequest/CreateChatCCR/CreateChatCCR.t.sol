@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
-import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
 
 contract CreateChatCCR is BaseCCRTest {
     uint256 amount = 100e18;

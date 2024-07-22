@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { BasePushCoreTest } from "../../PushCore/unit_tests/BasePushCoreTest.t.sol";
 import { SignatureVerifier } from "contracts/mocks/MockERC1271.sol";
-import { CoreTypes } from "../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 
 contract BasePushCommTest is BasePushCoreTest {
     SignatureVerifier verifierContract;

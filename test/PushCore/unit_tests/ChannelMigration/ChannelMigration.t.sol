@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
-import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
 import { console } from "forge-std/console.sol";

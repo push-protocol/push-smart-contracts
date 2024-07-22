@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
-import { CoreTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
 contract TimeBoundChannel_Test is BasePushCoreTest {

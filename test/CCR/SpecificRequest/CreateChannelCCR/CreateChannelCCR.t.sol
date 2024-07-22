@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 contract CreateChannelCCR is BaseCCRTest {

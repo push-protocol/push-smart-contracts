@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes, GenericTypes  } from "../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes  } from "contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);

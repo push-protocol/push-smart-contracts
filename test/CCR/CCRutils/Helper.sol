@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
-import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
+import { IWormholeTransceiver } from "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
-import {EPNS} from "./../../../contracts/token/EPNS.sol";
+import {EPNS} from "contracts/token/EPNS.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
