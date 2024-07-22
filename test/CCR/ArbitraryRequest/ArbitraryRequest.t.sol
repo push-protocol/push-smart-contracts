@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import { BaseHelper } from "./../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
     function setUp() public override {
@@ -166,5 +166,6 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         coreProxy.claimArbitraryRequestFees(coreProxy.arbitraryReqFees(actor.charlie_channel_owner));
         uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
         assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - feeAmount);
+        assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), 0);
     }
 }
