@@ -126,8 +126,6 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
 
-        (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
-
         vm.expectEmit(true, true, false, true);
         emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, percentage, 1);
 
@@ -142,7 +140,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), arbitraryFees + amount - feeAmount);
     }
 
-    function test_whenTokensAreTransferred() external {
+    function test_whenTokensAreTransferred() public {
         vm.recordLogs();
         test_whenReceiveChecksPass();
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
@@ -160,6 +158,16 @@ contract ArbitraryRequesttsol is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+    }
+
+    function test_when_UserTries_ClaimingArbitraryTokens() external {
+        // it should transfer the tokens to celeb user
+        test_whenTokensAreTransferred();
+        uint balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        changePrank(actor.charlie_channel_owner);
+        coreProxy.claimArbitraryRequestFees(coreProxy.arbitraryReqFees(actor.charlie_channel_owner));
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
+        assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - feeAmount);
     }
 }
