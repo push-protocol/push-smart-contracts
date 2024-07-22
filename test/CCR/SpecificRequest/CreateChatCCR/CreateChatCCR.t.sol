@@ -6,8 +6,6 @@ import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
 contract CreateChatCCR is BaseCCRTest {
     uint256 amount = 100e18;

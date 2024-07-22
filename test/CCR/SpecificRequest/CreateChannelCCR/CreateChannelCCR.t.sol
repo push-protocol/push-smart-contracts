@@ -5,8 +5,6 @@ import { BaseCCRTest } from "../../BaseCCR.t.sol";
 import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
     uint256 amount = ADD_CHANNEL_MIN_FEES;
