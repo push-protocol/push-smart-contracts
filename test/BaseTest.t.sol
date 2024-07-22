@@ -27,8 +27,7 @@ abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
     Push public pushNttToken;
     EPNS public pushToken;
-    PushCoreMock public coreMock;
-    PushCoreV3 public coreProxy;
+    PushCoreMock public coreProxy;
     PushCommV3 public comm;
     PushCommV3 public commProxy;
     PushCommETHV3 public commEth;
@@ -72,8 +71,7 @@ abstract contract BaseTest is Test, Constants, Events {
         tokenDistributor = makeAddr("tokenDistributor");
 
         pushToken = new EPNS(tokenDistributor);
-        coreMock = new PushCoreMock();
-        coreProxy = new PushCoreV3();
+        coreProxy = new PushCoreMock();
         comm = new PushCommV3();
         commEth = new PushCommETHV3();
         pushMigrationHelper = new PushMigrationHelper();
@@ -127,7 +125,7 @@ abstract contract BaseTest is Test, Constants, Events {
 
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
-            address(coreMock),
+            address(coreProxy),
             address(epnsCoreProxyAdmin),
             actor.admin,
             address(pushToken),
@@ -139,12 +137,8 @@ abstract contract BaseTest is Test, Constants, Events {
             0
         );
 
-        epnsCoreProxyAdmin.upgrade(
-            ITransparentUpgradeableProxy(address(epnsCoreProxy)),
-            address(coreProxy)
-        );
 
-        coreProxy = PushCoreV3(address(epnsCoreProxy));
+        coreProxy = PushCoreMock(address(epnsCoreProxy));
         changePrank(tokenDistributor);
         pushToken.transfer(address(coreProxy), 1 ether);
 

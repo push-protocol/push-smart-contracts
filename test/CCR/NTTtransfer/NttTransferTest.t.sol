@@ -12,7 +12,7 @@ import { INttManager } from "./../../../contracts/interfaces/wormhole/INttManage
 
 import { Vm } from "forge-std/Vm.sol";
 
-contract CreateChannelCCR is BaseCCRTest {
+contract NTTtransferTest is BaseCCRTest {
     // using TrimmedAmount for TrimmedAmount;
     uint256 constant DEVNET_GUARDIAN_PK = 0xedc2d60cdb193aac203bea0be0f5f1b016bf4381f92231ca0320fc01a57bcae5;
     WormholeSimulator guardian;
@@ -51,7 +51,7 @@ contract CreateChannelCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        console.log(pushNttToken.balanceOf(actor.bob_channel_owner));
+        console.log(pushToken.balanceOf(actor.bob_channel_owner));
 
     }
 }

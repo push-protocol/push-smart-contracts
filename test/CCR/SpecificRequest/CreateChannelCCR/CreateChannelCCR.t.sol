@@ -151,7 +151,7 @@ contract CreateChannelCCR is BaseCCRTest {
             uint256 _amount,
             uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
 
-        console.log(pushNttToken.balanceOf(address(coreProxy)));
+        console.log(pushToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
@@ -165,6 +165,6 @@ contract CreateChannelCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
     }
 }

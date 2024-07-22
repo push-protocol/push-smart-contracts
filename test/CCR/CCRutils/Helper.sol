@@ -11,7 +11,7 @@ import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
-
+import {EPNS} from "./../../../contracts/token/EPNS.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
@@ -65,9 +65,10 @@ contract Helper is BasePushCommTest, CCRConfig {
     function setUpDestChain() internal {
         switchChains(DestChain.rpc);
         BasePushCommTest.setUp();
-        pushNttToken = Push(DestChain.PUSH_NTT_DEST);
+        pushToken = EPNS(DestChain.PUSH_NTT_DEST);
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
+        coreProxy.setEpnsTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 

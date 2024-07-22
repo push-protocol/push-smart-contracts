@@ -15,5 +15,7 @@ CreateChannelCCR.t.sol
     │   └── it should Revert
     ├── when deliveryHash is used already
     │   └── it should Revert
-    └── when all checks pass
-        └── it should emit event and create Channel
+    ├── when all checks pass
+    │   └── it should emit event and create Channel
+    └── when Tokens are transferred by NTT
+        └── it should recieve the tokens in core
