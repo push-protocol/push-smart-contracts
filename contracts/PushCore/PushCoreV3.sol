@@ -767,7 +767,7 @@ contract PushCoreV3 is
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
-        _handleIncentivizedChat(requestSender, requestReceiver, amount);
+        _handleIncentivizedChat(BaseHelper.addressToBytes32(requestSender), requestReceiver, amount);
     }
 
     /**
@@ -778,7 +778,7 @@ contract PushCoreV3 is
      * @param requestReceiver The address of the receiver who is the target of the chat request.
      * @param amount The total amount sent by the sender for the incentivized chat.
      */
-    function _handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
+    function _handleIncentivizedChat(bytes32 requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -867,7 +867,7 @@ contract PushCoreV3 is
             // Specific Request: Incentivized Chat
             (bytes32 amountRecipient) = abi.decode(structPayload, (bytes32));
             _handleIncentivizedChat(
-                BaseHelper.bytes32ToAddress(sender), BaseHelper.bytes32ToAddress(amountRecipient), amount
+                sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
             );
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
@@ -875,7 +875,7 @@ contract PushCoreV3 is
                 abi.decode(structPayload, (uint8, GenericTypes.Percentage, bytes32));
 
             _handleArbitraryRequest(
-                BaseHelper.bytes32ToAddress(sender),
+                sender,
                 feeId,
                 feePercentage,
                 BaseHelper.bytes32ToAddress(amountRecipient),
@@ -904,7 +904,7 @@ contract PushCoreV3 is
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
 
         // Call the private function to process the arbitrary request
-        _handleArbitraryRequest(msg.sender, feeId, feePercentage, amountRecipient, amount);
+        _handleArbitraryRequest(BaseHelper.addressToBytes32(msg.sender), feeId, feePercentage, amountRecipient, amount);
     }
 
     /**
@@ -917,7 +917,7 @@ contract PushCoreV3 is
      * @param amount The total amount sent by the sender for the arbitrary request.
      */
     function _handleArbitraryRequest(
-        address sender,
+        bytes32 sender,
         uint8 feeId,
         GenericTypes.Percentage memory feePercentage,
         address amountRecipient,

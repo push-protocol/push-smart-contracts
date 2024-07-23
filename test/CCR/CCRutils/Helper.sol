@@ -89,11 +89,11 @@ contract Helper is BasePushCommTest, CCRConfig {
 
     function getSpecificPayload(
         CrossChainRequestTypes.CrossChainFunction typeOfReq,
-        address amountRecipient,
+        bytes32 amountRecipient,
         uint256 amount,
         uint8 _feeId,
         GenericTypes.Percentage memory _percentage,
-        address sender
+        bytes32 sender
     )
         internal
         pure

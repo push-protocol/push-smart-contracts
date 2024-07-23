@@ -112,7 +112,7 @@ contract CreateChatCCR is BaseCCRTest {
 
         vm.expectEmit(false, false, false, true);
         emit IncentivizeChatReqReceived(
-            actor.bob_channel_owner, actor.charlie_channel_owner, amount - poolFeeAmount, poolFeeAmount, block.timestamp
+            BaseHelper.addressToBytes32(actor.bob_channel_owner), actor.charlie_channel_owner, amount - poolFeeAmount, poolFeeAmount, block.timestamp
         );
 
         receiveWormholeMessage(requestPayload);
