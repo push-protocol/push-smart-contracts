@@ -229,10 +229,8 @@ contract PushCoreV3 is
         if (channelInfo[_channel].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
-        
-        if (
-            uint8(_channelType) < 2
-        ) {
+
+        if (uint8(_channelType) < 2) {
             revert Errors.Core_InvalidChannelType();
         }
 

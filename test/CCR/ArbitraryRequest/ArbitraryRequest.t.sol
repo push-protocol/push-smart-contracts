@@ -2,20 +2,22 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
-import { BaseHelper } from "./../../../contracts/libraries/BaseHelper.sol";
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
+
     function setUp() public override {
         BaseCCRTest.setUp();
 
-        percentage = GenericTypes.Percentage(2322, 2); 
+        percentage = GenericTypes.Percentage(2322, 2);
 
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest,
@@ -57,6 +59,19 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, amount, GasLimit
+        );
+    }
+
+    function test_revertWhen_OutboundQueueDisabled() external whencreateCrossChainRequestIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
         );
     }
 
@@ -148,8 +163,9 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
         bytes[] memory a;
-        
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
