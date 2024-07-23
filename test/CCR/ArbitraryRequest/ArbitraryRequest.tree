@@ -8,6 +8,8 @@ ArbitraryRequest.t.sol
 │   │   └── it should revert
 │   ├── when ether passed is less
 │   │   └── it should revert
+│   ├── when amount transferred is more than max outbound rate limit
+│   │   └── it should revert
 │   └── when all checks passes
 │       └── it should successfully create the CCR
 └── when receive function is called in core

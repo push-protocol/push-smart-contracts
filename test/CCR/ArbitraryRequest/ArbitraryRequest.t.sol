@@ -62,6 +62,19 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         );
     }
 
+    function test_revertWhen_OutboundQueueDisabled() external whencreateCrossChainRequestIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
+        );
+    }
+
     function test_WhenAllChecksPasses() public whencreateCrossChainRequestIsCalled {
         // it should successfully create the CCR
         vm.expectEmit(true, false, false, false);
@@ -164,18 +177,5 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         );
 
         assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
-    }
-
-    function test_revertWhen_OutboundQueueDisabled() external whencreateCrossChainRequestIsCalled {
-        changePrank(SourceChain.NTT_MANAGER);
-        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
-        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
-
-        changePrank(actor.bob_channel_owner);
-        // test revert on a transfer that is larger than max window size without enabling queueing
-        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
-        commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
-        );
     }
 }
