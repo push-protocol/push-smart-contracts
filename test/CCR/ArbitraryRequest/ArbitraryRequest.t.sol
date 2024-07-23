@@ -10,20 +10,22 @@ import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
 import { BaseHelper } from "./../../../contracts/libraries/BaseHelper.sol";
+
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
+
     function setUp() public override {
         BaseCCRTest.setUp();
 
-        percentage = GenericTypes.Percentage(2322, 2); 
+        percentage = GenericTypes.Percentage(2322, 2);
 
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest,
-            actor.charlie_channel_owner,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner),
             amount,
             1,
             percentage,
-            actor.bob_channel_owner
+            BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
 
@@ -148,8 +150,9 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
         bytes[] memory a;
-        
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(

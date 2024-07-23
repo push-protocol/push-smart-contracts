@@ -7,6 +7,7 @@ import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
     uint256 amount = ADD_CHANNEL_MIN_FEES;
@@ -15,7 +16,12 @@ contract CreateChannelCCR is BaseCCRTest {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, address(0), amount, 0, percentage, actor.charlie_channel_owner
+            CrossChainRequestTypes.CrossChainFunction.AddChannel,
+            BaseHelper.addressToBytes32(address(0)),
+            amount,
+            0,
+            percentage,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner)
         );
     }
 
@@ -145,16 +151,14 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.recordLogs();
         test_whenReceiveChecksPass();
 
-         (            
-            address sourceNttManager,
-            bytes32 recipient,
-            uint256 _amount,
-            uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(

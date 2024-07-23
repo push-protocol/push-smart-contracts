@@ -8,6 +8,7 @@ import { console } from "forge-std/console.sol";
 import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract CreateChatCCR is BaseCCRTest {
     uint256 amount = 100e18;
@@ -17,11 +18,11 @@ contract CreateChatCCR is BaseCCRTest {
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.IncentivizedChat,
-            actor.charlie_channel_owner,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner),
             amount,
             0,
             percentage,
-            actor.bob_channel_owner
+            BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
 
@@ -129,7 +130,8 @@ contract CreateChatCCR is BaseCCRTest {
         console.log(pushNttToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
