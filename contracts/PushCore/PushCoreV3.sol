@@ -229,10 +229,8 @@ contract PushCoreV3 is
         if (channelInfo[_channel].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
-        
-        if (
-            uint8(_channelType) < 2
-        ) {
+
+        if (uint8(_channelType) < 2) {
             revert Errors.Core_InvalidChannelType();
         }
 
@@ -856,26 +854,33 @@ contract PushCoreV3 is
             CrossChainRequestTypes.CrossChainFunction functionType,
             bytes memory structPayload,
             uint256 amount,
-            address sender
-        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
+            bytes32 sender
+        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, bytes32));
 
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             // Specific Request: Add Channel
             (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
                 abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
-            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
-            emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
-            _createChannel(_channelBytesID, channelType, amount, channelExpiry);
+            emit ChannelCreated(sender, channelType, channelIdentity);
+            _createChannel(sender, channelType, amount, channelExpiry);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
-            (address amountRecipient) = abi.decode(structPayload, (address));
-            _handleIncentivizedChat(sender, amountRecipient, amount);
+            (bytes32 amountRecipient) = abi.decode(structPayload, (bytes32));
+            _handleIncentivizedChat(
+                BaseHelper.bytes32ToAddress(sender), BaseHelper.bytes32ToAddress(amountRecipient), amount
+            );
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (uint8 feeId, GenericTypes.Percentage memory feePercentage, address amountRecipient) =
-                abi.decode(structPayload, (uint8, GenericTypes.Percentage, address));
+            (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =
+                abi.decode(structPayload, (uint8, GenericTypes.Percentage, bytes32));
 
-            _handleArbitraryRequest(sender, feeId, feePercentage, amountRecipient, amount);
+            _handleArbitraryRequest(
+                BaseHelper.bytes32ToAddress(sender),
+                feeId,
+                feePercentage,
+                BaseHelper.bytes32ToAddress(amountRecipient),
+                amount
+            );
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
             // Admin Request
             PROTOCOL_POOL_FEES += amount;
