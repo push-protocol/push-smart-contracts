@@ -228,10 +228,8 @@ contract PushCoreV3 is
         if (channelInfo[_channel].channelState != 0) {
             revert Errors.Core_InvalidChannel();
         }
-        
-        if (
-            uint8(_channelType) < 2
-        ) {
+
+        if (uint8(_channelType) < 2) {
             revert Errors.Core_InvalidChannelType();
         }
 
@@ -767,7 +765,7 @@ contract PushCoreV3 is
         if (msg.sender != epnsCommunicator) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
-        _handleIncentivizedChat(requestSender, requestReceiver, amount);
+        _handleIncentivizedChat(BaseHelper.addressToBytes32(requestSender), requestReceiver, amount);
     }
 
     /**
@@ -778,7 +776,7 @@ contract PushCoreV3 is
      * @param requestReceiver The address of the receiver who is the target of the chat request.
      * @param amount The total amount sent by the sender for the incentivized chat.
      */
-    function _handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
+    function _handleIncentivizedChat(bytes32 requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
@@ -854,26 +852,33 @@ contract PushCoreV3 is
             CrossChainRequestTypes.CrossChainFunction functionType,
             bytes memory structPayload,
             uint256 amount,
-            address sender
-        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
+            bytes32 sender
+        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, bytes32));
 
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             // Specific Request: Add Channel
             (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
                 abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
-            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
-            emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
-            _createChannel(_channelBytesID, channelType, amount, channelExpiry);
+            emit ChannelCreated(sender, channelType, channelIdentity);
+            _createChannel(sender, channelType, amount, channelExpiry);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
-            (address amountRecipient) = abi.decode(structPayload, (address));
-            _handleIncentivizedChat(sender, amountRecipient, amount);
+            (bytes32 amountRecipient) = abi.decode(structPayload, (bytes32));
+            _handleIncentivizedChat(
+                sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
+            );
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
-            (uint8 feeId, GenericTypes.Percentage memory feePercentage, address amountRecipient) =
-                abi.decode(structPayload, (uint8, GenericTypes.Percentage, address));
+            (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =
+                abi.decode(structPayload, (uint8, GenericTypes.Percentage, bytes32));
 
-            _handleArbitraryRequest(sender, feeId, feePercentage, amountRecipient, amount);
+            _handleArbitraryRequest(
+                sender,
+                feeId,
+                feePercentage,
+                BaseHelper.bytes32ToAddress(amountRecipient),
+                amount
+            );
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
             // Admin Request
             PROTOCOL_POOL_FEES += amount;
@@ -897,7 +902,7 @@ contract PushCoreV3 is
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
 
         // Call the private function to process the arbitrary request
-        _handleArbitraryRequest(msg.sender, feeId, feePercentage, amountRecipient, amount);
+        _handleArbitraryRequest(BaseHelper.addressToBytes32(msg.sender), feeId, feePercentage, amountRecipient, amount);
     }
 
     /**
@@ -910,7 +915,7 @@ contract PushCoreV3 is
      * @param amount The total amount sent by the sender for the arbitrary request.
      */
     function _handleArbitraryRequest(
-        address sender,
+        bytes32 sender,
         uint8 feeId,
         GenericTypes.Percentage memory feePercentage,
         address amountRecipient,

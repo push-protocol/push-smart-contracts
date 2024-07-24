@@ -11,7 +11,7 @@ abstract contract CoreEvents {
     event ChannelBlocked(bytes32 indexed channel);
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     event IncentivizeChatReqReceived(
-        address requestSender,
+        bytes32 requestSender,
         address requestReceiver,
         uint256 amountForReqReceiver,
         uint256 feePoolAmount,
@@ -22,7 +22,7 @@ abstract contract CoreEvents {
     event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     event ArbitraryRequest(
-        address indexed sender,
+        bytes32 indexed sender,
         address indexed receiver,
         uint256 amountDeposited,
         GenericTypes.Percentage feePercent,

@@ -37,7 +37,7 @@ interface IPushCoreV3 {
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     /// @notice emits whenever any user receives an incentivized chat request from another user
     event IncentivizeChatReqReceived(
-        address requestSender,
+        bytes32 requestSender,
         address requestReceiver,
         uint256 amountForReqReceiver,
         uint256 feePoolAmount,
@@ -50,7 +50,7 @@ interface IPushCoreV3 {
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
     event ArbitraryRequest(
-        address indexed sender,
+        bytes32 indexed sender,
         address indexed receiver,
         uint256 amountDeposited,
         GenericTypes.Percentage feePercent,
