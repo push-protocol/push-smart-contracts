@@ -18,8 +18,8 @@ CreateChatCCR.t.sol
     ├── when deliveryHash is used already
     │   └── it should Revert
     ├── when all checks pass
-    │   └── it should em###it event and update storage
+    │   └── it should emit event and update storage
     ├── when Tokens are transferred by NTT
     │   └── it should recieve the tokens in core
-    └── when celeb user tries to claim the the tokens
+    └── when celeb user tries to claim the tokens
         └── it should transfer the tokens to celeb user

@@ -150,19 +150,19 @@ abstract contract BaseTest is Test, Constants, Events {
         vm.startPrank(actor.admin);
         commProxy.setEPNSCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
-        coreProxy.setEpnsCommunicatorAddress(address(commProxy));
         vm.stopPrank();
 
         // Initialize comm proxy admin and commProxy contract
         epnsCommEthProxyAdmin = new EPNSCommAdmin(actor.admin);
         epnsCommEthProxy =
-            new EPNSCommProxy(address(comm), address(epnsCommEthProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
+            new EPNSCommProxy(address(commEth), address(epnsCommEthProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         commEthProxy = PushCommETHV3(address(epnsCommEthProxy));
 
         // Set-up Core Address in Comm Eth
         vm.startPrank(actor.admin);
         commEthProxy.setEPNSCoreAddress(address(coreProxy));
         commEthProxy.setPushTokenAddress(address(pushToken));
+        coreProxy.setEpnsCommunicatorAddress(address(commEthProxy));
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address
