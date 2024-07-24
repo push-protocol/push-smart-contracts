@@ -3,10 +3,9 @@ pragma experimental ABIEncoderV2;
 
 import "contracts/token/Push.sol";
 
-import {Helper} from  "./CCRutils/Helper.sol";
+import { Helper } from "./CCRutils/Helper.sol";
 
 contract BaseCCRTest is Helper {
-
     ///@notice start with forking the arbitrum testnet
     /// Wrap the token contract with the one deployed on arbitrum testnet
     /// getting the push tokens from whale address

@@ -654,7 +654,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             revert Errors.InsufficientFunds();
         }
 
-        IERC20  PushNtt = PUSH_NTT;
+        IERC20 PushNtt = PUSH_NTT;
         INttManager NttManager = NTT_MANAGER;
         address coreAddress = EPNSCoreAddress;
 

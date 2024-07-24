@@ -104,13 +104,11 @@ abstract contract BaseTest is Test, Constants, Events {
         changePrank(actor.admin);
         nttProxyAdmin = new ProxyAdmin();
         pushNttProxy = new TransparentUpgradeableProxy(
-            address(pushNtt),
-            address(nttProxyAdmin),
-            abi.encodeWithSignature("initialize()")
+            address(pushNtt), address(nttProxyAdmin), abi.encodeWithSignature("initialize()")
         );
         pushNttToken = Push(address(pushNttProxy));
         nttMigrationProxyAdmin = new ProxyAdmin();
-        
+
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),

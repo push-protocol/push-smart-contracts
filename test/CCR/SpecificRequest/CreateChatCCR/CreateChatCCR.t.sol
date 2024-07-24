@@ -5,7 +5,8 @@ import { BaseCCRTest } from "../../BaseCCR.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
-import { CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 
 contract CreateChatCCR is BaseCCRTest {
     uint256 amount = 100e18;
@@ -55,6 +56,19 @@ contract CreateChatCCR is BaseCCRTest {
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
             CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, amount, GasLimit
+        );
+    }
+
+    function test_revertWhen_OutboundQueueDisabled() external whenCreateChatIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, transferTooLarge, GasLimit
         );
     }
 
@@ -127,7 +141,8 @@ contract CreateChatCCR is BaseCCRTest {
         console.log(pushToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(

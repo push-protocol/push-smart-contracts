@@ -5,6 +5,7 @@ import { BaseCCRTest } from "../../BaseCCR.t.sol";
 import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
+import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
     uint256 amount = ADD_CHANNEL_MIN_FEES;
@@ -13,7 +14,12 @@ contract CreateChannelCCR is BaseCCRTest {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, address(0), amount, 0, percentage, actor.charlie_channel_owner
+            CrossChainRequestTypes.CrossChainFunction.AddChannel,
+            address(0),
+            amount,
+            0,
+            percentage,
+            actor.charlie_channel_owner
         );
     }
 
@@ -51,6 +57,19 @@ contract CreateChannelCCR is BaseCCRTest {
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
             CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+        );
+    }
+
+    function test_revertWhen_OutboundQueueDisabled() external whenCreateChannelIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
         );
     }
 
@@ -143,16 +162,14 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.recordLogs();
         test_whenReceiveChecksPass();
 
-         (            
-            address sourceNttManager,
-            bytes32 recipient,
-            uint256 _amount,
-            uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         console.log(pushToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(

@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes, GenericTypes  } from "contracts/libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes } from "../../contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
@@ -37,7 +37,9 @@ abstract contract CommEvents {
     );
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
-    event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel); 
+    event LogMessagePublished(
+        address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel
+    );
 }
 
 abstract contract ProxyEvents {

@@ -6,12 +6,13 @@ import { BaseCCRTest } from "../BaseCCR.t.sol";
 import { console } from "forge-std/console.sol";
 
 import { WormholeSimulator } from "wormhole-solidity-sdk/testing/helpers/WormholeSimulator.sol";
-import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { INttManager } from "contracts/interfaces/wormhole/INttManager.sol";
+import { TransceiverStructs } from "./../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "./../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { INttManager } from "./../../../contracts/interfaces/wormhole/INttManager.sol";
 
 import { Vm } from "forge-std/Vm.sol";
 
-contract NTTtransferTest is BaseCCRTest {
+contract CreateChannelCCR is BaseCCRTest {
     // using TrimmedAmount for TrimmedAmount;
     uint256 constant DEVNET_GUARDIAN_PK = 0xedc2d60cdb193aac203bea0be0f5f1b016bf4381f92231ca0320fc01a57bcae5;
     WormholeSimulator guardian;
@@ -27,19 +28,19 @@ contract NTTtransferTest is BaseCCRTest {
         changePrank(SourceChain.PushHolder);
         pushNttToken.approve(address(SourceChain.NTT_MANAGER), 100e18);
 
-        INttManager(SourceChain.NTT_MANAGER).transfer{ value: 12_260_834_040_000 }(
+        uint256 costOfTransfer = commProxy.quoteTokenBridgingCost();
+
+        INttManager(SourceChain.NTT_MANAGER).transfer{ value: costOfTransfer }(
             100e18, DestChain.DestChainId, toWormholeFormat(actor.bob_channel_owner)
         );
-         (            
-            address sourceNttManager,
-            bytes32 recipient,
-            uint256 _amount,
-            uint16 recipientChain )= getMessagefromLog(vm.getRecordedLogs());
+        (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
+            getMessagefromLog(vm.getRecordedLogs());
 
         setUpDestChain();
         bytes[] memory a;
 
-        (bytes memory transceiverMessage, bytes32 hash) = getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
+        (bytes memory transceiverMessage, bytes32 hash) =
+            getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
@@ -50,7 +51,6 @@ contract NTTtransferTest is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        console.log(pushToken.balanceOf(actor.bob_channel_owner));
-
+        console.log(pushNttToken.balanceOf(actor.bob_channel_owner));
     }
 }

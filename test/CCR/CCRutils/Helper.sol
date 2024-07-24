@@ -27,7 +27,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 sourceAddress;
     uint16 sourceChain = SourceChain.SourceChainId;
     GenericTypes.Percentage percentage;
-    uint256 GasLimit = 10_000_000;
+    uint256 GasLimit = 10_000_000; // ToDo: to be finalised
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;
 
@@ -201,9 +201,17 @@ contract Helper is BasePushCommTest, CCRConfig {
         (recipient,, _amount,, recipientChain,) = abi.decode(data, (bytes32, bytes32, uint256, uint256, uint16, uint64));
     }
 
-    function getRequestPayload(uint256 _amount, bytes32 recipient, uint16 recipientChain, address sourceNttManager) internal view returns(bytes memory transceiverMessage, bytes32 hash) {
-
-    TrimmedAmount _amt = _trimTransferAmount(_amount);
+    function getRequestPayload(
+        uint256 _amount,
+        bytes32 recipient,
+        uint16 recipientChain,
+        address sourceNttManager
+    )
+        internal
+        view
+        returns (bytes memory transceiverMessage, bytes32 hash)
+    {
+        TrimmedAmount _amt = _trimTransferAmount(_amount);
         bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
             TransceiverStructs.NativeTokenTransfer({
                 amount: _amt,
