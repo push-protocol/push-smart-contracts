@@ -34,7 +34,7 @@ contract DeactivateChannel_Test is BasePushCoreTest {
 
     function test_Revertwhen_DeactivatingBlockedChannel() public whenNotPaused {
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);

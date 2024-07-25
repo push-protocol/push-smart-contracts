@@ -68,16 +68,15 @@ contract PushCoreV3 is
         }
     }
 
-    function onlyActivatedChannels(address _channel) private view {
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+    function onlyActivatedChannels(bytes32 _channel) private view {
 
-        if (channelInfo[_channelBytesID].channelState != 1) {
+        if (channelInfo[_channel].channelState != 1) {
             revert Errors.Core_InvalidChannel();
         }
     }
 
     function addSubGraph(bytes calldata _subGraphData) external {
-        onlyActivatedChannels(msg.sender);
+        onlyActivatedChannels(BaseHelper.addressToBytes32(msg.sender));
         emit AddSubGraph(msg.sender, _subGraphData);
     }
 
@@ -160,8 +159,8 @@ contract PushCoreV3 is
     ///@inheritdoc IPushCoreV3
     // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private
     // function
-    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
-        onlyActivatedChannels(_channel);
+   function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
+        onlyActivatedChannels(BaseHelper.addressToBytes32(_channel));
 
         if (msg.sender != _channel) {
             revert Errors.UnauthorizedCaller(msg.sender);
@@ -268,7 +267,7 @@ contract PushCoreV3 is
     )
         external
     {
-        onlyActivatedChannels(msg.sender);
+        onlyActivatedChannels(BaseHelper.addressToBytes32(msg.sender));
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
@@ -354,14 +353,13 @@ contract PushCoreV3 is
     }
 
     /// @inheritdoc IPushCoreV3
-    function blockChannel(address _channelAddress) external whenNotPaused {
+    function blockChannel(bytes32 _channelAddress) external whenNotPaused {
         onlyGovernance();
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channelAddress);
-        if (((channelInfo[_channelBytesID].channelState == 3) || (channelInfo[_channelBytesID].channelState == 0))) {
+        if (((channelInfo[_channelAddress].channelState == 3) || (channelInfo[_channelAddress].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
+        CoreTypes.Channel storage channelData = channelInfo[_channelAddress];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -376,7 +374,7 @@ contract PushCoreV3 is
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = minPoolContribution;
 
-        emit ChannelBlocked(_channelBytesID);
+        emit ChannelBlocked(_channelAddress);
     }
 
     /* **************
@@ -384,14 +382,13 @@ contract PushCoreV3 is
     *************** */
 
     /// @inheritdoc IPushCoreV3
-    function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+    function getChannelVerfication(bytes32 _channel) public view returns (uint8 verificationStatus) {
 
-        address verifiedBy = channelInfo[_channelBytesID].verifiedBy;
+        address verifiedBy = channelInfo[_channel].verifiedBy;
         bool logicComplete = false;
 
         // Check if it's primary verification
-        if (verifiedBy == pushChannelAdmin || _channel == pushChannelAdmin) {
+        if (verifiedBy == pushChannelAdmin || _channel == BaseHelper.addressToBytes32(pushChannelAdmin)) {
             // primary verification, mark and exit
             verificationStatus = 1;
         } else {
@@ -415,7 +412,7 @@ contract PushCoreV3 is
     function batchVerification(
         uint256 _startIndex,
         uint256 _endIndex,
-        address[] calldata _channelList
+        bytes32[] calldata _channelList
     )
         external
         returns (bool)
@@ -432,10 +429,10 @@ contract PushCoreV3 is
     }
 
     /// @inheritdoc IPushCoreV3
-    function verifyChannel(address _channel) public {
+    function verifyChannel(bytes32 _channel) public {
         onlyActivatedChannels(_channel);
         // Check if caller is verified first
-        uint8 callerVerified = getChannelVerfication(msg.sender);
+        uint8 callerVerified = getChannelVerfication(BaseHelper.addressToBytes32(msg.sender));
         if (callerVerified == 0) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
@@ -447,25 +444,23 @@ contract PushCoreV3 is
         }
 
         // Verify channel
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
-        channelInfo[_channelBytesID].verifiedBy = msg.sender;
+        channelInfo[_channel].verifiedBy = msg.sender;
 
         // Emit event
-        emit ChannelVerified(_channelBytesID, msg.sender);
+        emit ChannelVerified(_channel, msg.sender);
     }
 
     /// @inheritdoc IPushCoreV3
-    function unverifyChannel(address _channel) public {
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
-        if (!(channelInfo[_channelBytesID].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
+    function unverifyChannel(bytes32 _channel) public {
+        if (!(channelInfo[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 
         // Unverify channel
-        channelInfo[_channelBytesID].verifiedBy = address(0x0);
+        channelInfo[_channel].verifiedBy = address(0x0);
 
         // Emit Event
-        emit ChannelVerificationRevoked(_channelBytesID, msg.sender);
+        emit ChannelVerificationRevoked(_channel, msg.sender);
     }
 
     /**
