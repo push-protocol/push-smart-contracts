@@ -71,10 +71,6 @@ contract Helper is BasePushCommTest, CCRConfig {
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 
-    function toWormholeFormat(address addr) internal pure returns (bytes32) {
-        return bytes32(uint256(uint160(addr)));
-    }
-
     function getPoolFundsAndFees(uint256 _amountDeposited)
         internal
         view

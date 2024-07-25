@@ -224,4 +224,8 @@ abstract contract BaseTest is Test, Constants, Events {
     function createChannelCreatorsID(address _actor) internal pure returns (bytes32 _channelCreatorBytes32) {
         _channelCreatorBytes32 = BaseHelper.addressToBytes32(_actor);
     }
+
+    function toWormholeFormat(address addr) internal pure returns (bytes32) {
+        return bytes32(uint256(uint160(addr)));
+    }
 }
