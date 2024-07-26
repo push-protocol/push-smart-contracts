@@ -89,6 +89,9 @@ contract Helper is BasePushCommTest, CCRConfig {
         uint256 amount,
         uint8 _feeId,
         GenericTypes.Percentage memory _percentage,
+        uint256 _notifOptions, 
+        string memory _notifSettings,  
+        string memory _notifDescription,
         bytes32 sender
     )
         internal
@@ -97,17 +100,14 @@ contract Helper is BasePushCommTest, CCRConfig {
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             payload = abi.encode(CoreTypes.ChannelType.InterestBearingMutual, _testChannelUpdatedIdentity, 0);
-
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             payload = abi.encode(amountRecipient);
-
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
+        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings) {
+            payload = abi.encode(_notifOptions, _notifSettings, _notifDescription);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
-
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         }
+        reqPayload = abi.encode(typeOfReq, payload, amount, sender);
     }
 
     function receiveWormholeMessage(bytes memory _requestPayload) internal {

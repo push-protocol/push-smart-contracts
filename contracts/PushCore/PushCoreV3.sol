@@ -271,21 +271,23 @@ contract PushCoreV3 is
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
+        
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
 
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
-        _createSettings(_channelBytesID, _notifOptions, _notifSettings, _notifDescription);
+        _createSettings(_channelBytesID, _notifOptions, _amountDeposited, _notifSettings, _notifDescription);
     }
 
     function _createSettings(
         bytes32 _channel,
         uint256 _notifOptions,
-        string calldata _notifSettings,
-        string calldata _notifDescription
+        uint256 _amountDeposited,
+        string memory _notifSettings,
+        string memory _notifDescription
     )
         private
     {
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
 
         emit ChannelNotifcationSettingsAdded(_channel, _notifOptions, notifSetting, _notifDescription);
@@ -864,6 +866,10 @@ contract PushCoreV3 is
             _handleIncentivizedChat(
                 sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
             );
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings) {
+            (uint256 _notifOptions, string memory _notifSettings,  string memory _notifDescription) =
+                abi.decode(structPayload, (uint256, string, string));
+            _createSettings(sender, _notifOptions, amount, _notifSettings, _notifDescription);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =

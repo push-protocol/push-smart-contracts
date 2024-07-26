@@ -2,80 +2,88 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import "forge-std/console.sol";
+import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-
-import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-contract CreateChatCCR is BaseCCRTest {
-    uint256 amount = 100e18;
+contract CreateChannelSettingsCCR is BaseCCRTest {
+    uint256 amount = ADD_CHANNEL_MIN_FEES;
+    uint256 notifOptions = 2;
+    string notifSettings = "1-0+2-50-20-100";
+    string notifDescription = "description";
 
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat,
-            BaseHelper.addressToBytes32(actor.charlie_channel_owner),
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings,
+            BaseHelper.addressToBytes32(address(0)),
             amount,
             0,
             percentage,
-            0,
-            "",
-            "",
-            BaseHelper.addressToBytes32(actor.bob_channel_owner)
+            notifOptions,
+            notifSettings,
+            notifDescription,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner)
         );
     }
 
-    modifier whenCreateChatIsCalled() {
+    modifier whenCreateChannelSettingsIsCalled() {
         _;
     }
 
-    function test_WhenContractIsPaused() external whenCreateChatIsCalled {
+    function test_WhenContractIsPaused() external whenCreateChannelSettingsIsCalled {
         // it should Revert
 
         changePrank(actor.admin);
         commProxy.pauseContract();
         vm.expectRevert("Pausable: paused");
-        changePrank(actor.bob_channel_owner);
+        changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChatIsCalled {
+    function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelSettingsIsCalled {
         // it should revert
-        amount = FEE_AMOUNT - 1e18;
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, FEE_AMOUNT, amount));
-        changePrank(actor.bob_channel_owner);
+        amount = 49e18;
+        vm.expectRevert(
+            abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES, amount)
+        );
+        changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_RevertWhen_EtherPassedIsLess() external whenCreateChatIsCalled {
+    function test_RevertWhen_EtherPassedIsLess() external whenCreateChannelSettingsIsCalled {
         // it should revert
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
-        changePrank(actor.bob_channel_owner);
+        changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_WhenAllChecksPasses() public whenCreateChatIsCalled {
+    function test_WhenAllChecksPasses() public whenCreateChannelSettingsIsCalled {
         // it should successfully create the CCR
+
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(SourceChain.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
-        changePrank(actor.bob_channel_owner);
+        changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.IncentivizedChat, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
     modifier whenReceiveFunctionIsCalledInCore() {
         test_WhenAllChecksPasses();
+
         setUpDestChain();
         _;
     }
@@ -98,7 +106,7 @@ contract CreateChatCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
     }
 
-    function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
+    function test_WhenDeliveryHashIsUsedAlreadyw() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
 
         receiveWormholeMessage(requestPayload);
@@ -106,27 +114,27 @@ contract CreateChatCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
     }
 
-    function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
-        // it should emit event and create Channel
+    function test_whenReceiveChecksPassa() public whenReceiveFunctionIsCalledInCore {
 
-        uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
-        uint256 userFundsPre = coreProxy.celebUserFunds(actor.charlie_channel_owner);
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
 
-        vm.expectEmit(false, false, false, true);
-        emit IncentivizeChatReqReceived(
-            BaseHelper.addressToBytes32(actor.bob_channel_owner), actor.charlie_channel_owner, amount - poolFeeAmount, poolFeeAmount, block.timestamp
+        string memory notifSettingRes = string(abi.encodePacked(Strings.toString(notifOptions), "+", notifSettings));
+
+        vm.expectEmit(true, true, false, true);
+        emit ChannelNotifcationSettingsAdded(BaseHelper.addressToBytes32(actor.charlie_channel_owner), notifOptions, notifSettingRes, notifDescription);
+
+        coreProxy.receiveWormholeMessages(
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
-
-        receiveWormholeMessage(requestPayload);
-
-        assertEq(coreProxy.celebUserFunds(actor.charlie_channel_owner), userFundsPre + amount - poolFeeAmount);
-        assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + poolFeeAmount);
+        // Update states based on Fee Percentage calculation
+        assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + amount);
     }
 
     function test_whenTokensAreTransferred() external {
         vm.recordLogs();
-        test_whenReceiveChecksPass();
+        test_whenReceiveChecksPassa();
+
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
 
