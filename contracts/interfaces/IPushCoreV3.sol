@@ -103,7 +103,7 @@ interface IPushCoreV3 {
      * @param _amount amount of PUSH Token required for updating channel details.
      *
      */
-    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external;
+    function updateChannelMeta(bytes calldata _newIdentity, uint256 _amount) external;
 
     /**
      * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH

@@ -627,8 +627,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             if (amount == 0) {
                 revert Errors.InvalidArg_LessThanExpected(1, amount);
             }
-        } else {
-            revert Errors.Comm_InvalidCrossChain_Function();
         }
 
         bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
