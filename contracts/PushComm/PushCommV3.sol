@@ -91,10 +91,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    // function completeMigration() external onlyPushChannelAdmin {
-    //     isMigrationComplete = true;
-    // }
-
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
     }
@@ -153,50 +149,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
         return true;
     }
-
-    /**
-     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
-     *
-     * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
-     * false
-     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
-     *
-     * @param _startIndex  starting Index for the LOOP
-     * @param _endIndex    Last Index for the LOOP
-     * @param _channelList array of addresses of the channels
-     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     *
-     */
-    // function migrateSubscribeData(
-    //     uint256 _startIndex,
-    //     uint256 _endIndex,
-    //     address[] calldata _channelList,
-    //     address[] calldata _usersList
-    // )
-    //     external
-    //     onlyPushChannelAdmin
-    //     returns (bool)
-    // {
-    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
-    //         revert Errors.InvalidArg_ArrayLengthMismatch();
-    //     }
-
-    //     for (uint256 i = _startIndex; i < _endIndex;) {
-    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
-    //             unchecked {
-    //                 i++;
-    //             }
-    //             continue;
-    //         } else {
-    //             _subscribe(_channelList[i], _usersList[i]);
-    //         }
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     return true;
-    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
