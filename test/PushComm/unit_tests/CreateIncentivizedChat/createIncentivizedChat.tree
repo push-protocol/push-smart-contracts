@@ -1,0 +1,16 @@
+test_createIncentivizedChat
+├── when user creates incentivized chat
+│   ├── when passed amount is zero
+│   │   └── it should Revert
+│   └── when parameters are correct
+│       └── it should update chatInfo and call core and emit event
+├── when core is called
+│   ├── when caller is not Comm
+│   │   └── it should revert
+│   └── when caller is comm
+│       └── it should update storage and emit event
+└── when celeb tries to claim the tokens
+    ├── when requested amount is more than balance
+    │   └── it should Revert
+    └── when requested amount is correct
+        └── it should transfer the tokens to celebUser

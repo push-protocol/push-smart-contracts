@@ -2,13 +2,11 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
 import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 
 contract CreateChatCCR is BaseCCRTest {
     uint256 amount = 100e18;
@@ -134,13 +132,13 @@ contract CreateChatCCR is BaseCCRTest {
         assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + poolFeeAmount);
     }
 
-    function test_whenTokensAreTransferred() external {
+    function test_whenTokensAreTransferred() public {
         vm.recordLogs();
         test_whenReceiveChecksPass();
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
 
-        console.log(pushNttToken.balanceOf(address(coreProxy)));
+        console.log(pushToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) =
@@ -155,6 +153,15 @@ contract CreateChatCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+    }
+
+    function test_when_celebUserTries_ClaimingTokens() external {
+        // it should transfer the tokens to celeb user
+        test_whenTokensAreTransferred();
+        uint balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        changePrank(actor.charlie_channel_owner);
+        coreProxy.claimChatIncentives(coreProxy.celebUserFunds(actor.charlie_channel_owner));
+        assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - FEE_AMOUNT);
     }
 }

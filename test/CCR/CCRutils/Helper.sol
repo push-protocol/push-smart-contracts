@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
-import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
+import { IWormholeTransceiver } from "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
-
+import {EPNS} from "contracts/token/EPNS.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
@@ -65,9 +65,10 @@ contract Helper is BasePushCommTest, CCRConfig {
     function setUpDestChain() internal {
         switchChains(DestChain.rpc);
         BasePushCommTest.setUp();
-        pushNttToken = Push(DestChain.PUSH_NTT_DEST);
+        pushToken = EPNS(DestChain.PUSH_NTT_DEST);
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
+        coreProxy.setEpnsTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 

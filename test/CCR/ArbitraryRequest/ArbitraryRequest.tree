@@ -19,5 +19,7 @@ ArbitraryRequest.t.sol
     │   └── it should Revert
     ├── when deliveryHash is used already
     │   └── it should Revert
-    └── when all checks pass
-        └── it should emit event and update storage
+    ├── when all checks pass
+    │    └── it should emit event and update storage
+    └── when recipient user tries to claim the Arbitrary tokens
+        └── it should transfer the tokens to the user

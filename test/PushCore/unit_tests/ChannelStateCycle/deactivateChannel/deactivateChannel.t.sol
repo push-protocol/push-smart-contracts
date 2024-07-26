@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 
 import { BasePushCoreTest } from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
-import { CoreTypes } from "../../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 
 contract DeactivateChannel_Test is BasePushCoreTest {
     function setUp() public virtual override {

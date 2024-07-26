@@ -2,11 +2,9 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes, CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 
 contract CreateChannelCCR is BaseCCRTest {
@@ -167,7 +165,7 @@ contract CreateChannelCCR is BaseCCRTest {
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
 
-        console.log(pushNttToken.balanceOf(address(coreProxy)));
+        console.log(pushToken.balanceOf(address(coreProxy)));
 
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) =
@@ -182,6 +180,6 @@ contract CreateChannelCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
     }
 }
