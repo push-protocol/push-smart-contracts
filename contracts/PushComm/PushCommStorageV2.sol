@@ -51,7 +51,7 @@ contract PushCommStorageV2 {
     uint16 public WORMHOLE_RECIPIENT_CHAIN; // Wormhole's Core contract recipient Chain ID
 
     uint256 public ADD_CHANNEL_MIN_FEES;
-
     uint256 public FEE_AMOUNT;
     uint256 public PROTOCOL_POOL_FEE;
+    uint256 public MIN_POOL_CONTRIBUTION;
 }
