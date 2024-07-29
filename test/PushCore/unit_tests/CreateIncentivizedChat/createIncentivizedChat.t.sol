@@ -1,25 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import { BasePushCommTest } from "../BasePushCommTest.t.sol";
+import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
-contract test_createIncentivizedChat is BasePushCommTest {
+contract test_createIncentivizedChat is BasePushCoreTest {
     function setUp() public override {
-        BasePushCommTest.setUp();
+        BasePushCoreTest.setUp();
     }
 
     modifier whenUserCreatesIncentivizedChat() {
-        approveTokens(actor.bob_channel_owner, address(commEthProxy), 100 ether);
+        approveTokens(actor.bob_channel_owner, address(coreProxy), 100 ether);
         _;
     }
 
     function test_WhenPassedAmountIsZero() external whenUserCreatesIncentivizedChat {
         // it should Revert
         changePrank(actor.bob_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, 1, 0));
-        commEthProxy.createIncentivizeChatRequest(actor.charlie_channel_owner, 0);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, coreProxy.FEE_AMOUNT(), 0));
+        coreProxy.createIncentivizedChatRequest(actor.charlie_channel_owner, 0);
+    }
+
+    function test_WhenPassedReceiver_IsZeroAddress() external whenUserCreatesIncentivizedChat {
+        // it should Revert
+        changePrank(actor.bob_channel_owner);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArgument_WrongAddress.selector, address(0)));
+        coreProxy.createIncentivizedChatRequest(address(0), 100e18);
     }
 
     function test_WhenParametersAreCorrect() public whenUserCreatesIncentivizedChat {
@@ -27,42 +34,21 @@ contract test_createIncentivizedChat is BasePushCommTest {
         uint256 bobBalanceBefore = pushToken.balanceOf(actor.bob_channel_owner);
         uint256 coreBalanceBefore = pushToken.balanceOf(address(coreProxy));
 
+        // it should update storage and emit event
+        uint256 previousAmount = coreProxy.celebUserFunds(actor.charlie_channel_owner);
+        uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
+
         changePrank(actor.bob_channel_owner);
 
         vm.expectEmit(false, false, false, true);
         emit IncentivizeChatReqReceived(
             actor.bob_channel_owner, actor.charlie_channel_owner, 100e18 - FEE_AMOUNT, FEE_AMOUNT, block.timestamp
         );
-        vm.expectEmit(false, false, false, true);
-        emit IncentivizeChatReqInitiated(actor.bob_channel_owner, actor.charlie_channel_owner, 100e18, block.timestamp);
-
-        commEthProxy.createIncentivizeChatRequest(actor.charlie_channel_owner, 100e18);
+        coreProxy.createIncentivizedChatRequest(actor.charlie_channel_owner, 100e18);
 
         assertEq(bobBalanceBefore - 100e18, pushToken.balanceOf(actor.bob_channel_owner));
         assertEq(coreBalanceBefore + 100e18, pushToken.balanceOf(address(coreProxy)));
 
-        (address sender, uint256 time, uint256 amount) = commEthProxy.userChatData(actor.bob_channel_owner);
-        assertEq(sender, actor.bob_channel_owner);
-        assertEq(time, block.timestamp);
-        assertEq(amount, 100e18);
-    }
-
-    modifier whenCoreIsCalled() {
-        _;
-    }
-
-    function test_RevertWhen_CallerIsNotComm() external whenCoreIsCalled {
-        // it should revert
-        changePrank(address(this));
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, address(this)));
-        coreProxy.handleChatRequestData(actor.bob_channel_owner, actor.charlie_channel_owner, 100e18);
-    }
-
-    function test_WhenCallerIsComm() external whenCoreIsCalled {
-        // it should update storage and emit event
-        uint256 previousAmount = coreProxy.celebUserFunds(actor.charlie_channel_owner);
-        uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
-        test_WhenParametersAreCorrect();
         assertEq(previousAmount + 100e18 - FEE_AMOUNT, coreProxy.celebUserFunds(actor.charlie_channel_owner));
         assertEq(PROTOCOL_POOL_FEES + FEE_AMOUNT, coreProxy.PROTOCOL_POOL_FEES());
     }
