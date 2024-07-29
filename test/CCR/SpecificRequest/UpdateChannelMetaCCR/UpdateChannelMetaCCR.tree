@@ -1,4 +1,4 @@
-CreateChatCCR.t.sol
+UpdateChannelMetaCCR.t.sol
 ├── when createCrossChainReq is called
 │   ├── when contract is paused
 │   │   └── it should Revert

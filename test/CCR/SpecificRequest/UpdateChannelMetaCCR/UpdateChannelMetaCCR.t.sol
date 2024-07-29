@@ -8,7 +8,7 @@ import { console } from "forge-std/console.sol";
 import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
-contract CreateChatCCR is BaseCCRTest {
+contract UpdateChannelCCR is BaseCCRTest {
     uint256 amount;
 
     function setUp() public override {
