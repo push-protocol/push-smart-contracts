@@ -157,7 +157,7 @@ describe("Incentivized chats", function () {
       );
 
     await expect(txn)
-      .to.emit(EPNSCoreV1Proxy, "IncentivizeChatReqReceived")
+      .to.emit(EPNSCoreV1Proxy, "IncentivizedChatReqReceived")
       .withArgs(
         BOB,
         ALICE,

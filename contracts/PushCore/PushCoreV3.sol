@@ -793,7 +793,7 @@ contract PushCoreV3 is
         celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        emit IncentivizeChatReqReceived(
+        emit IncentivizedChatReqReceived(
             requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }

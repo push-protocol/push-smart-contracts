@@ -36,7 +36,7 @@ interface IPushCoreV3 {
     /// @notice emits whenever a users claims the rewards from the staking program(not unstake)
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     /// @notice emits whenever any user receives an incentivized chat request from another user
-    event IncentivizeChatReqReceived(
+    event IncentivizedChatReqReceived(
         address requestSender,
         address requestReceiver,
         uint256 amountForReqReceiver,

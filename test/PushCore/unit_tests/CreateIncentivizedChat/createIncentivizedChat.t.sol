@@ -41,7 +41,7 @@ contract test_createIncentivizedChat is BasePushCoreTest {
         changePrank(actor.bob_channel_owner);
 
         vm.expectEmit(false, false, false, true);
-        emit IncentivizeChatReqReceived(
+        emit IncentivizedChatReqReceived(
             actor.bob_channel_owner, actor.charlie_channel_owner, 100e18 - FEE_AMOUNT, FEE_AMOUNT, block.timestamp
         );
         coreProxy.createIncentivizedChatRequest(actor.charlie_channel_owner, 100e18);

@@ -122,7 +122,7 @@ contract CreateChatCCR is BaseCCRTest {
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
 
         vm.expectEmit(false, false, false, true);
-        emit IncentivizeChatReqReceived(
+        emit IncentivizedChatReqReceived(
             actor.bob_channel_owner, actor.charlie_channel_owner, amount - poolFeeAmount, poolFeeAmount, block.timestamp
         );
 
