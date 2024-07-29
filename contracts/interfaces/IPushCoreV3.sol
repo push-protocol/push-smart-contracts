@@ -241,11 +241,10 @@ interface IPushCoreV3 {
      *          - Can only be called by Communicator contract
      *          - Records and keeps track of Pool Funds and Pool Fees
      *          - Stores the PUSH tokens for the Celeb User, which can be claimed later only by that specific user.
-     * @param  requestSender    Address that initiates the incentivized chat request
      * @param  requestReceiver  Address of the target user for whom the request is activated.
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external;
+    function createIncentivizedChatRequest(address requestReceiver, uint256 amount) external;
 
     /**
      * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
