@@ -63,9 +63,6 @@ const deploy = {
     fuseSpark: {
       version: 1,
     },
-    arbitrumSepolia:{
-      version: 1,
-    },
     optimismSepolia:{
       version: 1,
     },

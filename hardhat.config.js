@@ -135,14 +135,15 @@ module.exports = {
 
     },
 
-    // Arbitrum Sepolia
+    // Arbitrum Chain
     arbitrumSepolia: {
       url: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
       accounts: [process.env.PRIVATE]
     },
-    optimismSepolia :{
-      url :"https://sepolia.optimism.io/" ,
-      accounts:[process.env.PRIVATE]
+
+    arbitrumMainnet : {
+      url: 'https://arb1.arbitrum.io/rpc',
+      accounts: [process.env.PRIVATE]
     },
 
     // Linea Chain
@@ -151,7 +152,6 @@ module.exports = {
       accounts: [process.env.PRIVATE]
 
     },
-
     lineaMainnet: {
       url: `https://rpc.linea.build`,
       accounts: [process.env.PRIVATE]
@@ -183,16 +183,13 @@ module.exports = {
       accounts: [process.env.PRIVATE],
     },
 
-    //Arbitrum sepolia
-    arbitrumSepolia :{
-      url : "https://sepolia-rollup.arbitrum.io/rpc",
-      accounts:[process.env.PRIVATE]
-    },
     //OKX testnet X1
     X1: {
       url: "https://testrpc.x1.tech",
       accounts:[process.env.PRIVATE]
     },
+
+    // Cyber Chain
     cyberTestnet: {
       url: "https://cyber-testnet.alt.technology/",
       accounts:[process.env.PRIVATE]
@@ -202,6 +199,7 @@ module.exports = {
       chainId: 7560,
       accounts:[process.env.PRIVATE]
     },
+    //Base Chain
     baseMainnet: {
       url: 'https://mainnet.base.org',
       accounts: [process.env.PRIVATE],
@@ -221,6 +219,7 @@ module.exports = {
       fuse: process.env.FUSE_API,
       fuseSpark: process.env.FUSE_API,
       arbitrumSepolia:process.env.ARBISCAN_API,
+      arbitrumOne: process.env.ARBISCAN_API,
       optimismSepolia :process.env.OPTIMISM_API,
       polygonZkEVMTestnet: process.env.POLYGONzkEVMSCAN_API,
       berachainTestnet: "apiNotRequired",
