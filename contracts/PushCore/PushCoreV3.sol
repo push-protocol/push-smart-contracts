@@ -157,15 +157,15 @@ contract PushCoreV3 is
 
     **************************************/
     ///@inheritdoc IPushCoreV3
-    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private
-    // function
-   function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
-        onlyActivatedChannels(BaseHelper.addressToBytes32(_channel));
+    function updateChannelMeta(bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
+        bytes32 _channel = BaseHelper.addressToBytes32(msg.sender);
 
-        if (msg.sender != _channel) {
-            revert Errors.UnauthorizedCaller(msg.sender);
-        }
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        _updateChannelMeta(_channel, _newIdentity, _amount);
+    }
 
+    function _updateChannelMeta(bytes32 _channel, bytes memory _newIdentity, uint256 _amount) internal {
+        onlyActivatedChannels(_channel);
         uint256 updateCounter = channelUpdateCounter[_channel] + 1;
         uint256 requiredFees = ADD_CHANNEL_MIN_FEES * updateCounter;
 
@@ -176,11 +176,9 @@ contract PushCoreV3 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
         channelUpdateCounter[_channel] = updateCounter;
 
-        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
-        channelInfo[_channelBytesID].channelUpdateBlock = block.number;
+        channelInfo[_channel].channelUpdateBlock = block.number;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
-        emit UpdateChannel(_channelBytesID, _newIdentity, _amount);
+        emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
     /// @inheritdoc IPushCoreV3
@@ -861,21 +859,16 @@ contract PushCoreV3 is
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             // Specific Request: Incentivized Chat
             (bytes32 amountRecipient) = abi.decode(structPayload, (bytes32));
-            _handleIncentivizedChat(
-                sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
-            );
+            _handleIncentivizedChat(sender, BaseHelper.bytes32ToAddress(amountRecipient), amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+            (bytes memory _newIdentity) = abi.decode(structPayload, (bytes));
+            _updateChannelMeta(sender, _newIdentity, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =
                 abi.decode(structPayload, (uint8, GenericTypes.Percentage, bytes32));
 
-            _handleArbitraryRequest(
-                sender,
-                feeId,
-                feePercentage,
-                BaseHelper.bytes32ToAddress(amountRecipient),
-                amount
-            );
+            _handleArbitraryRequest(sender, feeId, feePercentage, BaseHelper.bytes32ToAddress(amountRecipient), amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
             // Admin Request
             PROTOCOL_POOL_FEES += amount;

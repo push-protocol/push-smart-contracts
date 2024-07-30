@@ -15,6 +15,7 @@ import { Vm } from "forge-std/Vm.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
+    bytes _newTestChannelIdentity = bytes("test-updated-channel-hello-world");
     SourceConfig SourceChain = ArbSepolia;
     DestConfig DestChain = EthSepolia;
 
@@ -92,7 +93,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         bytes32 sender
     )
         internal
-        pure
+        view
         returns (bytes memory payload, bytes memory reqPayload)
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
@@ -105,6 +106,12 @@ contract Helper is BasePushCommTest, CCRConfig {
             reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
+
+            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
+        }
+        else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+
+            payload = abi.encode(_newTestChannelIdentity);
 
             reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         }
