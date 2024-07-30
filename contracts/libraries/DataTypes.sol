@@ -116,7 +116,8 @@ library CrossChainRequestTypes {
         AddChannel,
         IncentivizedChat,
         ArbitraryRequest,
-        AdminRequest_AddPoolFee
+        AdminRequest_AddPoolFee,
+        UpdateChannelState
     }
 }
 

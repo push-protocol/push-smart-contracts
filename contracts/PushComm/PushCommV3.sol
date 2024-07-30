@@ -615,6 +615,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         whenNotPaused
     {
         // Implement restrictions based on functionType
+
         if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             if (amount < ADD_CHANNEL_MIN_FEES) {
                 revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, amount);
@@ -627,10 +628,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             if (amount == 0) {
                 revert Errors.InvalidArg_LessThanExpected(1, amount);
             }
-        } else {
-            revert Errors.Comm_InvalidCrossChain_Function();
         }
-
         bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
 
         // Call the internal function to create the cross-chain request
@@ -650,24 +648,27 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
+        address coreAddress = EPNSCoreAddress;
+        if (amount != 0) {
+            if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
+                revert Errors.InsufficientFunds();
+            }
+            IERC20 PushNtt = PUSH_NTT;
+            INttManager NttManager = NTT_MANAGER;
+
+            PushNtt.transferFrom(msg.sender, address(this), amount);
+            PushNtt.approve(address(NttManager), amount);
+            NttManager.transfer{ value: tokenBridgeCost }(
+                amount,
+                recipientChain,
+                BaseHelper.addressToBytes32(coreAddress),
+                BaseHelper.addressToBytes32(msg.sender),
+                false,
+                new bytes(1)
+            );
+        } else if (msg.value < (messageBridgeCost)) {
             revert Errors.InsufficientFunds();
         }
-
-        IERC20  PushNtt = PUSH_NTT;
-        INttManager NttManager = NTT_MANAGER;
-        address coreAddress = EPNSCoreAddress;
-
-        PushNtt.transferFrom(msg.sender, address(this), amount);
-        PushNtt.approve(address(NttManager), amount);
-        NttManager.transfer{ value: tokenBridgeCost }(
-            amount,
-            recipientChain,
-            BaseHelper.addressToBytes32(coreAddress),
-            BaseHelper.addressToBytes32(msg.sender),
-            false,
-            new bytes(1)
-        );
 
         // Relay the RequestData Payload
         WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(

@@ -15,7 +15,6 @@ import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
-import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
@@ -296,6 +295,18 @@ contract PushCoreV3 is
         // Check channel's current state
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
+           if(channelInfo[_channelBytesID].channelState == 2) {
+                if (_amount < ADD_CHANNEL_MIN_FEES) {
+                 revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+                }
+
+                IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+           }
+         _updateChannelState( _channelBytesID, _amount, msg.sender);
+    }
+
+    function _updateChannelState(bytes32 _channelBytesID, uint256 _amount, address recipient) internal {
+    
         CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
@@ -328,14 +339,9 @@ contract PushCoreV3 is
                 emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             }
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(recipient, totalRefundableAmount);
         } // RE-ACTIVATION PHASE
         else {
-            if (_amount < ADD_CHANNEL_MIN_FEES) {
-                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
-            }
-
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
             uint256 poolFeeAmount = FEE_AMOUNT;
             uint256 poolFundAmount = _amount - poolFeeAmount;
             //store funds in pool_funds & pool_fees
@@ -864,6 +870,10 @@ contract PushCoreV3 is
             _handleIncentivizedChat(
                 sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
             );
+        }else if (functionType == CrossChainRequestTypes.CrossChainFunction.UpdateChannelState) {
+            // Specific Request: Updating Channel State
+            (address recipient) = abi.decode(structPayload, (address));
+            _updateChannelState(sender, amount, recipient);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =
