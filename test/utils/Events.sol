@@ -29,6 +29,7 @@ abstract contract CoreEvents {
         uint256 indexed feeId
     );
     event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ChannelNotifcationSettingsAdded(bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription);
 }
 
 abstract contract CommEvents {

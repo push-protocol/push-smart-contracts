@@ -21,6 +21,9 @@ contract CreateChannelCCR is BaseCCRTest {
             amount,
             0,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.charlie_channel_owner)
         );
     }
