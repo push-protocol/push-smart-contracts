@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import { BasePushCommTest } from "../../PushComm/unit_tests/BasePushCommTest.t.sol";
 import "contracts/token/Push.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
+import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
+import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
@@ -15,6 +15,7 @@ import { Vm } from "forge-std/Vm.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
+    bytes _newTestChannelIdentity = bytes("test-updated-channel-hello-world");
     SourceConfig SourceChain = ArbSepolia;
     DestConfig DestChain = EthSepolia;
 
@@ -95,7 +96,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         bytes32 sender
     )
         internal
-        pure
+        view
         returns (bytes memory payload, bytes memory reqPayload)
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
@@ -106,6 +107,8 @@ contract Helper is BasePushCommTest, CCRConfig {
             payload = abi.encode(_notifOptions, _notifSettings, _notifDescription);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
+        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+            payload = abi.encode(_newTestChannelIdentity);
         }
         reqPayload = abi.encode(typeOfReq, payload, amount, sender);
     }
