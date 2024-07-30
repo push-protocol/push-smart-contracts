@@ -25,6 +25,9 @@ contract ArbitraryRequesttsol is BaseCCRTest {
             amount,
             1,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }

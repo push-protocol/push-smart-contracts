@@ -21,6 +21,9 @@ contract UpdateChannelCCR is BaseCCRTest {
             amount,
             0,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
