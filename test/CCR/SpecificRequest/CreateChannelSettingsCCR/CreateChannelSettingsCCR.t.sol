@@ -114,7 +114,7 @@ contract CreateChannelSettingsCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
     }
 
-    function test_whenReceiveChecksPassa() public whenReceiveFunctionIsCalledInCore {
+    function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
 
         uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
@@ -133,7 +133,7 @@ contract CreateChannelSettingsCCR is BaseCCRTest {
 
     function test_whenTokensAreTransferred() external {
         vm.recordLogs();
-        test_whenReceiveChecksPassa();
+        test_whenReceiveChecksPass();
 
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
