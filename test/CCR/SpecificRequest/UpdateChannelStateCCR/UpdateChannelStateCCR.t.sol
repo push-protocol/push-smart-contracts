@@ -20,6 +20,9 @@ contract UpdateChannelStateCCR is BaseCCRTest {
             amount,
             0,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
@@ -146,6 +149,9 @@ contract UpdateChannelStateCCR is BaseCCRTest {
             amount,
             0,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
         vm.expectEmit(true, true, false, true);
@@ -183,6 +189,9 @@ contract UpdateChannelStateCCR is BaseCCRTest {
             amount,
             0,
             percentage,
+            0,
+            "",
+            "",
             BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
 
