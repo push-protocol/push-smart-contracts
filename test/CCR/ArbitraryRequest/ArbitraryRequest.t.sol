@@ -179,7 +179,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
     function test_when_UserTries_ClaimingArbitraryTokens() external {
         // it should transfer the tokens to celeb user
         test_whenTokensAreTransferred();
-        uint balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        uint256 balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
         changePrank(actor.charlie_channel_owner);
         coreProxy.claimArbitraryRequestFees(coreProxy.arbitraryReqFees(actor.charlie_channel_owner));
         uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);

@@ -135,7 +135,6 @@ abstract contract BaseTest is Test, Constants, Events {
             0
         );
 
-
         coreProxy = PushCoreMock(address(epnsCoreProxy));
         changePrank(tokenDistributor);
         pushToken.transfer(address(coreProxy), 1 ether);

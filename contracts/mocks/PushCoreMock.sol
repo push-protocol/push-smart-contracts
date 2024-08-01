@@ -20,7 +20,7 @@ import {
     PausableUpgradeable, Initializable
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-import {PushCoreV3} from "./../PushCore/PushCoreV3.sol";
+import { PushCoreV3 } from "./../PushCore/PushCoreV3.sol";
 
 contract PushCoreMock is PushCoreV3 {
     using SafeERC20 for IERC20;
@@ -67,6 +67,7 @@ contract PushCoreMock is PushCoreV3 {
         // Create Channel
         success = true;
     }
+
     function setEpnsTokenAddress(address _epnsAddress) external {
         PUSH_TOKEN_ADDRESS = _epnsAddress;
     }

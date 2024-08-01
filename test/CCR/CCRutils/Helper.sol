@@ -11,7 +11,8 @@ import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
-import {EPNS} from "contracts/token/EPNS.sol";
+import { EPNS } from "contracts/token/EPNS.sol";
+
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 

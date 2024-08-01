@@ -2,10 +2,12 @@ import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { GenericTypes } from "contracts/libraries/DataTypes.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
+
 contract HandleArbitraryReq is BasePushCoreTest {
     GenericTypes.Percentage feePercentage = GenericTypes.Percentage(2322, 2);
-    uint amount = 100e18;
+    uint256 amount = 100e18;
+
     function setUp() public virtual override {
         BasePushCoreTest.setUp();
     }
@@ -38,15 +40,14 @@ contract HandleArbitraryReq is BasePushCoreTest {
     }
 
     function test_whenUserTries_ToClaimArbitraryFees() external {
-     //it should send the tokens to user
+        //it should send the tokens to user
         test_WhenTheySendAmount_GreaterThanZero();
-        uint balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        uint256 balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
         changePrank(actor.charlie_channel_owner);
         coreProxy.claimArbitraryRequestFees(coreProxy.arbitraryReqFees(actor.charlie_channel_owner));
         uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
-        console.log(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore , amount,  feeAmount);
+        console.log(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore, amount, feeAmount);
         assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - feeAmount);
         assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), 0);
-
     }
 }

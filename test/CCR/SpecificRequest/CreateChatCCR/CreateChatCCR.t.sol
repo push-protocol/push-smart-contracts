@@ -159,7 +159,7 @@ contract CreateChatCCR is BaseCCRTest {
     function test_when_celebUserTries_ClaimingTokens() external {
         // it should transfer the tokens to celeb user
         test_whenTokensAreTransferred();
-        uint balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        uint256 balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
         changePrank(actor.charlie_channel_owner);
         coreProxy.claimChatIncentives(coreProxy.celebUserFunds(actor.charlie_channel_owner));
         assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - FEE_AMOUNT);
