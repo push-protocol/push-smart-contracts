@@ -15,9 +15,6 @@ const deploy = {
     bnbMainnet: {
       version: 1,
     },
-    arbitrumSepolia: {
-      version: 1,
-    },
     hardhat: {
       version: 1
     },
@@ -66,8 +63,8 @@ const deploy = {
     arbitrumSepolia:{
       version: 1,
     },
-    optimismSepolia:{
-      version: 1,
+    arbitrumMainnet:{
+      version:1,
     },
     polygonAmoy:{
       version: 1
