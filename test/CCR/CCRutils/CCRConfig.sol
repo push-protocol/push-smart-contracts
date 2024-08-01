@@ -98,7 +98,7 @@ contract CCRConfig {
 
     // chain agnostic constants
     // ToDo: to be changed
-    uint256 public constant MAX_WINDOW = 100_000_000_000_000_000_000_000; // considering both inbound and outbound
+    uint256 public constant MAX_WINDOW = 100_000 ether; // considering both inbound and outbound
         // limits are same
     uint256 public constant RATE_LIMIT_DURATION = 900;
 }
