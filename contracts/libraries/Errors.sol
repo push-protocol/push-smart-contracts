@@ -51,6 +51,8 @@ library Errors {
     error Comm_InvalidSignature_FromEOA();
     /// @notice Comm Contract Error: Reverts whenever the signature is invalid from EIP-1271 perspective.
     error Comm_InvalidSignature_FromContract();
+    /// @notice Comm Contract Error: Reverts whenever the cross-chain function to be invoked is invalid.
+    error Comm_InvalidCrossChain_Function();
 
     /* ***************
         Push STAKING Errors

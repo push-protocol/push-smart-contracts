@@ -111,30 +111,18 @@ library StakingTypes {
 }
 
 library CrossChainRequestTypes {
-    enum RequestType {
-        SpecificReq,
-        ArbitraryReq
+    // Payload
+    enum CrossChainFunction {
+        AddChannel,
+        IncentivizedChat,
+        ArbitraryRequest,
+        AdminRequest_AddPoolFee
     }
+}
 
-    struct ChannelPayload {
-        string channelAddress;
-        CoreTypes.ChannelType channelType;
-        uint8 channelExpiry;
-        bytes channelIdentity;
-    }
-
-    struct SpecificRequestPayload {
-        bytes4 functionSig;
-        address amountRecipient;
-        uint256 amount;
-        ChannelPayload channelData;
-    }
-
-    struct ArbitraryRequestPayload {
-        bytes4 functionSig;
-        uint8 feeId;
-        uint8 feePercentage;
-        address amountRecipient;
-        uint256 amount;
+library GenericTypes {
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
     }
 }

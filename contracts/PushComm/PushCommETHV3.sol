@@ -14,7 +14,7 @@ pragma solidity ^0.8.20;
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
+import { PushCommEthStorageV2 } from "./PushCommEthStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
@@ -27,7 +27,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommETHV3 is Initializable, PushCommStorageV2, IPushCommV3 {
+contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -84,9 +84,9 @@ contract PushCommETHV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
+    // function completeMigration() external onlyPushChannelAdmin {
+    //     isMigrationComplete = true;
+    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
@@ -514,27 +514,5 @@ contract PushCommETHV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifID), "+", _notifSettings));
         userToChannelNotifs[msg.sender][_channel] = notifSetting;
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
-    }
-
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
-        }
-        address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
-
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
-        }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
-
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
-
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
     }
 }

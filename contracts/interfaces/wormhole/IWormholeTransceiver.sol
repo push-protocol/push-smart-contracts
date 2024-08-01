@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache 2
 pragma solidity ^0.8.20;
 
-interface IWormholeTransceiver {
+import "./ITransceiver.sol";
+
+interface IWormholeTransceiver is ITransceiver {
     /// @notice The instruction for the WormholeTransceiver contract
     ///         to skip delivery via the relayer.
     struct WormholeTransceiverInstruction {
@@ -15,4 +17,14 @@ interface IWormholeTransceiver {
         external
         pure
         returns (bytes memory);
+
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory additionalMessages,
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    )
+        external
+        payable;
 }

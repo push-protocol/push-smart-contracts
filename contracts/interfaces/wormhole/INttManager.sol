@@ -24,12 +24,7 @@ interface INttManager is IManagerBase {
     /// @param recipientChain The chain ID of the recipient.
     /// @param msgSequence The unique sequence ID of the message.
     event TransferSent(
-        bytes32 recipient,
-        bytes32 refundAddress,
-        uint256 amount,
-        uint256 fee,
-        uint16 recipientChain,
-        uint64 msgSequence
+        bytes32 recipient, bytes32 refundAddress, uint256 amount, uint256 fee, uint16 recipientChain, uint64 msgSequence
     );
 
     /// @notice Emitted when the peer contract is updated.
@@ -146,7 +141,10 @@ interface INttManager is IManagerBase {
         uint256 amount,
         uint16 recipientChain,
         bytes32 recipient
-    ) external payable returns (uint64 msgId);
+    )
+        external
+        payable
+        returns (uint64 msgId);
 
     /// @notice Transfer a given amount to a recipient on a given chain. This function is called
     ///         by the user to send the token cross-chain. This function will either lock or burn the
@@ -166,16 +164,16 @@ interface INttManager is IManagerBase {
         bytes32 refundAddress,
         bool shouldQueue,
         bytes memory encodedInstructions
-    ) external payable returns (uint64 msgId);
+    )
+        external
+        payable
+        returns (uint64 msgId);
 
     /// @notice Complete an outbound transfer that's been queued.
     /// @dev This method is called by the client to complete an outbound transfer that's been queued.
     /// @param queueSequence The sequence of the message in the queue.
     /// @return msgSequence The sequence of the message.
-    function completeOutboundQueuedTransfer(uint64 queueSequence)
-        external
-        payable
-        returns (uint64 msgSequence);
+    function completeOutboundQueuedTransfer(uint64 queueSequence) external payable returns (uint64 msgSequence);
 
     /// @notice Cancels an outbound transfer that's been queued.
     /// @dev This method is called by the client to cancel an outbound transfer that's been queued.
@@ -197,7 +195,8 @@ interface INttManager is IManagerBase {
         uint16 sourceChainId,
         bytes32 sourceNttManagerAddress,
         TransceiverStructs.NttManagerMessage memory payload
-    ) external;
+    )
+        external;
 
     /// @notice Called after a message has been sufficiently verified to execute
     ///         the command in the message. This function will decode the payload
@@ -211,7 +210,8 @@ interface INttManager is IManagerBase {
         uint16 sourceChainId,
         bytes32 sourceNttManagerAddress,
         TransceiverStructs.NttManagerMessage memory message
-    ) external;
+    )
+        external;
 
     /// @notice Returns the number of decimals of the token managed by the NttManager.
     /// @return decimals The number of decimals of the token.
@@ -227,12 +227,7 @@ interface INttManager is IManagerBase {
     /// @param peerContract The address of the peer nttManager contract.
     /// @param decimals The number of decimals of the token on the peer chain.
     /// @param inboundLimit The inbound rate limit for the peer chain id
-    function setPeer(
-        uint16 peerChainId,
-        bytes32 peerContract,
-        uint8 decimals,
-        uint256 inboundLimit
-    ) external;
+    function setPeer(uint16 peerChainId, bytes32 peerContract, uint8 decimals, uint256 inboundLimit) external;
 
     /// @notice Sets the outbound transfer limit for a given chain.
     /// @dev This method can only be executed by the `owner`.
