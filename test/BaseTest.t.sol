@@ -21,7 +21,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors, ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
@@ -117,7 +117,7 @@ abstract contract BaseTest is Test, Constants, Events {
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
             address(nttMigrationProxyAdmin),
-            abi.encodeWithSignature("initialize(address,address)", actor.admin, address(pushToken))
+            abi.encodeWithSignature("initialize(address)", address(pushToken))
         );
         pushMigrationHelperProxy = PushMigrationHelper(address(pushMigrationProxy));
         // set governance as minter of ntt token

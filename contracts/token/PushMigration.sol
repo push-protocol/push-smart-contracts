@@ -34,7 +34,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(address _owner, address _oldToken) external initializer {
+    function initialize(address _oldToken) external initializer {
         oldPushToken = IERC20(_oldToken);
 
         __Ownable_init();
