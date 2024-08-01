@@ -111,8 +111,11 @@ contract Helper is BasePushCommTest, CCRConfig {
         }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
 
-        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelState) {
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel) {
             payload = abi.encode(amountRecipient);
+        }
+        else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
+            payload = new bytes(0);
 
         }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
 

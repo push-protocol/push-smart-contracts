@@ -118,7 +118,8 @@ library CrossChainRequestTypes {
         ArbitraryRequest,
         CreateChannelSettings,
         AdminRequest_AddPoolFee,
-        UpdateChannelState,
+        ReactivateChannel,
+        DeactivateDeleteChannel,
         UpdateChannelMeta
     }
 }
