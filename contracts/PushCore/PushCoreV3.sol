@@ -296,18 +296,14 @@ contract PushCoreV3 is
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
            if(channelInfo[_channelBytesID].channelState == 2) {
-                if (_amount < ADD_CHANNEL_MIN_FEES) {
-                 revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
-                }
-
                 IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-                reactivateChanel( _channelBytesID, _amount);
+                _reactivateChannel( _channelBytesID, _amount);
            }else {
-              deactivateDeleteChannel( _channelBytesID, msg.sender);
+              _deactivateChannel( _channelBytesID, msg.sender);
             }     
     }
 
-    function deactivateDeleteChannel(bytes32 _channelBytesID, address recipient) internal {
+    function _deactivateChannel(bytes32 _channelBytesID, address recipient) internal {
     
         CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
@@ -341,7 +337,10 @@ contract PushCoreV3 is
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(recipient, totalRefundableAmount);
     }
 
-    function reactivateChanel(bytes32 _channelBytesID, uint256 _amount) internal {
+    function _reactivateChannel(bytes32 _channelBytesID, uint256 _amount) internal {
+            if (_amount < ADD_CHANNEL_MIN_FEES) {
+                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
+            }
             CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
             uint256 poolFeeAmount = FEE_AMOUNT;
             uint256 poolFundAmount = _amount - poolFeeAmount;
@@ -877,13 +876,13 @@ contract PushCoreV3 is
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
             (bytes memory _newIdentity) = abi.decode(structPayload, (bytes));
             _updateChannelMeta(sender, _newIdentity, amount);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel) {
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.DeactivateChannel) {
             // Specific Request: Deactivating or Deleting Channel
             (address recipient) = abi.decode(structPayload, (address));
-            deactivateDeleteChannel(sender, recipient);
+            _deactivateChannel(sender, recipient);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
             // Specific Request: Deactivating or Deleting Channel
-            reactivateChanel(sender, amount);
+            _reactivateChannel(sender, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =

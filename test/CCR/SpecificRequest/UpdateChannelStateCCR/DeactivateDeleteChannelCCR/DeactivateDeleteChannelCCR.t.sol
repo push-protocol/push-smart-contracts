@@ -8,14 +8,14 @@ import { console } from "forge-std/console.sol";
 import { CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
-contract DeactivateDeleteChannelCCR is BaseCCRTest {
+contract DeactivateChannelCCR is BaseCCRTest {
     uint256 amount;
 
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel,
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel,
             BaseHelper.addressToBytes32(actor.bob_channel_owner),
             amount,
             0,
@@ -39,7 +39,7 @@ contract DeactivateDeleteChannelCCR is BaseCCRTest {
         vm.expectRevert("Pausable: paused");
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel, _payload, amount, GasLimit
         );
     }
 
@@ -48,7 +48,7 @@ contract DeactivateDeleteChannelCCR is BaseCCRTest {
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel, _payload, amount, GasLimit
         );
     }
 
@@ -58,7 +58,7 @@ contract DeactivateDeleteChannelCCR is BaseCCRTest {
         emit LogMessagePublished(SourceChain.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel, _payload, amount, GasLimit
         );
     }
 
@@ -138,7 +138,7 @@ contract DeactivateDeleteChannelCCR is BaseCCRTest {
     function test_whenTokensAreTransferred() external {
         amount = ADD_CHANNEL_MIN_FEES;
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel,
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel,
             BaseHelper.addressToBytes32(actor.bob_channel_owner),
             amount,
             0,
@@ -152,7 +152,7 @@ contract DeactivateDeleteChannelCCR is BaseCCRTest {
         changePrank(actor.bob_channel_owner);
         vm.recordLogs();
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.DeactivateDeleteChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.DeactivateChannel, _payload, amount, GasLimit
         );        
         
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =

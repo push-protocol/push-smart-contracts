@@ -119,7 +119,7 @@ library CrossChainRequestTypes {
         IncentivizedChat,
         ArbitraryRequest,
         AdminRequest_AddPoolFee,
-        DeactivateDeleteChannel,
+        DeactivateChannel,
         UpdateChannelMeta
     }
 }
