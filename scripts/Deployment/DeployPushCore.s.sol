@@ -8,9 +8,9 @@ import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/
 import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { DeployBase } from './helpers/DeployBase.sol';
+import { DeployBase } from './helpers/DeployBase.s.sol';
 
-contract DeployPushNtt is Script, DeployBase {
+contract DeployPushNtt is DeployBase {
     struct ConfigParams {
         address pushToken;
         address weth;

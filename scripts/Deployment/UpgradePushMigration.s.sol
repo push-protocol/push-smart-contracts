@@ -5,9 +5,9 @@ import { console2, Script } from "forge-std/Script.sol";
 import { PushMigrationHelper } from "contracts/token/PushMigration.sol";
 import { ITransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { DeployBase } from "./helpers/DeployBase.sol";
+import { DeployBase } from "./helpers/DeployBase.s.sol";
 
-contract UpgradePushMigration is Script, DeployBase {
+contract UpgradePushMigration is DeployBase {
     struct ConfigParams {
         address pushMigrationProxyAddr;
     }
@@ -40,22 +40,7 @@ contract UpgradePushMigration is Script, DeployBase {
     function _upgradePushMigrationProxy(ConfigParams memory configParams) internal {
         console2.log("Upgrading PushMigrationHelper Proxy...");
 
-        // Load the ProxyAdmin address from the proxy contract's storage
-        address proxyAdmin = address(
-            uint160(
-                uint256(
-                    vm.load(
-                        configParams.pushMigrationProxyAddr,
-                        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
-                    )
-                )
-            )
-        );
-        pushMigrationProxyAdmin = ProxyAdmin(payable(proxyAdmin));
-        pushMigrationProxy = ITransparentUpgradeableProxy(payable(configParams.pushMigrationProxyAddr));
-
-        // Upgrade the proxy to the new implementation
-        pushMigrationProxyAdmin.upgrade(pushMigrationProxy, address(pushMigrationImpl));
+        _upgradeContract(configParams.pushMigrationProxyAddr, address(pushMigrationImpl));
 
         console2.log("PushMigrationHelper Proxy upgraded to new implementation at: ", address(pushMigrationImpl));
     }

@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import { Script, console2 } from "forge-std/Script.sol";
 import { EPNS } from "contracts/token/EPNS.sol";
-import { DeployBase } from './helpers/DeployBase.sol';
+import { DeployBase } from './helpers/DeployBase.s.sol';
 
-contract DeployPushToken is Script, DeployBase {
+contract DeployPushToken is DeployBase {
     EPNS public pushToken;
 
     function run() public {

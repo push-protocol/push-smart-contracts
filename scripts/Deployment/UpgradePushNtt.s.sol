@@ -5,9 +5,9 @@ import { console2, Script } from "forge-std/Script.sol";
 import { Push } from "contracts/token/Push.sol";
 import { ITransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { DeployBase } from "./helpers/DeployBase.sol";
+import { DeployBase } from "./helpers/DeployBase.s.sol";
 
-contract UpgradePushNtt is Script, DeployBase {
+contract UpgradePushNtt is DeployBase {
     struct ConfigParams {
         address pushNttProxyAddr;
     }
@@ -40,22 +40,7 @@ contract UpgradePushNtt is Script, DeployBase {
     function _upgradePushNttProxy(ConfigParams memory configParams) internal {
         console2.log("Upgrading PushNtt Proxy...");
 
-        // Load the ProxyAdmin address from the proxy contract's storage
-        address proxyAdmin = address(
-            uint160(
-                uint256(
-                    vm.load(
-                        configParams.pushNttProxyAddr,
-                        0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
-                    )
-                )
-            )
-        );
-        pushNttProxyAdmin = ProxyAdmin(payable(proxyAdmin));
-        pushNttProxy = ITransparentUpgradeableProxy(payable(configParams.pushNttProxyAddr));
-
-        // Upgrade the proxy to the new implementation
-        pushNttProxyAdmin.upgrade(pushNttProxy, address(pushNttImpl));
+        _upgradeContract(configParams.pushNttProxyAddr, address(pushNttImpl));
 
         console2.log("PushNtt Proxy upgraded to new implementation at: ", address(pushNttImpl));
     }

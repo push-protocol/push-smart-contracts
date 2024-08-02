@@ -5,9 +5,9 @@ import { Script, console2 } from "forge-std/Script.sol";
 import { Push } from "contracts/token/Push.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { DeployBase } from './helpers/DeployBase.sol';
+import { DeployBase } from './helpers/DeployBase.s.sol';
 
-contract DeployPushNtt is Script, DeployBase {
+contract DeployPushNtt is DeployBase {
     Push public pushNttImpl;
     ProxyAdmin public pushNttProxyAdmin;
     TransparentUpgradeableProxy public pushNttProxy;

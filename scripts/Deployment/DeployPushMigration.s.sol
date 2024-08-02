@@ -5,9 +5,9 @@ import { Script, console2 } from "forge-std/Script.sol";
 import { PushMigrationHelper } from "contracts/token/PushMigration.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import { DeployBase } from './helpers/DeployBase.sol';
+import { DeployBase } from './helpers/DeployBase.s.sol';
 
-contract DeployPushMigration is Script, DeployBase {
+contract DeployPushMigration is DeployBase {
     struct ConfigParams {
         address oldPushToken;
     }

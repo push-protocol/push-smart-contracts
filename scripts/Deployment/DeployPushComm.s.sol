@@ -5,9 +5,9 @@ import { Script, console2 } from "forge-std/Script.sol";
 import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 import { EPNSCommAdmin } from "contracts/PushComm/EPNSCommAdmin.sol";
-import { DeployBase } from './helpers/DeployBase.sol';
+import { DeployBase } from './helpers/DeployBase.s.sol';
 
-contract DeployPushComm is Script, DeployBase {
+contract DeployPushComm is DeployBase {
     struct ConfigParams {
         address coreProxy;
         address pushToken;
