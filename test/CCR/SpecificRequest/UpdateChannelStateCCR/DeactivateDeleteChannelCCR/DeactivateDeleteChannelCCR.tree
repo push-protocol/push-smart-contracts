@@ -1,4 +1,4 @@
-UpdateChannelStateCCR.t.sol
+DeactivateChannelCCR.t.sol
 ├── when createCrossChainReq is called
 │   ├── when contract is paused
 │   │   └── it should Revert
