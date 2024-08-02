@@ -60,7 +60,7 @@ contract EPNSCoreStorageV1_5 {
  *************** */
 
     mapping(address => Channel) public channels;
-    mapping(uint256 => address) public channelById;
+    mapping(uint256 => address) public channelById; // NOT IN USE
     mapping(address => string) public channelNotifSettings;
 
     /* ***************
@@ -84,7 +84,7 @@ contract EPNSCoreStorageV1_5 {
     uint256 ADJUST_FOR_FLOAT;
     uint256 public channelsCount;
 
-    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS
+    //  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
     uint256 public groupNormalizedWeight;
     uint256 public groupHistoricalZ;
     uint256 public groupLastUpdate;
