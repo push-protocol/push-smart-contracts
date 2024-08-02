@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { Script } from "forge-std/Script.sol";
-import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ITransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract DeployBase is Script {
@@ -22,7 +22,7 @@ contract DeployBase is Script {
             )
         );
         ProxyAdmin proxyAdmin = ProxyAdmin(payable(proxyAdminAddr));
-        TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(_proxyAddr));
+        ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(payable(_proxyAddr));
 
         // Upgrade the proxy to the new implementation
         proxyAdmin.upgrade(proxy, address(_newImplementation));

@@ -11,15 +11,17 @@ contract DeployPushToken is DeployBase {
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
 
-        // Deploy PushNtt and its Proxy
+        // Deploy PushToken
         _deployPushToken();
 
         vm.stopBroadcast();
     }
 
     function _deployPushToken() internal {
+        address account = vm.addr(vm.envUint("PRIVATE_KEY"));
+
         console2.log("Deploying Push Token...");
-        pushToken = new EPNS();
+        pushToken = new EPNS(account);
         console2.log("Push Token deployed at: ", address(pushToken));
     }
 }
