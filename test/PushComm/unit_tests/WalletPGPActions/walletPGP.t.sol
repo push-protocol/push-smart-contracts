@@ -19,7 +19,7 @@ contract walletPGP_Test is BasePushCommTest {
         BasePushCommTest.setUp();
 
         changePrank(actor.admin);
-        commProxy.setFeeAmount(10e18);
+        // commProxy.setFeeAmount(10e18);
         // minting 3 NFTs
         firstERC721 = new MockERC721(actor.bob_channel_owner);
         secondERC721 = new MockERC721(actor.bob_channel_owner);

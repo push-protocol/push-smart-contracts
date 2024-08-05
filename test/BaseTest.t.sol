@@ -162,6 +162,7 @@ abstract contract BaseTest is Test, Constants, Events {
         commEthProxy.setEPNSCoreAddress(address(coreProxy));
         commEthProxy.setPushTokenAddress(address(pushToken));
         coreProxy.setEpnsCommunicatorAddress(address(commEthProxy));
+        commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address

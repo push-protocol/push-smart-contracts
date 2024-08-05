@@ -19,7 +19,9 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
 
    event TokenMigrated(address indexed _tokenHolder, address indexed _tokenReceiver, uint256 _amountMigrated);
    event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
-
+   event TokenUnmigrationStatusUpdated(bool _status);
+   event NewPushTokenUpdated(address indexed _newTokenAddress);
+   
     modifier whenUnMigrationIsAllowed() {
         if (unMigrationPaused) {
             revert UnmigrationPaused();

@@ -276,4 +276,6 @@ interface IPushCoreV3 {
         uint256 amount
     )
         external;
+
+    function addPoolFees(uint256 _rewardAmount) external;
 }

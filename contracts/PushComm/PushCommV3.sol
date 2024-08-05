@@ -694,6 +694,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             recipientChain,
             msg.sender // Refund address is of the sender
         );
+    }
     ///@notice Wallet PGP attach code starts here
 
     /* *****************************
@@ -705,7 +706,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
         uint256 fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
 
         bytes32 caipHash = keccak256(_caipData);
 
@@ -738,7 +739,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         uint256 fee = FEE_AMOUNT;
         PROTOCOL_POOL_FEE += fee;
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
 
         string memory pgp = walletToPGP[caipHash];
 

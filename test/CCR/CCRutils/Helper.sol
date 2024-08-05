@@ -60,7 +60,6 @@ contract Helper is BasePushCommTest, CCRConfig {
             IWormholeRelayer(SourceChain.WORMHOLE_RELAYER_SOURCE),
             DestChain.DestChainId
         );
-        commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
     }
 
     function setUpDestChain() internal {
