@@ -121,6 +121,7 @@ abstract contract BaseTest is Test, Constants, Events {
         pushNttToken.setMinter(actor.governance);
         epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
 
+        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
             address(coreProxy),
@@ -146,7 +147,7 @@ abstract contract BaseTest is Test, Constants, Events {
         commProxy = PushCommV3(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
-        vm.startPrank(actor.admin);
+        changePrank(actor.admin);
         commProxy.setEPNSCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
         vm.stopPrank();
