@@ -58,7 +58,7 @@ abstract contract BaseTest is Test, Constants, Events {
     uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
     uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
     uint256 FEE_AMOUNT = 10 ether;
-    uint256 MIN_POOL_CONTRIBUTION = 50 ether;
+    uint256 MIN_POOL_CONTRIBUTION = 1 ether;
     uint256 ADJUST_FOR_FLOAT = 10 ** 7;
     mapping(address => uint256) privateKeys;
 
@@ -158,7 +158,7 @@ abstract contract BaseTest is Test, Constants, Events {
         commEthProxy = PushCommETHV3(address(epnsCommEthProxy));
 
         // Set-up Core Address in Comm Eth
-        vm.startPrank(actor.admin);
+        changePrank(actor.admin);
         commEthProxy.setEPNSCoreAddress(address(coreProxy));
         commEthProxy.setPushTokenAddress(address(pushToken));
         coreProxy.setEpnsCommunicatorAddress(address(commEthProxy));
@@ -186,14 +186,14 @@ abstract contract BaseTest is Test, Constants, Events {
     }
 
     function approveTokens(address from, address to, uint256 amount) internal {
-        vm.startPrank(from);
+        changePrank(from);
         pushToken.approve(to, amount);
         pushToken.setHolderDelegation(to, true);
         vm.stopPrank();
     }
 
     function approveNttTokens(address from, address to, uint256 amount) internal {
-        vm.startPrank(from);
+       changePrank(from);
         pushNttToken.approve(to, amount);
         pushNttToken.setHolderDelegation(to, true);
         vm.stopPrank();

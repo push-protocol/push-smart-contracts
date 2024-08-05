@@ -8,7 +8,7 @@ import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 
 import "forge-std/console.sol";
 
-contract walletPGP_Test is BasePushCommTest {
+contract walletPGPforETH_Test is BasePushCommTest {
     string pgp1 = "PGP1";
     string pgp2 = "PGP2";
     string pgp3 = "PGP3";
