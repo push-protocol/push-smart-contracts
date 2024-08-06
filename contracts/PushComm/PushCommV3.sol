@@ -616,7 +616,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     {
         // Implement restrictions based on functionType
 
-        if (uint8(functionType) < 3) {
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel || 
+            functionType == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings ||
+            functionType == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel ) {
             if (amount < ADD_CHANNEL_MIN_FEES) {
                 revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, amount);
             }
