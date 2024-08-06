@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 interface IPushCoreV3 {
     /* *****************************
@@ -10,18 +10,20 @@ interface IPushCoreV3 {
     ***************************** */
 
     /// @notice emits whenever a channel updates its metadata
-    event UpdateChannel(address indexed channel, bytes identity, uint256 indexed amountDeposited);
+    event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
-    event ChannelVerified(address indexed channel, address indexed verifier);
+    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
-    event ChannelVerificationRevoked(address indexed channel, address indexed revoker);
+    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
-    event ChannelBlocked(address indexed channel);
+    event ChannelBlocked(bytes32 indexed channel);
+    /// @notice emits whenever a new channel is created - ToDo: Remove this event
+    event AddChannel(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a new channel is created
-    event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
+    event ChannelCreated(bytes32 indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
     /// @notice emits whenever a channel changes the notification settings
     event ChannelNotifcationSettingsAdded(
-        address _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
+        bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     /// @notice emits whenever a subgraph is added(handled by backend)
     event AddSubGraph(address indexed channel, bytes _subGraphData);
@@ -34,7 +36,7 @@ interface IPushCoreV3 {
     /// @notice emits whenever a users claims the rewards from the staking program(not unstake)
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     /// @notice emits whenever any user receives an incentivized chat request from another user
-    event IncentivizeChatReqReceived(
+    event IncentivizedChatReqReceived(
         address requestSender,
         address requestReceiver,
         uint256 amountForReqReceiver,
@@ -45,7 +47,17 @@ interface IPushCoreV3 {
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
-    event ChannelStateUpdate(address indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
+    /// @notice emits when arbitray cross chain request is received
+    event ArbitraryRequest(
+        address indexed sender,
+        address indexed receiver,
+        uint256 amountDeposited,
+        GenericTypes.Percentage feePercent,
+        uint256 indexed feeId
+    );
+    /// @notice emits whenever a user claims the funds that they got from arbirary request fees
+    event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
 
     /* *****************************
 
@@ -229,11 +241,10 @@ interface IPushCoreV3 {
      *          - Can only be called by Communicator contract
      *          - Records and keeps track of Pool Funds and Pool Fees
      *          - Stores the PUSH tokens for the Celeb User, which can be claimed later only by that specific user.
-     * @param  requestSender    Address that initiates the incentivized chat request
      * @param  requestReceiver  Address of the target user for whom the request is activated.
      * @param  amount           Amount of PUSH tokens deposited for activating the chat request
      */
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external;
+    function createIncentivizedChatRequest(address requestReceiver, uint256 amount) external;
 
     /**
      * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
@@ -241,6 +252,30 @@ interface IPushCoreV3 {
      * @param  _amount Amount of PUSH tokens to be claimed
      */
     function claimChatIncentives(uint256 _amount) external;
+
+    /**
+     * @notice Allows users to claim their earned fees from arbitrary requests.
+     * @dev Only accessible if the user has a non-zero balance in the contract for arbitrary request fees.
+     * @param _amount Amount of PUSH tokens to be claimed.
+     */
+    function claimArbitraryRequestFees(uint256 _amount) external;
+
+    /**
+     * @notice Handles arbitrary request data by transferring tokens and processing the request.
+     * @dev Transfers the specified amount from the caller to the contract and calls the private function to process the
+     * request.
+     * @param feeId The fee ID associated with the request.
+     * @param feePercentage The fee percentage to be deducted.
+     * @param amountRecipient The address of the recipient.
+     * @param amount The total amount sent by the sender for the arbitrary request.
+     */
+    function handleArbitraryRequestData(
+        uint8 feeId,
+        GenericTypes.Percentage calldata feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        external;
 
     function addPoolFees(uint256 _rewardAmount) external;
 }

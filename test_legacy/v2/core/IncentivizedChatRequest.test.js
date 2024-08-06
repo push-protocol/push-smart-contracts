@@ -116,7 +116,7 @@ describe("Incentivized chats", function () {
 
   it("should call handleChatRequest in core and it should fail if caller is not Comm ", async () => {
     await expect(
-      EPNSCoreV1Proxy.handleChatRequestData(
+      EPNSCoreV1Proxy.createIncentivizedChatRequest(
         BOB,
         ALICE,
         ethers.utils.parseEther("100")
@@ -157,7 +157,7 @@ describe("Incentivized chats", function () {
       );
 
     await expect(txn)
-      .to.emit(EPNSCoreV1Proxy, "IncentivizeChatReqReceived")
+      .to.emit(EPNSCoreV1Proxy, "IncentivizedChatReqReceived")
       .withArgs(
         BOB,
         ALICE,

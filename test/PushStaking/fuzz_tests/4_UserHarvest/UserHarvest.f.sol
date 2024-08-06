@@ -165,9 +165,9 @@ contract UserHarvest_test is BaseFuzzStaking {
         _fee = bound(_fee, 100, pushToken.balanceOf(actor.admin) / 1e18);
         vm.assume(
             _amount <= pushToken.balanceOf(actor.bob_channel_owner) / 1e18
-                && _amount <= (pushToken.balanceOf(actor.alice_channel_owner) / 1e18) + 100
-                && _amount <= (pushToken.balanceOf(actor.charlie_channel_owner) / 1e18) + 200
-                && _amount <= (pushToken.balanceOf(actor.tony_channel_owner) / 1e18) + 300
+                && _amount <= (pushToken.balanceOf(actor.alice_channel_owner) / 1e18) - 100
+                && _amount <= (pushToken.balanceOf(actor.charlie_channel_owner) / 1e18) - 200
+                && _amount <= (pushToken.balanceOf(actor.tony_channel_owner) / 1e18) - 300
         );
         _passEpoch = bound(_passEpoch, 2, 22);
         addPool(_fee);

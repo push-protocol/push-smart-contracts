@@ -1,6 +1,6 @@
 updateChannelMeta.t.sol
     ├── when contract is Paused
-    │   └── it REVERT - EnforcedPause()
+    │   └── it REVERT - "Pausable: paused"
     └── when contract is not Paused
         ├── when channel is not activated
         │   └── it REVERT - UnauthorizedCaller(caller)

@@ -6,3 +6,4 @@ eth-gas-reporter/=node_modules/eth-gas-reporter/
 forge-std/=lib/forge-std/src/
 hardhat/=node_modules/hardhat/
 solidity-bytes-utils/=node_modules/solidity-bytes-utils/
+wormhole-solidity-sdk = lib/wormhole-solidity-sdk/src

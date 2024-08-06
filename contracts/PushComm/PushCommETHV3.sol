@@ -14,21 +14,21 @@ pragma solidity ^0.8.20;
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
  *
  */
-import { PushCommEthStorageV3 } from "./PushCommEthStorageV3.sol";
+import { PushCommEthStorageV2 } from "./PushCommEthStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushCommEthV3 is Initializable, PushCommEthStorageV3, IPushCommV3 {
+contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -85,9 +85,9 @@ contract PushCommEthV3 is Initializable, PushCommEthStorageV3, IPushCommV3 {
         emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
+    // function completeMigration() external onlyPushChannelAdmin {
+    //     isMigrationComplete = true;
+    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;

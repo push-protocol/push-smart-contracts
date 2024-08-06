@@ -6,5 +6,5 @@ contractPausability.t.sol
     │       ├── it should pause/unpause successfully
     │       └── channel creation, deactivation, reactivation, blocking should work after unpause
     └── when contract is paused
-        ├── channel creation should REVERT EnforcedPause()
-        └── channel deactivation-reactivation-blocking should REVERT EnforcedPause()
+        ├── channel creation should REVERT "Pausable: paused"
+        └── channel deactivation-reactivation-blocking should REVERT "Pausable: paused"

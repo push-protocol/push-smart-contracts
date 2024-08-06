@@ -109,3 +109,20 @@ library StakingTypes {
         mapping(uint256 => uint256) epochToUserStakedWeight;
     }
 }
+
+library CrossChainRequestTypes {
+    // Payload
+    enum CrossChainFunction {
+        AddChannel,
+        IncentivizedChat,
+        ArbitraryRequest,
+        AdminRequest_AddPoolFee
+    }
+}
+
+library GenericTypes {
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
+    }
+}

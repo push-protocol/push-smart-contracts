@@ -1,0 +1,8 @@
+HandleArbitraryReq
+├── when user creates an arbitrary request
+│   ├── when they send zero tokens
+│   │   └── it should revert
+│   └── when they send amount greater than zero
+│       └── it should execute and update storage
+└── when user tries to claim arbitrary fees
+    └── it should send the tokens to user

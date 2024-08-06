@@ -74,7 +74,7 @@ contract CommAdminActions_Test is BasePushCommTest {
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
         commProxy.setPushTokenAddress(address(123));
-        assertEq(commProxy.PUSH_TOKEN_ADDRESS(), address(pushToken));
+        assertEq(address(commProxy.PUSH_NTT()), address(pushToken));
     }
 
     function test_WhenAdminSets_ThePushTokenAddress() external {
@@ -82,6 +82,6 @@ contract CommAdminActions_Test is BasePushCommTest {
 
         changePrank(actor.admin);
         commProxy.setPushTokenAddress(address(123));
-        assertEq(commProxy.PUSH_TOKEN_ADDRESS(), address(123));
+        assertEq(address(commProxy.PUSH_NTT()), address(123));
     }
 }

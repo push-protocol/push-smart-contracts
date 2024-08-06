@@ -1,6 +1,6 @@
 migratePushTokensTo.t.sol
 ├── when contract is Paused
-│   └── it REVERT - EnforcedPause()
+│   └── it REVERT - "Pausable: paused"
 └── when contract is not Paused
     ├── when allowance of oldToken to migration contract is less than _amount passed
     │   └── it REVERT - Push::transferFrom: transfer amount exceeds spender allowance

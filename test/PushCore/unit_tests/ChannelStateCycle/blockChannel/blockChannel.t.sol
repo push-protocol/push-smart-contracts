@@ -26,7 +26,7 @@ contract BlockChannel_Test is BasePushCoreTest {
 
     function test_AdminCanBlockActivatedChannel() public whenNotPaused whenCallerIsAdmin {
         vm.expectEmit(true, false, false, false, address(coreProxy));
-        emit ChannelBlocked(actor.bob_channel_owner);
+        emit ChannelBlocked(channelCreators.bob_channel_owner_Bytes32);
 
         vm.prank(actor.admin);
         coreProxy.blockChannel(actor.bob_channel_owner);
@@ -37,7 +37,7 @@ contract BlockChannel_Test is BasePushCoreTest {
         coreProxy.updateChannelState(0);
 
         vm.expectEmit(true, false, false, false, address(coreProxy));
-        emit ChannelBlocked(actor.bob_channel_owner);
+        emit ChannelBlocked(channelCreators.bob_channel_owner_Bytes32);
 
         vm.prank(actor.admin);
         coreProxy.blockChannel(actor.bob_channel_owner);
@@ -74,7 +74,7 @@ contract BlockChannel_Test is BasePushCoreTest {
             ,
             uint256 actualChannelUpdateBlock,
             uint256 actualChannelWeight,
-        ) = coreProxy.channels(actor.bob_channel_owner);
+        ) = coreProxy.channelInfo(channelCreators.bob_channel_owner_Bytes32);
         uint256 actualChannelsCount = coreProxy.channelsCount();
 
         uint256 expectedPoolContribution = MIN_POOL_CONTRIBUTION;

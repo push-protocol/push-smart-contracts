@@ -1,7 +1,7 @@
 updateChannelState.t.sol 
 .
 ├── when contract is Paused
-│   └── it REVERT - EnforcedPause()
+│   └── it REVERT - "Pausable: paused"
 └── when contract is not Paused
     ├── when caller's chanel is INACTIVE or BLOCKED
     │   └── it REVERT - Core_InvalidChannel()

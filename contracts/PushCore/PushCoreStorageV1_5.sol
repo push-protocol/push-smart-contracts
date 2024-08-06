@@ -7,9 +7,9 @@ contract PushCoreStorageV1_5 {
     MAPPINGS
     *************** */
 
-    mapping(address => CoreTypes.Channel) public channels;
+    mapping(address => CoreTypes.Channel) public channels; // ToDo: TO BE MIGRATED - NOT IN USE
     mapping(uint256 => address) public channelById; // NOT IN USE
-    mapping(address => string) public channelNotifSettings;
+    mapping(address => string) public channelNotifSettings; // NOT IN USE
 
     /* ***************
     STATE VARIABLES

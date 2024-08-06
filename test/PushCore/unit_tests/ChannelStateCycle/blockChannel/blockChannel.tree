@@ -1,6 +1,6 @@
 blockChannel.t.sol
     ├── when contract is Paused
-    │   └── it REVERT - EnforcedPause()
+    │   └── it REVERT - "Pausable: paused"
     └── when contract is not Paused
         ├── when caller is not Push Admin
         │   └── it REVERT - PushCoreV2::onlyPushChannelAdmin: Invalid Caller

@@ -19,6 +19,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
+    // Todo - fix updateChannelState function - Test case fails until then
 
     function test_Revertwhen_UpdatingDeactivatedChannel() public whenNotPaused {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
@@ -150,12 +151,14 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         assertEq(coreProxy.CHANNEL_POOL_FUNDS(), expectedChannelPoolFunds);
     }
 
-    function test_EmitRelevantEventsU() public {
+    function test_EmitRelevantEvents() public {
         _createChannel(actor.bob_channel_owner);
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
 
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit UpdateChannel(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        emit UpdateChannel(
+            channelCreators.bob_channel_owner_Bytes32, _testChannelUpdatedIdentity, _amountBeingTransferred
+        );
 
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);

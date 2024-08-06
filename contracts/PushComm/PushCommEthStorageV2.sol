@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 
 import { CommTypes } from "../libraries/DataTypes.sol";
 
-contract PushCommEthStorageV3 {
+contract PushCommEthStorageV2 {
     /**
      * MAPPINGS *
      */

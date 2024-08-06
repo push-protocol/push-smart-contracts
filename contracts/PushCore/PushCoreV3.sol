@@ -16,8 +16,9 @@ import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -25,8 +26,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import {
     PausableUpgradeable, Initializable
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "../interfaces/wormhole/IWormholeReceiver.sol";
 
-contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2, IPushCoreV3 {
+contract PushCoreV3 is
+    Initializable,
+    PushCoreStorageV1_5,
+    PausableUpgradeable,
+    PushCoreStorageV2,
+    IPushCoreV3,
+    IWormholeReceiver
+{
     using SafeERC20 for IERC20;
 
     /* ***************
@@ -60,7 +69,9 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     }
 
     function onlyActivatedChannels(address _channel) private view {
-        if (channels[_channel].channelState != 1) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        if (channelInfo[_channelBytesID].channelState != 1) {
             revert Errors.Core_InvalidChannel();
         }
     }
@@ -147,6 +158,8 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
     **************************************/
     ///@inheritdoc IPushCoreV3
+    // ToDo: Check if updateChannelMeta is required for Cross-Chain-Req feature. If yes, it needs its own private
+    // function
     function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
         onlyActivatedChannels(_channel);
 
@@ -163,10 +176,12 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amount;
         channelUpdateCounter[_channel] = updateCounter;
-        channels[_channel].channelUpdateBlock = block.number;
+
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        channelInfo[_channelBytesID].channelUpdateBlock = block.number;
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(_channel, address(this), _amount);
-        emit UpdateChannel(_channel, _newIdentity, _amount);
+        emit UpdateChannel(_channelBytesID, _newIdentity, _amount);
     }
 
     /// @inheritdoc IPushCoreV3
@@ -182,23 +197,12 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         if (_amount < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
         }
-        if (channels[msg.sender].channelState != 0) {
-            revert Errors.Core_InvalidChannel();
-        }
-        if (
-            !(
-                _channelType == CoreTypes.ChannelType.InterestBearingOpen
-                    || _channelType == CoreTypes.ChannelType.InterestBearingMutual
-                    || _channelType == CoreTypes.ChannelType.TimeBound || _channelType == CoreTypes.ChannelType.TokenGated
-            )
-        ) {
-            revert Errors.Core_InvalidChannelType();
-        }
-
-        emit AddChannel(msg.sender, _channelType, _identity);
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
-        _createChannel(msg.sender, _channelType, _amount, _channelExpiryTime);
+
+        emit ChannelCreated(_channelBytesID, _channelType, _identity);
+        _createChannel(_channelBytesID, _channelType, _amount, _channelExpiryTime);
     }
 
     /**
@@ -215,37 +219,44 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
      *
      */
     function _createChannel(
-        address _channel,
+        bytes32 _channel,
         CoreTypes.ChannelType _channelType,
         uint256 _amountDeposited,
         uint256 _channelExpiryTime
     )
         private
     {
-        uint256 poolFeeAmount = FEE_AMOUNT;
-        uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
-        //store funds in pool_funds & pool_fees
-        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
-        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
+        if (channelInfo[_channel].channelState != 0) {
+            revert Errors.Core_InvalidChannel();
+        }
 
-        // Calculate channel weight
-        uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
-        // Next create the channel and mark user as channellized
-        channels[_channel].channelState = 1;
-        channels[_channel].poolContribution = poolFundAmount;
-        channels[_channel].channelType = _channelType;
-        channels[_channel].channelStartBlock = block.number;
-        channels[_channel].channelUpdateBlock = block.number;
-        channels[_channel].channelWeight = _channelWeight;
-        // Add to map of addresses and increment channel count
-        channelsCount = channelsCount + 1;
+        if (uint8(_channelType) < 2) {
+            revert Errors.Core_InvalidChannelType();
+        }
 
         if (_channelType == CoreTypes.ChannelType.TimeBound) {
             if (_channelExpiryTime <= block.timestamp) {
                 revert Errors.Core_InvalidExpiryTime();
             }
-            channels[_channel].expiryTime = _channelExpiryTime;
+            channelInfo[_channel].expiryTime = _channelExpiryTime;
         }
+
+        uint256 poolFeeAmount = FEE_AMOUNT;
+        uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
+        //store funds in pool_funds & pool_fees
+        CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
+        PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
+        // Calculate channel weight
+        uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
+        // Next create the channel and mark user as channellized
+        channelInfo[_channel].channelState = 1;
+        channelInfo[_channel].poolContribution = poolFundAmount;
+        channelInfo[_channel].channelType = _channelType;
+        channelInfo[_channel].channelStartBlock = block.number;
+        channelInfo[_channel].channelUpdateBlock = block.number;
+        channelInfo[_channel].channelWeight = _channelWeight;
+        // Add to map of addresses and increment channel count
+        channelsCount = channelsCount + 1;
     }
 
     /// @inheritdoc IPushCoreV3
@@ -261,18 +272,32 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         if (_amountDeposited < ADD_CHANNEL_MIN_FEES) {
             revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amountDeposited);
         }
-        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
-        channelNotifSettings[msg.sender] = notifSetting;
-
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + _amountDeposited;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amountDeposited);
-        emit ChannelNotifcationSettingsAdded(msg.sender, _notifOptions, notifSetting, _notifDescription);
+
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+        _createSettings(_channelBytesID, _notifOptions, _notifSettings, _notifDescription);
+    }
+
+    function _createSettings(
+        bytes32 _channel,
+        uint256 _notifOptions,
+        string calldata _notifSettings,
+        string calldata _notifDescription
+    )
+        private
+    {
+        string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
+
+        emit ChannelNotifcationSettingsAdded(_channel, _notifOptions, notifSetting, _notifDescription);
     }
 
     /// @inheritdoc IPushCoreV3
     function updateChannelState(uint256 _amount) external whenNotPaused {
         // Check channel's current state
-        CoreTypes.Channel storage channelData = channels[msg.sender];
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
+
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
         if (channelCurrentState != 1 && channelCurrentState != 2) {
@@ -292,7 +317,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
                 channelData.channelState = 2;
                 channelData.channelWeight = _newChannelWeight;
                 channelData.poolContribution = minPoolContribution;
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             } else {
                 // TIME-BOUND CHANNEL DELETION PHASE
                 if (channelData.expiryTime >= block.timestamp) {
@@ -300,8 +325,8 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
                 }
                 totalRefundableAmount = channelData.poolContribution;
                 channelsCount = channelsCount - 1;
-                delete channels[msg.sender];
-                emit ChannelStateUpdate(msg.sender, totalRefundableAmount, 0);
+                delete channelInfo[_channelBytesID];
+                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             }
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
             IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
@@ -324,18 +349,19 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
             channelData.channelState = 1;
             channelData.poolContribution = _newPoolContribution;
             channelData.channelWeight = _newChannelWeight;
-            emit ChannelStateUpdate(msg.sender, 0, _amount);
+            emit ChannelStateUpdate(_channelBytesID, 0, _amount);
         }
     }
 
     /// @inheritdoc IPushCoreV3
     function blockChannel(address _channelAddress) external whenNotPaused {
         onlyGovernance();
-        if (((channels[_channelAddress].channelState == 3) || (channels[_channelAddress].channelState == 0))) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channelAddress);
+        if (((channelInfo[_channelBytesID].channelState == 3) || (channelInfo[_channelBytesID].channelState == 0))) {
             revert Errors.Core_InvalidChannel();
         }
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
-        CoreTypes.Channel storage channelData = channels[_channelAddress];
+        CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         // add channel's currentPoolContribution to PoolFees - (no refunds if Channel is blocked)
         // Decrease CHANNEL_POOL_FUNDS by currentPoolContribution
         uint256 currentPoolContribution = channelData.poolContribution - minPoolContribution;
@@ -350,7 +376,7 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         channelData.channelUpdateBlock = block.number;
         channelData.poolContribution = minPoolContribution;
 
-        emit ChannelBlocked(_channelAddress);
+        emit ChannelBlocked(_channelBytesID);
     }
 
     /* **************
@@ -359,7 +385,9 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
 
     /// @inheritdoc IPushCoreV3
     function getChannelVerfication(address _channel) public view returns (uint8 verificationStatus) {
-        address verifiedBy = channels[_channel].verifiedBy;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+
+        address verifiedBy = channelInfo[_channelBytesID].verifiedBy;
         bool logicComplete = false;
 
         // Check if it's primary verification
@@ -377,7 +405,8 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
                     logicComplete = true;
                 } else {
                     // Upper drill exists, go up
-                    verifiedBy = channels[verifiedBy].verifiedBy;
+                    bytes32 verifiedByChannel = BaseHelper.addressToBytes32(verifiedBy);
+                    verifiedBy = channelInfo[verifiedByChannel].verifiedBy;
                 }
             }
         }
@@ -418,23 +447,25 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         }
 
         // Verify channel
-        channels[_channel].verifiedBy = msg.sender;
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        channelInfo[_channelBytesID].verifiedBy = msg.sender;
 
         // Emit event
-        emit ChannelVerified(_channel, msg.sender);
+        emit ChannelVerified(_channelBytesID, msg.sender);
     }
 
     /// @inheritdoc IPushCoreV3
     function unverifyChannel(address _channel) public {
-        if (!(channels[_channel].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
+        bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channel);
+        if (!(channelInfo[_channelBytesID].verifiedBy == msg.sender || msg.sender == pushChannelAdmin)) {
             revert Errors.CallerNotAdmin();
         }
 
         // Unverify channel
-        channels[_channel].verifiedBy = address(0x0);
+        channelInfo[_channelBytesID].verifiedBy = address(0x0);
 
         // Emit Event
-        emit ChannelVerificationRevoked(_channel, msg.sender);
+        emit ChannelVerificationRevoked(_channelBytesID, msg.sender);
     }
 
     /**
@@ -732,17 +763,37 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
     }
 
     /// @inheritdoc IPushCoreV3
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
-        if (msg.sender != epnsCommunicator) {
-            revert Errors.UnauthorizedCaller(msg.sender);
+    function createIncentivizedChatRequest(address requestReceiver, uint256 amount) external {
+        if (amount < FEE_AMOUNT) {
+            revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
         }
+        if (requestReceiver == address(0)) {
+            revert Errors.InvalidArgument_WrongAddress(requestReceiver);
+        }
+
+        // Transfer tokens from the caller to the contract
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Process the incentivized chat request
+        _handleIncentivizedChat(msg.sender, requestReceiver, amount);
+    }
+
+    /**
+     * @notice Handles the incentivized chat request between a sender and a receiver.
+     * @dev Transfers the specified amount, deducting a protocol fee, to the receiver's funds and updates the protocol
+     * fee pool.
+     * @param requestSender The address of the sender initiating the chat request.
+     * @param requestReceiver The address of the receiver who is the target of the chat request.
+     * @param amount The total amount sent by the sender for the incentivized chat.
+     */
+    function _handleIncentivizedChat(address requestSender, address requestReceiver, uint256 amount) private {
         uint256 poolFeeAmount = FEE_AMOUNT;
         uint256 requestReceiverAmount = amount - poolFeeAmount;
 
         celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        emit IncentivizeChatReqReceived(
+        emit IncentivizedChatReqReceived(
             requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
@@ -757,5 +808,167 @@ contract PushCoreV3 is Initializable, PushCoreStorageV1_5, PausableUpgradeable, 
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
         emit ChatIncentiveClaimed(msg.sender, _amount);
+    }
+
+    /* *****************************
+         WORMHOLE CROSS-CHAIN Functions
+    ***************************** */
+    modifier isRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) {
+        require(registeredSenders[sourceChain] == sourceAddress, "Not registered sender");
+        _;
+    }
+
+    /**
+     * Sets the registered address for 'sourceChain' to 'sourceAddress'
+     * So that for messages from 'sourceChain', only ones from 'sourceAddress' are valid
+     *
+     * Assumes only one sender per chain is valid
+     * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
+     */
+    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) external {
+        onlyPushChannelAdmin();
+        registeredSenders[sourceChain] = sourceAddress;
+    }
+
+    function setWormholeRelayer(address _wormholeRelayer) external {
+        onlyPushChannelAdmin();
+        wormholeRelayer = _wormholeRelayer;
+    }
+
+    function onlyWormholeRelayer() private view {
+        if (msg.sender != wormholeRelayer) {
+            revert Errors.CallerNotAdmin();
+        }
+    }
+
+    function receiveWormholeMessages(
+        bytes memory payload,
+        bytes[] memory, // additionalVaas
+        bytes32 sourceAddress,
+        uint16 sourceChain,
+        bytes32 deliveryHash
+    )
+        public
+        payable
+        override
+        isRegisteredSender(sourceChain, sourceAddress)
+    {
+        onlyWormholeRelayer();
+        if (processedMessages[deliveryHash]) {
+            revert Errors.Payload_Duplicacy_Error();
+        }
+
+        (
+            CrossChainRequestTypes.CrossChainFunction functionType,
+            bytes memory structPayload,
+            uint256 amount,
+            address sender
+        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, address));
+
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
+            // Specific Request: Add Channel
+            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
+                abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(sender);
+            emit ChannelCreated(_channelBytesID, channelType, channelIdentity);
+            _createChannel(_channelBytesID, channelType, amount, channelExpiry);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            // Specific Request: Incentivized Chat
+            (address amountRecipient) = abi.decode(structPayload, (address));
+            _handleIncentivizedChat(sender, amountRecipient, amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            // Arbitrary Request
+            (uint8 feeId, GenericTypes.Percentage memory feePercentage, address amountRecipient) =
+                abi.decode(structPayload, (uint8, GenericTypes.Percentage, address));
+
+            _handleArbitraryRequest(sender, feeId, feePercentage, amountRecipient, amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
+            // Admin Request
+            PROTOCOL_POOL_FEES += amount;
+        } else {
+            revert("Invalid Function Type");
+        }
+
+        processedMessages[deliveryHash] = true;
+    }
+
+    /// @inheritdoc IPushCoreV3
+    function handleArbitraryRequestData(
+        uint8 feeId,
+        GenericTypes.Percentage calldata feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        external
+    {
+        if (amount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, amount);
+        }
+        // Transfer tokens from the caller to the contract
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Call the private function to process the arbitrary request
+        _handleArbitraryRequest(msg.sender, feeId, feePercentage, amountRecipient, amount);
+    }
+
+    /**
+     * @notice Handles the arbitrary request.
+     * @dev Calculates the fee, updates the state variables, and emits an event.
+     * @param sender The address of the sender initiating the arbitrary request.
+     * @param feeId The fee ID associated with the request.
+     * @param feePercentage The fee percentage to be deducted.
+     * @param amountRecipient The address of the recipient.
+     * @param amount The total amount sent by the sender for the arbitrary request.
+     */
+    function _handleArbitraryRequest(
+        address sender,
+        uint8 feeId,
+        GenericTypes.Percentage memory feePercentage,
+        address amountRecipient,
+        uint256 amount
+    )
+        private
+    {
+        // Calculate the fee amount
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);
+
+        // Update states based on Fee Percentage calculation
+        PROTOCOL_POOL_FEES += feeAmount;
+        arbitraryReqFees[amountRecipient] += amount - feeAmount;
+
+        // Emit an event for the arbitrary request
+        emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
+    }
+
+    /**
+     * @notice Allows a user to claim a specified amount of arbitrary request fees.
+     * @dev Reverts if the user tries to claim more than their available balance.
+     * @param _amount The amount of arbitrary request fees to claim.
+     * @custom:requires The caller's balance of arbitrary request fees must be greater than or equal to `_amount`.
+     * @custom:reverts Errors.InvalidArg_MoreThanExpected if `_amount` exceeds the caller's available arbitrary request
+     * fees.
+     * @custom:emits An {ArbitraryRequestFeesClaimed} event.
+     */
+    function claimArbitraryRequestFees(uint256 _amount) external {
+        uint256 userFeesBalance = arbitraryReqFees[msg.sender];
+
+        if (userFeesBalance < _amount) {
+            revert Errors.InvalidArg_MoreThanExpected(userFeesBalance, _amount);
+        }
+
+        arbitraryReqFees[msg.sender] = userFeesBalance - _amount;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
+
+        emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
+    }
+
+    function migrateAddressToBytes32(address[] calldata _channels) external whenPaused {
+        onlyPushChannelAdmin();
+        for (uint256 i; i < _channels.length; ++i) {
+            CoreTypes.Channel memory _channelData = channels[_channels[i]];
+            bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channels[i]);
+            channelInfo[_channelBytesID] = _channelData;
+            delete channels[_channels[i]];
+        }
     }
 }
