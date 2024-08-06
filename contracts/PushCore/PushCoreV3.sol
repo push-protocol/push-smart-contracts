@@ -15,7 +15,6 @@ import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
 import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
-import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
 import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
@@ -296,19 +295,27 @@ contract PushCoreV3 is
         // Check channel's current state
         bytes32 _channelBytesID = BaseHelper.addressToBytes32(msg.sender);
 
+           if(channelInfo[_channelBytesID].channelState == 2) {
+                IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+                _reactivateChannel( _channelBytesID, _amount);
+           }else {
+              _deactivateChannel( _channelBytesID, msg.sender);
+            }     
+    }
+
+    function _deactivateChannel(bytes32 _channelBytesID, address recipient) internal {
+    
         CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
         uint8 channelCurrentState = channelData.channelState;
         // Prevent INACTIVE or BLOCKED Channels
-        if (channelCurrentState != 1 && channelCurrentState != 2) {
+        if (channelCurrentState != 1) {
             revert Errors.Core_InvalidChannel();
         }
 
         uint256 minPoolContribution = MIN_POOL_CONTRIBUTION;
         // If Active State , Enter the Time-Bound Deletion/Deactivate Channel Phase
-        if (channelCurrentState == 1) {
             uint256 totalRefundableAmount;
-            bool isTimeBound = channelData.channelType == CoreTypes.ChannelType.TimeBound;
-            if (!isTimeBound) {
+            if (!(channelData.channelType == CoreTypes.ChannelType.TimeBound)) {
                 // DEACTIVATION PHASE
                 totalRefundableAmount = channelData.poolContribution - minPoolContribution;
 
@@ -316,7 +323,6 @@ contract PushCoreV3 is
                 channelData.channelState = 2;
                 channelData.channelWeight = _newChannelWeight;
                 channelData.poolContribution = minPoolContribution;
-                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             } else {
                 // TIME-BOUND CHANNEL DELETION PHASE
                 if (channelData.expiryTime >= block.timestamp) {
@@ -325,17 +331,17 @@ contract PushCoreV3 is
                 totalRefundableAmount = channelData.poolContribution;
                 channelsCount = channelsCount - 1;
                 delete channelInfo[_channelBytesID];
-                emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             }
+            emit ChannelStateUpdate(_channelBytesID, totalRefundableAmount, 0);
             CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - totalRefundableAmount;
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, totalRefundableAmount);
-        } // RE-ACTIVATION PHASE
-        else {
+            IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(recipient, totalRefundableAmount);
+    }
+
+    function _reactivateChannel(bytes32 _channelBytesID, uint256 _amount) internal {
             if (_amount < ADD_CHANNEL_MIN_FEES) {
                 revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, _amount);
             }
-
-            IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+            CoreTypes.Channel storage channelData = channelInfo[_channelBytesID];
             uint256 poolFeeAmount = FEE_AMOUNT;
             uint256 poolFundAmount = _amount - poolFeeAmount;
             //store funds in pool_funds & pool_fees
@@ -343,13 +349,12 @@ contract PushCoreV3 is
             PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
             uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
-            uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
+            uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
 
             channelData.channelState = 1;
             channelData.poolContribution = _newPoolContribution;
             channelData.channelWeight = _newChannelWeight;
             emit ChannelStateUpdate(_channelBytesID, 0, _amount);
-        }
     }
 
     /// @inheritdoc IPushCoreV3
@@ -871,6 +876,13 @@ contract PushCoreV3 is
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
             (bytes memory _newIdentity) = abi.decode(structPayload, (bytes));
             _updateChannelMeta(sender, _newIdentity, amount);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.DeactivateChannel) {
+            // Specific Request: Deactivating or Deleting Channel
+            (address recipient) = abi.decode(structPayload, (address));
+            _deactivateChannel(sender, recipient);
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
+            // Specific Request: Deactivating or Deleting Channel
+            _reactivateChannel(sender, amount);
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             // Arbitrary Request
             (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =

@@ -101,13 +101,24 @@ contract Helper is BasePushCommTest, CCRConfig {
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             payload = abi.encode(CoreTypes.ChannelType.InterestBearingMutual, _testChannelUpdatedIdentity, 0);
+
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             payload = abi.encode(amountRecipient);
+            
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings) {
             payload = abi.encode(_notifOptions, _notifSettings, _notifDescription);
-        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
-        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.DeactivateChannel) {
+            payload = abi.encode(amountRecipient);
+        }
+        else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
+            payload = new bytes(0);
+
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+
             payload = abi.encode(_newTestChannelIdentity);
         }
         reqPayload = abi.encode(typeOfReq, payload, amount, sender);
