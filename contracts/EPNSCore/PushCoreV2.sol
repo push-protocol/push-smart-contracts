@@ -35,7 +35,11 @@ contract PushCoreV2 is
     /* ***************
         EVENTS
      *************** */
-    event UpdateChannel(address indexed channel, bytes identity);
+    event UpdateChannel(
+        address indexed channel,
+        bytes identity,
+        uint256 indexed amountDeposited
+    );
     event RewardsClaimed(address indexed user, uint256 rewardAmount);
     event ChannelVerified(address indexed channel, address indexed verifier);
     event ChannelVerificationRevoked(
@@ -79,14 +83,6 @@ contract PushCoreV2 is
         uint256 indexed rewardAmount,
         uint256 fromEpoch,
         uint256 tillEpoch
-    );
-    event RelayerAddressUpdated(
-        address indexed oldRelayer,
-        address indexed newRelayer
-    );
-    event BridgeAddressUpdated(
-        address indexed oldBridge,
-        address indexed newBridge
     );
     event IncentivizeChatReqReceived(
         address requestSender,
@@ -291,7 +287,7 @@ contract PushCoreV2 is
             address(this),
             _amount
         );
-        emit UpdateChannel(_channel, _newIdentity);
+        emit UpdateChannel(_channel, _newIdentity, _amount);
     }
 
     /**
@@ -373,7 +369,6 @@ contract PushCoreV2 is
         channels[_channel].channelWeight = _channelWeight;
         // Add to map of addresses and increment channel count
         uint256 _channelsCount = channelsCount;
-        channelById[_channelsCount] = _channel;
         channelsCount = _channelsCount.add(1);
 
         if (_channelType == ChannelType.TimeBound) {
@@ -817,11 +812,6 @@ contract PushCoreV2 is
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(
-            msg.sender,
-            address(this),
-            1e18
-        );
         _stake(address(this), 1e18);
     }
 
@@ -1097,26 +1087,24 @@ contract PushCoreV2 is
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
 
-    function setRelayerAddress(address _relayer) external {
-        onlyPushChannelAdmin();
-        emit RelayerAddressUpdated(relayerAddress, _relayer);
-        relayerAddress = _relayer;
-    }
-
-    function setBridgeAddress(address _bridge) external {
-        onlyPushChannelAdmin();
-        emit BridgeAddressUpdated(bridgeAddress, _bridge);
-        bridgeAddress = _bridge;
-    }
-
+    /**
+     * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.
+     * @dev    This function currently handles the PUSH tokens that enters the contract due to any
+     *         activation of incentivizied chat request from Communicator contract.
+     *          - Can only be called by Communicator contract
+     *          - Records and keeps track of Pool Funds and Pool Fees
+     *          - Stores the PUSH tokens for the Celeb User, which can be claimed later only by that specific user.
+     * @param  requestSender    Address that initiates the incentivized chat request
+     * @param  requestReceiver  Address of the target user for whom the request is activated.
+     * @param  amount           Amount of PUSH tokens deposited for activating the chat request
+     */
     function handleChatRequestData(
         address requestSender,
         address requestReceiver,
-        uint256 amount,
-        bytes calldata vaa
+        uint256 amount
     ) external {
         require(
-            msg.sender == relayerAddress,
+            msg.sender == epnsCommunicator,
             "PushCoreV2:handleChatRequestData::Unauthorized caller"
         );
         uint256 poolFeeAmount = FEE_AMOUNT;
@@ -1125,7 +1113,6 @@ contract PushCoreV2 is
         celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES.add(poolFeeAmount);
 
-        ITokenBridge(bridgeAddress).completeTransferWithPayload(vaa);
         emit IncentivizeChatReqReceived(
             requestSender,
             requestReceiver,
@@ -1135,6 +1122,11 @@ contract PushCoreV2 is
         );
     }
 
+    /**
+     * @notice Allows the Celeb User(for whom chat requests were triggered) to claim their PUSH token earings.
+     * @dev    Only accessible if a particular user has a non-zero PUSH token earnings in contract.
+     * @param  _amount Amount of PUSH tokens to be claimed
+     */
     function claimChatIncentives(uint256 _amount) external {
         require(
             celebUserFunds[msg.sender] >= _amount,
