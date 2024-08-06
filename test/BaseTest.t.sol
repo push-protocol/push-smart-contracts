@@ -112,7 +112,7 @@ abstract contract BaseTest is Test, Constants, Events {
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
             address(nttMigrationProxyAdmin),
-            abi.encodeWithSignature("initialize(address,address)", actor.admin, address(pushToken))
+            abi.encodeWithSignature("initialize(address)", address(pushToken))
         );
         pushMigrationHelperProxy = PushMigrationHelper(address(pushMigrationProxy));
         // set governance as minter of ntt token
