@@ -12,9 +12,9 @@ interface IPushCoreV3 {
     /// @notice emits whenever a channel updates its metadata
     event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
-    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
+    event ChannelVerified(bytes32 indexed channel, bytes32 indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
-    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
+    event ChannelVerificationRevoked(bytes32 indexed channel, bytes32 indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(bytes32 indexed channel);
     /// @notice emits whenever a new channel is created - ToDo: Remove this event
@@ -26,7 +26,7 @@ interface IPushCoreV3 {
         bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     /// @notice emits whenever a subgraph is added(handled by backend)
-    event AddSubGraph(address indexed channel, bytes _subGraphData);
+    event AddSubGraph(bytes32 indexed channel, bytes _subGraphData);
     /// @notice emits whenever any time bound channel is deleted permanently
     // event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     /// @notice emits whenever a user stakes in the staking program
@@ -38,26 +38,26 @@ interface IPushCoreV3 {
     /// @notice emits whenever any user receives an incentivized chat request from another user
     event IncentivizeChatReqReceived(
         bytes32 requestSender,
-        address requestReceiver,
+        bytes32 requestReceiver,
         uint256 amountForReqReceiver,
         uint256 feePoolAmount,
         uint256 timestamp
     );
     /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
-    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ChatIncentiveClaimed(bytes32 indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
     event ArbitraryRequest(
         bytes32 indexed sender,
-        address indexed receiver,
+        bytes32 indexed receiver,
         uint256 amountDeposited,
         GenericTypes.Percentage feePercent,
         uint256 indexed feeId
     );
     /// @notice emits whenever a user claims the funds that they got from arbirary request fees
-    event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ArbitraryRequestFeesClaimed(bytes32 indexed user, uint256 indexed amountClaimed);
 
     /* *****************************
 

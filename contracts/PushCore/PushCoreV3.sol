@@ -76,7 +76,7 @@ contract PushCoreV3 is
 
     function addSubGraph(bytes calldata _subGraphData) external {
         onlyActivatedChannels(BaseHelper.addressToBytes32(msg.sender));
-        emit AddSubGraph(msg.sender, _subGraphData);
+        emit AddSubGraph(BaseHelper.addressToBytes32(msg.sender), _subGraphData);
     }
 
     function setEpnsCommunicatorAddress(address _commAddress) external {
@@ -452,7 +452,7 @@ contract PushCoreV3 is
         channelInfo[_channel].verifiedBy = msg.sender;
 
         // Emit event
-        emit ChannelVerified(_channel, msg.sender);
+        emit ChannelVerified(_channel, BaseHelper.addressToBytes32(msg.sender));
     }
 
     /// @inheritdoc IPushCoreV3
@@ -465,7 +465,7 @@ contract PushCoreV3 is
         channelInfo[_channel].verifiedBy = address(0x0);
 
         // Emit Event
-        emit ChannelVerificationRevoked(_channel, msg.sender);
+        emit ChannelVerificationRevoked(_channel, BaseHelper.addressToBytes32(msg.sender));
     }
 
     /**
@@ -786,7 +786,7 @@ contract PushCoreV3 is
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
         emit IncentivizeChatReqReceived(
-            requestSender, requestReceiver, requestReceiverAmount, poolFeeAmount, block.timestamp
+            requestSender, BaseHelper.addressToBytes32(requestReceiver), requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
 
@@ -799,7 +799,7 @@ contract PushCoreV3 is
         celebUserFunds[msg.sender] -= _amount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
-        emit ChatIncentiveClaimed(msg.sender, _amount);
+        emit ChatIncentiveClaimed(BaseHelper.addressToBytes32(msg.sender), _amount);
     }
 
     /* *****************************
@@ -941,7 +941,7 @@ contract PushCoreV3 is
         arbitraryReqFees[amountRecipient] += amount - feeAmount;
 
         // Emit an event for the arbitrary request
-        emit ArbitraryRequest(sender, amountRecipient, amount, feePercentage, feeId);
+        emit ArbitraryRequest(sender, BaseHelper.addressToBytes32(amountRecipient), amount, feePercentage, feeId);
     }
 
     /**
@@ -963,7 +963,7 @@ contract PushCoreV3 is
         arbitraryReqFees[msg.sender] = userFeesBalance - _amount;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransfer(msg.sender, _amount);
 
-        emit ArbitraryRequestFeesClaimed(msg.sender, _amount);
+        emit ArbitraryRequestFeesClaimed(BaseHelper.addressToBytes32(msg.sender), _amount);
     }
 
     function migrateAddressToBytes32(address[] calldata _channels) external whenPaused {
