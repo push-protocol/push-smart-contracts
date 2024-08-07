@@ -22,9 +22,10 @@ import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import {
     PausableUpgradeable, Initializable
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -87,13 +88,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function removeChannelAlias(string memory _channelAddress) external {
-        emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
-    }
-
-    // function completeMigration() external onlyPushChannelAdmin {
-    //     isMigrationComplete = true;
-    // }
 
     function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
         EPNSCoreAddress = _coreAddress;
@@ -104,7 +98,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
     function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
-        PUSH_TOKEN_ADDRESS = _tokenAddress;
+        PUSH_NTT = IERC20(_tokenAddress);
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
@@ -153,50 +147,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         }
         return true;
     }
-
-    /**
-     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
-     *
-     * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
-     * false
-     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
-     *
-     * @param _startIndex  starting Index for the LOOP
-     * @param _endIndex    Last Index for the LOOP
-     * @param _channelList array of addresses of the channels
-     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     *
-     */
-    // function migrateSubscribeData(
-    //     uint256 _startIndex,
-    //     uint256 _endIndex,
-    //     address[] calldata _channelList,
-    //     address[] calldata _usersList
-    // )
-    //     external
-    //     onlyPushChannelAdmin
-    //     returns (bool)
-    // {
-    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
-    //         revert Errors.InvalidArg_ArrayLengthMismatch();
-    //     }
-
-    //     for (uint256 i = _startIndex; i < _endIndex;) {
-    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
-    //             unchecked {
-    //                 i++;
-    //             }
-    //             continue;
-    //         } else {
-    //             _subscribe(_channelList[i], _usersList[i]);
-    //         }
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     return true;
-    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
@@ -569,7 +519,21 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
      * @param _minChannelCreationFee The minimum fee for creating a channel
      * @param _feeAmount The amount of the fee
      */
-    function setCoreFeeConfig(uint256 _minChannelCreationFee, uint256 _feeAmount) external onlyPushChannelAdmin {
+    function setCoreFeeConfig(
+        uint256 _minChannelCreationFee,
+        uint256 _feeAmount,
+        uint256 _minPoolContribution
+    )
+        external
+        onlyPushChannelAdmin
+    {
+        if (_minPoolContribution == 0 || _feeAmount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, _minPoolContribution);
+        }
+        if (_minChannelCreationFee < _feeAmount + _minPoolContribution) {
+            revert Errors.InvalidArg_LessThanExpected(_feeAmount + _minPoolContribution, _minChannelCreationFee);
+        }
+        MIN_POOL_CONTRIBUTION = _minPoolContribution;
         ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
         FEE_AMOUNT = _feeAmount;
     }
@@ -733,5 +697,69 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
             recipientChain,
             msg.sender // Refund address is of the sender
         );
+    }
+    ///@notice Wallet PGP attach code starts here
+
+    /* *****************************
+
+         USER PGP Registry Functions
+
+    ***************************** */
+
+    function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
+        uint256 fee = FEE_AMOUNT;
+        PROTOCOL_POOL_FEE += fee;
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
+
+        bytes32 caipHash = keccak256(_caipData);
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRegistered(_pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+
+            if (bytes(walletToPGP[caipHash]).length != 0) {
+                string memory _previousPgp = walletToPGP[caipHash];
+                emit UserPGPRemoved(_previousPgp, _nft, _id, chainName, chainID);
+            }
+            emit UserPGPRegistered(_pgp, _nft, _id, chainName, chainID);
+        }
+        walletToPGP[caipHash] = _pgp;
+    }
+
+    function removeWalletFromUser(bytes calldata _caipData, bool _isNFT) public {
+        bytes32 caipHash = keccak256(_caipData);
+        if (bytes(walletToPGP[caipHash]).length == 0) {
+            revert("Invalid Call");
+        }
+
+        uint256 fee = FEE_AMOUNT;
+        PROTOCOL_POOL_FEE += fee;
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
+
+        string memory pgp = walletToPGP[caipHash];
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (_wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRemoved(pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+            emit UserPGPRemoved(pgp, _nft, _id, chainName, chainID);
+        }
+        delete walletToPGP[caipHash];
     }
 }

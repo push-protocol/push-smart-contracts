@@ -6,8 +6,10 @@ CreateChatCCR.t.sol
 │   │   └── it should revert
 │   ├── when ether passed is less
 │   │   └── it should revert
-│   ├── when all checks passes
-│   │   └── it should successfully create the CCR
+│   ├── when amount transferred is more than max outbound rate limit
+│   │   └── it should revert
+│   └── when all checks passes
+│       └── it should successfully create the CCR
 └── when receive function is called in core
     ├── when sender is not registered
     │   └── it should Revert
@@ -15,5 +17,9 @@ CreateChatCCR.t.sol
     │   └── it should Revert
     ├── when deliveryHash is used already
     │   └── it should Revert
-    └── when all checks pass
-        └── it should emit event and update storage
+    ├── when all checks pass
+    │   └── it should emit event and update storage
+    ├── when Tokens are transferred by NTT
+    │   └── it should recieve the tokens in core
+    └── when celeb user tries to claim the tokens
+        └── it should transfer the tokens to celeb user

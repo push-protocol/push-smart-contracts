@@ -2,14 +2,13 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../BaseCCR.t.sol";
-import { Errors } from ".././../../../contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
+import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { CrossChainRequestTypes, GenericTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes, GenericTypes } from "contracts/libraries/DataTypes.sol";
 
-import "./../../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { TransceiverStructs } from "./../../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
-
-import { BaseHelper } from "./../../../contracts/libraries/BaseHelper.sol";
+import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract ArbitraryRequesttsol is BaseCCRTest {
     uint256 amount = 100e18;
@@ -62,6 +61,19 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, amount, GasLimit
+        );
+    }
+
+    function test_revertWhen_OutboundQueueDisabled() external whencreateCrossChainRequestIsCalled {
+        changePrank(SourceChain.NTT_MANAGER);
+        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
+        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
+
+        changePrank(actor.bob_channel_owner);
+        // test revert on a transfer that is larger than max window size without enabling queueing
+        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
+        commProxy.createCrossChainRequest{ value: 1e18 }(
+            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
         );
     }
 
@@ -131,8 +143,6 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
 
-        (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
-
         vm.expectEmit(true, true, false, true);
         emit ArbitraryRequest(BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), amount, percentage, 1);
 
@@ -147,7 +157,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), arbitraryFees + amount - feeAmount);
     }
 
-    function test_whenTokensAreTransferred() external {
+    function test_whenTokensAreTransferred() public {
         vm.recordLogs();
         test_whenReceiveChecksPass();
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
@@ -166,6 +176,17 @@ contract ArbitraryRequesttsol is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+    }
+
+    function test_when_UserTries_ClaimingArbitraryTokens() external {
+        // it should transfer the tokens to celeb user
+        test_whenTokensAreTransferred();
+        uint256 balanceBefore = pushToken.balanceOf(address(actor.charlie_channel_owner));
+        changePrank(actor.charlie_channel_owner);
+        coreProxy.claimArbitraryRequestFees(coreProxy.arbitraryReqFees(actor.charlie_channel_owner));
+        uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
+        assertEq(pushToken.balanceOf(address(actor.charlie_channel_owner)), balanceBefore + amount - feeAmount);
+        assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), 0);
     }
 }

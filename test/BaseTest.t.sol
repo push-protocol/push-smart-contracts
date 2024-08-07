@@ -6,9 +6,8 @@ import "forge-std/Test.sol";
 import "contracts/token/EPNS.sol";
 import "contracts/token/Push.sol";
 import "contracts/interfaces/uniswap/IUniswapV2Router.sol";
-import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
-import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
+import { EPNSCoreProxy} from "contracts/PushCore/EPNSCoreProxy.sol";
 import { EPNSCoreAdmin } from "contracts/PushCore/EPNSCoreAdmin.sol";
 import { PushCommETHV3 } from "contracts/PushComm/PushCommEthV3.sol";
 import { PushCommV3 } from "contracts/PushComm/PushCommV3.sol";
@@ -21,14 +20,13 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { Actors, ChannelCreators } from "./utils/Actors.sol";
 import { Events } from "./utils/Events.sol";
 import { Constants } from "./utils/Constants.sol";
-import { BaseHelper } from "../../../../contracts/libraries/BaseHelper.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 abstract contract BaseTest is Test, Constants, Events {
     Push public pushNtt;
     Push public pushNttToken;
     EPNS public pushToken;
-    PushCoreMock public coreMock;
-    PushCoreV3 public coreProxy;
+    PushCoreMock public coreProxy;
     PushCommV3 public comm;
     PushCommV3 public commProxy;
     PushCommETHV3 public commEth;
@@ -60,7 +58,7 @@ abstract contract BaseTest is Test, Constants, Events {
     uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
     uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
     uint256 FEE_AMOUNT = 10 ether;
-    uint256 MIN_POOL_CONTRIBUTION = 50 ether;
+    uint256 MIN_POOL_CONTRIBUTION = 1 ether;
     uint256 ADJUST_FOR_FLOAT = 10 ** 7;
     mapping(address => uint256) privateKeys;
 
@@ -72,8 +70,7 @@ abstract contract BaseTest is Test, Constants, Events {
         tokenDistributor = makeAddr("tokenDistributor");
 
         pushToken = new EPNS(tokenDistributor);
-        coreMock = new PushCoreMock();
-        coreProxy = new PushCoreV3();
+        coreProxy = new PushCoreMock();
         comm = new PushCommV3();
         commEth = new PushCommETHV3();
         pushMigrationHelper = new PushMigrationHelper();
@@ -106,18 +103,16 @@ abstract contract BaseTest is Test, Constants, Events {
         changePrank(actor.admin);
         nttProxyAdmin = new ProxyAdmin();
         pushNttProxy = new TransparentUpgradeableProxy(
-            address(pushNtt),
-            address(nttProxyAdmin),
-            abi.encodeWithSignature("initialize()")
+            address(pushNtt), address(nttProxyAdmin), abi.encodeWithSignature("initialize()")
         );
         pushNttToken = Push(address(pushNttProxy));
         nttMigrationProxyAdmin = new ProxyAdmin();
-        
+
         // Initialize pushMigration proxy admin and proxy contract
         pushMigrationProxy = new TransparentUpgradeableProxy(
             address(pushMigrationHelper),
             address(nttMigrationProxyAdmin),
-            abi.encodeWithSignature("initialize(address,address)", actor.admin, address(pushToken))
+            abi.encodeWithSignature("initialize(address)", address(pushToken))
         );
         pushMigrationHelperProxy = PushMigrationHelper(address(pushMigrationProxy));
         // set governance as minter of ntt token
@@ -125,9 +120,10 @@ abstract contract BaseTest is Test, Constants, Events {
         pushNttToken.setMinter(actor.governance);
         epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
 
+        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
-            address(coreMock),
+            address(coreProxy),
             address(epnsCoreProxyAdmin),
             actor.admin,
             address(pushToken),
@@ -139,12 +135,7 @@ abstract contract BaseTest is Test, Constants, Events {
             0
         );
 
-        epnsCoreProxyAdmin.upgrade(
-            ITransparentUpgradeableProxy(address(epnsCoreProxy)),
-            address(coreProxy)
-        );
-
-        coreProxy = PushCoreV3(address(epnsCoreProxy));
+        coreProxy = PushCoreMock(address(epnsCoreProxy));
         changePrank(tokenDistributor);
         pushToken.transfer(address(coreProxy), 1 ether);
 
@@ -155,22 +146,23 @@ abstract contract BaseTest is Test, Constants, Events {
         commProxy = PushCommV3(address(epnsCommProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
-        vm.startPrank(actor.admin);
+        changePrank(actor.admin);
         commProxy.setEPNSCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
-        coreProxy.setEpnsCommunicatorAddress(address(commProxy));
         vm.stopPrank();
 
         // Initialize comm proxy admin and commProxy contract
         epnsCommEthProxyAdmin = new EPNSCommAdmin(actor.admin);
         epnsCommEthProxy =
-            new EPNSCommProxy(address(comm), address(epnsCommEthProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
+            new EPNSCommProxy(address(commEth), address(epnsCommEthProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         commEthProxy = PushCommETHV3(address(epnsCommEthProxy));
 
         // Set-up Core Address in Comm Eth
-        vm.startPrank(actor.admin);
+        changePrank(actor.admin);
         commEthProxy.setEPNSCoreAddress(address(coreProxy));
         commEthProxy.setPushTokenAddress(address(pushToken));
+        coreProxy.setEpnsCommunicatorAddress(address(commEthProxy));
+        commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address
@@ -194,14 +186,14 @@ abstract contract BaseTest is Test, Constants, Events {
     }
 
     function approveTokens(address from, address to, uint256 amount) internal {
-        vm.startPrank(from);
+        changePrank(from);
         pushToken.approve(to, amount);
         pushToken.setHolderDelegation(to, true);
         vm.stopPrank();
     }
 
     function approveNttTokens(address from, address to, uint256 amount) internal {
-        vm.startPrank(from);
+       changePrank(from);
         pushNttToken.approve(to, amount);
         pushNttToken.setHolderDelegation(to, true);
         vm.stopPrank();

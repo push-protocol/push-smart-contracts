@@ -17,11 +17,11 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
     /// @notice thrown when a user attempts to unmigrate while unmigration is locked
     error UnmigrationPaused();
 
-    event TokenMigrated(address indexed _tokenHolder, address indexed _tokenReceiver, uint256 _amountMigrated);
-    event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
-    event TokenUnmigrationStatusUpdated(bool _status);
-    event NewPushTokenUpdated(address indexed _newTokenAddress);
-
+   event TokenMigrated(address indexed _tokenHolder, address indexed _tokenReceiver, uint256 _amountMigrated);
+   event TokenUnmigrated(address indexed _tokenHolder, uint256 _amountUnmigrated);
+   event TokenUnmigrationStatusUpdated(bool _status);
+   event NewPushTokenUpdated(address indexed _newTokenAddress);
+   
     modifier whenUnMigrationIsAllowed() {
         if (unMigrationPaused) {
             revert UnmigrationPaused();
@@ -34,7 +34,7 @@ contract PushMigrationHelper is OwnableUpgradeable, PausableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(address _owner, address _oldToken) external initializer {
+    function initialize(address _oldToken) external initializer {
         oldPushToken = IERC20(_oldToken);
 
         __Ownable_init();

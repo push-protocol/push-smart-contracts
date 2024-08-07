@@ -763,11 +763,20 @@ contract PushCoreV3 is
     }
 
     /// @inheritdoc IPushCoreV3
-    function handleChatRequestData(address requestSender, address requestReceiver, uint256 amount) external {
-        if (msg.sender != epnsCommunicator) {
-            revert Errors.UnauthorizedCaller(msg.sender);
+    function createIncentivizedChatRequest(address requestReceiver, uint256 amount) external {
+        if (amount < FEE_AMOUNT) {
+            revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
         }
-        _handleIncentivizedChat(BaseHelper.addressToBytes32(requestSender), requestReceiver, amount);
+        
+        if (requestReceiver == address(0)) {
+            revert Errors.InvalidArgument_WrongAddress(requestReceiver);
+        }
+
+        // Transfer tokens from the caller to the contract
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
+
+        // Process the incentivized chat request
+        _handleIncentivizedChat(BaseHelper.addressToBytes32(msg.sender), requestReceiver, amount);
     }
 
     /**
@@ -785,7 +794,7 @@ contract PushCoreV3 is
         celebUserFunds[requestReceiver] += requestReceiverAmount;
         PROTOCOL_POOL_FEES = PROTOCOL_POOL_FEES + poolFeeAmount;
 
-        emit IncentivizeChatReqReceived(
+        emit IncentivizedChatReqReceived(
             requestSender, BaseHelper.addressToBytes32(requestReceiver), requestReceiverAmount, poolFeeAmount, block.timestamp
         );
     }
@@ -908,6 +917,9 @@ contract PushCoreV3 is
     )
         external
     {
+        if (amount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, amount);
+        }
         // Transfer tokens from the caller to the contract
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), amount);
 

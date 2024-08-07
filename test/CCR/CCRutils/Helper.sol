@@ -9,8 +9,9 @@ import "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "contracts/interfaces/wormhole/IWormholeRelayer.sol";
 import { CCRConfig } from "./CCRConfig.sol";
-import { IWormholeTransceiver } from "./../../../contracts/interfaces/wormhole/IWormholeTransceiver.sol";
+import { IWormholeTransceiver } from "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
+import { EPNS } from "contracts/token/EPNS.sol";
 
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
@@ -28,7 +29,7 @@ contract Helper is BasePushCommTest, CCRConfig {
     bytes32 sourceAddress;
     uint16 sourceChain = SourceChain.SourceChainId;
     GenericTypes.Percentage percentage;
-    uint256 GasLimit = 10_000_000;
+    uint256 GasLimit = 10_000_000; // ToDo: to be finalised
 
     bytes4 constant TEST_TRANSCEIVER_PAYLOAD_PREFIX = 0x9945ff10;
 
@@ -60,15 +61,15 @@ contract Helper is BasePushCommTest, CCRConfig {
             IWormholeRelayer(SourceChain.WORMHOLE_RELAYER_SOURCE),
             DestChain.DestChainId
         );
-        commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT);
     }
 
     function setUpDestChain() internal {
         switchChains(DestChain.rpc);
         BasePushCommTest.setUp();
-        pushNttToken = Push(DestChain.PUSH_NTT_DEST);
+        pushToken = EPNS(DestChain.PUSH_NTT_DEST);
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
+        coreProxy.setEpnsTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
     }
 
@@ -210,9 +211,17 @@ contract Helper is BasePushCommTest, CCRConfig {
         (recipient,, _amount,, recipientChain,) = abi.decode(data, (bytes32, bytes32, uint256, uint256, uint16, uint64));
     }
 
-    function getRequestPayload(uint256 _amount, bytes32 recipient, uint16 recipientChain, address sourceNttManager) internal view returns(bytes memory transceiverMessage, bytes32 hash) {
-
-    TrimmedAmount _amt = _trimTransferAmount(_amount);
+    function getRequestPayload(
+        uint256 _amount,
+        bytes32 recipient,
+        uint16 recipientChain,
+        address sourceNttManager
+    )
+        internal
+        view
+        returns (bytes memory transceiverMessage, bytes32 hash)
+    {
+        TrimmedAmount _amt = _trimTransferAmount(_amount);
         bytes memory tokenTransferMessage = TransceiverStructs.encodeNativeTokenTransfer(
             TransceiverStructs.NativeTokenTransfer({
                 amount: _amt,

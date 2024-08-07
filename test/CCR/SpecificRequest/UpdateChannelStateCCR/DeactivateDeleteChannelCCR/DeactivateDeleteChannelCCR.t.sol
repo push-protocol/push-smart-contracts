@@ -174,6 +174,6 @@ contract DeactivateChannelCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushNttToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
     }
 }

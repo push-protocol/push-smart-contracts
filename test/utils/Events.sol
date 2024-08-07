@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes, GenericTypes  } from "../../contracts/libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes } from "../../contracts/libraries/DataTypes.sol";
 
 abstract contract CoreEvents {
     event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
@@ -10,7 +10,7 @@ abstract contract CoreEvents {
     event DeactivateChannel(address indexed channel, uint256 indexed amountRefunded);
     event ChannelBlocked(bytes32 indexed channel);
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
-    event IncentivizeChatReqReceived(
+    event IncentivizedChatReqReceived(
         bytes32 requestSender,
         bytes32 requestReceiver,
         uint256 amountForReqReceiver,
@@ -38,7 +38,17 @@ abstract contract CommEvents {
     );
     event Subscribe(address indexed channel, address indexed user);
     event Unsubscribe(address indexed channel, address indexed user);
-    event LogMessagePublished(address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel); 
+    ///@notice emits whenever a Wallet or NFT is linked OR unlinked to a PGP hash
+    event UserPGPRegistered(string indexed PgpHash, address indexed wallet, string chainName, uint256 chainID);
+    event UserPGPRegistered(
+        string indexed PgpHash, address indexed nft, uint256 nftId, string chainName, uint256 chainID
+    );
+
+    event UserPGPRemoved(string indexed PgpHash, address indexed wallet, string chainName, uint256 chainID);
+    event UserPGPRemoved(string indexed PgpHash, address indexed nft, uint256 nftId, string chainName, uint256 chainID);
+    event LogMessagePublished(
+        address indexed sender, uint64 sequence, uint32 nonce, bytes payload, uint8 consistencyLevel
+    );
 }
 
 abstract contract ProxyEvents {

@@ -21,6 +21,7 @@ import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -138,50 +139,6 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
         }
         return true;
     }
-
-    /**
-     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
-     *
-     * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
-     * false
-     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
-     *
-     * @param _startIndex  starting Index for the LOOP
-     * @param _endIndex    Last Index for the LOOP
-     * @param _channelList array of addresses of the channels
-     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     *
-     */
-    // function migrateSubscribeData(
-    //     uint256 _startIndex,
-    //     uint256 _endIndex,
-    //     address[] calldata _channelList,
-    //     address[] calldata _usersList
-    // )
-    //     external
-    //     onlyPushChannelAdmin
-    //     returns (bool)
-    // {
-    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
-    //         revert Errors.InvalidArg_ArrayLengthMismatch();
-    //     }
-
-    //     for (uint256 i = _startIndex; i < _endIndex;) {
-    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
-    //             unchecked {
-    //                 i++;
-    //             }
-    //             continue;
-    //         } else {
-    //             _subscribe(_channelList[i], _usersList[i]);
-    //         }
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     return true;
-    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
@@ -516,25 +473,71 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
     }
 
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
+    function setFeeAmount(uint256 _feeAmount) external onlyPushChannelAdmin {
+        FEE_AMOUNT = _feeAmount;
+    }
+
+    /* *****************************
+
+         USER PGP Registry Functions
+
+    ***************************** */
+    function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
+        uint256 fee = FEE_AMOUNT;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
+        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
+
+        bytes32 caipHash = keccak256(_caipData);
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRegistered(_pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+
+            if (bytes(walletToPGP[caipHash]).length != 0) {
+                string memory _previousPgp = walletToPGP[caipHash];
+                emit UserPGPRemoved(_previousPgp, _nft, _id, chainName, chainID);
+            }
+            emit UserPGPRegistered(_pgp, _nft, _id, chainName, chainID);
         }
-        address requestSender = msg.sender;
-        address coreContract = EPNSCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
+        walletToPGP[caipHash] = _pgp;
+    }
 
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
+    function removeWalletFromUser(bytes calldata _caipData, bool _isNFT) public {
+        bytes32 caipHash = keccak256(_caipData);
+        if (bytes(walletToPGP[caipHash]).length == 0) {
+            revert("Invalid Call");
         }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
 
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
+        uint256 fee = FEE_AMOUNT;
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
+        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
 
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
+        string memory pgp = walletToPGP[caipHash];
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (_wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRemoved(pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+            emit UserPGPRemoved(pgp, _nft, _id, chainName, chainID);
+        }
+        delete walletToPGP[caipHash];
     }
 }
