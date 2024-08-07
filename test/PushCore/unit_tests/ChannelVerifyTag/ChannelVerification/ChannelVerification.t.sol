@@ -7,6 +7,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
     bytes32 bobBytes; 
     bytes32 aliceBytes;
     bytes32 charlieBytes;
+    bytes32 adminBytes;
     function setUp() public virtual override {
         BasePushCoreTest.setUp();
         _createChannel(actor.bob_channel_owner);
@@ -16,6 +17,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         bobBytes = toWormholeFormat(actor.bob_channel_owner);
         aliceBytes = toWormholeFormat(actor.alice_channel_owner);
         charlieBytes = toWormholeFormat(actor.charlie_channel_owner);
+        adminBytes = toWormholeFormat(actor.admin);
     }
 
     modifier whenCheckedTheDefaultVerificationStatus() {
@@ -71,7 +73,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
         // it should return primary verified for channels verified by admin
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(bobBytes);
 
         uint8 bobVerification = coreProxy.getChannelVerfication(bobBytes);
@@ -85,12 +87,12 @@ contract ChannelVerification_Test is BasePushCoreTest {
         // it should give secondary verification(2) to that channel
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(bobBytes);
 
         changePrank(actor.bob_channel_owner);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.bob_channel_owner);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, bobBytes);
         coreProxy.verifyChannel(aliceBytes);
 
         uint8 aliceVerification = coreProxy.getChannelVerfication(aliceBytes);
@@ -117,11 +119,11 @@ contract ChannelVerification_Test is BasePushCoreTest {
         // it should allow admin to give primary verification
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(bobBytes);
 
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.bob_channel_owner);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, bobBytes);
         changePrank(actor.bob_channel_owner);
         coreProxy.verifyChannel(aliceBytes);
 
@@ -133,7 +135,7 @@ contract ChannelVerification_Test is BasePushCoreTest {
 
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(aliceBytes);
 
         uint8 aliceVerificationAfter = coreProxy.getChannelVerfication(aliceBytes);
@@ -148,11 +150,11 @@ contract ChannelVerification_Test is BasePushCoreTest {
 
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(bobBytes);
 
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(aliceBytes);
 
         uint8 aliceVerificationBefore = coreProxy.getChannelVerfication(aliceBytes);
@@ -176,17 +178,17 @@ contract ChannelVerification_Test is BasePushCoreTest {
         // it should give secondary verification to that channel
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         coreProxy.verifyChannel(bobBytes);
 
         changePrank(actor.bob_channel_owner);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.charlie_channel_owner_Bytes32, actor.bob_channel_owner);
+        emit ChannelVerified(channelCreators.charlie_channel_owner_Bytes32, bobBytes);
         coreProxy.verifyChannel(charlieBytes);
 
         changePrank(actor.charlie_channel_owner);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.charlie_channel_owner);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, charlieBytes);
         coreProxy.verifyChannel(aliceBytes);
 
         uint8 aliceVerification = coreProxy.getChannelVerfication(aliceBytes);
@@ -221,11 +223,11 @@ contract ChannelVerification_Test is BasePushCoreTest {
 
         changePrank(actor.admin);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.charlie_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.charlie_channel_owner_Bytes32, adminBytes);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.bob_channel_owner_Bytes32, adminBytes);
         vm.expectEmit(true, true, false, false);
-        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, actor.admin);
+        emit ChannelVerified(channelCreators.alice_channel_owner_Bytes32, adminBytes);
         coreProxy.batchVerification(0, 3, _channels);
 
         uint8 charlieVerificationAfter = coreProxy.getChannelVerfication(charlieBytes);

@@ -134,7 +134,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
 
         vm.expectEmit(true, true, false, true);
-        emit ArbitraryRequest(BaseHelper.addressToBytes32(actor.bob_channel_owner), actor.charlie_channel_owner, amount, percentage, 1);
+        emit ArbitraryRequest(BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), amount, percentage, 1);
 
         coreProxy.receiveWormholeMessages(
             requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
