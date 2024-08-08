@@ -5,7 +5,8 @@ import { BaseCCRTest } from "../../BaseCCR.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 
-import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 
 contract CreateChatCCR is BaseCCRTest {
@@ -16,11 +17,14 @@ contract CreateChatCCR is BaseCCRTest {
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.IncentivizedChat,
-            actor.charlie_channel_owner,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner),
             amount,
             0,
             percentage,
-            actor.bob_channel_owner
+            0,
+            "",
+            "",
+            BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
 
@@ -123,7 +127,7 @@ contract CreateChatCCR is BaseCCRTest {
 
         vm.expectEmit(false, false, false, true);
         emit IncentivizedChatReqReceived(
-            actor.bob_channel_owner, actor.charlie_channel_owner, amount - poolFeeAmount, poolFeeAmount, block.timestamp
+            BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), amount - poolFeeAmount, poolFeeAmount, block.timestamp
         );
 
         receiveWormholeMessage(requestPayload);
@@ -138,7 +142,7 @@ contract CreateChatCCR is BaseCCRTest {
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
 
-        console.log(pushToken.balanceOf(address(coreProxy)));
+       uint balanceCoreBefore = pushToken.balanceOf(address(coreProxy));
 
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) =
@@ -153,7 +157,7 @@ contract CreateChatCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), balanceCoreBefore + amount, "Tokens in Core");
     }
 
     function test_when_celebUserTries_ClaimingTokens() external {

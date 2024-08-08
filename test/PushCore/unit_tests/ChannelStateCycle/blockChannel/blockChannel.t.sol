@@ -4,10 +4,14 @@ import { BasePushCoreTest } from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
 contract BlockChannel_Test is BasePushCoreTest {
+    bytes32 bobBytes; 
+    bytes32 charlieBytes;
     function setUp() public virtual override {
         BasePushCoreTest.setUp();
 
         _createChannel(actor.bob_channel_owner);
+        bobBytes = toWormholeFormat(actor.bob_channel_owner);
+        charlieBytes = toWormholeFormat(actor.charlie_channel_owner);
     }
 
     modifier whenNotPaused() {
@@ -21,7 +25,7 @@ contract BlockChannel_Test is BasePushCoreTest {
     function test_Revertwhen_BlockCallerNotGovernance() public whenNotPaused whenCallerIsAdmin {
         vm.expectRevert(Errors.CallerNotGovernance.selector);
 
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
     }
 
     function test_AdminCanBlockActivatedChannel() public whenNotPaused whenCallerIsAdmin {
@@ -29,7 +33,7 @@ contract BlockChannel_Test is BasePushCoreTest {
         emit ChannelBlocked(channelCreators.bob_channel_owner_Bytes32);
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
     }
 
     function test_AdminCanBlockDeactivatedChannel() public whenNotPaused whenCallerIsAdmin {
@@ -40,28 +44,28 @@ contract BlockChannel_Test is BasePushCoreTest {
         emit ChannelBlocked(channelCreators.bob_channel_owner_Bytes32);
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
     }
 
     function test_Revertwhen_BlockInactiveChannel() public whenNotPaused whenCallerIsAdmin {
         vm.prank(actor.admin);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
-        coreProxy.blockChannel(actor.charlie_channel_owner);
+         coreProxy.blockChannel(charlieBytes);
     }
 
     function test_Revertwhen_AlreadyBlockedChannel() public whenNotPaused whenCallerIsAdmin {
         vm.startPrank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
 
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
         vm.stopPrank();
     }
 
     function test_ChannelDetailsUpdation() public whenNotPaused whenCallerIsAdmin {
         uint256 channelsCountBeforeBlocked = coreProxy.channelsCount();
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
 
         (
             ,
@@ -96,7 +100,7 @@ contract BlockChannel_Test is BasePushCoreTest {
         uint256 poolFundsBeforeBlocked = coreProxy.CHANNEL_POOL_FUNDS();
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(bobBytes);
         uint256 actualChannelFundsAfterBlocked = coreProxy.CHANNEL_POOL_FUNDS();
         uint256 actualPoolFeesAfterBlocked = coreProxy.PROTOCOL_POOL_FEES();
 

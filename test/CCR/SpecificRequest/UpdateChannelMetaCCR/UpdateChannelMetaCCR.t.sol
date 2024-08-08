@@ -2,20 +2,21 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
-import { Errors } from "contracts/libraries/Errors.sol";
+import { Errors } from ".././../../../contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
-import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
-import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
 
-contract CreateChannelCCR is BaseCCRTest {
-    uint256 amount = ADD_CHANNEL_MIN_FEES;
+import { CrossChainRequestTypes } from "../../../../contracts/libraries/DataTypes.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
+
+contract UpdateChannelCCR is BaseCCRTest {
+    uint256 amount;
 
     function setUp() public override {
         BaseCCRTest.setUp();
+        amount = (coreProxy.channelUpdateCounter(toWormholeFormat(actor.bob_channel_owner)) + 1) * ADD_CHANNEL_MIN_FEES;
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel,
+            CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta,
             BaseHelper.addressToBytes32(address(0)),
             amount,
             0,
@@ -23,74 +24,47 @@ contract CreateChannelCCR is BaseCCRTest {
             0,
             "",
             "",
-            BaseHelper.addressToBytes32(actor.charlie_channel_owner)
+            BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
 
-    modifier whenCreateChannelIsCalled() {
+    modifier whencreateCrossChainReqIsCalled() {
         _;
     }
 
-    function test_WhenContractIsPaused() external whenCreateChannelIsCalled {
+    function test_WhenContractIsPaused() external whencreateCrossChainReqIsCalled {
         // it should Revert
 
         changePrank(actor.admin);
         commProxy.pauseContract();
         vm.expectRevert("Pausable: paused");
-        changePrank(actor.charlie_channel_owner);
+        changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta, _payload, amount, GasLimit
         );
     }
 
-    function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelIsCalled {
-        // it should revert
-        amount = 49e18;
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES, amount)
-        );
-        changePrank(actor.charlie_channel_owner);
-        commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
-        );
-    }
-
-    function test_RevertWhen_EtherPassedIsLess() external whenCreateChannelIsCalled {
+    function test_RevertWhen_EtherPassedIsLess() external whencreateCrossChainReqIsCalled {
         // it should revert
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
-        changePrank(actor.charlie_channel_owner);
-        commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
-        );
-    }
-
-    function test_revertWhen_OutboundQueueDisabled() external whenCreateChannelIsCalled {
-        changePrank(SourceChain.NTT_MANAGER);
-        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
-        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
-
         changePrank(actor.bob_channel_owner);
-        // test revert on a transfer that is larger than max window size without enabling queueing
-        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
-        commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
+        commProxy.createCrossChainRequest(
+            CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta, _payload, amount, GasLimit
         );
     }
 
-    function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
+    function test_WhenAllChecksPasses() public whencreateCrossChainReqIsCalled {
         // it should successfully create the CCR
-
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(SourceChain.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
-        changePrank(actor.charlie_channel_owner);
+        changePrank(actor.bob_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta, _payload, amount, GasLimit
         );
     }
 
     modifier whenReceiveFunctionIsCalledInCore() {
         test_WhenAllChecksPasses();
-
         setUpDestChain();
         _;
     }
@@ -124,58 +98,44 @@ contract CreateChannelCCR is BaseCCRTest {
     function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
         // it should emit event and create Channel
 
-        (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
+        uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
+        uint256 oldCounter = coreProxy.channelUpdateCounter(toWormholeFormat(actor.bob_channel_owner));
 
         vm.expectEmit(true, true, false, true);
-        emit ChannelCreated(
-            toWormholeFormat(actor.charlie_channel_owner),
-            CoreTypes.ChannelType.InterestBearingMutual,
-            _testChannelUpdatedIdentity
-        );
+        emit UpdateChannel(toWormholeFormat(actor.bob_channel_owner), _newTestChannelIdentity, amount);
 
         receiveWormholeMessage(requestPayload);
-        assertEq(coreProxy.CHANNEL_POOL_FUNDS(), poolFunds);
-        assertEq(coreProxy.PROTOCOL_POOL_FEES(), poolFees);
-
         (
-            CoreTypes.ChannelType channelType,
-            uint8 channelState,
-            ,
-            uint256 poolContribution,
             ,
             ,
             ,
-            uint256 channelStartBlock,
+            ,
+            ,
+            ,
+            ,
+            ,
             uint256 channelUpdateBlock,
-            uint256 channelWeight,
-        ) = coreProxy.channelInfo(toWormholeFormat(actor.charlie_channel_owner));
-
-        assertEq(uint8(channelType), uint8(CoreTypes.ChannelType.InterestBearingMutual), "channel Type");
-        assertEq(channelState, 1, "channel State");
-        assertEq(poolContribution, amount - coreProxy.FEE_AMOUNT(), "Pool Contribution");
-        assertEq(channelStartBlock, block.number, "Channel Start Block");
-        assertEq(channelUpdateBlock, block.number, "Chanel Update Block");
-        assertEq(
-            channelWeight,
-            ((amount - coreProxy.FEE_AMOUNT()) * 10 ** 7) / coreProxy.MIN_POOL_CONTRIBUTION(),
-            "Channel Weight"
-        );
+           ,
+        ) = coreProxy.channelInfo(toWormholeFormat(actor.bob_channel_owner));
+        assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + amount);
+        assertEq(coreProxy.channelUpdateCounter(toWormholeFormat(actor.bob_channel_owner)), oldCounter + 1);
+        assertEq(channelUpdateBlock, block.number);
     }
 
     function test_whenTokensAreTransferred() external {
         vm.recordLogs();
         test_whenReceiveChecksPass();
-
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
+
 
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) =
             getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         uint balanceCoreBefore = pushToken.balanceOf(address(coreProxy));
 
-        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
             a, // Should be zero

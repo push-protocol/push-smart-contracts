@@ -29,7 +29,7 @@ contract HandleArbitraryReq is BasePushCoreTest {
         uint256 arbitraryFees = coreProxy.arbitraryReqFees(actor.charlie_channel_owner);
 
         vm.expectEmit(true, true, false, true);
-        emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, feePercentage, 1);
+        emit ArbitraryRequest(BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), amount, feePercentage, 1);
         changePrank(actor.bob_channel_owner);
         coreProxy.handleArbitraryRequestData(1, feePercentage, actor.charlie_channel_owner, amount);
         uint256 feeAmount = BaseHelper.calcPercentage(amount, feePercentage);

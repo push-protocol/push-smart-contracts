@@ -11,24 +11,25 @@ abstract contract CoreEvents {
     event ChannelBlocked(bytes32 indexed channel);
     event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     event IncentivizedChatReqReceived(
-        address requestSender,
-        address requestReceiver,
+        bytes32 requestSender,
+        bytes32 requestReceiver,
         uint256 amountForReqReceiver,
         uint256 feePoolAmount,
         uint256 timestamp
     );
     event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
-    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
-    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
+    event ChannelVerified(bytes32 indexed channel, bytes32 indexed verifier);
+    event ChannelVerificationRevoked(bytes32 indexed channel, bytes32 indexed revoker);
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     event ArbitraryRequest(
-        address indexed sender,
-        address indexed receiver,
+        bytes32 indexed sender,
+        bytes32 indexed receiver,
         uint256 amountDeposited,
         GenericTypes.Percentage feePercent,
         uint256 indexed feeId
     );
     event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ChannelNotifcationSettingsAdded(bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription);
 }
 
 abstract contract CommEvents {

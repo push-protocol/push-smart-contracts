@@ -33,6 +33,20 @@ library BaseHelper {
     }
 
     /**
+     * @notice This function converts a bytes32 value to an address
+     * @dev This function performs type casting to convert a bytes32 to an address.
+     *      It first converts the bytes32 to a uint256, then to a uint160, and finally to an address.
+     *      This conversion involves truncation from left side.
+     *      For example, given a bytes32 value of 0x111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFFCCCC:
+     *      - Using address(uint160(uint256(b))) results in an address of 0x777788889999AaAAbBbbCcccddDdeeeEfFFfCcCc
+     * @param _bytes The bytes32 value to be converted to an address
+     * @return address The address representation of the bytes32 value
+     */
+    function bytes32ToAddress(bytes32 _bytes) internal pure returns (address) {
+        return address(uint160(uint256(_bytes)));
+    }
+
+    /**
      * @notice This function calculates the percentage of a given amount using a Percentage struct.
      * @dev This function performs a simple percentage calculation.
      *      It multiplies the amount by the percentage number and divides the result by 10 raised to the power of

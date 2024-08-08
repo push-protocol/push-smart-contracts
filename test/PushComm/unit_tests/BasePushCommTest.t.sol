@@ -12,9 +12,6 @@ contract BasePushCommTest is BasePushCoreTest {
         BasePushCoreTest.setUp();
         changePrank(actor.tim_push_holder);
         verifierContract = new SignatureVerifier();
-
-        changePrank(actor.bob_channel_owner);
-        coreProxy.createChannelWithPUSH(CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, 50e18, 0);
     }
 
     //Helper Functions

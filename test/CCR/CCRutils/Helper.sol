@@ -16,6 +16,7 @@ import { EPNS } from "contracts/token/EPNS.sol";
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
 
+    bytes _newTestChannelIdentity = bytes("test-updated-channel-hello-world");
     SourceConfig SourceChain = ArbSepolia;
     DestConfig DestChain = EthSepolia;
 
@@ -36,12 +37,21 @@ contract Helper is BasePushCommTest, CCRConfig {
         vm.createSelectFork(url);
     }
 
-    function getPushTokenOnfork(address _addr, uint256 _amount) public {
-        changePrank(SourceChain.PushHolder);
-        pushNttToken.transfer(_addr, _amount);
+    function getPushTokenOnfork(address _addr, uint256 _amount, address _token) public {
+        if(_token == SourceChain.PUSH_NTT_SOURCE){
 
-        changePrank(_addr);
-        pushNttToken.approve(address(commProxy), type(uint256).max);
+          changePrank(SourceChain.PushHolder);
+          pushNttToken.transfer(_addr, _amount);
+
+          changePrank(_addr);
+          pushNttToken.approve(address(commProxy), type(uint256).max);
+        } else if(_token == DestChain.PUSH_NTT_DEST){
+          changePrank(DestChain.DestPushHolder);
+          pushToken.transfer(_addr, _amount);
+
+          changePrank(_addr);
+          pushToken.approve(address(coreProxy), type(uint256).max);
+        }
     }
 
     function setUpSourceChain() internal {
@@ -49,8 +59,8 @@ contract Helper is BasePushCommTest, CCRConfig {
         BasePushCommTest.setUp();
         pushNttToken = Push(SourceChain.PUSH_NTT_SOURCE);
 
-        getPushTokenOnfork(actor.bob_channel_owner, 1000e18);
-        getPushTokenOnfork(actor.charlie_channel_owner, 1000e18);
+        getPushTokenOnfork(actor.bob_channel_owner, 1000e18, address(pushNttToken));
+        getPushTokenOnfork(actor.charlie_channel_owner, 1000e18,address(pushNttToken));
 
         changePrank(actor.admin);
         commProxy.setBridgeConfig(
@@ -66,14 +76,17 @@ contract Helper is BasePushCommTest, CCRConfig {
         switchChains(DestChain.rpc);
         BasePushCommTest.setUp();
         pushToken = EPNS(DestChain.PUSH_NTT_DEST);
+
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.setEpnsTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
-    }
 
-    function toWormholeFormat(address addr) internal pure returns (bytes32) {
-        return bytes32(uint256(uint160(addr)));
+        getPushTokenOnfork(actor.bob_channel_owner, 1000e18, address(pushToken));
+        getPushTokenOnfork(actor.charlie_channel_owner, 1000e18,address(pushToken));
+        changePrank(actor.bob_channel_owner);
+        coreProxy.createChannelWithPUSH(CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, 50e18, 0);
+        changePrank(actor.admin);
     }
 
     function getPoolFundsAndFees(uint256 _amountDeposited)
@@ -90,29 +103,42 @@ contract Helper is BasePushCommTest, CCRConfig {
 
     function getSpecificPayload(
         CrossChainRequestTypes.CrossChainFunction typeOfReq,
-        address amountRecipient,
+        bytes32 amountRecipient,
         uint256 amount,
         uint8 _feeId,
         GenericTypes.Percentage memory _percentage,
-        address sender
+        uint256 _notifOptions, 
+        string memory _notifSettings,  
+        string memory _notifDescription,
+        bytes32 sender
     )
         internal
-        pure
+        view
         returns (bytes memory payload, bytes memory reqPayload)
     {
         if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
             payload = abi.encode(CoreTypes.ChannelType.InterestBearingMutual, _testChannelUpdatedIdentity, 0);
 
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
         } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
             payload = abi.encode(amountRecipient);
+            
+        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings) {
+            payload = abi.encode(_notifOptions, _notifSettings, _notifDescription);
 
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
-        } else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
             payload = abi.encode(_feeId, _percentage, amountRecipient);
 
-            reqPayload = abi.encode(typeOfReq, payload, amount, sender);
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.DeactivateChannel) {
+            payload = abi.encode(amountRecipient);
         }
+        else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
+            payload = new bytes(0);
+
+        }else if (typeOfReq == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
+
+            payload = abi.encode(_newTestChannelIdentity);
+        }
+        reqPayload = abi.encode(typeOfReq, payload, amount, sender);
     }
 
     function receiveWormholeMessage(bytes memory _requestPayload) internal {
