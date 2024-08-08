@@ -167,6 +167,8 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (bytes memory transceiverMessage, bytes32 hash) =
             getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
+        uint balanceCoreBefore = pushToken.balanceOf(address(coreProxy));
+
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
@@ -176,7 +178,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), balanceCoreBefore + amount, "Tokens in Core");
     }
 
     function test_when_UserTries_ClaimingArbitraryTokens() external {
