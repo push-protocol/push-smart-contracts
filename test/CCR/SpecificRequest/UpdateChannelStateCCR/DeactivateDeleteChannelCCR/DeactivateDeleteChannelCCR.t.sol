@@ -158,13 +158,13 @@ contract DeactivateChannelCCR is BaseCCRTest {
         (address sourceNttManager, bytes32 recipient, uint256 _amount, uint16 recipientChain) =
             getMessagefromLog(vm.getRecordedLogs());
 
-        console.log(pushNttToken.balanceOf(address(coreProxy)));
-
         bytes[] memory a;
         (bytes memory transceiverMessage, bytes32 hash) =
             getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
         
         setUpDestChain();
+        uint balanceCoreBefore = pushToken.balanceOf(address(coreProxy));
+
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
@@ -174,6 +174,6 @@ contract DeactivateChannelCCR is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), balanceCoreBefore + amount, "Tokens in Core");    
     }
 }
