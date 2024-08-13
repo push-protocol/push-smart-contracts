@@ -36,9 +36,6 @@ contract PushCoreStorageV2 {
      */
     mapping(address => uint256) public celebUserFunds;
 
-    /* *** v2.5 State variables *** */
-    address public feePoolStakingContract;
-
     /* *** V3 State variables *** */
     // WORMHOLE Cross-Chain State
 
