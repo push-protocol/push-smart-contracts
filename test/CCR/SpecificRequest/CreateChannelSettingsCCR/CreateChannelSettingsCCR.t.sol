@@ -2,36 +2,40 @@
 pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
-import { CoreTypes, CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
+import "forge-std/console.sol";
+import {CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
-import { IRateLimiter } from "contracts/interfaces/wormhole/IRateLimiter.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-contract CreateChannelCCR is BaseCCRTest {
+contract CreateChannelSettingsCCR is BaseCCRTest {
     uint256 amount = ADD_CHANNEL_MIN_FEES;
+    uint256 notifOptions = 2;
+    string notifSettings = "1-0+2-50-20-100";
+    string notifDescription = "description";
 
     function setUp() public override {
         BaseCCRTest.setUp();
         sourceAddress = toWormholeFormat(address(commProxy));
         (_payload, requestPayload) = getSpecificPayload(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel,
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings,
             BaseHelper.addressToBytes32(address(0)),
             amount,
             0,
             percentage,
-            0,
-            "",
-            "",
+            notifOptions,
+            notifSettings,
+            notifDescription,
             BaseHelper.addressToBytes32(actor.charlie_channel_owner)
         );
     }
 
-    modifier whenCreateChannelIsCalled() {
+    modifier whenCreateChannelSettingsIsCalled() {
         _;
     }
 
-    function test_WhenContractIsPaused() external whenCreateChannelIsCalled {
+    function test_WhenContractIsPaused() external whenCreateChannelSettingsIsCalled {
         // it should Revert
 
         changePrank(actor.admin);
@@ -39,11 +43,11 @@ contract CreateChannelCCR is BaseCCRTest {
         vm.expectRevert("Pausable: paused");
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelIsCalled {
+    function test_RevertWhen_AmountIsLessThanMinimumFees() external whenCreateChannelSettingsIsCalled {
         // it should revert
         amount = 49e18;
         vm.expectRevert(
@@ -51,40 +55,27 @@ contract CreateChannelCCR is BaseCCRTest {
         );
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_RevertWhen_EtherPassedIsLess() external whenCreateChannelIsCalled {
+    function test_RevertWhen_EtherPassedIsLess() external whenCreateChannelSettingsIsCalled {
         // it should revert
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientFunds.selector));
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
-    function test_revertWhen_OutboundQueueDisabled() external whenCreateChannelIsCalled {
-        changePrank(SourceChain.NTT_MANAGER);
-        uint256 transferTooLarge = MAX_WINDOW + 1e18; // one token more than the outbound capacity
-        pushNttToken.mint(actor.bob_channel_owner, transferTooLarge);
-
-        changePrank(actor.bob_channel_owner);
-        // test revert on a transfer that is larger than max window size without enabling queueing
-        vm.expectRevert(abi.encodeWithSelector(IRateLimiter.NotEnoughCapacity.selector, MAX_WINDOW, transferTooLarge));
-        commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest, _payload, transferTooLarge, GasLimit
-        );
-    }
-
-    function test_WhenAllChecksPasses() public whenCreateChannelIsCalled {
+    function test_WhenAllChecksPasses() public whenCreateChannelSettingsIsCalled {
         // it should successfully create the CCR
 
         vm.expectEmit(true, false, false, false);
         emit LogMessagePublished(SourceChain.WORMHOLE_RELAYER_SOURCE, 2105, 0, requestPayload, 15);
         changePrank(actor.charlie_channel_owner);
         commProxy.createCrossChainRequest{ value: 1e18 }(
-            CrossChainRequestTypes.CrossChainFunction.AddChannel, _payload, amount, GasLimit
+            CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings, _payload, amount, GasLimit
         );
     }
 
@@ -113,7 +104,7 @@ contract CreateChannelCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
     }
 
-    function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
+    function test_WhenDeliveryHashIsUsedAlreadyw() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
 
         receiveWormholeMessage(requestPayload);
@@ -122,44 +113,20 @@ contract CreateChannelCCR is BaseCCRTest {
     }
 
     function test_whenReceiveChecksPass() public whenReceiveFunctionIsCalledInCore {
-        // it should emit event and create Channel
 
-        (uint256 poolFunds, uint256 poolFees) = getPoolFundsAndFees(amount);
+        uint256 PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES();
+        changePrank(DestChain.WORMHOLE_RELAYER_DEST);
+
+        string memory notifSettingRes = string(abi.encodePacked(Strings.toString(notifOptions), "+", notifSettings));
 
         vm.expectEmit(true, true, false, true);
-        emit ChannelCreated(
-            toWormholeFormat(actor.charlie_channel_owner),
-            CoreTypes.ChannelType.InterestBearingMutual,
-            _testChannelUpdatedIdentity
+        emit ChannelNotifcationSettingsAdded(BaseHelper.addressToBytes32(actor.charlie_channel_owner), notifOptions, notifSettingRes, notifDescription);
+
+        coreProxy.receiveWormholeMessages(
+            requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
         );
-
-        receiveWormholeMessage(requestPayload);
-        assertEq(coreProxy.CHANNEL_POOL_FUNDS(), poolFunds);
-        assertEq(coreProxy.PROTOCOL_POOL_FEES(), poolFees);
-
-        (
-            CoreTypes.ChannelType channelType,
-            uint8 channelState,
-            ,
-            uint256 poolContribution,
-            ,
-            ,
-            ,
-            uint256 channelStartBlock,
-            uint256 channelUpdateBlock,
-            uint256 channelWeight,
-        ) = coreProxy.channelInfo(toWormholeFormat(actor.charlie_channel_owner));
-
-        assertEq(uint8(channelType), uint8(CoreTypes.ChannelType.InterestBearingMutual), "channel Type");
-        assertEq(channelState, 1, "channel State");
-        assertEq(poolContribution, amount - coreProxy.FEE_AMOUNT(), "Pool Contribution");
-        assertEq(channelStartBlock, block.number, "Channel Start Block");
-        assertEq(channelUpdateBlock, block.number, "Chanel Update Block");
-        assertEq(
-            channelWeight,
-            ((amount - coreProxy.FEE_AMOUNT()) * 10 ** 7) / coreProxy.MIN_POOL_CONTRIBUTION(),
-            "Channel Weight"
-        );
+        // Update states based on Fee Percentage calculation
+        assertEq(coreProxy.PROTOCOL_POOL_FEES(), PROTOCOL_POOL_FEES + amount);
     }
 
     function test_whenTokensAreTransferred() external {

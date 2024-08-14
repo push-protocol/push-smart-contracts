@@ -20,7 +20,7 @@ contract ReactivateChannel_Test is BasePushCoreTest {
         approveTokens(actor.bob_channel_owner, address(coreProxy), ADD_CHANNEL_MIN_FEES);
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);

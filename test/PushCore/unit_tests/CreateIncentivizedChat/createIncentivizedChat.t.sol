@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { console } from "forge-std/console.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract test_createIncentivizedChat is BasePushCoreTest {
     function setUp() public override {
@@ -42,7 +43,7 @@ contract test_createIncentivizedChat is BasePushCoreTest {
 
         vm.expectEmit(false, false, false, true);
         emit IncentivizedChatReqReceived(
-            actor.bob_channel_owner, actor.charlie_channel_owner, 100e18 - FEE_AMOUNT, FEE_AMOUNT, block.timestamp
+            BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), 100e18 - FEE_AMOUNT, FEE_AMOUNT, block.timestamp
         );
         coreProxy.createIncentivizedChatRequest(actor.charlie_channel_owner, 100e18);
 

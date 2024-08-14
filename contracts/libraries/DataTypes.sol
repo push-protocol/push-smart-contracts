@@ -108,9 +108,13 @@ library CrossChainRequestTypes {
     // Payload
     enum CrossChainFunction {
         AddChannel,
+        CreateChannelSettings,
+        ReactivateChannel,
         IncentivizedChat,
         ArbitraryRequest,
-        AdminRequest_AddPoolFee
+        AdminRequest_AddPoolFee,
+        DeactivateChannel,
+        UpdateChannelMeta
     }
 }
 

@@ -20,11 +20,14 @@ contract ArbitraryRequesttsol is BaseCCRTest {
 
         (_payload, requestPayload) = getSpecificPayload(
             CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest,
-            actor.charlie_channel_owner,
+            BaseHelper.addressToBytes32(actor.charlie_channel_owner),
             amount,
             1,
             percentage,
-            actor.bob_channel_owner
+            0,
+            "",
+            "",
+            BaseHelper.addressToBytes32(actor.bob_channel_owner)
         );
     }
 
@@ -141,7 +144,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
 
         vm.expectEmit(true, true, false, true);
-        emit ArbitraryRequest(actor.bob_channel_owner, actor.charlie_channel_owner, amount, percentage, 1);
+        emit ArbitraryRequest(BaseHelper.addressToBytes32(actor.bob_channel_owner), BaseHelper.addressToBytes32(actor.charlie_channel_owner), amount, percentage, 1);
 
         coreProxy.receiveWormholeMessages(
             requestPayload, additionalVaas, sourceAddress, SourceChain.SourceChainId, deliveryHash
@@ -164,6 +167,8 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         (bytes memory transceiverMessage, bytes32 hash) =
             getRequestPayload(_amount, recipient, recipientChain, sourceNttManager);
 
+        uint balanceCoreBefore = pushToken.balanceOf(address(coreProxy));
+
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);
         DestChain.wormholeTransceiverChain2.receiveWormholeMessages(
             transceiverMessage, // Verified
@@ -173,7 +178,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
             hash // Hash of the VAA being used
         );
 
-        assertEq(pushToken.balanceOf(address(coreProxy)), amount);
+        assertEq(pushToken.balanceOf(address(coreProxy)), balanceCoreBefore + amount, "Tokens in Core");
     }
 
     function test_when_UserTries_ClaimingArbitraryTokens() external {

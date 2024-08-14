@@ -12,9 +12,9 @@ interface IPushCoreV3 {
     /// @notice emits whenever a channel updates its metadata
     event UpdateChannel(bytes32 indexed channel, bytes identity, uint256 indexed amountDeposited);
     /// @notice emits whenever a channel is verified either by admin or any otherchannel with primary verification
-    event ChannelVerified(bytes32 indexed channel, address indexed verifier);
+    event ChannelVerified(bytes32 indexed channel, bytes32 indexed verifier);
     /// @notice emits whenever the verification is revoked for a channel
-    event ChannelVerificationRevoked(bytes32 indexed channel, address indexed revoker);
+    event ChannelVerificationRevoked(bytes32 indexed channel, bytes32 indexed revoker);
     /// @notice emits whenever any channel is blocked by admin
     event ChannelBlocked(bytes32 indexed channel);
     /// @notice emits whenever a new channel is created - ToDo: Remove this event
@@ -26,7 +26,7 @@ interface IPushCoreV3 {
         bytes32 _channel, uint256 totalNotifOptions, string _notifSettings, string _notifDescription
     );
     /// @notice emits whenever a subgraph is added(handled by backend)
-    event AddSubGraph(address indexed channel, bytes _subGraphData);
+    event AddSubGraph(bytes32 indexed channel, bytes _subGraphData);
     /// @notice emits whenever any time bound channel is deleted permanently
     // event TimeBoundChannelDestroyed(address indexed channel, uint256 indexed amountRefunded);
     /// @notice emits whenever a user stakes in the staking program
@@ -37,27 +37,27 @@ interface IPushCoreV3 {
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
     /// @notice emits whenever any user receives an incentivized chat request from another user
     event IncentivizedChatReqReceived(
-        address requestSender,
-        address requestReceiver,
+        bytes32 requestSender,
+        bytes32 requestReceiver,
         uint256 amountForReqReceiver,
         uint256 feePoolAmount,
         uint256 timestamp
     );
     /// @notice emits whenever a user claims the remianing funds that they got from incentivized chat
-    event ChatIncentiveClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ChatIncentiveClaimed(bytes32 indexed user, uint256 indexed amountClaimed);
     /// @notice emits when the state of a channel is updated from Active State to either Deactivated, Reactivated,
     /// Blocked or Deleted
     event ChannelStateUpdate(bytes32 indexed channel, uint256 amountRefunded, uint256 amountDeposited);
     /// @notice emits when arbitray cross chain request is received
     event ArbitraryRequest(
-        address indexed sender,
-        address indexed receiver,
+        bytes32 indexed sender,
+        bytes32 indexed receiver,
         uint256 amountDeposited,
         GenericTypes.Percentage feePercent,
         uint256 indexed feeId
     );
     /// @notice emits whenever a user claims the funds that they got from arbirary request fees
-    event ArbitraryRequestFeesClaimed(address indexed user, uint256 indexed amountClaimed);
+    event ArbitraryRequestFeesClaimed(bytes32 indexed user, uint256 indexed amountClaimed);
 
     /* *****************************
 
@@ -67,12 +67,12 @@ interface IPushCoreV3 {
     /**
      * @notice    Function is designed to tell if a channel is verified or not
      * @dev       Get if channel is verified or not
-     * @param    _channel Address of the channel to be Verified
+     * @param    _channel Address of the channel to be Verified, in bytes32 format
      * @return   verificationStatus  Returns 0 for not verified, 1 for primary verification, 2 for secondary
      * verification
      *
      */
-    function getChannelVerfication(address _channel) external view returns (uint8 verificationStatus);
+    function getChannelVerfication(bytes32 _channel) external view returns (uint8 verificationStatus);
 
     /* *****************************
 
@@ -99,12 +99,11 @@ interface IPushCoreV3 {
      *       Records the Block Number of the Block at which the Channel is being updated
      *       Emits an event with the new identity for the respective Channel Address
      *
-     * @param _channel     address of the Channel
      * @param _newIdentity bytes Value for the New Identity of the Channel
      * @param _amount amount of PUSH Token required for updating channel details.
      *
      */
-    function updateChannelMeta(address _channel, bytes calldata _newIdentity, uint256 _amount) external;
+    function updateChannelMeta(bytes calldata _newIdentity, uint256 _amount) external;
 
     /**
      * @notice An external function that allows users to Create their Own Channels by depositing a valid amount of PUSH
@@ -212,27 +211,27 @@ interface IPushCoreV3 {
      *         - Since there is no refund, the channel's poolContribution is added to PROTOCOL_POOL_FEES and Removed
      * from CHANNEL_POOL_FUNDS
      *         - Emit 'ChannelBlocked' Event
-     * @param _channelAddress Address of the Channel to be blocked
+     * @param _channelAddress Address of the Channel to be blocked, in bytes32 format
      *
      */
-    function blockChannel(address _channelAddress) external;
+    function blockChannel(bytes32 _channelAddress) external;
 
     /**
      * @notice    Function is designed to verify a channel
      * @dev       Channel will be verified by primary or secondary verification, will fail or upgrade if already
      * verified
-     * @param    _channel Address of the channel to be Verified
+     * @param    _channel Address of the channel to be Verified, in bytes32 format
      *
      */
-    function verifyChannel(address _channel) external;
+    function verifyChannel(bytes32 _channel) external;
 
     /**
      * @notice    Function is designed to unverify a channel
      * @dev       Channel who verified this channel or Push Channel Admin can only revoke
-     * @param    _channel Address of the channel to be unverified
+     * @param    _channel Address of the channel to be unverified, in bytes32 format
      *
      */
-    function unverifyChannel(address _channel) external;
+    function unverifyChannel(bytes32 _channel) external;
 
     /**
      * @notice Designed to handle the incoming Incentivized Chat Request Data and PUSH tokens.

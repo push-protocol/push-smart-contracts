@@ -11,7 +11,7 @@ contract PushCoreStorageV2 {
     );
 
     mapping(address => uint256) public nonces; // NOT IN USE Anymore
-    mapping(address => uint256) public channelUpdateCounter;
+    mapping(address => uint256) public oldChannelUpdateCounter;//NOT in use anymore
     /**
      * Staking V2 state variables *
      */
@@ -36,9 +36,6 @@ contract PushCoreStorageV2 {
      */
     mapping(address => uint256) public celebUserFunds;
 
-    /* *** v2.5 State variables *** */
-    address public feePoolStakingContract;
-
     /* *** V3 State variables *** */
     // WORMHOLE Cross-Chain State
 
@@ -48,5 +45,6 @@ contract PushCoreStorageV2 {
     mapping(address => uint256) public arbitraryReqFees; // ToDo: Could be replaced with nonces(unused) mapping instead
         // of adding new state
 
-    mapping(bytes32 => CoreTypes.Channel) public channelInfo;
+    mapping(bytes32 => CoreTypes.Channel) public channelInfo;    
+    mapping(bytes32 => uint256) public channelUpdateCounter;
 }
