@@ -86,12 +86,6 @@ library CommTypes {
         ///@notice Maps ID to the Channel
         mapping(uint256 => address) mapAddressSubscribed;
     }
-
-    struct ChatDetails {
-        address requestSender;
-        uint256 timestamp;
-        uint256 amountDeposited;
-    }
 }
 
 library StakingTypes {

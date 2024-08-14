@@ -41,7 +41,6 @@ contract PushCommStorageV2 {
     // New State Variables
     IERC20 public PUSH_NTT;
 
-    mapping(address => CommTypes.ChatDetails) public userChatData;
     mapping(bytes32 => string) public walletToPGP;
 
     // WORMHOLE CROSS-CHAIN STATE VARIABLES

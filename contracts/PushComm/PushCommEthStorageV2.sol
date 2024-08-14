@@ -35,7 +35,6 @@ contract PushCommEthStorageV2 {
     // New State Variables
     address public PUSH_TOKEN_ADDRESS;
 
-    mapping(address => CommTypes.ChatDetails) public userChatData;
     mapping(bytes32 => string) public walletToPGP;
     uint256 FEE_AMOUNT;
 }
