@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 
 import { CommTypes } from "../libraries/DataTypes.sol";
 
-contract PushCommEthStorageV3 {
+contract PushCommEthStorageV2 {
     /**
      * MAPPINGS *
      */
@@ -35,7 +35,6 @@ contract PushCommEthStorageV3 {
     // New State Variables
     address public PUSH_TOKEN_ADDRESS;
 
-    mapping(address => CommTypes.ChatDetails) public userChatData;
     mapping(bytes32 => string) public walletToPGP;
     uint256 FEE_AMOUNT;
 }

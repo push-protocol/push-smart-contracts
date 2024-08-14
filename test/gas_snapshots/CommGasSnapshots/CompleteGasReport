@@ -23,4 +23,3 @@
 | transferPushChannelAdminControl                             | 7470            | 8332   | 7607   | 10645  | 4       |
 | unSubscribeViaCore                                          | 4010            | 4010   | 4010   | 4010   | 30      |
 | unsubscribeBySig                                            | 9498            | 16569  | 16569  | 23641  | 2       |
-| userChatData                                                | 1342            | 4842   | 1342   | 11842  | 3       |

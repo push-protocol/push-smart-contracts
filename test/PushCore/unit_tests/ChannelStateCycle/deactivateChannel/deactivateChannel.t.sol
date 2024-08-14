@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 
 import { BasePushCoreTest } from "../../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
-import { CoreTypes } from "../../../../../contracts/libraries/DataTypes.sol";
+import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 
 contract DeactivateChannel_Test is BasePushCoreTest {
     function setUp() public virtual override {
@@ -34,7 +34,7 @@ contract DeactivateChannel_Test is BasePushCoreTest {
 
     function test_Revertwhen_DeactivatingBlockedChannel() public whenNotPaused {
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(Errors.Core_InvalidChannel.selector);
@@ -55,7 +55,7 @@ contract DeactivateChannel_Test is BasePushCoreTest {
         uint256 expectedRefundAmount = ADD_CHANNEL_MIN_FEES - FEE_AMOUNT - MIN_POOL_CONTRIBUTION;
         vm.expectEmit(true, true, false, false, address(coreProxy));
 
-        emit ChannelStateUpdate(actor.bob_channel_owner, expectedRefundAmount, 0);
+        emit ChannelStateUpdate(channelCreators.bob_channel_owner_Bytes32, expectedRefundAmount, 0);
 
         coreProxy.updateChannelState(0);
 

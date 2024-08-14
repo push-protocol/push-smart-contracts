@@ -83,7 +83,7 @@ contract ContractPausability_Test is BasePushCoreTest {
 
         vm.expectRevert("Pausable: paused");
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
     }
 
     function test_ChannelFunctionsAfterPauseUnpause() public {
@@ -99,6 +99,6 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.stopPrank();
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
     }
 }

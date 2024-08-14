@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 import { BasePushCommTest } from "../BasePushCommTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { MockERC721 } from "contracts/mocks/MockERC721.sol";
-import { PushCommEthV3 } from "contracts/PushComm/PushCommEthV3.sol";
+import { PushCommETHV3 } from "contracts/PushComm/PushCommETHV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 
 import "forge-std/console.sol";
 
-contract walletPGP_Test is BasePushCommTest {
+contract walletPGPforETH_Test is BasePushCommTest {
     string pgp1 = "PGP1";
     string pgp2 = "PGP2";
     string pgp3 = "PGP3";
@@ -16,16 +16,16 @@ contract walletPGP_Test is BasePushCommTest {
     MockERC721 firstERC721;
     MockERC721 secondERC721;
     MockERC721 thirdERC721;
-    PushCommEthV3 public commEth;
-    PushCommEthV3 public commProxyEth;
+    // PushCommETHV3 public commEth;
+    PushCommETHV3 public commProxyEth;
 
     function setUp() public override {
         BasePushCommTest.setUp();
-        commEth = new PushCommEthV3();
+        // commEth = new PushCommEthV3();
         epnsCommProxy =
             new EPNSCommProxy(address(commEth), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         changePrank(actor.admin);
-        commProxyEth = PushCommEthV3(address(epnsCommProxy));
+        commProxyEth = PushCommETHV3(address(epnsCommProxy));
         commProxyEth.setEPNSCoreAddress(address(coreProxy));
         commProxyEth.setPushTokenAddress(address(pushToken));
         coreProxy.setEpnsCommunicatorAddress(address(commProxyEth));
