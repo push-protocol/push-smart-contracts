@@ -8,7 +8,7 @@ import { console } from "forge-std/console.sol";
 import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 
-contract Migration_Test is BasePushCoreTest {
+contract StateMigration_Test is BasePushCoreTest {
     PushCoreMock public coreV2;
     PushCoreV3 public coreV3;
     EPNSCoreProxy public epnsCoreProxyV2;
