@@ -982,10 +982,9 @@ contract PushCoreV3 is
         onlyPushChannelAdmin();
         for (uint256 i; i < _channels.length; ++i) {
             CoreTypes.Channel memory _channelData = channels[_channels[i]];
-            uint256 _channelUpdateCounter = oldChannelUpdateCounter[_channels[i]];
             bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channels[i]);
             channelInfo[_channelBytesID] = _channelData;
-            channelUpdateCounter[_channelBytesID] = _channelUpdateCounter;
+            channelUpdateCounter[_channelBytesID] = oldChannelUpdateCounter[_channels[i]];
             delete channels[_channels[i]];
             delete oldChannelUpdateCounter[_channels[i]];
         }
