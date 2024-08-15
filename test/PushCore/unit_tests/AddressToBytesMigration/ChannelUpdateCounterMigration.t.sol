@@ -8,7 +8,7 @@ import { console } from "forge-std/console.sol";
 import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 
-contract Migration_Test is BasePushCoreTest {
+contract UpdationMigration_Test is BasePushCoreTest {
     PushCoreMock public coreV2;
     PushCoreV3 public coreV3;
     EPNSCoreProxy public epnsCoreProxyV2;
@@ -43,74 +43,54 @@ contract Migration_Test is BasePushCoreTest {
         approveTokens(actor.tim_push_holder, address(coreV2), 50_000 ether);
     }
 
-    function test_ProtocolPoolFees_IsCorrect_ForMultipleChannelsCreation() public {
+    function test_ProtocolPoolFees_IsCorrect_ForMultipleTimesUpdation() public {
         changePrank(actor.bob_channel_owner);
         coreV2.createChannelWithPUSH(
             CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, ADD_CHANNEL_MIN_FEES, 0
         );
 
-        changePrank(actor.charlie_channel_owner);
-        coreV2.createChannelWithPUSH(
-            CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, ADD_CHANNEL_MIN_FEES * 2, 0
-        );
-        uint256 expectedProtocolPoolFees = FEE_AMOUNT * 2;
-        uint256 expectedChannelPoolFunds =
-            (ADD_CHANNEL_MIN_FEES + (ADD_CHANNEL_MIN_FEES * 2)) - expectedProtocolPoolFees;
+        uint256 amountForUpdation = ADD_CHANNEL_MIN_FEES;
+        coreV2.updateChannelMeta(_testChannelUpdatedIdentity, amountForUpdation);
+        coreV2.updateChannelMeta(_testChannelUpdatedIdentity, amountForUpdation * 2);
+
+        uint256 expectedProtocolPoolFees = FEE_AMOUNT + ADD_CHANNEL_MIN_FEES * 3;
+        uint256 expectedChannelPoolFunds = ADD_CHANNEL_MIN_FEES - FEE_AMOUNT;
         assertEq(expectedProtocolPoolFees, coreV2.PROTOCOL_POOL_FEES());
         assertEq(expectedChannelPoolFunds, coreV2.CHANNEL_POOL_FUNDS());
     }
 
-    function test_ChannelsState_Migration() external {
-        test_ProtocolPoolFees_IsCorrect_ForMultipleChannelsCreation();
+    function test_ChannelUpdateCounter_Migration() public {
+        changePrank(actor.bob_channel_owner);
+        coreV2.createChannelWithPUSH(
+            CoreTypes.ChannelType.InterestBearingOpen, _testChannelIdentity, ADD_CHANNEL_MIN_FEES, 0
+        );
+
+        uint256 amountForChannelUpdation = ADD_CHANNEL_MIN_FEES;
+        coreV2.oldUpdateChannelMeta(_testChannelUpdatedIdentity, amountForChannelUpdation);
+        coreV2.oldUpdateChannelMeta(_testChannelUpdatedIdentity, amountForChannelUpdation * 2);
 
         address[] memory _channels = new address[](2);
         _channels[0] = actor.bob_channel_owner;
-        _channels[1] = actor.charlie_channel_owner;
 
-        for (uint256 i; i < _channels.length; ++i) {
-            (
-                ,
-                uint8 actualChannelState,
-                ,
-                uint256 actualPoolContribution,
-                ,
-                ,
-                ,
-                uint256 actualChannelStartBlock,
-                uint256 actualChannelUpdateBlock,
-                uint256 actualChannelWeight,
-                uint256 actualExpiryTime
-            ) = coreV2.channels(_channels[i]);
-            console.log(actualChannelState, actualPoolContribution, actualChannelStartBlock, actualChannelUpdateBlock);
-        }
+        uint256 _bobChannelUpdateCounterBeforeMigration = coreV2.oldChannelUpdateCounter(actor.bob_channel_owner);
+
         changePrank(actor.admin);
         epnsCoreProxyAdmin.upgrade(ITransparentUpgradeableProxy(address(epnsCoreProxyV2)), address(coreV3));
         coreV3 = PushCoreV3(address(epnsCoreProxyV2));
 
-        bytes32[] memory _channelsBytes = new bytes32[](2);
+        bytes32[] memory _channelsBytes = new bytes32[](1);
         _channelsBytes[0] = channelCreators.bob_channel_owner_Bytes32;
-        _channelsBytes[1] = channelCreators.charlie_channel_owner_Bytes32;
 
         vm.expectRevert();
         coreV3.migrateAddressToBytes32(_channels);
 
         coreV3.pauseContract();
         coreV3.migrateAddressToBytes32(_channels);
-        for (uint256 i; i < _channelsBytes.length; ++i) {
-            (
-                ,
-                uint8 actualChannelState,
-                ,
-                uint256 actualPoolContribution,
-                ,
-                ,
-                ,
-                uint256 actualChannelStartBlock,
-                uint256 actualChannelUpdateBlock,
-                uint256 actualChannelWeight,
-                uint256 actualExpiryTime
-            ) = coreV3.channelInfo(_channelsBytes[i]);
-            console.log(actualChannelState, actualPoolContribution, actualChannelStartBlock, actualChannelUpdateBlock);
-        }
+
+        coreV3.unPauseContract();
+
+        uint256 _bobChannelUpdateCounterAfterMigration = coreV3.channelUpdateCounter(_channelsBytes[0]);
+
+        assertEq(_bobChannelUpdateCounterAfterMigration, _bobChannelUpdateCounterBeforeMigration);
     }
 }

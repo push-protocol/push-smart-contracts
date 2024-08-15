@@ -984,7 +984,9 @@ contract PushCoreV3 is
             CoreTypes.Channel memory _channelData = channels[_channels[i]];
             bytes32 _channelBytesID = BaseHelper.addressToBytes32(_channels[i]);
             channelInfo[_channelBytesID] = _channelData;
+            channelUpdateCounter[_channelBytesID] = oldChannelUpdateCounter[_channels[i]];
             delete channels[_channels[i]];
+            delete oldChannelUpdateCounter[_channels[i]];
         }
     }
 }
