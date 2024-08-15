@@ -71,4 +71,16 @@ contract PushCoreMock is PushCoreV3 {
     function setEpnsTokenAddress(address _epnsAddress) external {
         PUSH_TOKEN_ADDRESS = _epnsAddress;
     }
+
+    // for testing channelUpdateCounter migration
+    function oldUpdateChannelMeta(bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        _updateChannelMeta(msg.sender, _newIdentity, _amount);
+    }
+
+    function _updateChannelMeta(address _channel, bytes memory _newIdentity, uint256 _amount) internal {
+        uint256 updateCounter = oldChannelUpdateCounter[_channel] + 1;
+        oldChannelUpdateCounter[_channel] = updateCounter;
+        channels[_channel].channelUpdateBlock = block.number;
+    }
 }
