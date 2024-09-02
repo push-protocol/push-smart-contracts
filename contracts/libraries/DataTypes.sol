@@ -86,12 +86,6 @@ library CommTypes {
         ///@notice Maps ID to the Channel
         mapping(uint256 => address) mapAddressSubscribed;
     }
-
-    struct ChatDetails {
-        address requestSender;
-        uint256 timestamp;
-        uint256 amountDeposited;
-    }
 }
 
 library StakingTypes {
@@ -107,5 +101,26 @@ library StakingTypes {
         uint256 lastClaimedBlock;
         ///@notice Weight of staked amount of a user w.r.t total staked in a single epoch
         mapping(uint256 => uint256) epochToUserStakedWeight;
+    }
+}
+
+library CrossChainRequestTypes {
+    // Payload
+    enum CrossChainFunction {
+        AddChannel,
+        CreateChannelSettings,
+        ReactivateChannel,
+        IncentivizedChat,
+        ArbitraryRequest,
+        AdminRequest_AddPoolFee,
+        DeactivateChannel,
+        UpdateChannelMeta
+    }
+}
+
+library GenericTypes {
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
     }
 }

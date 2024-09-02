@@ -1,6 +1,6 @@
 migrationAdminActions.t.sol
 ├── when non-admin tries to call setNewPushToken
-│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+│   └── it should REVERT - "Ownable: caller is not the owner"
 ├── when admin tries to call setNewPushToken
 │   └── when passed _newToken is zero address
 │       ├── it REVERT - InvalidArgument_WrongAddress(0)
@@ -9,11 +9,11 @@ migrationAdminActions.t.sol
 │           └── when newPushToken is not not set already
 │               └── it should update newPushToken
 ├── when non-admin tries to call toggleUnMigrationStatus
-│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+│   └── it should REVERT - "Ownable: caller is not the owner"
 ├── when admin tries to call toggleUnMigrationStatus
 │   └── it should successfully set unMigrationPaused as passed value
 ├── when non-admin tries to call burnOldTokens
-│   └── it should REVERT - OwnableUnauthorizedAccount(caller)
+│   └── it should REVERT - "Ownable: caller is not the owner"
 └── when admin tries to call burnOldTokens
     ├── when balance of the migration contract is less than _amount passed
     │   └── it REVERT - Push::_transferTokens: transfer amount exceeds balance

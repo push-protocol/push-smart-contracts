@@ -17,8 +17,9 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
+    // Todo - fix updateChannelState function - Test case fails until then
 
     function test_Revertwhen_UpdatingDeactivatedChannel() public whenNotPaused {
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
@@ -28,25 +29,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
 
         vm.prank(actor.bob_channel_owner);
         vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
-    }
-
-    function test_Revertwhen_CallerNotChannelOwner() public whenNotPaused {
-        uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
-        _createChannel(actor.bob_channel_owner);
-
-        vm.prank(actor.charlie_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.UnauthorizedCaller.selector, actor.charlie_channel_owner));
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
-    }
-
-    function test_Revertwhen_UpdateZeroAddressChannel() public whenNotPaused {
-        uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
-        address _channelAddress = address(0x0);
-
-        vm.prank(actor.bob_channel_owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.Core_InvalidChannel.selector));
-        coreProxy.updateChannelMeta(_channelAddress, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
     function test_Revertwhen_AmountLessThanRequiredFees() public whenNotPaused {
@@ -59,7 +42,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
                 Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES, _amountBeingTransferred
             )
         );
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
     function test_Revertwhen_AmountLessThanRequiredFeesForSecondUpdate() public whenNotPaused {
@@ -67,14 +50,14 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         _createChannel(actor.bob_channel_owner);
 
         vm.startPrank(actor.bob_channel_owner);
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.InvalidArg_LessThanExpected.selector, ADD_CHANNEL_MIN_FEES * 2, _amountBeingTransferred
             )
         );
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
         vm.stopPrank();
     }
 
@@ -88,7 +71,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
             approveTokens(actor.bob_channel_owner, address(coreProxy), _amountBeingTransferred);
 
             vm.prank(actor.bob_channel_owner);
-            coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+            coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
         }
     }
 
@@ -104,7 +87,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
             uint256 _balanceOfPushTokensBeforeUpdateInProxy = pushToken.balanceOf(address(coreProxy));
 
             vm.prank(actor.bob_channel_owner);
-            coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+            coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
 
             uint256 _balanceOfPushTokensAfterUpdateInProxy = pushToken.balanceOf(address(coreProxy));
             assertEq(
@@ -124,9 +107,9 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
             approveTokens(actor.bob_channel_owner, address(coreProxy), _amountBeingTransferred);
 
             vm.prank(actor.bob_channel_owner);
-            coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+            coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
 
-            uint256 _channelUpdateCounterAfter = coreProxy.channelUpdateCounter(actor.bob_channel_owner);
+            uint256 _channelUpdateCounterAfter = coreProxy.channelUpdateCounter(toWormholeFormat(actor.bob_channel_owner));
             uint256 _channelUpdateBlock = _getChannelUpdateBlock(actor.bob_channel_owner);
             assertEq(_channelUpdateCounterAfter, i + 1);
             assertEq(_channelUpdateBlock, block.number);
@@ -141,7 +124,7 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         uint256 channelPoolFundsBeforeUpdate = coreProxy.CHANNEL_POOL_FUNDS();
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
 
         uint256 expectedProtocolPoolFees = poolFeesBeforeUpdate + _amountBeingTransferred;
         uint256 expectedChannelPoolFunds = channelPoolFundsBeforeUpdate;
@@ -150,15 +133,17 @@ contract UpdateChannelMeta_Test is BasePushCoreTest {
         assertEq(coreProxy.CHANNEL_POOL_FUNDS(), expectedChannelPoolFunds);
     }
 
-    function test_EmitRelevantEventsU() public {
+    function test_EmitRelevantEvents() public {
         _createChannel(actor.bob_channel_owner);
         uint256 _amountBeingTransferred = ADD_CHANNEL_MIN_FEES;
 
         vm.expectEmit(true, true, false, true, address(coreProxy));
-        emit UpdateChannel(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        emit UpdateChannel(
+            channelCreators.bob_channel_owner_Bytes32, _testChannelUpdatedIdentity, _amountBeingTransferred
+        );
 
         vm.prank(actor.bob_channel_owner);
-        coreProxy.updateChannelMeta(actor.bob_channel_owner, _testChannelUpdatedIdentity, _amountBeingTransferred);
+        coreProxy.updateChannelMeta( _testChannelUpdatedIdentity, _amountBeingTransferred);
     }
 
     // Zero-Address Channel Support - Now Deprecated

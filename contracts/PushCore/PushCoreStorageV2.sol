@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { StakingTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, StakingTypes } from "../libraries/DataTypes.sol";
 
 contract PushCoreStorageV2 {
     /* *** V2 State variables *** */
@@ -10,8 +10,8 @@ contract PushCoreStorageV2 {
         "CreateChannel(ChannelType channelType, bytes identity, uint256 amount, uint256 channelExpiryTime, uint256 nonce, uint256 expiry)"
     );
 
-    mapping(address => uint256) public nonces;
-    mapping(address => uint256) public channelUpdateCounter;
+    mapping(address => uint256) public nonces; // NOT IN USE Anymore
+    mapping(address => uint256) public oldChannelUpdateCounter;//NOT in use anymore
     /**
      * Staking V2 state variables *
      */
@@ -36,6 +36,15 @@ contract PushCoreStorageV2 {
      */
     mapping(address => uint256) public celebUserFunds;
 
-    /* *** v2.5 State variables *** */
-    address public feePoolStakingContract;
+    /* *** V3 State variables *** */
+    // WORMHOLE Cross-Chain State
+
+    address public wormholeRelayer;
+    mapping(bytes32 => bool) public processedMessages;
+    mapping(uint16 => bytes32) public registeredSenders;
+    mapping(address => uint256) public arbitraryReqFees; // ToDo: Could be replaced with nonces(unused) mapping instead
+        // of adding new state
+
+    mapping(bytes32 => CoreTypes.Channel) public channelInfo;    
+    mapping(bytes32 => uint256) public channelUpdateCounter;
 }

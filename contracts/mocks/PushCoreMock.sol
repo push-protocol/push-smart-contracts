@@ -11,15 +11,21 @@ pragma solidity ^0.8.20;
  *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
  *
  */
-import { PushCoreStorageV1_5 } from "../PushCore/PushCoreStorageV1_5.sol";
-import { PushCoreStorageV2 } from "../PushCore/PushCoreStorageV2.sol";
+import { CoreTypes } from "../libraries/DataTypes.sol";
+import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { PausableUpgradeable, Initializable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {
+    PausableUpgradeable, Initializable
+} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable, PushCoreStorageV2 {
+import { PushCoreV3 } from "./../PushCore/PushCoreV3.sol";
+
+contract PushCoreMock is PushCoreV3 {
     using SafeERC20 for IERC20;
+
+    event AddChannel(address indexed channel, CoreTypes.ChannelType indexed channelType, bytes identity);
 
     /* ***************
         INITIALIZER
@@ -60,5 +66,21 @@ contract PushCoreMock is Initializable, PushCoreStorageV1_5, PausableUpgradeable
 
         // Create Channel
         success = true;
+    }
+
+    function setEpnsTokenAddress(address _epnsAddress) external {
+        PUSH_TOKEN_ADDRESS = _epnsAddress;
+    }
+
+    // for testing channelUpdateCounter migration
+    function oldUpdateChannelMeta(bytes calldata _newIdentity, uint256 _amount) external whenNotPaused {
+        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _amount);
+        _updateChannelMeta(msg.sender, _newIdentity, _amount);
+    }
+
+    function _updateChannelMeta(address _channel, bytes memory _newIdentity, uint256 _amount) internal {
+        uint256 updateCounter = oldChannelUpdateCounter[_channel] + 1;
+        oldChannelUpdateCounter[_channel] = updateCounter;
+        channels[_channel].channelUpdateBlock = block.number;
     }
 }

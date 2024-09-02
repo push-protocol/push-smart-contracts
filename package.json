@@ -23,8 +23,8 @@
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "^5.0.0",
-    "@openzeppelin/contracts-upgradeable": "^5.0.0",
+    "@openzeppelin/contracts": "4.9.0",
+    "@openzeppelin/contracts-upgradeable": "4.9.0",
     "bip39": "3.0.3",
     "chai": "^4.3.4",
     "chalk": "^4.1.1",

@@ -47,7 +47,7 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
+        vm.expectRevert("Pausable: paused");
         _createChannel(actor.bob_channel_owner);
     }
 
@@ -57,7 +57,7 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
+        vm.expectRevert("Pausable: paused");
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(0);
     }
@@ -70,7 +70,7 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
+        vm.expectRevert("Pausable: paused");
         vm.prank(actor.bob_channel_owner);
         coreProxy.updateChannelState(ADD_CHANNEL_MIN_FEES);
     }
@@ -81,9 +81,9 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.prank(actor.admin);
         coreProxy.pauseContract();
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.EnforcedPause.selector));
+        vm.expectRevert("Pausable: paused");
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
     }
 
     function test_ChannelFunctionsAfterPauseUnpause() public {
@@ -99,6 +99,6 @@ contract ContractPausability_Test is BasePushCoreTest {
         vm.stopPrank();
 
         vm.prank(actor.admin);
-        coreProxy.blockChannel(actor.bob_channel_owner);
+        coreProxy.blockChannel(toWormholeFormat(actor.bob_channel_owner));
     }
 }

@@ -19,15 +19,23 @@ import { Errors } from "../libraries/Errors.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
-import { CommTypes } from "../libraries/DataTypes.sol";
+import { CommTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
 import { IERC1271 } from "../interfaces/signatures/IERC1271.sol";
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import {
+    PausableUpgradeable, Initializable
+} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
+import "../interfaces/wormhole/INttManager.sol";
+import "../interfaces/wormhole/IWormholeTransceiver.sol";
+import "../interfaces/wormhole/IWormholeRelayer.sol";
+import "../libraries/wormhole-lib/TransceiverStructs.sol";
+
+contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUpgradeable {
     using SafeERC20 for IERC20;
 
     /* *****************************
@@ -80,16 +88,9 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         emit ChannelAlias(chainName, chainID, msg.sender, _channelAddress);
     }
 
-    function removeChannelAlias(string memory _channelAddress) external {
-        emit RemoveChannelAlias(chainName, chainID, msg.sender, _channelAddress);
-    }
 
-    function completeMigration() external onlyPushChannelAdmin {
-        isMigrationComplete = true;
-    }
-
-    function setPushCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
-        PushCoreAddress = _coreAddress;
+    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+        EPNSCoreAddress = _coreAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
@@ -97,7 +98,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
     }
 
     function setPushTokenAddress(address _tokenAddress) external onlyPushChannelAdmin {
-        PUSH_TOKEN_ADDRESS = _tokenAddress;
+        PUSH_NTT = IERC20(_tokenAddress);
     }
 
     function transferPushChannelAdminControl(address _newAdmin) external onlyPushChannelAdmin {
@@ -107,13 +108,21 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         pushChannelAdmin = _newAdmin;
     }
 
+    function pauseContract() external onlyPushChannelAdmin {
+        _pause();
+    }
+
+    function unPauseContract() external onlyPushChannelAdmin {
+        _unpause();
+    }
+
     /* *****************************
 
          SUBSCRIBE FUNCTIONS
 
     ***************************** */
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function isUserSubscribed(address _channel, address _user) public view returns (bool) {
         CommTypes.User storage user = users[_user];
         if (user.isSubscribed[_channel] == 1) {
@@ -121,13 +130,13 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         }
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function subscribe(address _channel) external returns (bool) {
         _subscribe(_channel, msg.sender);
         return true;
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function batchSubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
         for (uint256 i = 0; i < channelListLength;) {
@@ -138,50 +147,6 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         }
         return true;
     }
-
-    /**
-     * @notice This Function helps in migrating the already existing Subscriber's data to the New protocol
-     *
-     * @dev     Can only be called by pushChannelAdmin
-     *          Can only be called if the Migration is not yet complete, i.e., "isMigrationComplete" boolean must be
-     * false
-     *          Subscribes the Users to the respective Channels as per the arguments passed to the function
-     *
-     * @param _startIndex  starting Index for the LOOP
-     * @param _endIndex    Last Index for the LOOP
-     * @param _channelList array of addresses of the channels
-     * @param _usersList   array of addresses of the Users or Subscribers of the Channels
-     *
-     */
-    // function migrateSubscribeData(
-    //     uint256 _startIndex,
-    //     uint256 _endIndex,
-    //     address[] calldata _channelList,
-    //     address[] calldata _usersList
-    // )
-    //     external
-    //     onlyPushChannelAdmin
-    //     returns (bool)
-    // {
-    //     if (isMigrationComplete || _channelList.length != _usersList.length) {
-    //         revert Errors.InvalidArg_ArrayLengthMismatch();
-    //     }
-
-    //     for (uint256 i = _startIndex; i < _endIndex;) {
-    //         if (isUserSubscribed(_channelList[i], _usersList[i])) {
-    //             unchecked {
-    //                 i++;
-    //             }
-    //             continue;
-    //         } else {
-    //             _subscribe(_channelList[i], _usersList[i]);
-    //         }
-    //         unchecked {
-    //             i++;
-    //         }
-    //     }
-    //     return true;
-    // }
 
     /**
      * @notice Base Subscribe Function that allows users to Subscribe to a Particular Channel
@@ -211,7 +176,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         }
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function subscribeBySig(
         address channel,
         address subscriber,
@@ -255,7 +220,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         _subscribe(channel, subscriber);
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function subscribeViaCore(address _channel, address _user) external onlyPushCore returns (bool) {
         _subscribe(_channel, _user);
         return true;
@@ -267,14 +232,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
     ***************************** */
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function unsubscribe(address _channel) external returns (bool) {
         // Call actual unsubscribe
         _unsubscribe(_channel, msg.sender);
         return true;
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function batchUnsubscribe(address[] calldata _channelList) external returns (bool) {
         uint256 channelListLength = _channelList.length;
         for (uint256 i = 0; i < channelListLength;) {
@@ -313,7 +278,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         }
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function unsubscribeBySig(
         address channel,
         address subscriber,
@@ -356,7 +321,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         _unsubscribe(channel, subscriber);
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function unSubscribeViaCore(address _channel, address _user) external onlyPushCore returns (bool) {
         _unsubscribe(_channel, _user);
         return true;
@@ -387,14 +352,14 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
 
     ***************************** */
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function addDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = true;
         _subscribe(msg.sender, _delegate);
         emit AddDelegate(msg.sender, _delegate);
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function removeDelegate(address _delegate) external {
         delegatedNotificationSenders[msg.sender][_delegate] = false;
         emit RemoveDelegate(msg.sender, _delegate);
@@ -422,7 +387,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         return false;
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function sendNotification(address _channel, address _recipient, bytes memory _identity) external returns (bool) {
         bool success = _checkNotifReq(_channel, _recipient);
         if (success) {
@@ -464,7 +429,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         return false;
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function sendNotifBySig(
         address _channel,
         address _recipient,
@@ -506,7 +471,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         return success;
     }
 
-    /// @inheritdoc  IPushCommV3
+    /// @inheritdoc IPushCommV3
     function changeUserChannelSettings(address _channel, uint256 _notifID, string calldata _notifSettings) external {
         if (!isUserSubscribed(_channel, msg.sender)) {
             revert Errors.Comm_InvalidSubscriber();
@@ -516,25 +481,285 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3 {
         emit UserNotifcationSettingsAdded(_channel, msg.sender, _notifID, notifSetting);
     }
 
-    function createIncentivizeChatRequest(address requestReceiver, uint256 amount) external {
-        if (amount == 0) {
-            revert Errors.InvalidArg_LessThanExpected(1, amount);
+    /* *****************************
+
+         WORMHOLE CROSS-CHAIN Functions
+
+    ***************************** */
+
+    /**
+     * @notice Sets the configuration for the bridge
+     * @dev This function can only be called by the Push Channel Admin
+     * @param _pushNTT The address of the PUSH NTT token
+     * @param _nttManager The address of the NTT Manager contract
+     * @param _wormholeTransceiver The Wormhole Transceiver contract interface
+     * @param _wormholeRelayerAddress The Wormhole Relayer contract interface
+     * @param _recipientChain The recipient chain ID for the Wormhole
+     */
+    function setBridgeConfig(
+        address _pushNTT,
+        address _nttManager,
+        IWormholeTransceiver _wormholeTransceiver,
+        IWormholeRelayer _wormholeRelayerAddress,
+        uint16 _recipientChain
+    )
+        external
+        onlyPushChannelAdmin
+    {
+        PUSH_NTT = IERC20(_pushNTT);
+        NTT_MANAGER = INttManager(_nttManager);
+        WORMHOLE_TRANSCEIVER = IWormholeTransceiver(_wormholeTransceiver);
+        WORMHOLE_RELAYER = IWormholeRelayer(_wormholeRelayerAddress);
+        WORMHOLE_RECIPIENT_CHAIN = _recipientChain;
+    }
+
+    /**
+     * @notice Sets the configuration for core fees
+     * @dev Can only be called by the Push Channel Admin
+     * @param _minChannelCreationFee The minimum fee for creating a channel
+     * @param _feeAmount The amount of the fee
+     */
+    function setCoreFeeConfig(
+        uint256 _minChannelCreationFee,
+        uint256 _feeAmount,
+        uint256 _minPoolContribution
+    )
+        external
+        onlyPushChannelAdmin
+    {
+        if (_minPoolContribution == 0 || _feeAmount == 0) {
+            revert Errors.InvalidArg_LessThanExpected(1, _minPoolContribution);
         }
-        address requestSender = msg.sender;
-        address coreContract = PushCoreAddress;
-        // Transfer incoming PUSH Token to core contract
-        IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(requestSender, coreContract, amount);
-
-        CommTypes.ChatDetails storage chatData = userChatData[requestSender];
-        if (chatData.amountDeposited == 0) {
-            chatData.requestSender = requestSender;
+        if (_minChannelCreationFee < _feeAmount + _minPoolContribution) {
+            revert Errors.InvalidArg_LessThanExpected(_feeAmount + _minPoolContribution, _minChannelCreationFee);
         }
-        chatData.timestamp = block.timestamp;
-        chatData.amountDeposited += amount;
+        MIN_POOL_CONTRIBUTION = _minPoolContribution;
+        ADD_CHANNEL_MIN_FEES = _minChannelCreationFee;
+        FEE_AMOUNT = _feeAmount;
+    }
 
-        // Trigger handleChatRequestData() on core directly from comm
-        IPushCoreV3(coreContract).handleChatRequestData(requestSender, requestReceiver, amount);
+    /**
+     * @notice Quotes the cost of bridging tokens to the recipient chain
+     * @dev Calls the Wormhole Transceiver to get the delivery price
+     * @return cost The cost of bridging tokens
+     */
+    function quoteTokenBridgingCost() public view returns (uint256 cost) {
+        TransceiverStructs.TransceiverInstruction memory transceiverInstruction =
+            TransceiverStructs.TransceiverInstruction({ index: 0, payload: abi.encodePacked(false) });
+        cost = WORMHOLE_TRANSCEIVER.quoteDeliveryPrice(WORMHOLE_RECIPIENT_CHAIN, transceiverInstruction);
+    }
 
-        emit IncentivizeChatReqInitiated(requestSender, requestReceiver, amount, block.timestamp);
+    /**
+     * @notice Quotes the cost of relaying a message to the target chain with the specified gas limit
+     * @dev Calls the Wormhole Relayer to get the EVM delivery price
+     * @param targetChain The chain to which the message is being relayed
+     * @param gasLimit The gas limit for the message relay
+     * @return cost The cost of relaying the message
+     */
+    function quoteMsgRelayCost(uint16 targetChain, uint256 gasLimit) public view returns (uint256 cost) {
+        (cost,) = WORMHOLE_RELAYER.quoteEVMDeliveryPrice(targetChain, 0, gasLimit);
+    }
+
+    /**
+     * @notice Creates a cross-chain request based on the specified function type and payload
+     * @dev Implements restrictions and calls the internal function to create the cross-chain request
+     * @param functionType The type of cross-chain function to execute
+     * @param payload The payload data for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
+    function createCrossChainRequest(
+        CrossChainRequestTypes.CrossChainFunction functionType,
+        bytes calldata payload,
+        uint256 amount,
+        uint256 gasLimit
+    )
+        external
+        payable
+        whenNotPaused
+    {
+        // Implement restrictions based on functionType
+
+        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel || 
+            functionType == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings ||
+            functionType == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel ) {
+            if (amount < ADD_CHANNEL_MIN_FEES) {
+                revert Errors.InvalidArg_LessThanExpected(ADD_CHANNEL_MIN_FEES, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
+            if (amount < FEE_AMOUNT) {
+                revert Errors.InvalidArg_LessThanExpected(FEE_AMOUNT, amount);
+            }
+        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
+            if (amount == 0) {
+                revert Errors.InvalidArg_LessThanExpected(1, amount);
+            }
+        }
+        bytes memory requestPayload = abi.encode(functionType, payload, amount, msg.sender);
+
+        // Call the internal function to create the cross-chain request
+        _createCrossChainRequest(requestPayload, amount, gasLimit);
+    }
+
+    /**
+     * @notice Internal function to create a cross-chain request
+     * @dev Calculates the message bridge cost and token bridge cost, transfers tokens, and sends the payload
+     * @param requestPayload The encoded payload for the cross-chain request
+     * @param amount The amount of tokens to be transferred
+     * @param gasLimit The gas limit for the cross-chain request
+     */
+    function _createCrossChainRequest(bytes memory requestPayload, uint256 amount, uint256 gasLimit) internal {
+        // Calculate MSG bridge cost and Token Bridge cost
+        uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
+
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
+        uint256 tokenBridgeCost = quoteTokenBridgingCost();
+        address coreAddress = EPNSCoreAddress;
+        if (amount != 0) {
+            if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
+                revert Errors.InsufficientFunds();
+            }
+            IERC20 PushNtt = PUSH_NTT;
+            INttManager NttManager = NTT_MANAGER;
+
+            PushNtt.transferFrom(msg.sender, address(this), amount);
+            PushNtt.approve(address(NttManager), amount);
+            NttManager.transfer{ value: tokenBridgeCost }(
+                amount,
+                recipientChain,
+                BaseHelper.addressToBytes32(coreAddress),
+                BaseHelper.addressToBytes32(msg.sender),
+                false,
+                new bytes(1)
+            );
+        } else if (msg.value < (messageBridgeCost)) {
+            revert Errors.InsufficientFunds();
+        }
+
+        // Relay the RequestData Payload
+        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
+            recipientChain,
+            coreAddress,
+            requestPayload,
+            0, // no receiver value needed since we're just passing a message
+            gasLimit,
+            recipientChain,
+            msg.sender // Refund address is of the sender
+        );
+    }
+
+    /**
+     * @notice Function to allow the Push Channel Admin to bridge PROTOCOL_POOL_FEES from Comm to Core
+     * @dev    Can only be called by the Push Channel Admin
+     * @param  amount Amount to be bridged
+     */
+    // Should be only admin
+    // Should only bridge NTT TOKENS FROM COMM TO CORE on ethereum
+    function transferFeePoolToCore(uint256 amount, uint256 gasLimit) external payable onlyPushChannelAdmin {
+        uint256 protocolPoolFee = PROTOCOL_POOL_FEE;
+        if (protocolPoolFee < amount) {
+            revert Errors.InsufficientFunds();
+        }
+        address coreAddress = EPNSCoreAddress;
+        uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
+        uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
+        uint256 tokenBridgeCost = quoteTokenBridgingCost();
+
+        if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
+            revert Errors.InsufficientFunds();
+        }
+
+        protocolPoolFee = protocolPoolFee - amount;
+        PROTOCOL_POOL_FEE = protocolPoolFee;
+
+        INttManager NttManager = NTT_MANAGER;
+
+        PUSH_NTT.approve(address(NttManager), amount);
+        NttManager.transfer{ value: tokenBridgeCost }(
+            amount,
+            recipientChain,
+            BaseHelper.addressToBytes32(coreAddress),
+            BaseHelper.addressToBytes32(msg.sender),
+            false,
+            new bytes(1)
+        );
+
+        bytes memory requestPayload =
+            abi.encode(CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee, bytes(""), amount, msg.sender);
+
+        // Relay the RequestData Payload
+        WORMHOLE_RELAYER.sendPayloadToEvm{ value: messageBridgeCost }(
+            recipientChain,
+            coreAddress,
+            requestPayload,
+            0, // no receiver value needed since we're just passing a message
+            gasLimit,
+            recipientChain,
+            msg.sender // Refund address is of the sender
+        );
+    }
+    ///@notice Wallet PGP attach code starts here
+
+    /* *****************************
+
+         USER PGP Registry Functions
+
+    ***************************** */
+
+    function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
+        uint256 fee = FEE_AMOUNT;
+        PROTOCOL_POOL_FEE += fee;
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
+
+        bytes32 caipHash = keccak256(_caipData);
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (bytes(walletToPGP[caipHash]).length != 0 || _wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRegistered(_pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+
+            if (bytes(walletToPGP[caipHash]).length != 0) {
+                string memory _previousPgp = walletToPGP[caipHash];
+                emit UserPGPRemoved(_previousPgp, _nft, _id, chainName, chainID);
+            }
+            emit UserPGPRegistered(_pgp, _nft, _id, chainName, chainID);
+        }
+        walletToPGP[caipHash] = _pgp;
+    }
+
+    function removeWalletFromUser(bytes calldata _caipData, bool _isNFT) public {
+        bytes32 caipHash = keccak256(_caipData);
+        if (bytes(walletToPGP[caipHash]).length == 0) {
+            revert("Invalid Call");
+        }
+
+        uint256 fee = FEE_AMOUNT;
+        PROTOCOL_POOL_FEE += fee;
+        PUSH_NTT.safeTransferFrom(msg.sender, address(this), fee);
+
+        string memory pgp = walletToPGP[caipHash];
+
+        if (!_isNFT) {
+            (, uint256 _chainId, address _wallet) = abi.decode(_caipData, (string, uint256, address));
+
+            if (_wallet != msg.sender) {
+                revert Errors.Comm_InvalidArguments();
+            }
+            emit UserPGPRemoved(pgp, _wallet, chainName, chainID);
+        } else {
+            (,,, address _nft, uint256 _id,) =
+                abi.decode(_caipData, (string, string, uint256, address, uint256, uint256));
+
+            require(IERC721(_nft).ownerOf(_id) == msg.sender, "NFT not owned");
+            emit UserPGPRemoved(pgp, _nft, _id, chainName, chainID);
+        }
+        delete walletToPGP[caipHash];
     }
 }

@@ -1,0 +1,29 @@
+walletPGP.t.sol
+├── when a user tries to add an EOA to PGP
+│   ├── when the EOA is not owned by the caller
+│   │   └── it REVERTS
+│   ├── when the EOA is owned but already has a PGP
+│   │   └── it REVERTS
+│   └── when EOA is owned and doesn't have a PGP
+│       └── it should execute and set update the mappings
+├── when a user tries to add an NFT to PGP
+│   ├── when caller doesn't own the NFT
+│   │   └── it REVERTS
+│   ├── when caller owns an NFT that's not already attached
+│   │   └── it should execute and update mappings
+│   └── when caller owns an NFT that's already attached
+│       └── it should delete old PGP and update new
+├── when a user tries to remove an EOA from PGP
+│   ├── when the caller is Not Owner
+│   │   └── it REVERTS
+│   ├── when the EOA is owned and already has a PGP
+│   │   └── it Removes the stored data
+│   └── when EOA is owned but doesn't have a PGP
+│       └── it should REVERT
+└── when a user tries to remove an NFT from PGP
+    ├── when the NFT is not owned by the caller
+    │   └── it REVERTS
+    ├── when the NFT is owned and already has a PGP
+    │   └── it removes the stored data
+    └── when NFT is owned But doesn't have a PGP
+        └── it should REVERT

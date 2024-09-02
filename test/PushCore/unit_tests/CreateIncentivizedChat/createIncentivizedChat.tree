@@ -1,0 +1,15 @@
+.
+├── test_createIncentivizedChat
+├── when user creates incentivized chat
+│   ├── when passed amount is less than fee_amount
+│   │   └── it should Revert
+│   └── when passed amount is more than fee_amount
+│       ├── when requestReceiver parameter is zero address
+│       │   └── it should revert
+│       └── when parameters are correct
+│           └── it should update storage and emit event
+└── when celeb tries to claim the tokens
+    ├── when requested amount is more than balance
+    │   └── it should Revert
+    └── when requested amount is correct
+        └── it should transfer the tokens to celebUser
