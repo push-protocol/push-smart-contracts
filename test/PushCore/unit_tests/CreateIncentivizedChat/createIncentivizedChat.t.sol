@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
-import { console } from "forge-std/console.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract test_createIncentivizedChat is BasePushCoreTest {

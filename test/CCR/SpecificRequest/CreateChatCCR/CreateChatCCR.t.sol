@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../../BaseCCR.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
-import { console } from "forge-std/console.sol";
 
 import { CrossChainRequestTypes } from "contracts/libraries/DataTypes.sol";
 import { BaseHelper } from "contracts/libraries/BaseHelper.sol";

@@ -4,7 +4,6 @@ import { CommTypes } from "../libraries/DataTypes.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/wormhole/INttManager.sol";
-import "../interfaces/wormhole/ITransceiver.sol";
 import "../interfaces/wormhole/IWormholeTransceiver.sol";
 import "../interfaces/wormhole/IWormholeRelayer.sol";
 
