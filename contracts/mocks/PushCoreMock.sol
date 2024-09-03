@@ -68,8 +68,8 @@ contract PushCoreMock is PushCoreV3 {
         success = true;
     }
 
-    function setEpnsTokenAddress(address _epnsAddress) external {
-        PUSH_TOKEN_ADDRESS = _epnsAddress;
+    function setPushTokenAddress(address _pushAddress) external {
+        PUSH_TOKEN_ADDRESS = _pushAddress;
     }
 
     // for testing channelUpdateCounter migration

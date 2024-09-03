@@ -89,8 +89,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
-        EPNSCoreAddress = _coreAddress;
+    function setPushCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+        PushCoreAddress = _coreAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
@@ -614,7 +614,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        address coreAddress = EPNSCoreAddress;
+        address coreAddress = PushCoreAddress;
         if (amount != 0) {
             if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
                 revert Errors.InsufficientFunds();
@@ -660,7 +660,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         if (protocolPoolFee < amount) {
             revert Errors.InsufficientFunds();
         }
-        address coreAddress = EPNSCoreAddress;
+        address coreAddress = PushCoreAddress;
         uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();

@@ -20,7 +20,7 @@ contract PushCommEthStorageV2 {
     uint256 public chainID;
     uint256 public usersCount;
     bool public isMigrationComplete;
-    address public EPNSCoreAddress;
+    address public PushCoreAddress;
     string public chainName;
     string public constant name = "EPNS COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));

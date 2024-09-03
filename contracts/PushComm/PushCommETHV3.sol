@@ -52,7 +52,7 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     }
 
     modifier onlyPushCore() {
-        if (msg.sender != EPNSCoreAddress) {
+        if (msg.sender != PushCoreAddress) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         _;
@@ -89,8 +89,8 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     //     isMigrationComplete = true;
     // }
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
-        EPNSCoreAddress = _coreAddress;
+    function setPushCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+        PushCoreAddress = _coreAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
@@ -485,8 +485,8 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
     function registerUserPGP(bytes calldata _caipData, string calldata _pgp, bool _isNFT) external {
         uint256 fee = FEE_AMOUNT;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
-        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(PushCoreAddress), fee);
+        IPushCoreV3(PushCoreAddress).addPoolFees(fee);
 
         bytes32 caipHash = keccak256(_caipData);
 
@@ -519,8 +519,8 @@ contract PushCommETHV3 is Initializable, PushCommEthStorageV2, IPushCommV3 {
 
         uint256 fee = FEE_AMOUNT;
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), fee);
-        IERC20(PUSH_TOKEN_ADDRESS).approve(address(EPNSCoreAddress), fee);
-        IPushCoreV3(EPNSCoreAddress).addPoolFees(fee);
+        IERC20(PUSH_TOKEN_ADDRESS).approve(address(PushCoreAddress), fee);
+        IPushCoreV3(PushCoreAddress).addPoolFees(fee);
 
         string memory pgp = walletToPGP[caipHash];
 
