@@ -6,8 +6,6 @@ import { MockERC721 } from "contracts/mocks/MockERC721.sol";
 import { PushCommETHV3 } from "contracts/PushComm/PushCommETHV3.sol";
 import { EPNSCommProxy } from "contracts/PushComm/EPNSCommProxy.sol";
 
-import "forge-std/console.sol";
-
 contract walletPGPforETH_Test is BasePushCommTest {
     string pgp1 = "PGP1";
     string pgp2 = "PGP2";
@@ -26,9 +24,9 @@ contract walletPGPforETH_Test is BasePushCommTest {
             new EPNSCommProxy(address(commEth), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         changePrank(actor.admin);
         commProxyEth = PushCommETHV3(address(epnsCommProxy));
-        commProxyEth.setEPNSCoreAddress(address(coreProxy));
+        commProxyEth.setPushCoreAddress(address(coreProxy));
         commProxyEth.setPushTokenAddress(address(pushToken));
-        coreProxy.setEpnsCommunicatorAddress(address(commProxyEth));
+        coreProxy.setPushCommunicatorAddress(address(commProxyEth));
 
         commProxyEth.setFeeAmount(10e18);
         firstERC721 = new MockERC721(actor.bob_channel_owner);

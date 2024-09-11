@@ -3,15 +3,9 @@ pragma solidity ^0.8.0;
 
 import { BaseCCRTest } from "../BaseCCR.t.sol";
 
-import { console } from "forge-std/console.sol";
-
-import { WormholeSimulator } from "wormhole-solidity-sdk/testing/helpers/WormholeSimulator.sol";
-import { TransceiverStructs } from "contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import { TrimmedAmountLib, TrimmedAmount, eq } from "contracts/libraries/wormhole-lib/TrimmedAmount.sol";
-import { INttManager } from "contracts/interfaces/wormhole/INttManager.sol";
 import { MockNttManager } from "contracts/mocks/MockNttManager.sol";
 
-import { Vm } from "forge-std/Vm.sol";
 
 contract RateLimitNtt is BaseCCRTest {
     using TrimmedAmountLib for uint256;

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { BaseTest } from "../../../../BaseTest.t.sol";
-import { Errors } from "contracts/libraries/Errors.sol";
 
 contract Burn_Test is BaseTest {
     function setUp() public virtual override {

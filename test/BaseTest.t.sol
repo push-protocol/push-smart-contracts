@@ -147,7 +147,7 @@ abstract contract BaseTest is Test, Constants, Events {
 
         // Set-up Core Address in Comm & Vice-Versa
         changePrank(actor.admin);
-        commProxy.setEPNSCoreAddress(address(coreProxy));
+        commProxy.setPushCoreAddress(address(coreProxy));
         commProxy.setPushTokenAddress(address(pushToken));
         vm.stopPrank();
 
@@ -159,9 +159,9 @@ abstract contract BaseTest is Test, Constants, Events {
 
         // Set-up Core Address in Comm Eth
         changePrank(actor.admin);
-        commEthProxy.setEPNSCoreAddress(address(coreProxy));
+        commEthProxy.setPushCoreAddress(address(coreProxy));
         commEthProxy.setPushTokenAddress(address(pushToken));
-        coreProxy.setEpnsCommunicatorAddress(address(commEthProxy));
+        coreProxy.setPushCommunicatorAddress(address(commEthProxy));
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
         vm.stopPrank();
 

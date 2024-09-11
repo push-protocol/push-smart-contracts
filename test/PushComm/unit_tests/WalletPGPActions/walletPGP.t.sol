@@ -4,8 +4,6 @@ import { BasePushCommTest } from "../BasePushCommTest.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 import { MockERC721 } from "contracts/mocks/MockERC721.sol";
 
-import "forge-std/console.sol";
-
 contract walletPGP_Test is BasePushCommTest {
     string pgp1 = "PGP1";
     string pgp2 = "PGP2";

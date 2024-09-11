@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { BaseTest } from "../../../BaseTest.t.sol";
-import { Errors } from "contracts/libraries/Errors.sol";
 
 contract Burn_Test is BaseTest {
     function setUp() public virtual override {
@@ -10,7 +9,7 @@ contract Burn_Test is BaseTest {
     }
 
     function test_BurnFuzz(address user, uint256 balanceAmount, uint256 burnAmount) public {
-        vm.assume(user != address(0));
+        vm.assume(user != address(0) && user != address(nttProxyAdmin));
         balanceAmount = bound(balanceAmount, 1, 100_000_000e18);
         burnAmount = bound(burnAmount, 0, balanceAmount);
 

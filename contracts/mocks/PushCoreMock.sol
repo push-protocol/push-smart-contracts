@@ -12,7 +12,6 @@ pragma solidity ^0.8.20;
  *
  */
 import { CoreTypes } from "../libraries/DataTypes.sol";
-import { Errors } from "../libraries/Errors.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -68,8 +67,8 @@ contract PushCoreMock is PushCoreV3 {
         success = true;
     }
 
-    function setEpnsTokenAddress(address _epnsAddress) external {
-        PUSH_TOKEN_ADDRESS = _epnsAddress;
+    function setPushTokenAddress(address _pushAddress) external {
+        PUSH_TOKEN_ADDRESS = _pushAddress;
     }
 
     // for testing channelUpdateCounter migration

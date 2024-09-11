@@ -1,7 +1,7 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title  PushCore v2.5
+ * @title  PushCore V3
  * @author Push Protocol
  * @notice Push Core is the main protocol that deals with the imperative
  *         features and functionalities like Channel Creation, pushChannelAdmin etc.
@@ -79,9 +79,9 @@ contract PushCoreV3 is
         emit AddSubGraph(BaseHelper.addressToBytes32(msg.sender), _subGraphData);
     }
 
-    function setEpnsCommunicatorAddress(address _commAddress) external {
+    function setPushCommunicatorAddress(address _commAddress) external {
         onlyPushChannelAdmin();
-        epnsCommunicator = _commAddress;
+        pushCommunicator = _commAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external {
@@ -205,7 +205,7 @@ contract PushCoreV3 is
      * @notice Base Channel Creation Function that allows users to Create Their own Channels and Stores crucial details
      * about the Channel being created
      * @dev    -Initializes the Channel Struct
-     *         -Subscribes the Channel's Owner to Imperative EPNS Channels as well as their Own Channels
+     *         -Subscribes the Channel's Owner to Imperative Push Channels as well as their Own Channels
      *         - Updates the CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
      *
      * @param _channel         address of the channel being Created
@@ -469,7 +469,7 @@ contract PushCoreV3 is
     }
 
     /**
-     * Core-V2: Stake and Claim Functions
+     * Core-V3: Stake and Claim Functions
      */
 
     /// @notice Allows caller to add pool_fees at any given epoch

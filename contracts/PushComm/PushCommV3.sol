@@ -2,7 +2,7 @@ pragma solidity ^0.8.20;
 // SPDX-License-Identifier: MIT
 
 /**
- * @title PushComm v2.5
+ * @title PushComm V3
  * @author Push Protocol
  * @notice Push Communicator, as the name suggests, is more of a Communictation Layer
  *         between END USERS and Push Core Protocol.
@@ -16,7 +16,6 @@ pragma solidity ^0.8.20;
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes, CrossChainRequestTypes } from "../libraries/DataTypes.sol";
@@ -59,7 +58,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
     modifier onlyPushCore() {
-        if (msg.sender != EPNSCoreAddress) {
+        if (msg.sender != PushCoreAddress) {
             revert Errors.UnauthorizedCaller(msg.sender);
         }
         _;
@@ -89,8 +88,8 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
     }
 
 
-    function setEPNSCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
-        EPNSCoreAddress = _coreAddress;
+    function setPushCoreAddress(address _coreAddress) external onlyPushChannelAdmin {
+        PushCoreAddress = _coreAddress;
     }
 
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
@@ -614,7 +613,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();
-        address coreAddress = EPNSCoreAddress;
+        address coreAddress = PushCoreAddress;
         if (amount != 0) {
             if (msg.value < (messageBridgeCost + tokenBridgeCost)) {
                 revert Errors.InsufficientFunds();
@@ -660,7 +659,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
         if (protocolPoolFee < amount) {
             revert Errors.InsufficientFunds();
         }
-        address coreAddress = EPNSCoreAddress;
+        address coreAddress = PushCoreAddress;
         uint16 recipientChain = WORMHOLE_RECIPIENT_CHAIN;
         uint256 messageBridgeCost = quoteMsgRelayCost(recipientChain, gasLimit);
         uint256 tokenBridgeCost = quoteTokenBridgingCost();

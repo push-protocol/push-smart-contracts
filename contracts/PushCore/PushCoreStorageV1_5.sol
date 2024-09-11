@@ -14,7 +14,7 @@ contract PushCoreStorageV1_5 {
     /* ***************
     STATE VARIABLES
     *************** */
-    string public constant name = "EPNS_CORE_V2";
+    string public constant name = "Push_CORE_V2";
     bool oneTimeCheck;
     bool public isMigrationComplete;
 
@@ -23,7 +23,7 @@ contract PushCoreStorageV1_5 {
     address public daiAddress;
     address public aDaiAddress;
     address public WETH_ADDRESS;
-    address public epnsCommunicator;
+    address public pushCommunicator;
     address public UNISWAP_V2_ROUTER;
     address public PUSH_TOKEN_ADDRESS;
     address public lendingPoolProviderAddress;

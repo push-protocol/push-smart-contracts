@@ -12,15 +12,15 @@ contract CoreAdminActions_Test is BasePushCoreTest {
         // it should Revert
         vm.expectRevert(Errors.CallerNotAdmin.selector);
         changePrank(actor.bob_channel_owner);
-        coreProxy.setEpnsCommunicatorAddress(address(123));
-        assertTrue(coreProxy.epnsCommunicator() != address(123));
+        coreProxy.setPushCommunicatorAddress(address(123));
+        assertTrue(coreProxy.pushCommunicator() != address(123));
     }
 
     function test_WhenAdmin_TriesToSet_CommunicatorAddress() external {
         // it should succesfuly set the communicator address
         changePrank(actor.admin);
-        coreProxy.setEpnsCommunicatorAddress(address(0x0));
-        assertTrue(coreProxy.epnsCommunicator() == address(0x0));
+        coreProxy.setPushCommunicatorAddress(address(0x0));
+        assertTrue(coreProxy.pushCommunicator() == address(0x0));
     }
 
     function test_RevertWhenNonAdmin_Set_GovernanceAddress() external {

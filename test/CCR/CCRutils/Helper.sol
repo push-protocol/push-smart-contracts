@@ -79,7 +79,7 @@ contract Helper is BasePushCommTest, CCRConfig {
 
         changePrank(actor.admin);
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
-        coreProxy.setEpnsTokenAddress(address(pushToken));
+        coreProxy.setPushTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
 
         getPushTokenOnfork(actor.bob_channel_owner, 1000e18, address(pushToken));

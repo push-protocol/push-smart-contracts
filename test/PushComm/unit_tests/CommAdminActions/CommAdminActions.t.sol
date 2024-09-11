@@ -12,15 +12,15 @@ contract CommAdminActions_Test is BasePushCommTest {
         // it should REVERT
         changePrank(actor.bob_channel_owner);
         vm.expectRevert(Errors.CallerNotAdmin.selector);
-        commProxy.setEPNSCoreAddress(address(123));
-        assertEq(commProxy.EPNSCoreAddress(), address(coreProxy));
+        commProxy.setPushCoreAddress(address(123));
+        assertEq(commProxy.PushCoreAddress(), address(coreProxy));
     }
 
     function test_WhenAdminTriesToChange_CoreAddress() external {
         // it should update the core address
         changePrank(actor.admin);
-        commProxy.setEPNSCoreAddress(address(123));
-        assertEq(commProxy.EPNSCoreAddress(), address(123));
+        commProxy.setPushCoreAddress(address(123));
+        assertEq(commProxy.PushCoreAddress(), address(123));
     }
 
     function test_REVERTWhen_Non_adminTriesTo_ChangeGovernanceAddress() external {

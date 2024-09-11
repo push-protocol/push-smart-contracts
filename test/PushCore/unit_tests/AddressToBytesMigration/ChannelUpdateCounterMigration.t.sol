@@ -4,7 +4,6 @@ import { BasePushCoreTest } from "../BasePushCoreTest.t.sol";
 import { CoreTypes } from "contracts/libraries/DataTypes.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 import { PushCoreMock } from "contracts/mocks/PushCoreMock.sol";
-import { console } from "forge-std/console.sol";
 import { PushCoreV3 } from "contracts/PushCore/PushCoreV3.sol";
 import { EPNSCoreProxy, ITransparentUpgradeableProxy } from "contracts/PushCore/EPNSCoreProxy.sol";
 

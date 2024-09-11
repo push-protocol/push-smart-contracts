@@ -6,7 +6,6 @@ import { BaseCCRTest } from "../BaseCCR.t.sol";
 import { console } from "forge-std/console.sol";
 
 import { WormholeSimulator } from "wormhole-solidity-sdk/testing/helpers/WormholeSimulator.sol";
-import { TransceiverStructs } from "./../../../contracts/libraries/wormhole-lib/TransceiverStructs.sol";
 import "./../../../contracts/libraries/wormhole-lib/TrimmedAmount.sol";
 import { INttManager } from "./../../../contracts/interfaces/wormhole/INttManager.sol";
 
