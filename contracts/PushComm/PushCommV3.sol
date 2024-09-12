@@ -16,7 +16,6 @@ pragma solidity ^0.8.20;
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { IPushCommV3 } from "../interfaces/IPushCommV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { CommTypes } from "../libraries/DataTypes.sol";
@@ -30,7 +29,6 @@ import {
     PausableUpgradeable, Initializable
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
-import "forge-std/console.sol";
 
 contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUpgradeable {
     using SafeERC20 for IERC20;
