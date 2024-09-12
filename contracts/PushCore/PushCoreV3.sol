@@ -17,7 +17,7 @@ import "../interfaces/IPUSH.sol";
 import { IPushCoreV3 } from "../interfaces/IPushCoreV3.sol";
 import { BaseHelper } from "../libraries/BaseHelper.sol";
 import { Errors } from "../libraries/Errors.sol";
-import { CoreTypes, CrossChainRequestTypes, GenericTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -25,15 +25,13 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import {
     PausableUpgradeable, Initializable
 } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "../interfaces/wormhole/IWormholeReceiver.sol";
 
 contract PushCoreV3 is
     Initializable,
     PushCoreStorageV1_5,
     PausableUpgradeable,
     PushCoreStorageV2,
-    IPushCoreV3,
-    IWormholeReceiver
+    IPushCoreV3
 {
     using SafeERC20 for IERC20;
 
@@ -810,104 +808,6 @@ contract PushCoreV3 is
 
         emit ChatIncentiveClaimed(BaseHelper.addressToBytes32(msg.sender), _amount);
     }
-
-    /* *****************************
-         WORMHOLE CROSS-CHAIN Functions
-    ***************************** */
-    modifier isRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) {
-        require(registeredSenders[sourceChain] == sourceAddress, "Not registered sender");
-        _;
-    }
-
-    /**
-     * Sets the registered address for 'sourceChain' to 'sourceAddress'
-     * So that for messages from 'sourceChain', only ones from 'sourceAddress' are valid
-     *
-     * Assumes only one sender per chain is valid
-     * Sender is the address that called 'send' on the Wormhole Relayer contract on the source chain)
-     */
-    function setRegisteredSender(uint16 sourceChain, bytes32 sourceAddress) external {
-        onlyPushChannelAdmin();
-        registeredSenders[sourceChain] = sourceAddress;
-    }
-
-    function setWormholeRelayer(address _wormholeRelayer) external {
-        onlyPushChannelAdmin();
-        wormholeRelayer = _wormholeRelayer;
-    }
-
-    function onlyWormholeRelayer() private view {
-        if (msg.sender != wormholeRelayer) {
-            revert Errors.CallerNotAdmin();
-        }
-    }
-
-    function receiveWormholeMessages(
-        bytes memory payload,
-        bytes[] memory, // additionalVaas
-        bytes32 sourceAddress,
-        uint16 sourceChain,
-        bytes32 deliveryHash
-    )
-        public
-        payable
-        override
-        isRegisteredSender(sourceChain, sourceAddress)
-    {
-        onlyWormholeRelayer();
-        if (processedMessages[deliveryHash]) {
-            revert Errors.Payload_Duplicacy_Error();
-        }
-
-        (
-            CrossChainRequestTypes.CrossChainFunction functionType,
-            bytes memory structPayload,
-            uint256 amount,
-            bytes32 sender
-        ) = abi.decode(payload, (CrossChainRequestTypes.CrossChainFunction, bytes, uint256, bytes32));
-
-        if (functionType == CrossChainRequestTypes.CrossChainFunction.AddChannel) {
-            // Specific Request: Add Channel
-            (CoreTypes.ChannelType channelType, bytes memory channelIdentity, uint256 channelExpiry) =
-                abi.decode(structPayload, (CoreTypes.ChannelType, bytes, uint256));
-            emit ChannelCreated(sender, channelType, channelIdentity);
-            _createChannel(sender, channelType, amount, channelExpiry);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.IncentivizedChat) {
-            // Specific Request: Incentivized Chat
-            (bytes32 amountRecipient) = abi.decode(structPayload, (bytes32));
-            _handleIncentivizedChat(
-                sender, BaseHelper.bytes32ToAddress(amountRecipient), amount
-            );
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.CreateChannelSettings) {
-            (uint256 _notifOptions, string memory _notifSettings,  string memory _notifDescription) =
-                abi.decode(structPayload, (uint256, string, string));
-            _createSettings(sender, _notifOptions, amount, _notifSettings, _notifDescription);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.UpdateChannelMeta) {
-            (bytes memory _newIdentity) = abi.decode(structPayload, (bytes));
-            _updateChannelMeta(sender, _newIdentity, amount);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.DeactivateChannel) {
-            // Specific Request: Deactivating or Deleting Channel
-            (address recipient) = abi.decode(structPayload, (address));
-            _deactivateChannel(sender, recipient);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ReactivateChannel) {
-            // Specific Request: Deactivating or Deleting Channel
-            _reactivateChannel(sender, amount);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.ArbitraryRequest) {
-            // Arbitrary Request
-            (uint8 feeId, GenericTypes.Percentage memory feePercentage, bytes32 amountRecipient) =
-                abi.decode(structPayload, (uint8, GenericTypes.Percentage, bytes32));
-
-            _handleArbitraryRequest(sender, feeId, feePercentage, BaseHelper.bytes32ToAddress(amountRecipient), amount);
-        } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
-            // Admin Request
-            PROTOCOL_POOL_FEES += amount;
-        } else {
-            revert("Invalid Function Type");
-        }
-
-        processedMessages[deliveryHash] = true;
-    }
-
     /// @inheritdoc IPushCoreV3
     function handleArbitraryRequestData(
         uint8 feeId,
