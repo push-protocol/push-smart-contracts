@@ -121,7 +121,7 @@ contract ArbitraryRequesttsol is BaseCCRTest {
 
     function test_WhenDeliveryHashIsUsedAlready() external whenReceiveFunctionIsCalledInCore {
         // it should Revert
-
+        test_WhenAllChecksPasses();
         setUpDestChain();
 
         changePrank(DestChain.WORMHOLE_RELAYER_DEST);

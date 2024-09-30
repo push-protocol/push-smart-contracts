@@ -118,9 +118,9 @@ abstract contract BaseTest is Test, Constants, Events {
         // set governance as minter of ntt token
         // vm.prank(actor.admin);
         pushNttToken.setMinter(actor.governance);
-        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
+        epnsCoreProxyAdmin = new EPNSCoreAdmin();
 
-        epnsCoreProxyAdmin = new EPNSCoreAdmin(actor.admin);
+        epnsCoreProxyAdmin = new EPNSCoreAdmin();
         // Initialize coreMock proxy admin and coreProxy contract
         epnsCoreProxy = new EPNSCoreProxy(
             address(coreProxy),
@@ -136,11 +136,9 @@ abstract contract BaseTest is Test, Constants, Events {
         );
 
         coreProxy = PushCoreMock(address(epnsCoreProxy));
-        changePrank(tokenDistributor);
-        pushToken.transfer(address(coreProxy), 1 ether);
 
         // Initialize comm proxy admin and commProxy contract
-        epnsCommProxyAdmin = new EPNSCommAdmin(actor.admin);
+        epnsCommProxyAdmin = new EPNSCommAdmin();
         epnsCommProxy =
             new EPNSCommProxy(address(comm), address(epnsCommProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         commProxy = PushCommV3(address(epnsCommProxy));
@@ -152,7 +150,7 @@ abstract contract BaseTest is Test, Constants, Events {
         vm.stopPrank();
 
         // Initialize comm proxy admin and commProxy contract
-        epnsCommEthProxyAdmin = new EPNSCommAdmin(actor.admin);
+        epnsCommEthProxyAdmin = new EPNSCommAdmin();
         epnsCommEthProxy =
             new EPNSCommProxy(address(commEth), address(epnsCommEthProxyAdmin), actor.admin, "FOUNDRY_TEST_NETWORK");
         commEthProxy = PushCommETHV3(address(epnsCommEthProxy));
@@ -174,6 +172,8 @@ abstract contract BaseTest is Test, Constants, Events {
         approveTokens(actor.tony_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
+        vm.prank(actor.admin);
+        // coreProxy.initializeStake();
         vm.warp(DEC_27_2021);
     }
 

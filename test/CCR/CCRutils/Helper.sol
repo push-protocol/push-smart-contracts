@@ -51,6 +51,7 @@ contract Helper is BasePushCommTest, CCRConfig {
 
           changePrank(_addr);
           pushToken.approve(address(coreProxy), type(uint256).max);
+          pushToken.setHolderDelegation(address(coreProxy), true);
         }
     }
 
@@ -81,7 +82,8 @@ contract Helper is BasePushCommTest, CCRConfig {
         coreProxy.setWormholeRelayer(DestChain.WORMHOLE_RELAYER_DEST);
         coreProxy.setPushTokenAddress(address(pushToken));
         coreProxy.setRegisteredSender(SourceChain.SourceChainId, toWormholeFormat(address(commProxy)));
-
+        
+        getPushTokenOnfork(actor.admin, 1000e18, address(pushToken));
         getPushTokenOnfork(actor.bob_channel_owner, 1000e18, address(pushToken));
         getPushTokenOnfork(actor.charlie_channel_owner, 1000e18,address(pushToken));
         changePrank(actor.bob_channel_owner);

@@ -4,22 +4,10 @@ pragma experimental ABIEncoderV2;
 import { BaseTest } from "../../BaseTest.t.sol";
 
 contract BaseFuzzStaking is BaseTest {
-    uint256 genesis;
 
     function setUp() public virtual override {
         BaseTest.setUp();
-
-        approveTokens(actor.admin, address(coreProxy), 100_000 ether);
-        approveTokens(actor.admin, address(coreProxy), 100_000 ether);
-        approveTokens(actor.bob_channel_owner, address(coreProxy), 100_000 ether);
-        approveTokens(actor.alice_channel_owner, address(coreProxy), 100_000 ether);
-        approveTokens(actor.charlie_channel_owner, address(coreProxy), 100_000 ether);
-        approveTokens(actor.tony_channel_owner, address(coreProxy), 100_000 ether);
-
-        //initialize stake to avoid divsion by zero errors
-        vm.prank(actor.admin);
-        coreProxy.initializeStake();
-        genesis = coreProxy.genesisEpoch();
+        genesisEpoch = coreProxy.genesisEpoch();
     }
 
     //Helper Functions
@@ -54,6 +42,6 @@ contract BaseFuzzStaking is BaseTest {
     }
 
     function getCurrentEpoch() public returns (uint256 currentEpoch) {
-        currentEpoch = coreProxy.lastEpochRelative(genesis, block.number);
+        currentEpoch = coreProxy.lastEpochRelative(genesisEpoch, block.number);
     }
 }
