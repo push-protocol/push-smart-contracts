@@ -102,6 +102,10 @@ library StakingTypes {
         ///@notice Weight of staked amount of a user w.r.t total staked in a single epoch
         mapping(uint256 => uint256) epochToUserStakedWeight;
     }
+    struct Percentage {
+        uint256 percentageNumber;
+        uint256 decimalPlaces;
+    }
 }
 
 library CrossChainRequestTypes {
