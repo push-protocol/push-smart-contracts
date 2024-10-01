@@ -151,7 +151,7 @@ abstract contract BaseTest is Test, Constants, Events {
         //Setup PushStaking Contracts
         pushStakingProxyAdmin = new PushStakingAdmin();
         pushStakingProxy =
-            new PushStakingProxy(address(pushStaking), actor.admin, address(coreProxy), actor.admin, address(pushToken));
+            new PushStakingProxy(address(pushStaking), address(pushStakingProxyAdmin), address(coreProxy), actor.admin, address(pushToken));
         pushStaking = PushStaking(address(pushStakingProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
@@ -172,6 +172,7 @@ abstract contract BaseTest is Test, Constants, Events {
         commEthProxy.setPushTokenAddress(address(pushToken));
         coreProxy.setPushCommunicatorAddress(address(commEthProxy));
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
+        coreProxy.updateStakingAddress(address(pushStaking));
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address
@@ -183,8 +184,6 @@ abstract contract BaseTest is Test, Constants, Events {
         approveTokens(actor.tony_channel_owner, address(coreProxy), 50_000 ether);
         approveTokens(actor.dan_push_holder, address(coreProxy), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(coreProxy), 50_000 ether);
-        vm.prank(actor.admin);
-        pushStaking.initializeStake();
         vm.warp(DEC_27_2021);
     }
 

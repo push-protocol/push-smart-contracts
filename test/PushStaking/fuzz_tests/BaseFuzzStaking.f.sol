@@ -7,6 +7,17 @@ contract BaseFuzzStaking is BaseTest {
 
     function setUp() public virtual override {
         BaseTest.setUp();
+        
+        approveTokens(actor.admin, address(pushStaking), 50_000 ether);
+        approveTokens(actor.governance, address(pushStaking), 50_000 ether);
+        approveTokens(actor.bob_channel_owner, address(pushStaking), 50_000 ether);
+        approveTokens(actor.alice_channel_owner, address(pushStaking), 50_000 ether);
+        approveTokens(actor.charlie_channel_owner, address(pushStaking), 50_000 ether);
+        approveTokens(actor.tony_channel_owner, address(pushStaking), 50_000 ether);
+        approveTokens(actor.dan_push_holder, address(pushStaking), 50_000 ether);
+        approveTokens(actor.tim_push_holder, address(pushStaking), 50_000 ether);
+        
+        pushStaking.initializeStake();
         genesisEpoch = pushStaking.genesisEpoch();
     }
 

@@ -17,7 +17,7 @@ contract PushStakingProxy is TransparentUpgradeableProxy {
             _logic,
             _governance,
             abi.encodeWithSignature(
-                "initialize(address,address,address,uint256,uint256,uint256,uint256,uint256)",
+                "initialize(address,address,address)",
                 _pushChannelAdmin,
                 _core,
                 _pushTokenAddress
