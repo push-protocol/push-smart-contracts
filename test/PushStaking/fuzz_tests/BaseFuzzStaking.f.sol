@@ -7,23 +7,23 @@ contract BaseFuzzStaking is BaseTest {
 
     function setUp() public virtual override {
         BaseTest.setUp();
-        genesisEpoch = coreProxy.genesisEpoch();
+        genesisEpoch = pushStaking.genesisEpoch();
     }
 
     //Helper Functions
     function stake(address signer, uint256 amount) internal {
         changePrank(signer);
-        coreProxy.stake(amount * 1e18);
+        pushStaking.stake(amount * 1e18);
     }
 
     function harvest(address signer) internal {
         changePrank(signer);
-        coreProxy.harvestAll();
+        pushStaking.harvestAll();
     }
 
     function harvestPaginated(address signer, uint256 _till) internal {
         changePrank(signer);
-        coreProxy.harvestPaginated(_till);
+        pushStaking.harvestPaginated(_till);
     }
 
     function addPool(uint256 amount) internal {
@@ -33,15 +33,15 @@ contract BaseFuzzStaking is BaseTest {
 
     function unstake(address signer) internal {
         changePrank(signer);
-        coreProxy.unstake();
+        pushStaking.unstake();
     }
 
     function daoHarvest(address signer, uint256 _epoch) internal {
         changePrank(signer);
-        coreProxy.daoHarvestPaginated(_epoch);
+        pushStaking.daoHarvestPaginated(_epoch);
     }
 
     function getCurrentEpoch() public returns (uint256 currentEpoch) {
-        currentEpoch = coreProxy.lastEpochRelative(genesisEpoch, block.number);
+        currentEpoch = pushStaking.lastEpochRelative(genesisEpoch, block.number);
     }
 }

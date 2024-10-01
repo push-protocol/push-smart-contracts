@@ -10,7 +10,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-contract PushFeePoolStaking is Initializable, PushStakingStorage {
+contract PushStaking is Initializable, PushStakingStorage {
     using SafeERC20 for IERC20;
 
     event Staked(address indexed user, uint256 indexed amountStaked);

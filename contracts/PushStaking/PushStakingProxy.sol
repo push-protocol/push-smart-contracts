@@ -10,12 +10,7 @@ contract PushStakingProxy is TransparentUpgradeableProxy {
         address _governance,
         address _pushChannelAdmin,
         address _core,
-        address _pushTokenAddress,
-        uint256 _genesisEpoch,
-        uint256 _lastEpochInitialized,
-        uint256 _lastTotalStakeEpochInitialized,
-        uint256 _totalStakedAmount,
-        uint256 _previouslySetEpochRewards
+        address _pushTokenAddress
     )
         payable
         TransparentUpgradeableProxy(
@@ -25,12 +20,7 @@ contract PushStakingProxy is TransparentUpgradeableProxy {
                 "initialize(address,address,address,uint256,uint256,uint256,uint256,uint256)",
                 _pushChannelAdmin,
                 _core,
-                _pushTokenAddress,
-                _genesisEpoch,
-                _lastEpochInitialized,
-                _lastTotalStakeEpochInitialized,
-                _totalStakedAmount,
-                _previouslySetEpochRewards
+                _pushTokenAddress
             )
         )
     { }
