@@ -209,7 +209,7 @@ contract PushCoreV3 is
      * about the Channel being created
      * @dev    -Initializes the Channel Struct
      *         -Subscribes the Channel's Owner to Imperative Push Channels as well as their Own Channels
-     *         - Updates the CHANNEL_POOL_FUNDS and PROTOCOL_POOL_FEES in the contract.
+     *         - Updates the CHANNEL_POOL_FUNDS and POOL_FEES in the contract.
      *
      * @param _channel         address of the channel being Created
      * @param _channelType     The type of the Channel
