@@ -42,6 +42,12 @@ contract WalletShareTest is BaseFuzzStaking{
         assertEq(percentage, percentAllocation.percentageNumber);
     }
 
+    function test_whenWallet_TriesTo_ClaimRewards()external {
+        test_WalletGets_20PercentAllocation();
+        changePrank(actor.bob_channel_owner);
+        pushStaking.claimShareRewards();
+    }
+
 
     function test_WalletGets_50PercentAllocation() public {
         // bob wallet gets allocated 20% shares i.e. 25k

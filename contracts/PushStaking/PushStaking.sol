@@ -301,10 +301,7 @@ contract PushStaking is Initializable, PushStakingStorage {
      *         Unlike other harvest functions, this is designed to transfer rewards to Push Governance.
      *
      */
-    function daoHarvestPaginated(uint256 _tillEpoch) external {
-        if (msg.sender != governance) {
-            revert Errors.CallerNotAdmin();
-        }
+    function daoHarvestPaginated(uint256 _tillEpoch) external onlyGovernance{
         uint256 rewards = harvest(core, _tillEpoch);
         IPushCoreStaking(core).sendFunds(msg.sender, rewards);
     }

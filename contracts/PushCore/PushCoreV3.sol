@@ -489,6 +489,7 @@ contract PushCoreV3 is
     function updateStakingAddress(address _stakingAddress) external {
         onlyPushChannelAdmin();
         STAKING_CONTRACT = _stakingAddress;
+        IPUSH(PUSH_TOKEN_ADDRESS).setHolderDelegation(_stakingAddress,true);
     }
 
     function sendFunds(address _user, uint256 _amount) external {
