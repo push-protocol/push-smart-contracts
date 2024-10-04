@@ -17,6 +17,7 @@ contract BaseFuzzStaking is BaseTest {
         approveTokens(actor.dan_push_holder, address(pushStaking), 50_000 ether);
         approveTokens(actor.tim_push_holder, address(pushStaking), 50_000 ether);
         
+        changePrank(actor.admin);
         pushStaking.initializeStake();
         genesisEpoch = pushStaking.genesisEpoch();
     }

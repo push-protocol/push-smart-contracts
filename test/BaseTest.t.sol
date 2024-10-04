@@ -151,7 +151,7 @@ abstract contract BaseTest is Test, Constants, Events {
         //Setup PushStaking Contracts
         pushStakingProxyAdmin = new PushStakingAdmin();
         pushStakingProxy =
-            new PushStakingProxy(address(pushStaking), address(pushStakingProxyAdmin), address(coreProxy), actor.admin, address(pushToken));
+            new PushStakingProxy(address(pushStaking), address(pushStakingProxyAdmin),  actor.admin, address(coreProxy), address(pushToken));
         pushStaking = PushStaking(address(pushStakingProxy));
 
         // Set-up Core Address in Comm & Vice-Versa
