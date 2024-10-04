@@ -16,19 +16,18 @@ contract PushStaking is Initializable, PushStakingStorage {
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
+    event NewSharesIssued(address indexed Wallet, uint256 indexed Shares);
+    event SharesRemoved(address indexed Wallet, uint256 indexed Shares);
+    event SharesDecreased(address indexed Wallet, uint256 indexed oldShares, uint256 newShares);
 
-    function initialize(
-        address _pushChannelAdmin,
-        address _core,
-        address _pushToken
-    )
-        public
-        initializer
-    {
+    function initialize(address _pushChannelAdmin, address _core, address _pushToken) public initializer {
         pushChannelAdmin = _pushChannelAdmin;
         governance = _pushChannelAdmin;
         core = _core;
         PUSH_TOKEN_ADDRESS = _pushToken;
+        WALLET_TOTAL_SHARES = 100_000 * 1e18;
+        FOUNDATION = _pushChannelAdmin;
+        walletShareInfo[FOUNDATION].walletShare = WALLET_TOTAL_SHARES;
     }
 
     modifier onlyPushChannelAdmin() {
@@ -57,76 +56,85 @@ contract PushStaking is Initializable, PushStakingStorage {
     }
 
     function initializeStake() external {
-        require(
-            genesisEpoch == 0,
-            "PushCoreV2::initializeStake: Already Initialized"
-        );
+        require(genesisEpoch == 0, "PushCoreV2::initializeStake: Already Initialized");
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
         _stake(core, 1e18);
     }
 
-   /*
+    /*
      * Fetching shares for a wallet 
      * 1. Internal helper function
      * 2. helps in getting the shares to be assigned for a wallet based on params passed in this function
-   */ 
+    */
     function getSharesAmount(
         uint256 _totalShares,
         StakingTypes.Percentage memory _percentage
     )
         public
-        pure
         returns (uint256 sharesToBeAllocated)
     {
-        if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100) revert Errors.InvalidArg_MoreThanExpected( 99,_percentage.decimalPlaces);
-        sharesToBeAllocated = (_percentage.percentageNumber * _totalShares) 
+        if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100) {
+            revert Errors.InvalidArg_MoreThanExpected(99, _percentage.decimalPlaces);
+        }
+        sharesToBeAllocated = (_percentage.percentageNumber * _totalShares)
             / ((100 * (10 ** _percentage.decimalPlaces)) - _percentage.percentageNumber);
     }
 
-   /*
+    /*
      * Adding Wallet Share to a Wallet
      * 1. addWalletShare(address wallet, uint256 percentageOfShares)
      * 2. Can be called by governance.
      * 3. Uses the formulae to derive the percent of shares to be assigned to a specific wallet
      * 4. Updates WALLET_TOTAL_SHARES
-     * 5. Updates WalletToShares mapping
+     * 5. Updates walletShareInfo mapping
      * 6. Emits out an event.
-     * 7. If a wallet has already has a share, then it acts as a "increase share" function. And the percenatge passed
+    * 7. If a wallet has already has a share, then it acts as a "increase share" function. And the percenatge passed
      *    should be greater than the already assigned percentge.
-    */  
-    function addWalletShare(address _walletAddress, StakingTypes.Percentage memory _percentage) public onlyGovernance{
-        uint oldTotalShare = WALLET_TOTAL_SHARES;
-        uint currentWalletShare = WalletToShares[_walletAddress];
-        uint newTotalShare;
-
-        if( currentWalletShare != 0) {
-            newTotalShare = oldTotalShare - currentWalletShare;
-        }else{
-            newTotalShare = oldTotalShare;
+    */
+    function addWalletShare(address _walletAddress, StakingTypes.Percentage memory _percentage) public onlyGovernance {
+        uint256 TotalShare = WALLET_TOTAL_SHARES;
+        uint256 currentWalletShare = walletShareInfo[_walletAddress].walletShare;
+        if (currentWalletShare != 0) {
+            TotalShare -= currentWalletShare;
         }
-        uint256 sharesToBeAllocated = getSharesAmount(newTotalShare, _percentage);
-         if (sharesToBeAllocated < currentWalletShare) revert Errors.InvalidArg_LessThanExpected(currentWalletShare, sharesToBeAllocated);
-        WALLET_TOTAL_SHARES = newTotalShare + sharesToBeAllocated;
-        WalletToShares[_walletAddress] = sharesToBeAllocated;
+        uint256 sharesToBeAllocated = getSharesAmount(TotalShare, _percentage);
+        if (sharesToBeAllocated < currentWalletShare) {
+            revert Errors.InvalidArg_LessThanExpected(currentWalletShare, sharesToBeAllocated);
+        }
+        _adjustWalletAndTotalStake(_walletAddress, sharesToBeAllocated, false);
+        WALLET_TOTAL_SHARES = TotalShare + sharesToBeAllocated;
+        emit NewSharesIssued(_walletAddress, sharesToBeAllocated);
     }
-   /*
+    /*
      * Removing Wallet Share from a Wallet
      * 1. removes the shares from a wallet completely
      * 2. Can be called by governance.
      * 3. Updates WALLET_TOTAL_SHARES
      * 4. Emits out an event.
-   */
+    */
+
     function removeWalletShare(address _walletAddress) public onlyGovernance {
-        WalletToShares[FOUNDATION] += WalletToShares[_walletAddress];
-        WalletToShares[_walletAddress] = 0;
+        uint256 sharesToBeRemoved = walletShareInfo[_walletAddress].walletShare;
+        _adjustWalletAndTotalStake(_walletAddress, sharesToBeRemoved, true);
+
+        walletShareInfo[FOUNDATION].walletShare += sharesToBeRemoved;
+
+        emit SharesRemoved(_walletAddress, sharesToBeRemoved);
     }
 
-    function decreaseWalletShare(address _walletAddress, StakingTypes.Percentage memory _percentage) external onlyGovernance{
+    function decreaseWalletShare(
+        address _walletAddress,
+        StakingTypes.Percentage memory _percentage
+    )
+        external
+        onlyGovernance
+    {
+        uint256 sharesToBeRemoved = walletShareInfo[_walletAddress].walletShare;
         removeWalletShare(_walletAddress);
-        addWalletShare( _walletAddress, _percentage);
-
+        addWalletShare(_walletAddress, _percentage);
+        emit SharesDecreased(_walletAddress, sharesToBeRemoved, walletShareInfo[_walletAddress].walletShare);
     }
 
     /*
@@ -141,14 +149,36 @@ contract PushStaking is Initializable, PushStakingStorage {
      * 5. Reward can be calculated for wallets similar they are calculated for Token holders in a specific epoch.
         * Reward for a Given Wallet X = ( Wallet Share of X / WALLET_TOTAL_SHARES) * WALLET_FEE_POOL
     */
-   //TODO logic yet to be finalized
-   function calculateWalletRewards(address _wallet) public returns(uint) {
-       return ( WalletToShares[_wallet] / WALLET_TOTAL_SHARES) * IPushCoreStaking(core).WALLET_FEE_POOL();
-   }
+    //TODO logic yet to be finalized
+    function calculateWalletRewards(address _wallet, uint256 _epochId) public returns (uint256) {
+        return (walletShareInfo[_wallet].walletShare * epochRewardsForWallets[_epochId]) / epochToTotalShares[_epochId];
+    }
+
+    function claimShareRewards() external returns (uint256 rewards) {
+        _adjustUserAndTotalStake(msg.sender, 0, false);
+
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, walletShareInfo[msg.sender].lastClaimedBlock);
+
+        uint256 _tillEpoch = currentEpoch - 1;
+
+        for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
+            uint256 claimableReward = calculateEpochRewards(msg.sender, i);
+            rewards = rewards + claimableReward;
+        }
+
+        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender] + rewards;
+        // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
+        uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
+        userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+
+        emit RewardsHarvested(msg.sender, rewards, nextFromEpoch, _tillEpoch);
+    }
     /**
      * @notice Function to return User's Push Holder weight based on amount being staked & current block number
      *
      */
+
     function _returnPushTokenWeight(
         address _account,
         uint256 _amount,
@@ -180,7 +210,7 @@ contract PushStaking is Initializable, PushStakingStorage {
      *
      */
     function calculateEpochRewards(address _user, uint256 _epochId) public view returns (uint256 rewards) {
-        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewards[_epochId])
+        rewards = (userFeesInfo[_user].epochToUserStakedWeight[_epochId] * epochRewardsForStakers[_epochId])
             / epochToTotalStakedWeight[_epochId];
     }
 
@@ -200,7 +230,6 @@ contract PushStaking is Initializable, PushStakingStorage {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 blockNumberToConsider = genesisEpoch + (epochDuration * currentEpoch);
         uint256 userWeight = _returnPushTokenWeight(_staker, _amount, blockNumberToConsider);
-
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, core, _amount);
 
         userFeesInfo[_staker].stakedAmount = userFeesInfo[_staker].stakedAmount + _amount;
@@ -286,7 +315,6 @@ contract PushStaking is Initializable, PushStakingStorage {
      * @param  _tillEpoch   - the end epoch number till which rewards shall be counted.
      * @dev    _tillEpoch should never be equal to currentEpoch.
      *         Transfers rewards to caller and updates user's details.
-     *
      */
     function harvest(address _user, uint256 _tillEpoch) internal returns (uint256 rewards) {
         IPUSH(PUSH_TOKEN_ADDRESS).resetHolderWeight(_user);
@@ -384,18 +412,19 @@ contract PushStaking is Initializable, PushStakingStorage {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
-            uint256 PROTOCOL_POOL_FEES = IPushCoreStaking(core).PROTOCOL_POOL_FEES();
-            uint256 availableRewardsPerEpoch = (PROTOCOL_POOL_FEES - previouslySetEpochRewards);
+            uint256 HOLDER_FEE_POOL = IPushCoreStaking(core).HOLDER_FEE_POOL();
+
+            uint256 availableRewardsPerEpoch = (HOLDER_FEE_POOL - previouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 
             if (_epochGap > 1) {
-                epochRewards[_currentEpoch - 1] += availableRewardsPerEpoch;
+                epochRewardsForStakers[_currentEpoch - 1] += availableRewardsPerEpoch;
             } else {
-                epochRewards[_currentEpoch] += availableRewardsPerEpoch;
+                epochRewardsForStakers[_currentEpoch] += availableRewardsPerEpoch;
             }
 
             lastEpochInitialized = block.number;
-            previouslySetEpochRewards = PROTOCOL_POOL_FEES;
+            previouslySetEpochRewards = HOLDER_FEE_POOL;
         }
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
@@ -412,6 +441,82 @@ contract PushStaking is Initializable, PushStakingStorage {
             epochToTotalStakedWeight[_currentEpoch] = isUnstake
                 ? epochToTotalStakedWeight[lastTotalStakeEpochInitialized] - _userWeight
                 : epochToTotalStakedWeight[lastTotalStakeEpochInitialized] + _userWeight;
+        }
+        lastTotalStakeEpochInitialized = _currentEpoch;
+    }
+
+    function _adjustWalletAndTotalStake(address _wallet, uint256 _shares, bool isUnstake) internal {
+        uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
+        _setupEpochsRewardAndWeights(_shares, currentEpoch, isUnstake);
+
+        uint256 _walletPrevShares = walletShareInfo[_wallet].walletShare;
+
+        // Initiating 1st Case: User stakes for first time
+        if (_walletPrevShares == 0) {
+            walletShareInfo[_wallet].walletShare = _shares;
+        } else {
+            // Initiating 2.1 Case: User stakes again but in Same Epoch
+            uint256 lastStakedEpoch = lastEpochRelative(genesisEpoch, walletShareInfo[_wallet].lastStakedBlock);
+            if (currentEpoch == lastStakedEpoch) {
+                walletShareInfo[_wallet].walletShare = isUnstake ? _walletPrevShares - _shares : _shares;
+            } else {
+                // Initiating 2.2 Case: User stakes again but in Different Epoch
+                for (uint256 i = lastStakedEpoch; i <= currentEpoch; i++) {
+                    if (i != currentEpoch) {
+                        walletShareInfo[_wallet].epochToWalletShares[i] = _walletPrevShares;
+                    } else {
+                        walletShareInfo[_wallet].walletShare =
+                            isUnstake ? _walletPrevShares - _shares : _walletPrevShares + _shares;
+                        walletShareInfo[_wallet].epochToWalletShares[i] = walletShareInfo[_wallet].walletShare;
+                    }
+                }
+            }
+        }
+
+        if (_shares != 0) {
+            walletShareInfo[_wallet].lastStakedBlock = block.number;
+        }
+    }
+
+    /**
+     * @notice Internal function that allows setting up the rewards for specific EPOCH IDs
+     * @dev    Initializes (sets reward) for every epoch ID that falls between the lastEpochInitialized and currentEpoch
+     *         Reward amount for specific EPOCH Ids depends on newly available Protocol_Pool_Fees.
+     *             - If no new fees was accumulated, rewards for particular epoch ids can be zero
+     *             - Records the Pool_Fees value used as rewards.
+     *             - Records the last epoch id whose rewards were set.
+     */
+    function _setupEpochsRewardAndWeightsForWallets(uint256 _wallet, uint256 _currentEpoch, bool isUnstake) private {
+        uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
+        // Setting up Epoch Based Rewards
+        if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
+            uint256 WALLET_FEE_POOL = IPushCoreStaking(core).WALLET_FEE_POOL();
+            uint256 availableRewardsPerEpoch = (WALLET_FEE_POOL - previouslySetEpochRewards);
+            uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
+
+            if (_epochGap > 1) {
+                epochRewardsForWallets[_currentEpoch - 1] += availableRewardsPerEpoch;
+            } else {
+                epochRewardsForWallets[_currentEpoch] += availableRewardsPerEpoch;
+            }
+
+            lastEpochInitialized = block.number;
+            previouslySetEpochRewards = WALLET_FEE_POOL;
+        }
+        // Setting up Epoch Based TotalWeight
+        if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
+            epochToTotalShares[_currentEpoch] =
+                isUnstake ? epochToTotalShares[_currentEpoch] - _wallet : epochToTotalShares[_currentEpoch] + _wallet;
+        } else {
+            for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
+                if (epochToTotalShares[i] == 0) {
+                    epochToTotalShares[i] = epochToTotalShares[lastTotalStakeEpochInitialized];
+                }
+            }
+
+            epochToTotalShares[_currentEpoch] = isUnstake
+                ? epochToTotalShares[lastTotalStakeEpochInitialized] - _wallet
+                : epochToTotalShares[lastTotalStakeEpochInitialized] + _wallet;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
