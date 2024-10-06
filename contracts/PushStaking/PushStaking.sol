@@ -9,7 +9,7 @@ import { Errors } from "../libraries/Errors.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-
+import { console } from "lib/forge-std/src/console.sol";
 contract PushStaking is Initializable, PushStakingStorage {
     using SafeERC20 for IERC20;
 
@@ -103,6 +103,8 @@ contract PushStaking is Initializable, PushStakingStorage {
         if (sharesToBeAllocated < currentWalletShare) {
             revert Errors.InvalidArg_LessThanExpected(currentWalletShare, sharesToBeAllocated);
         }
+         walletShareInfo[_walletAddress].lastClaimedBlock =
+            walletShareInfo[_walletAddress].lastClaimedBlock == 0 ? genesisEpoch :  walletShareInfo[_walletAddress].lastClaimedBlock;
         _adjustWalletAndTotalStake(_walletAddress, sharesToBeAllocated, false);
         WALLET_TOTAL_SHARES = TotalShare + sharesToBeAllocated;
         emit NewSharesIssued(_walletAddress, sharesToBeAllocated);
@@ -155,7 +157,7 @@ contract PushStaking is Initializable, PushStakingStorage {
     }
 
     function claimShareRewards() external returns (uint256 rewards) {
-        _adjustUserAndTotalStake(msg.sender, 0, false);
+        _adjustWalletAndTotalStake(msg.sender, 0, false);
 
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
         uint256 nextFromEpoch = lastEpochRelative(genesisEpoch, walletShareInfo[msg.sender].lastClaimedBlock);
@@ -163,7 +165,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         uint256 _tillEpoch = currentEpoch - 1;
 
         for (uint256 i = nextFromEpoch; i <= _tillEpoch; i++) {
-            uint256 claimableReward = calculateEpochRewards(msg.sender, i);
+            uint256 claimableReward = calculateWalletRewards(msg.sender, i);
             rewards = rewards + claimableReward;
         }
 
@@ -171,6 +173,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+        IPushCoreStaking(core).sendFunds(msg.sender, rewards);
 
         emit RewardsHarvested(msg.sender, rewards, nextFromEpoch, _tillEpoch);
     }
@@ -444,7 +447,7 @@ contract PushStaking is Initializable, PushStakingStorage {
 
     function _adjustWalletAndTotalStake(address _wallet, uint256 _shares, bool isUnstake) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        _setupEpochsRewardAndWeights(_shares, currentEpoch, isUnstake);
+        _setupEpochsRewardAndWeightsForWallets(_shares, currentEpoch, isUnstake);
 
         uint256 _walletPrevShares = walletShareInfo[_wallet].walletShare;
 
