@@ -24,27 +24,28 @@ contract WalletShareTest is BaseFuzzStaking{
     }
 
     function test_WalletGets_20PercentAllocation() public {
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
         uint256 expectedAllocationShares = 25_000 * 1e18;
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
 
         assertEq(bobWalletSharesBefore, 0);
         assertEq(bobWalletSharesAfter, expectedAllocationShares);
         assertEq(actualTotalShares, 125_000 * 1e18);
-        console2.log(bobWalletSharesAfter * 100, actualTotalShares);
 
         uint percentage = (bobWalletSharesAfter * 100)/actualTotalShares;
         assertEq(percentage, percentAllocation.percentageNumber);
     }
 
     function test_whenWallet_TriesTo_ClaimRewards()external {
+        addPool(1000);
         test_WalletGets_20PercentAllocation();
         changePrank(actor.bob_channel_owner);
+        roll(epochDuration * 2);
         pushStaking.claimShareRewards();
     }
 
@@ -59,7 +60,7 @@ contract WalletShareTest is BaseFuzzStaking{
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.alice_channel_owner, percentAllocation);
         uint256 expectedAllocationShares = 125_000 * 1e18;
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 aliceWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.alice_channel_owner);
         (uint256 foundationWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.admin);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
@@ -79,7 +80,7 @@ contract WalletShareTest is BaseFuzzStaking{
         test_WalletGets_50PercentAllocation();
 
         uint256 totalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 aliceWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.alice_channel_owner);
         (uint256 foundationWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.admin);
 
@@ -87,7 +88,7 @@ contract WalletShareTest is BaseFuzzStaking{
         pushStaking.removeWalletShare(actor.bob_channel_owner);
 
         uint256 totalSharesAfter = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 aliceWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.alice_channel_owner);
         (uint256 foundationWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.admin);
 
@@ -116,13 +117,13 @@ contract WalletShareTest is BaseFuzzStaking{
 
     // assign wallet 0.001% shares
     function test_WalletGets_NegligiblePercentAllocation() public {
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 1, decimalPlaces: 3 });
 
         uint256 expectedAllocationShares = pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES(),percentAllocation);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
 
         assertEq(bobWalletSharesBefore, 0);
@@ -132,13 +133,13 @@ contract WalletShareTest is BaseFuzzStaking{
 
     // assign wallet 0.0001% shares
     function test_WalletGets_NegligiblePercentAllocation2() public {
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 1, decimalPlaces: 4 });
 
         uint256 expectedAllocationShares = pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES(),percentAllocation);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
          console2.log(expectedAllocationShares,bobWalletSharesAfter,actualTotalShares);
         assertEq(bobWalletSharesBefore, 0);
@@ -153,7 +154,7 @@ contract WalletShareTest is BaseFuzzStaking{
 
         // let's increase actor.bob_channel_owner allocation to 50%
         uint256 totalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.admin);
 
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
@@ -162,7 +163,7 @@ contract WalletShareTest is BaseFuzzStaking{
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
         uint256 expectedAllocationShares = 100_000* 1e18;
         uint256 totalSharesAfter = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.admin);
 
         assertEq(bobWalletSharesBefore, 25_000* 1e18,"bob wallet share");
@@ -179,14 +180,14 @@ contract WalletShareTest is BaseFuzzStaking{
 
         // let's increase actor.bob_channel_owner allocation to 50%
         uint256 totalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
 
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         vm.expectRevert();
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
 
         assertEq(bobWalletSharesBefore, bobWalletSharesAfter);
@@ -202,7 +203,7 @@ contract WalletShareTest is BaseFuzzStaking{
 
         // let's decrease actor.bob_channel_owner allocation to 10%
         uint256 totalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.admin);
 
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
@@ -211,7 +212,7 @@ contract WalletShareTest is BaseFuzzStaking{
         changePrank(actor.admin);
         pushStaking.decreaseWalletShare(actor.bob_channel_owner, percentAllocation);
         uint256 totalSharesAfter = pushStaking.WALLET_TOTAL_SHARES();
-        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.admin);
 
         assertEq(bobWalletSharesBefore, 25_000 * 1e18);

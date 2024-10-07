@@ -173,6 +173,7 @@ abstract contract BaseTest is Test, Constants, Events {
         coreProxy.setPushCommunicatorAddress(address(commEthProxy));
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
         coreProxy.updateStakingAddress(address(pushStaking));
+        coreProxy.splitFeePool(50);
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address
