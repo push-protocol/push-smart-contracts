@@ -20,6 +20,13 @@ abstract contract Constants {
     uint256 public totalStakedAmount = 0 ether;
     uint256 public previouslySetEpochRewards = 0 ether;
 
+    uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
+    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
+    uint256 FEE_AMOUNT = 10 ether;
+    uint256 MIN_POOL_CONTRIBUTION = 1 ether;
+    uint256 ADJUST_FOR_FLOAT = 10 ** 7;
+    uint256 HOLDER_SPLIT = 50;
+
     //Comm Constants used for meta transaction
     string public constant name = "Push COMM V1";
     bytes32 public constant NAME_HASH = keccak256(bytes(name));

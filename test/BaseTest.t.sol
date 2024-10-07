@@ -59,11 +59,6 @@ abstract contract BaseTest is Test, Constants, Events {
     /* ***************
         State Variables
      *************** */
-    uint256 ADD_CHANNEL_MIN_FEES = 50 ether;
-    uint256 ADD_CHANNEL_MAX_POOL_CONTRIBUTION = 250 ether;
-    uint256 FEE_AMOUNT = 10 ether;
-    uint256 MIN_POOL_CONTRIBUTION = 1 ether;
-    uint256 ADJUST_FOR_FLOAT = 10 ** 7;
     mapping(address => uint256) privateKeys;
 
     /* ***************
@@ -173,7 +168,7 @@ abstract contract BaseTest is Test, Constants, Events {
         coreProxy.setPushCommunicatorAddress(address(commEthProxy));
         commProxy.setCoreFeeConfig(ADD_CHANNEL_MIN_FEES, FEE_AMOUNT, MIN_POOL_CONTRIBUTION);
         coreProxy.updateStakingAddress(address(pushStaking));
-        coreProxy.splitFeePool(50);
+        coreProxy.splitFeePool(HOLDER_SPLIT);
         vm.stopPrank();
 
         // Approve tokens of actors now to core contract proxy address

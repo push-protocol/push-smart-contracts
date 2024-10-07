@@ -53,7 +53,7 @@ contract BaseFuzzStaking is BaseTest {
         pushStaking.daoHarvestPaginated(_epoch);
     }
 
-    function getCurrentEpoch() public returns (uint256 currentEpoch) {
+    function getCurrentEpoch() public view returns (uint256 currentEpoch) {
         currentEpoch = pushStaking.lastEpochRelative(genesisEpoch, block.number);
     }
 }

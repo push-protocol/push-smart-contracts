@@ -151,7 +151,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         * Reward for a Given Wallet X = ( Wallet Share of X / WALLET_TOTAL_SHARES) * WALLET_FEE_POOL
     */
     //TODO logic yet to be finalized
-    function calculateWalletRewards(address _wallet, uint256 _epochId) public returns (uint256) {
+    function calculateWalletRewards(address _wallet, uint256 _epochId) public view returns (uint256) {
         return (walletShareInfo[_wallet].walletShare * epochRewardsForWallets[_epochId]) / epochToTotalShares[_epochId];
     }
 
@@ -171,7 +171,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender] + rewards;
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
-        userFeesInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
+        walletShareInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
         IPushCoreStaking(core).sendFunds(msg.sender, rewards);
 
         emit RewardsHarvested(msg.sender, rewards, nextFromEpoch, _tillEpoch);
