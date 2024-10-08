@@ -9,6 +9,7 @@ import { Errors } from "../libraries/Errors.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 contract PushStaking is Initializable, PushStakingStorage {
     using SafeERC20 for IERC20;
 
@@ -28,6 +29,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         FOUNDATION = _pushChannelAdmin;
         walletShareInfo[FOUNDATION].walletShare = WALLET_TOTAL_SHARES;
         epochToTotalShares[1] = 100_000 * 1e18;
+        walletLastEpochInitialized = block.number;
     }
 
     modifier onlyPushChannelAdmin() {
@@ -487,11 +489,11 @@ contract PushStaking is Initializable, PushStakingStorage {
      *             - Records the last epoch id whose rewards were set.
      */
     function _setupEpochsRewardAndWeightsForWallets(uint256 _shares, uint256 _currentEpoch, bool isUnstake) private {
-        uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
+        uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, walletLastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
             uint256 WALLET_FEE_POOL = IPushCoreStaking(core).WALLET_FEE_POOL();
-            uint256 availableRewardsPerEpoch = (WALLET_FEE_POOL - previouslySetEpochRewards);
+            uint256 availableRewardsPerEpoch = (WALLET_FEE_POOL - walletPreviouslySetEpochRewards);
             uint256 _epochGap = _currentEpoch - _lastEpochInitiliazed;
 
             if (_epochGap > 1) {
@@ -500,24 +502,24 @@ contract PushStaking is Initializable, PushStakingStorage {
                 epochRewardsForWallets[_currentEpoch] += availableRewardsPerEpoch;
             }
 
-            lastEpochInitialized = block.number;
-            previouslySetEpochRewards = WALLET_FEE_POOL;
+            walletLastEpochInitialized = block.number;
+            walletPreviouslySetEpochRewards = WALLET_FEE_POOL;
         }
         // Setting up Epoch Based TotalWeight
-        if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
+        if (walletLastTotalStakeEpochInitialized == 0 || walletLastTotalStakeEpochInitialized == _currentEpoch) {
             epochToTotalShares[_currentEpoch] =
                 isUnstake ? epochToTotalShares[_currentEpoch] - _shares : epochToTotalShares[_currentEpoch] + _shares;
         } else {
-            for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
+            for (uint256 i = walletLastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalShares[i] == 0) {
-                    epochToTotalShares[i] = epochToTotalShares[lastTotalStakeEpochInitialized];
+                    epochToTotalShares[i] = epochToTotalShares[walletLastTotalStakeEpochInitialized];
                 }
             }
 
             epochToTotalShares[_currentEpoch] = isUnstake
-                ? epochToTotalShares[lastTotalStakeEpochInitialized] - _shares
-                : epochToTotalShares[lastTotalStakeEpochInitialized] + _shares;
+                ? epochToTotalShares[walletLastTotalStakeEpochInitialized] - _shares
+                : epochToTotalShares[walletLastTotalStakeEpochInitialized] + _shares;
         }
-        lastTotalStakeEpochInitialized = _currentEpoch;
+        walletLastTotalStakeEpochInitialized = _currentEpoch;
     }
 }
