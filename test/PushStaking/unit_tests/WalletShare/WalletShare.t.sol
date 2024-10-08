@@ -41,12 +41,62 @@ contract WalletShareTest is BaseFuzzStaking{
         assertEq(percentage, percentAllocation.percentageNumber);
     }
 
-    function test_whenWallet_TriesTo_ClaimRewards()external {
+    function test_whenWallet_ClaimRewards_for20Percent()external {
         addPool(1000);
         test_WalletGets_20PercentAllocation();
         changePrank(actor.bob_channel_owner);
         roll(epochDuration * 2);
+        uint256 balanceBobBefore = pushToken.balanceOf(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         pushStaking.claimShareRewards();
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+
+        assertEq(bobWalletSharesBefore,bobWalletSharesAfter,"Shares");
+        assertEq(bobStakedBlockBefore, bobStakedBlockAfter,"StakedBlock");
+        assertEq(bobClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration,"ClaimedBlock");
+
+        uint256 claimedRewards = pushStaking.usersRewardsClaimed(actor.bob_channel_owner);
+        uint expectedRewards = coreProxy.WALLET_FEE_POOL();
+        assertEq(balanceBobBefore + expectedRewards, pushToken.balanceOf(actor.bob_channel_owner),"ClaimedBlock");
+        assertEq(expectedRewards,claimedRewards);
+    }
+
+    function test_whenWallets_ClaimRewards_for_20_50_Percent()external {
+        addPool(1000);
+        test_WalletGets_50PercentAllocation();
+        roll(epochDuration * 2);
+        uint256 balanceBobBefore = pushToken.balanceOf(actor.bob_channel_owner);
+        (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , ) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        uint256 balanceAliceBefore = pushToken.balanceOf(actor.alice_channel_owner);
+        (uint256 aliceWalletSharesBefore, uint256 aliceStakedBlockBefore , ) = pushStaking.walletShareInfo(actor.alice_channel_owner);
+
+        changePrank(actor.bob_channel_owner);
+        pushStaking.claimShareRewards();
+        changePrank(actor.alice_channel_owner);
+        pushStaking.claimShareRewards();
+        
+        (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        (uint256 aliceWalletSharesAfter, uint256 aliceStakedBlockAfter , uint256 aliceClaimedBlockAfter) = pushStaking.walletShareInfo(actor.alice_channel_owner);
+
+        assertEq(bobWalletSharesBefore,bobWalletSharesAfter,"Shares");
+        assertEq(bobStakedBlockBefore, bobStakedBlockAfter,"StakedBlock");
+        assertEq(bobClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration,"ClaimedBlock");
+
+        uint256 claimedRewardsBob = pushStaking.usersRewardsClaimed(actor.bob_channel_owner);
+
+        uint expectedRewardsBob = (coreProxy.WALLET_FEE_POOL() * 10)/100;
+        console2.log(expectedRewardsBob,claimedRewardsBob);
+        assertEq(balanceBobBefore + expectedRewardsBob, pushToken.balanceOf(actor.bob_channel_owner),"balanceBob");
+        assertEq(expectedRewardsBob, claimedRewardsBob,"bobClaimed");
+
+        assertEq(aliceWalletSharesBefore,aliceWalletSharesAfter,"Shares");
+        assertEq(aliceStakedBlockBefore,aliceStakedBlockAfter,"StakedBlock");
+        assertEq(aliceClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration,"ClaimedBlock");
+
+        uint256 claimedRewardsAlice = pushStaking.usersRewardsClaimed(actor.alice_channel_owner);
+        uint expectedRewardsAlice = coreProxy.WALLET_FEE_POOL()* 50/100;
+        assertEq(balanceAliceBefore + expectedRewardsAlice, pushToken.balanceOf(actor.alice_channel_owner),"balanceAlice");
+        assertEq(expectedRewardsAlice,claimedRewardsAlice,"Alice Claimed");
     }
 
 
@@ -141,10 +191,8 @@ contract WalletShareTest is BaseFuzzStaking{
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
         (uint256 bobWalletSharesAfter, uint256 bobStakedBlockAfter , uint256 bobClaimedBlockAfter) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         uint256 actualTotalShares = pushStaking.WALLET_TOTAL_SHARES();
-         console2.log(expectedAllocationShares,bobWalletSharesAfter,actualTotalShares);
         assertEq(bobWalletSharesBefore, 0);
         assertEq(bobWalletSharesAfter, expectedAllocationShares);
-        console2.log(bobWalletSharesBefore,bobWalletSharesAfter);
         assertEq(actualTotalShares, 100_000 * 1e18 + expectedAllocationShares);
     }
 

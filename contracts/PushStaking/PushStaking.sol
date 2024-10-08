@@ -27,6 +27,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         WALLET_TOTAL_SHARES = 100_000 * 1e18;
         FOUNDATION = _pushChannelAdmin;
         walletShareInfo[FOUNDATION].walletShare = WALLET_TOTAL_SHARES;
+        epochToTotalShares[1] = 100_000 * 1e18;
     }
 
     modifier onlyPushChannelAdmin() {
@@ -152,7 +153,7 @@ contract PushStaking is Initializable, PushStakingStorage {
     */
     //TODO logic yet to be finalized
     function calculateWalletRewards(address _wallet, uint256 _epochId) public view returns (uint256) {
-        return (walletShareInfo[_wallet].walletShare * epochRewardsForWallets[_epochId]) / epochToTotalShares[_epochId];
+        return (walletShareInfo[_wallet].epochToWalletShares[_epochId] * epochRewardsForWallets[_epochId]) / epochToTotalShares[_epochId];
     }
 
     function claimShareRewards() external returns (uint256 rewards) {
@@ -485,7 +486,7 @@ contract PushStaking is Initializable, PushStakingStorage {
      *             - Records the Pool_Fees value used as rewards.
      *             - Records the last epoch id whose rewards were set.
      */
-    function _setupEpochsRewardAndWeightsForWallets(uint256 _wallet, uint256 _currentEpoch, bool isUnstake) private {
+    function _setupEpochsRewardAndWeightsForWallets(uint256 _shares, uint256 _currentEpoch, bool isUnstake) private {
         uint256 _lastEpochInitiliazed = lastEpochRelative(genesisEpoch, lastEpochInitialized);
         // Setting up Epoch Based Rewards
         if (_currentEpoch > _lastEpochInitiliazed || _currentEpoch == 1) {
@@ -505,7 +506,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         // Setting up Epoch Based TotalWeight
         if (lastTotalStakeEpochInitialized == 0 || lastTotalStakeEpochInitialized == _currentEpoch) {
             epochToTotalShares[_currentEpoch] =
-                isUnstake ? epochToTotalShares[_currentEpoch] - _wallet : epochToTotalShares[_currentEpoch] + _wallet;
+                isUnstake ? epochToTotalShares[_currentEpoch] - _shares : epochToTotalShares[_currentEpoch] + _shares;
         } else {
             for (uint256 i = lastTotalStakeEpochInitialized + 1; i <= _currentEpoch - 1; i++) {
                 if (epochToTotalShares[i] == 0) {
@@ -514,8 +515,8 @@ contract PushStaking is Initializable, PushStakingStorage {
             }
 
             epochToTotalShares[_currentEpoch] = isUnstake
-                ? epochToTotalShares[lastTotalStakeEpochInitialized] - _wallet
-                : epochToTotalShares[lastTotalStakeEpochInitialized] + _wallet;
+                ? epochToTotalShares[lastTotalStakeEpochInitialized] - _shares
+                : epochToTotalShares[lastTotalStakeEpochInitialized] + _shares;
         }
         lastTotalStakeEpochInitialized = _currentEpoch;
     }
