@@ -173,8 +173,8 @@ contract PushCoreV3 is
         }
 
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * _amount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = _amount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += _amount - holderFee;
 
         channelUpdateCounter[_channel] = updateCounter;
 
@@ -245,8 +245,8 @@ contract PushCoreV3 is
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * poolFeeAmount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = poolFeeAmount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += poolFeeAmount - holderFee;
 
         // Calculate channel weight
         uint256 _channelWeight = (poolFundAmount * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
@@ -291,8 +291,8 @@ contract PushCoreV3 is
         private
     {
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * _amountDeposited) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = _amountDeposited - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += _amountDeposited - holderFee;
 
         string memory notifSetting = string(abi.encodePacked(Strings.toString(_notifOptions), "+", _notifSettings));
 
@@ -357,8 +357,8 @@ contract PushCoreV3 is
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS + poolFundAmount;
 
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * poolFeeAmount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = poolFeeAmount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += poolFeeAmount - holderFee;
 
             uint256 _newPoolContribution = channelData.poolContribution + poolFundAmount;
             uint256 _newChannelWeight = (_newPoolContribution * ADJUST_FOR_FLOAT) / MIN_POOL_CONTRIBUTION;
@@ -383,8 +383,8 @@ contract PushCoreV3 is
         CHANNEL_POOL_FUNDS = CHANNEL_POOL_FUNDS - currentPoolContribution;
 
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * currentPoolContribution) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = currentPoolContribution - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += currentPoolContribution - holderFee;
 
         uint256 _newChannelWeight = (minPoolContribution * ADJUST_FOR_FLOAT) / minPoolContribution;
 
@@ -506,8 +506,8 @@ contract PushCoreV3 is
     function addPoolFees(uint256 _rewardAmount) external {
         IERC20(PUSH_TOKEN_ADDRESS).safeTransferFrom(msg.sender, address(this), _rewardAmount);
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * _rewardAmount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = _rewardAmount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += _rewardAmount - holderFee;
     }
 
     function splitFeePool(uint256 holderSplit) external {
@@ -548,8 +548,8 @@ contract PushCoreV3 is
         celebUserFunds[requestReceiver] += requestReceiverAmount;
 
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * poolFeeAmount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = poolFeeAmount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += poolFeeAmount - holderFee;
 
         emit IncentivizedChatReqReceived(
             requestSender, BaseHelper.addressToBytes32(requestReceiver), requestReceiverAmount, poolFeeAmount, block.timestamp
@@ -658,8 +658,8 @@ contract PushCoreV3 is
         } else if (functionType == CrossChainRequestTypes.CrossChainFunction.AdminRequest_AddPoolFee) {
             // Admin Request
             uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * amount) / 100;
-            HOLDER_FEE_POOL = holderFee;
-            WALLET_FEE_POOL = amount - holderFee;
+            HOLDER_FEE_POOL += holderFee;
+            WALLET_FEE_POOL += amount - holderFee;
         } else {
             revert("Invalid Function Type");
         }
@@ -709,8 +709,8 @@ contract PushCoreV3 is
 
         // Update states based on Fee Percentage calculation
         uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * feeAmount) / 100;
-        HOLDER_FEE_POOL = holderFee;
-        WALLET_FEE_POOL = feeAmount - holderFee;
+        HOLDER_FEE_POOL += holderFee;
+        WALLET_FEE_POOL += feeAmount - holderFee;
 
         arbitraryReqFees[amountRecipient] += amount - feeAmount;
 
