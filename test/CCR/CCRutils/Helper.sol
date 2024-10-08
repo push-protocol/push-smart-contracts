@@ -94,13 +94,15 @@ contract Helper is BasePushCommTest, CCRConfig {
     function getPoolFundsAndFees(uint256 _amountDeposited)
         internal
         view
-        returns (uint256 CHANNEL_POOL_FUNDS, uint256 PROTOCOL_POOL_FEES)
+        returns (uint256 CHANNEL_POOL_FUNDS, uint256 HOLDER_FEE_POOL,uint256 WALLET_FEE_POOL )
     {
         uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = coreProxy.CHANNEL_POOL_FUNDS() + poolFundAmount;
-        PROTOCOL_POOL_FEES = coreProxy.PROTOCOL_POOL_FEES() + poolFeeAmount;
+        uint holderFees = (poolFeeAmount* HOLDER_SPLIT) /100;
+        HOLDER_FEE_POOL = coreProxy.HOLDER_FEE_POOL() + holderFees ;
+        WALLET_FEE_POOL = coreProxy.WALLET_FEE_POOL() + poolFeeAmount - holderFees;
     }
 
     function getSpecificPayload(
