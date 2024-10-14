@@ -25,11 +25,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         governance = _pushChannelAdmin;
         core = _core;
         PUSH_TOKEN_ADDRESS = _pushToken;
-        WALLET_TOTAL_SHARES = 100_000 * 1e18;
         FOUNDATION = _pushChannelAdmin;
-        walletShareInfo[FOUNDATION].walletShare = WALLET_TOTAL_SHARES;
-        epochToTotalShares[1] = 100_000 * 1e18;
-        walletLastEpochInitialized = block.number;
     }
 
     modifier onlyPushChannelAdmin() {
@@ -57,12 +53,22 @@ contract PushStaking is Initializable, PushStakingStorage {
         governance = _governanceAddress;
     }
 
-    function initializeStake() external {
+    function initializeStake(uint256 _walletTotalShares) external {
         require(genesisEpoch == 0, "PushCoreV2::initializeStake: Already Initialized");
         genesisEpoch = block.number;
         lastEpochInitialized = genesisEpoch;
 
         _stake(core, 1e18);
+
+        WALLET_TOTAL_SHARES = _walletTotalShares;
+        walletLastEpochInitialized = genesisEpoch;
+        uint256 sharesToBeAllocated = _walletTotalShares;
+
+        walletShareInfo[FOUNDATION].lastClaimedBlock =  genesisEpoch;
+
+        _adjustWalletAndTotalStake(FOUNDATION, sharesToBeAllocated, false);
+        emit NewSharesIssued(FOUNDATION, sharesToBeAllocated);
+       
     }
 
     /*

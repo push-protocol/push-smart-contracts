@@ -23,6 +23,26 @@ contract WalletShareTest is BaseFuzzStaking{
         assertEq(foundationWalletShares, actualTotalShares);
     }
 
+    function test_whenFoundation_ClaimRewards()external {
+        addPool(1000);
+        test_WalletGets_20PercentAllocation();
+        roll(epochDuration * 2);
+        uint256 balanceAdminBefore = pushToken.balanceOf(actor.admin);
+        (uint256 adminWalletSharesBefore, uint256 adminStakedBlockBefore ,) = pushStaking.walletShareInfo(actor.admin);
+        changePrank(actor.admin);
+        pushStaking.claimShareRewards();
+        (uint256 adminWalletSharesAfter, uint256 adminStakedBlockAfter , uint256 adminClaimedBlockAfter) = pushStaking.walletShareInfo(actor.admin);
+
+        assertEq(adminWalletSharesBefore,adminWalletSharesAfter,"Shares");
+        assertEq(adminStakedBlockBefore, adminStakedBlockAfter,"StakedBlock");
+        assertEq(adminClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration,"ClaimedBlock");
+
+        uint256 claimedRewards = pushStaking.usersRewardsClaimed(actor.admin);
+        uint expectedRewards = (coreProxy.WALLET_FEE_POOL()* 80) / 100 ;
+        assertEq(balanceAdminBefore + expectedRewards, pushToken.balanceOf(actor.admin),"Balance");
+        assertEq(expectedRewards,claimedRewards);
+    }
+
     function test_WalletGets_20PercentAllocation() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });

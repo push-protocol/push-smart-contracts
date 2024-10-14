@@ -26,6 +26,7 @@ abstract contract Constants {
     uint256 MIN_POOL_CONTRIBUTION = 1 ether;
     uint256 ADJUST_FOR_FLOAT = 10 ** 7;
     uint256 HOLDER_SPLIT = 50;
+    uint256 WALLET_TOTAL_SHARES = 100_000 * 1e18;
 
     //Comm Constants used for meta transaction
     string public constant name = "Push COMM V1";
