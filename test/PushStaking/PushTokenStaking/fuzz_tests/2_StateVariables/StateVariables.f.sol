@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import { BaseFuzzStaking } from "../BaseFuzzStaking.f.sol";
+import { BasePushTokenStaking } from "../../BasePushTokenStaking.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
-contract StateVariables_test is BaseFuzzStaking {
+contract StateVariables_test is BasePushTokenStaking {
     function setUp() public virtual override {
-        BaseFuzzStaking.setUp();
+        BasePushTokenStaking.setUp();
     }
 
     function test_BlockOverflow(uint256 _passEpoch) public {
