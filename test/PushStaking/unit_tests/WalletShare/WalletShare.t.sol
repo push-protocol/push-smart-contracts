@@ -481,6 +481,25 @@ contract WalletShareTest is BaseFuzzStaking {
         assertEq(epochToTotalSharesAfter2, actualTotalShares2);
     }
 
+    // POC
+    function test_whenWallet_ClaimRewards_InSameEpoch() external {
+        addPool(1000);
+        test_WalletGets_20PercentAllocation();
+        changePrank(actor.bob_channel_owner);
+        roll(epochDuration + 1);
+        addPool(1000);
+        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+
+        changePrank(actor.admin);
+        pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
+        (uint256 bobWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+
+        changePrank(actor.bob_channel_owner);
+        pushStaking.claimShareRewards();
+        (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        assertEq(bobWalletSharesBefore, bobWalletSharesAfter);
+    }
+    
     // function test_MaxDecimalAmount () public  {
     //     // fixed at most 10 decimal places
     //     // percentage = 10.1111111111
