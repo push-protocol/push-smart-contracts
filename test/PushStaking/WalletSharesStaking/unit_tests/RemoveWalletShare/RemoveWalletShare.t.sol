@@ -6,7 +6,7 @@ import { StakingTypes } from "../../../../../contracts/libraries/DataTypes.sol";
 import {console2} from "forge-std/console2.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
-contract AddWalletShareTest is BaseWalletSharesStaking {
+contract RemoveWalletShareTest is BaseWalletSharesStaking {
 
     function setUp() public virtual override {
         BaseWalletSharesStaking.setUp();
