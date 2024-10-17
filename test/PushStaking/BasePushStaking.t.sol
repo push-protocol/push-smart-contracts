@@ -18,7 +18,7 @@ contract BasePushStaking is BaseTest {
         approveTokens(actor.tim_push_holder, address(pushStaking), 50_000 ether);
         
         changePrank(actor.admin);
-        pushStaking.initializeStake();
+        pushStaking.initializeStake(WALLET_TOTAL_SHARES);
         genesisEpoch = pushStaking.genesisEpoch();
     }
 
