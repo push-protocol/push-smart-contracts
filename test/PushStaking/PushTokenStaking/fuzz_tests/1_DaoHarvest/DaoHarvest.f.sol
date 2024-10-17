@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import { BaseFuzzStaking } from "../BaseFuzzStaking.f.sol";
+import { BasePushTokenStaking } from "../../BasePushTokenStaking.t.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
-contract DaoHarvest_test is BaseFuzzStaking {
+contract DaoHarvest_test is BasePushTokenStaking {
     function setUp() public virtual override {
-        BaseFuzzStaking.setUp();
+        BasePushTokenStaking.setUp();
     }
     //   allows admin to harvest,
 
