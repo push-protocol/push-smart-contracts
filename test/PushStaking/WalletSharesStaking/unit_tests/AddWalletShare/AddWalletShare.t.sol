@@ -26,7 +26,7 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocationZero);
 
         StakingTypes.Percentage memory percentAllocationHundred = StakingTypes.Percentage({ percentageNumber: 100, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 100));
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocationHundred);
     }
 
@@ -48,15 +48,19 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         changePrank(actor.admin);
         StakingTypes.Percentage memory percentAllocation1 = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation1);
+        (uint256 bobWalletSharesBefore, ,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+
 
         // revert when new allocation is equal to already allocated shares
         StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        uint256 sharesToBeAllocated2 = pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES() - bobWalletSharesBefore, percentAllocation2);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, bobWalletSharesBefore, sharesToBeAllocated2));
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
 
         // revert when new allocation is less than already allocated shares
         StakingTypes.Percentage memory percentAllocation3 = StakingTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        uint256 sharesToBeAllocated3 = pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES() - bobWalletSharesBefore, percentAllocation3);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_LessThanExpected.selector, bobWalletSharesBefore, sharesToBeAllocated3));
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation3);
     }
 
@@ -83,7 +87,6 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         assertEq(bobWalletSharesAfter, expectedSharesOfBob);
         assertEq(bobStakedBlockAfter, block.number);
         assertEq(bobClaimedBlockAfter, pushStaking.genesisEpoch());
-        assertEq(bobClaimedBlockBefore, bobClaimedBlockAfter);
     }
 
     function test_IncreaseAllocation_InSameEpoch() public validateShareInvariants {

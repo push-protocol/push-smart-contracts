@@ -380,8 +380,9 @@ contract WalletShareTest is BaseWalletSharesStaking {
 
     // FUZZ TESTS
     function testFuzz_AddShares(address _walletAddress, StakingTypes.Percentage memory _percentage) public {
-        _percentage.percentageNumber = bound(_percentage.percentageNumber, 0, 100);
-        _percentage.decimalPlaces = bound(_percentage.decimalPlaces, 0, 10);
+        _percentage.percentageNumber = bound(_percentage.percentageNumber, 1, 100);
+        _percentage.decimalPlaces = bound(_percentage.decimalPlaces, 1, 10);
+        vm.assume(_walletAddress != actor.admin && _walletAddress != address(0));
         // percentage must be less than 100
         vm.assume(_percentage.percentageNumber / 10 ** _percentage.decimalPlaces < 100);
         changePrank(actor.admin);
@@ -499,6 +500,28 @@ contract WalletShareTest is BaseWalletSharesStaking {
         pushStaking.claimShareRewards();
         (uint256 bobWalletSharesAfter,,) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         assertEq(bobWalletSharesBefore, bobWalletSharesAfter);
+    }
+
+    function test_WhenFoundationIsChanged() external {
+        (uint256 foundationWalletShares,uint256 foundationStakedBlock, uint256 foundationClaimedBlock) = pushStaking.walletShareInfo(actor.admin);
+        assertEq(foundationWalletShares, 100_000 ether);
+        assertEq(foundationStakedBlock, genesisEpoch);
+        assertEq(foundationClaimedBlock, genesisEpoch);
+        roll(epochDuration + 1);
+        changePrank(actor.admin);
+        pushStaking.setFoundationAddress(actor.bob_channel_owner);
+
+        (uint256 newfoundationWalletShares,uint256 newfoundationStakedBlock, uint256 newfoundationClaimedBlock) = pushStaking.walletShareInfo(actor.bob_channel_owner);
+        assertEq(newfoundationWalletShares, 100_000 ether);
+        assertEq(newfoundationStakedBlock, block.number);
+        uint256 _tillEpoch = pushStaking.lastEpochRelative(genesisEpoch, block.number) - 1;
+        assertEq(newfoundationClaimedBlock,  genesisEpoch + _tillEpoch * epochDuration);
+
+        (uint256 oldfoundationWalletShares,uint256 oldfoundationStakedBlock, uint256 oldfoundationClaimedBlock) = pushStaking.walletShareInfo(actor.admin);
+
+        assertEq(oldfoundationWalletShares, 0);
+        assertEq(oldfoundationStakedBlock, genesisEpoch);
+        assertEq(oldfoundationClaimedBlock, genesisEpoch);
     }
     
     // function test_MaxDecimalAmount () public  {

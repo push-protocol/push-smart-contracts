@@ -53,6 +53,21 @@ contract PushStaking is Initializable, PushStakingStorage {
         governance = _governanceAddress;
     }
 
+    function setPushChannelAdmin(address _newChannelAdmin) external onlyPushChannelAdmin{
+        pushChannelAdmin = _newChannelAdmin;
+    }
+    
+    function setFoundationAddress(address _foundation) external onlyGovernance{
+        uint256 _tillEpoch = lastEpochRelative(genesisEpoch, block.number) - 1;
+        uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
+
+        address oldFoundation = FOUNDATION;
+        FOUNDATION = _foundation;
+        walletShareInfo[_foundation].lastClaimedBlock = _epoch_to_block_number;
+
+        removeWalletShare(oldFoundation);
+    }
+
     function initializeStake(uint256 _walletTotalShares) external {
         require(genesisEpoch == 0, "PushCoreV2::initializeStake: Already Initialized");
         genesisEpoch = block.number;
@@ -82,8 +97,8 @@ contract PushStaking is Initializable, PushStakingStorage {
         public
         returns (uint256 sharesToBeAllocated)
     {
-        if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100) {
-            revert Errors.InvalidArg_MoreThanExpected(99, _percentage.decimalPlaces);
+        if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100 || _percentage.percentageNumber == 0) {
+            revert Errors.InvalidArg_MoreThanExpected(99, _percentage.percentageNumber);
         }
         sharesToBeAllocated = (_percentage.percentageNumber * _totalShares)
             / ((100 * (10 ** _percentage.decimalPlaces)) - _percentage.percentageNumber);
@@ -101,13 +116,16 @@ contract PushStaking is Initializable, PushStakingStorage {
      *    should be greater than the already assigned percentge.
     */
     function addWalletShare(address _walletAddress, StakingTypes.Percentage memory _percentage) public onlyGovernance {
+        if(_walletAddress == address(0)){
+            revert Errors.InvalidArgument_WrongAddress(_walletAddress);
+        }
         uint256 TotalShare = WALLET_TOTAL_SHARES;
         uint256 currentWalletShare = walletShareInfo[_walletAddress].walletShare;
         if (currentWalletShare != 0) {
             TotalShare -= currentWalletShare;
         }
         uint256 sharesToBeAllocated = getSharesAmount(TotalShare, _percentage);
-        if (sharesToBeAllocated < currentWalletShare) {
+        if (sharesToBeAllocated <= currentWalletShare) {
             revert Errors.InvalidArg_LessThanExpected(currentWalletShare, sharesToBeAllocated);
         }
         walletShareInfo[_walletAddress].lastClaimedBlock = walletShareInfo[_walletAddress].lastClaimedBlock == 0
@@ -126,10 +144,12 @@ contract PushStaking is Initializable, PushStakingStorage {
     */
 
     function removeWalletShare(address _walletAddress) public onlyGovernance {
+        if(_walletAddress == address(0) || _walletAddress == FOUNDATION) {
+            revert Errors.InvalidArgument_WrongAddress(_walletAddress);
+        }
         uint256 sharesToBeRemoved = walletShareInfo[_walletAddress].walletShare;
         _adjustWalletAndTotalStake(_walletAddress, 0, sharesToBeRemoved);
-
-        walletShareInfo[FOUNDATION].walletShare += sharesToBeRemoved;
+        _adjustWalletAndTotalStake(FOUNDATION, sharesToBeRemoved, 0);
 
         emit SharesRemoved(_walletAddress, sharesToBeRemoved);
     }
