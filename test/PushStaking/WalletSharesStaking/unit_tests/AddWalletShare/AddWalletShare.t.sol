@@ -44,7 +44,7 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         pushStaking.addWalletShare(address(0), percentAllocation);
     }
 
-    function test_Revertwhen_NewSharesEqual_ToOldShares() public validateShareInvariants {
+    function test_Revertwhen_NewShares_LE_ToOldShares() public validateShareInvariants {
         changePrank(actor.admin);
         StakingTypes.Percentage memory percentAllocation1 = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation1);
