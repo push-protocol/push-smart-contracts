@@ -27,7 +27,7 @@ contract PushCoreStorageV2 {
     /// @notice Stores all the individual epoch rewards
     mapping(uint256 => uint256) public epochRewards;
     /// @notice Stores User's Fees Details
-    mapping(address => StakingTypes.UserFessInfo) public userFeesInfo;
+    mapping(address => StakingTypes.UserFeesInfo) public userFeesInfo;
     /// @notice Stores the total staked weight at a specific epoch.
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
 
