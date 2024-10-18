@@ -40,7 +40,7 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         (uint256 foundationWalletSharesBefore, , uint256 foundationClaimedBlockBefore) = pushStaking.walletShareInfo(actor.admin);
 
         emit SharesRemoved(actor.bob_channel_owner, bobWalletSharesBefore);
-        // Remove wallet shares of foundation
+        // Remove wallet shares of bob
         pushStaking.removeWalletShare(actor.bob_channel_owner);
 
         uint256 walletTotalSharesAfter = pushStaking.WALLET_TOTAL_SHARES();
@@ -79,7 +79,7 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         (uint256 foundationWalletSharesBefore, , uint256 foundationClaimedBlockBefore) = pushStaking.walletShareInfo(actor.admin);
 
         emit SharesRemoved(actor.bob_channel_owner, bobWalletSharesBefore);
-        // Remove wallet shares of foundation
+        // Remove wallet shares of bob
         pushStaking.removeWalletShare(actor.bob_channel_owner);
 
         uint256 walletTotalSharesAfter = pushStaking.WALLET_TOTAL_SHARES();
