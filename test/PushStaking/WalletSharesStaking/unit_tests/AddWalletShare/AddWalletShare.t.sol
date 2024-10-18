@@ -71,6 +71,7 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         (uint256 bobWalletSharesBefore, , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
 
         uint256 expectedSharesOfBob = 25_000 * 1e18; // wallet total shares is 100k initially
+        vm.expectEmit(true, true, false, false);
         emit NewSharesIssued(actor.bob_channel_owner, expectedSharesOfBob);
 
         StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
@@ -96,6 +97,7 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         (uint256 bobWalletSharesBefore, , ) = pushStaking.walletShareInfo(actor.bob_channel_owner);
 
         uint256 expectedSharesOfBob = 100_000 * 1e18; // wallet total shares is 125k now, already allocated shares of bob is 25k
+        vm.expectEmit(true, true, false, false);
         emit NewSharesIssued(actor.bob_channel_owner, expectedSharesOfBob);
 
         StakingTypes.Percentage memory newPercentAllocation = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
@@ -130,6 +132,7 @@ contract AddWalletShareTest is BaseWalletSharesStaking {
         roll(epochDuration + 1);
 
         uint256 expectedSharesOfBob = 100_000 * 1e18; // wallet total shares is 125k now, already allocated shares of bob is 25k
+        vm.expectEmit(true, true, false, false);
         emit NewSharesIssued(actor.bob_channel_owner, expectedSharesOfBob);
 
         StakingTypes.Percentage memory newPercentAllocation = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
