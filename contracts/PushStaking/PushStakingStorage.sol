@@ -37,5 +37,4 @@ contract PushStakingStorage {
     mapping(uint256 => uint256) public epochToTotalStakedWeight;
     ///@notice stores the total shares in a specific epoch
     mapping(uint256 => uint256) public epochToTotalShares;
-    bool migrated;
 }

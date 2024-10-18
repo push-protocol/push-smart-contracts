@@ -502,14 +502,37 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(bobWalletSharesBefore, bobWalletSharesAfter);
     }
 
+    function test_foundation() external {
+        addPool(1000);
+        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        pushStaking.addWalletShare(actor.charlie_channel_owner, percentAllocation2);
+        roll(epochDuration + 1);
+        addPool(1000);
+        pushStaking.setFoundationAddress(actor.bob_channel_owner);
+        // StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        // pushStaking.addWalletShare(actor.charlie_channel_owner, percentAllocation2);
+        roll(epochDuration * 3);
+        changePrank(actor.admin);
+        pushStaking.claimShareRewards();
+        changePrank(actor.bob_channel_owner);
+        pushStaking.claimShareRewards();
+        changePrank(actor.charlie_channel_owner);
+        pushStaking.claimShareRewards();
+    }
+
     function test_WhenFoundationIsChanged() external {
+        addPool(1000);
+        // pushStaking.claimShareRewards();
         (uint256 foundationWalletShares,uint256 foundationStakedBlock, uint256 foundationClaimedBlock) = pushStaking.walletShareInfo(actor.admin);
         assertEq(foundationWalletShares, 100_000 ether);
         assertEq(foundationStakedBlock, genesisEpoch);
         assertEq(foundationClaimedBlock, genesisEpoch);
         roll(epochDuration + 1);
         changePrank(actor.admin);
+        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
         pushStaking.setFoundationAddress(actor.bob_channel_owner);
+        addPool(1000);
 
         (uint256 newfoundationWalletShares,uint256 newfoundationStakedBlock, uint256 newfoundationClaimedBlock) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         assertEq(newfoundationWalletShares, 100_000 ether);
@@ -518,6 +541,12 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(newfoundationClaimedBlock,  genesisEpoch + _tillEpoch * epochDuration);
 
         (uint256 oldfoundationWalletShares,uint256 oldfoundationStakedBlock, uint256 oldfoundationClaimedBlock) = pushStaking.walletShareInfo(actor.admin);
+
+        roll(epochDuration * 2);
+
+        pushStaking.claimShareRewards();
+        changePrank(actor.bob_channel_owner);
+        pushStaking.claimShareRewards();
 
         assertEq(oldfoundationWalletShares, 0);
         assertEq(oldfoundationStakedBlock, genesisEpoch);
