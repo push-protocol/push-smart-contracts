@@ -36,7 +36,7 @@ contract DecreaseWalletShareTest is BaseWalletSharesStaking {
         pushStaking.decreaseWalletShare(actor.bob_channel_owner, percentAllocationZero);
 
         StakingTypes.Percentage memory percentAllocationHundred = StakingTypes.Percentage({ percentageNumber: 100, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 100));
         pushStaking.decreaseWalletShare(actor.bob_channel_owner, percentAllocationHundred);
     }
 
@@ -47,12 +47,12 @@ contract DecreaseWalletShareTest is BaseWalletSharesStaking {
 
         // revert when new allocation is equal to already allocated shares
         StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 20));
         pushStaking.decreaseWalletShare(actor.bob_channel_owner, percentAllocation2);
 
         // revert when new allocation is greater than already allocated shares
         StakingTypes.Percentage memory percentAllocation3 = StakingTypes.Percentage({ percentageNumber: 30, decimalPlaces: 0 });
-        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 0));
+        vm.expectRevert(abi.encodeWithSelector(Errors.InvalidArg_MoreThanExpected.selector, 99, 30));
         pushStaking.decreaseWalletShare(actor.bob_channel_owner, percentAllocation3);
     }
 
