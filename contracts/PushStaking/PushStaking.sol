@@ -42,13 +42,6 @@ contract PushStaking is Initializable, PushStakingStorage {
         _;
     }
 
-    modifier isMigrated() {
-        if (migrated) {
-            revert Errors.PushStaking_MigrationCompleted();
-        }
-        _;
-    }
-
     function setGovernanceAddress(address _governanceAddress) external onlyPushChannelAdmin {
         governance = _governanceAddress;
     }
@@ -56,7 +49,7 @@ contract PushStaking is Initializable, PushStakingStorage {
     function setPushChannelAdmin(address _newChannelAdmin) external onlyPushChannelAdmin{
         pushChannelAdmin = _newChannelAdmin;
     }
-    
+
     function setFoundationAddress(address _foundation) external onlyGovernance{
         uint256 _tillEpoch = lastEpochRelative(genesisEpoch, block.number) - 1;
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
@@ -95,6 +88,7 @@ contract PushStaking is Initializable, PushStakingStorage {
         StakingTypes.Percentage memory _percentage
     )
         public
+        pure
         returns (uint256 sharesToBeAllocated)
     {
         if (_percentage.percentageNumber / 10 ** _percentage.decimalPlaces >= 100 || _percentage.percentageNumber == 0) {
@@ -476,7 +470,7 @@ contract PushStaking is Initializable, PushStakingStorage {
 
     function _adjustWalletAndTotalStake(address _wallet, uint256 _sharesToAdd, uint256 _sharesToRemove) internal {
         uint256 currentEpoch = lastEpochRelative(genesisEpoch, block.number);
-        _setupEpochsRewardAndWeightsForWallets(_sharesToAdd, currentEpoch, _sharesToRemove);
+        _setupEpochsRewardAndSharesForWallets(_sharesToAdd, currentEpoch, _sharesToRemove);
 
         uint256 _walletPrevShares = walletShareInfo[_wallet].walletShare;
 
@@ -515,7 +509,7 @@ contract PushStaking is Initializable, PushStakingStorage {
      *             - Records the Pool_Fees value used as rewards.
      *             - Records the last epoch id whose rewards were set.
      */
-    function _setupEpochsRewardAndWeightsForWallets(
+    function _setupEpochsRewardAndSharesForWallets(
         uint256 _sharesToAdd,
         uint256 _currentEpoch,
         uint256 _sharesToRemove
