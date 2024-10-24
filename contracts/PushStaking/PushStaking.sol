@@ -85,7 +85,7 @@ contract PushStaking is Initializable, PushStakingStorage {
     */
     function getSharesAmount(
         uint256 _totalShares,
-        StakingTypes.Percentage memory _percentage
+        GenericTypes.Percentage memory _percentage
     )
         public
         pure
@@ -109,7 +109,7 @@ contract PushStaking is Initializable, PushStakingStorage {
     * 7. If a wallet has already has a share, then it acts as a "increase share" function. And the percenatge passed
      *    should be greater than the already assigned percentge.
     */
-    function addWalletShare(address _walletAddress, StakingTypes.Percentage memory _percentage) public onlyGovernance {
+    function addWalletShare(address _walletAddress, GenericTypes.Percentage memory _percentage) public onlyGovernance {
         if(_walletAddress == address(0)){
             revert Errors.InvalidArgument_WrongAddress(_walletAddress);
         }
@@ -150,7 +150,7 @@ contract PushStaking is Initializable, PushStakingStorage {
 
     function decreaseWalletShare(
         address _walletAddress,
-        StakingTypes.Percentage memory _percentage
+        GenericTypes.Percentage memory _percentage
     )
         external
         onlyGovernance

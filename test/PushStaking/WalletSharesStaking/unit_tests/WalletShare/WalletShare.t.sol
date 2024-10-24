@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 
 import { BaseWalletSharesStaking } from "../../BaseWalletSharesStaking.t.sol";
-import { StakingTypes } from "../../../../../contracts/libraries/DataTypes.sol";
+import { GenericTypes } from "../../../../../contracts/libraries/DataTypes.sol";
 import {console2} from "forge-std/console2.sol";
 
 contract WalletShareTest is BaseWalletSharesStaking {
@@ -44,8 +44,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
     function test_WalletGets_20PercentAllocation() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -185,8 +185,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
         test_WalletGets_20PercentAllocation();
 
         (uint256 aliceWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.alice_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.alice_channel_owner, percentAllocation);
@@ -240,8 +240,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
         test_RemovalWalletM2();
         (uint256 charlieWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.charlie_channel_owner);
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.charlie_channel_owner, percentAllocation);
@@ -258,8 +258,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
     function test_WalletGets_NegligiblePercentAllocation() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 1, decimalPlaces: 3 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 1, decimalPlaces: 3 });
 
         uint256 expectedAllocationShares =
             pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES(), percentAllocation);
@@ -278,8 +278,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
     function test_WalletGets_NegligiblePercentAllocation2() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 1, decimalPlaces: 4 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 1, decimalPlaces: 4 });
 
         uint256 expectedAllocationShares =
             pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES(), percentAllocation);
@@ -303,8 +303,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
             pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.admin);
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -331,8 +331,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         vm.expectRevert();
@@ -358,8 +358,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
             pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesBefore,,) = pushStaking.walletShareInfo(actor.admin);
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 10, decimalPlaces: 0 });
 
         uint256 expectedAllocationShares =
             pushStaking.getSharesAmount(pushStaking.WALLET_TOTAL_SHARES(), percentAllocation);
@@ -379,7 +379,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
     }
 
     // FUZZ TESTS
-    function testFuzz_AddShares(address _walletAddress, StakingTypes.Percentage memory _percentage) public {
+    function testFuzz_AddShares(address _walletAddress, GenericTypes.Percentage memory _percentage) public {
         _percentage.percentageNumber = bound(_percentage.percentageNumber, 1, 100);
         _percentage.decimalPlaces = bound(_percentage.decimalPlaces, 1, 10);
         vm.assume(_walletAddress != actor.admin && _walletAddress != address(0));
@@ -389,7 +389,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         pushStaking.addWalletShare(_walletAddress, _percentage);
     }
 
-    function testFuzz_RemoveShares(address _walletAddress, StakingTypes.Percentage memory _percentage) public {
+    function testFuzz_RemoveShares(address _walletAddress, GenericTypes.Percentage memory _percentage) public {
         _percentage.percentageNumber = bound(_percentage.percentageNumber, 0, 100);
         vm.assume(_percentage.decimalPlaces < 10);
         // percentage must be less than 100
@@ -406,8 +406,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
     function test_whenWallet_SharesIncrease_InSameEpoch() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -425,8 +425,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
         uint256 percentage = (bobWalletSharesAfter * 100) / actualTotalShares;
         assertEq(percentage, percentAllocation.percentageNumber);
 
-        StakingTypes.Percentage memory percentAllocation2 =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
@@ -445,8 +445,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
     function test_whenWallet_SharesIncrease_InDifferentEpoch() public {
         (uint256 bobWalletSharesBefore, uint256 bobStakedBlockBefore, uint256 bobClaimedBlockBefore) =
             pushStaking.walletShareInfo(actor.bob_channel_owner);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -466,8 +466,8 @@ contract WalletShareTest is BaseWalletSharesStaking {
 
         roll(epochDuration + 1);
 
-        StakingTypes.Percentage memory percentAllocation2 =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
@@ -490,7 +490,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         changePrank(actor.bob_channel_owner);
         roll(epochDuration + 1);
         addPool(1000);
-        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 = GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
@@ -504,12 +504,12 @@ contract WalletShareTest is BaseWalletSharesStaking {
 
     function test_foundation() external {
         addPool(1000);
-        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 = GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.charlie_channel_owner, percentAllocation2);
         roll(epochDuration + 1);
         addPool(1000);
         pushStaking.setFoundationAddress(actor.bob_channel_owner);
-        // StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        // GenericTypes.Percentage memory percentAllocation2 = GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
         // pushStaking.addWalletShare(actor.charlie_channel_owner, percentAllocation2);
         roll(epochDuration * 3);
         changePrank(actor.admin);
@@ -529,7 +529,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(foundationClaimedBlock, genesisEpoch);
         roll(epochDuration + 1);
         changePrank(actor.admin);
-        StakingTypes.Percentage memory percentAllocation2 = StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 = GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation2);
         pushStaking.setFoundationAddress(actor.bob_channel_owner);
         addPool(1000);
@@ -556,7 +556,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
     // function test_MaxDecimalAmount () public  {
     //     // fixed at most 10 decimal places
     //     // percentage = 10.1111111111
-    //     StakingTypes.Percentage memory _percentage = StakingTypes.Percentage({
+    //     GenericTypes.Percentage memory _percentage = GenericTypes.Percentage({
     //         percentageNumber: 101111111111,
     //         decimalPlaces: 10
     //     });

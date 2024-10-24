@@ -133,8 +133,8 @@ contract CreateChatCCR is BaseCCRTest {
         receiveWormholeMessage(requestPayload);
 
         assertEq(coreProxy.celebUserFunds(actor.charlie_channel_owner), userFundsPre + amount - poolFeeAmount);
-        assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + (poolFeeAmount * HOLDER_SPLIT) /100);
-        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL + (poolFeeAmount * HOLDER_SPLIT) /100);
+        assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + BaseHelper.calcPercentage(poolFeeAmount , HOLDER_SPLIT));
+        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL + poolFeeAmount - BaseHelper.calcPercentage(poolFeeAmount , HOLDER_SPLIT));
     }
     function test_whenTokensAreTransferred() public {
         vm.recordLogs();

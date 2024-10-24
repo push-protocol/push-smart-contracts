@@ -154,8 +154,8 @@ contract ArbitraryRequesttsol is BaseCCRTest {
         uint256 feeAmount = BaseHelper.calcPercentage(amount, percentage);
 
         // Update states based on Fee Percentage calculation
-        assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + (feeAmount * HOLDER_SPLIT) /100);
-        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL + (feeAmount * HOLDER_SPLIT) /100);
+        assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + BaseHelper.calcPercentage(feeAmount , HOLDER_SPLIT));
+        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL + feeAmount - BaseHelper.calcPercentage(feeAmount , HOLDER_SPLIT));
         assertEq(coreProxy.arbitraryReqFees(actor.charlie_channel_owner), arbitraryFees + amount - feeAmount);
     }
 

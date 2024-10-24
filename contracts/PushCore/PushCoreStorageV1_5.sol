@@ -35,7 +35,7 @@ contract PushCoreStorageV1_5 {
     ///  @notice Helper Variables for FSRatio Calculation | GROUPS = CHANNELS -> NOT IN USE
     uint256 public HOLDER_FEE_POOL;//TODO Re-Using groupNormalizedWeight slot
     uint256 public WALLET_FEE_POOL;   //TODO Re-Using groupHistoricalZ slot
-    uint256 public SPLIT_PERCENTAGE_FOR_HOLDER; //TODO Re-Using groupLastUpdate slot
+    uint256 public groupLastUpdate;
     uint256 public groupFairShareCount;
 
     /// @notice Necessary variables for Keeping track of Funds and Fees

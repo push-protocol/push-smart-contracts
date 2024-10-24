@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { StakingTypes } from "../libraries/DataTypes.sol";
+import { StakingTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 contract PushStakingStorage {
     /**

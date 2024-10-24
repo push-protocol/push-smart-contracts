@@ -117,8 +117,8 @@ contract UpdateChannelCCR is BaseCCRTest {
             uint256 channelUpdateBlock,
            ,
         ) = coreProxy.channelInfo(toWormholeFormat(actor.bob_channel_owner));
-                assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + (amount * HOLDER_SPLIT) /100);
-        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL + (amount * HOLDER_SPLIT) /100);
+        assertEq(coreProxy.HOLDER_FEE_POOL(), HOLDER_FEE_POOL + BaseHelper.calcPercentage(amount , HOLDER_SPLIT));
+        assertEq(coreProxy.WALLET_FEE_POOL(), WALLET_FEE_POOL +  amount - BaseHelper.calcPercentage(amount , HOLDER_SPLIT));
         assertEq(coreProxy.channelUpdateCounter(toWormholeFormat(actor.bob_channel_owner)), oldCounter + 1);
         assertEq(channelUpdateBlock, block.number);
     }

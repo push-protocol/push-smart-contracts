@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseWalletSharesStaking } from "../../BaseWalletSharesStaking.t.sol";
-import { StakingTypes } from "../../../../../contracts/libraries/DataTypes.sol";
+import { GenericTypes } from "../../../../../contracts/libraries/DataTypes.sol";
 import { console2 } from "forge-std/console2.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
@@ -14,8 +14,8 @@ contract ClaimRewardsTest is BaseWalletSharesStaking {
     function test_whenUser_claimsIn_stakedEpoch() external validateShareInvariants {
         uint256 walletTotalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
         // gets zero rewards for that epoch
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         addPool(1000);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -59,8 +59,8 @@ contract ClaimRewardsTest is BaseWalletSharesStaking {
         uint256 walletTotalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
         //SHould succesully Claim the reward
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         addPool(1000);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -137,8 +137,8 @@ contract ClaimRewardsTest is BaseWalletSharesStaking {
     function test_whenUser_claimsFor_multipleEpochs() external validateShareInvariants {
         uint256 walletTotalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
         //shares issues in epoch one, reward added in subsequent epoch, wallet claims in 4th epoch
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         addPool(1000);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -196,8 +196,8 @@ contract ClaimRewardsTest is BaseWalletSharesStaking {
     function test_whenFoundation_ClaimRewards() external validateShareInvariants {
         uint256 walletTotalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
 
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         addPool(1000);
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
@@ -238,14 +238,14 @@ contract ClaimRewardsTest is BaseWalletSharesStaking {
 
     function test_whenWalletsAndUsers_ClaimRewards() external {
         addPool(1000);
-        StakingTypes.Percentage memory percentAllocation =
-            StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation =
+            GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
 
-        StakingTypes.Percentage memory percentAllocation2 =
-            StakingTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation2 =
+            GenericTypes.Percentage({ percentageNumber: 50, decimalPlaces: 0 });
 
         changePrank(actor.admin);
         pushStaking.addWalletShare(actor.alice_channel_owner, percentAllocation2);

@@ -498,13 +498,13 @@ contract PushCoreV3 is
         distributeFees(_rewardAmount);
     }
 
-    function splitFeePool(uint256 holderSplit) external {
+    function splitFeePool(GenericTypes.Percentage memory holderSplit) external {
         onlyGovernance();
         SPLIT_PERCENTAGE_FOR_HOLDER = holderSplit;
     }
 
     function distributeFees(uint256 _fees) internal{
-        uint holderFee = (SPLIT_PERCENTAGE_FOR_HOLDER * _fees) / 100;
+        uint holderFee = BaseHelper.calcPercentage(_fees, SPLIT_PERCENTAGE_FOR_HOLDER);
         HOLDER_FEE_POOL += holderFee;
         WALLET_FEE_POOL += _fees - holderFee;
     }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { BaseWalletSharesStaking } from "../../BaseWalletSharesStaking.t.sol";
-import { StakingTypes } from "../../../../../contracts/libraries/DataTypes.sol";
+import { GenericTypes } from "../../../../../contracts/libraries/DataTypes.sol";
 import {console2} from "forge-std/console2.sol";
 import { Errors } from "contracts/libraries/Errors.sol";
 
@@ -31,7 +31,7 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         addPool(1000);
         changePrank(actor.admin);
         // Add wallet shares of bob
-        StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation = GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
 
         uint256 walletTotalSharesBefore = pushStaking.WALLET_TOTAL_SHARES();
@@ -68,7 +68,7 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         addPool(1000); // doubt
         changePrank(actor.admin);
         // Add wallet shares of bob
-        StakingTypes.Percentage memory percentAllocation = StakingTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        GenericTypes.Percentage memory percentAllocation = GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
         pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
 
         roll(epochDuration * 2);

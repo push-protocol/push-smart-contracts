@@ -12,6 +12,7 @@ import { CCRConfig } from "./CCRConfig.sol";
 import { IWormholeTransceiver } from "contracts/interfaces/wormhole/IWormholeTransceiver.sol";
 import { Vm } from "forge-std/Vm.sol";
 import { EPNS } from "contracts/token/EPNS.sol";
+import { BaseHelper } from "contracts/libraries/BaseHelper.sol";
 
 contract Helper is BasePushCommTest, CCRConfig {
     // Set Source and dest chains
@@ -100,7 +101,7 @@ contract Helper is BasePushCommTest, CCRConfig {
         uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
         //store funds in pool_funds & pool_fees
         CHANNEL_POOL_FUNDS = coreProxy.CHANNEL_POOL_FUNDS() + poolFundAmount;
-        uint holderFees = (poolFeeAmount* HOLDER_SPLIT) /100;
+        uint holderFees = BaseHelper.calcPercentage(poolFeeAmount , HOLDER_SPLIT);
         HOLDER_FEE_POOL = coreProxy.HOLDER_FEE_POOL() + holderFees ;
         WALLET_FEE_POOL = coreProxy.WALLET_FEE_POOL() + poolFeeAmount - holderFees;
     }

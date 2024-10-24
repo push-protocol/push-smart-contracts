@@ -1,6 +1,6 @@
 pragma solidity ^0.8.20;
 
-import { CoreTypes, StakingTypes } from "../libraries/DataTypes.sol";
+import { CoreTypes, StakingTypes, GenericTypes } from "../libraries/DataTypes.sol";
 
 contract PushCoreStorageV2 {
     /* *** V2 State variables *** */
@@ -47,4 +47,5 @@ contract PushCoreStorageV2 {
 
     mapping(bytes32 => CoreTypes.Channel) public channelInfo;    
     mapping(bytes32 => uint256) public channelUpdateCounter;
+    GenericTypes.Percentage public SPLIT_PERCENTAGE_FOR_HOLDER;
 }
