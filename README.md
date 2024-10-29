@@ -44,6 +44,7 @@ We invite you to explore, contribute, and help us build the future of web3 commu
 - [Getting Started/Installation](#getting-started)
 - [Resources](#resources)
 - [Contributing](#contributing)
+- [License](#license)
 
 
 ## Smart Contract Addresses 
@@ -144,7 +145,7 @@ forge test
 - **[Blog](https://medium.com/push-protocol)** To learn more about our partners, new launches, etc.
 - **[Discord](https://discord.gg/pushprotocol)** for support and discussions with the community and the team.
 - **[GitHub](https://github.com/push-protocol)** for source code, project board, issues, and pull requests.
-- **[Twitter](https://twitter.com/pushprotocol)** for the latest updates on the product and published blogs.
+- **[X (formerly Twitter)](https://x.com/pushprotocol)** for the latest updates on the product and published blogs.
 
 
 ## Contributing
