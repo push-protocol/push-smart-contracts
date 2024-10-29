@@ -226,4 +226,18 @@ abstract contract BaseTest is Test, Constants, Events {
     function toWormholeFormat(address addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(addr)));
     }
+
+    function getPoolFundsAndFees(uint256 _amountDeposited)
+        internal
+        view
+        returns (uint256 CHANNEL_POOL_FUNDS, uint256 HOLDER_FEE_POOL,uint256 WALLET_FEE_POOL )
+    {
+        uint256 poolFeeAmount = coreProxy.FEE_AMOUNT();
+        uint256 poolFundAmount = _amountDeposited - poolFeeAmount;
+        //store funds in pool_funds & pool_fees
+        CHANNEL_POOL_FUNDS = coreProxy.CHANNEL_POOL_FUNDS() + poolFundAmount;
+        uint holderFees = BaseHelper.calcPercentage(poolFeeAmount , HOLDER_SPLIT);
+        HOLDER_FEE_POOL = coreProxy.HOLDER_FEE_POOL() + holderFees ;
+        WALLET_FEE_POOL = coreProxy.WALLET_FEE_POOL() + poolFeeAmount - holderFees;
+    }
 }
