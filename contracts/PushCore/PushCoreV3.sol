@@ -509,6 +509,10 @@ contract PushCoreV3 is
         WALLET_FEE_POOL += _fees - holderFee;
     }
 
+    function getTotalFeePool() external view returns (uint256) {
+        return HOLDER_FEE_POOL + WALLET_FEE_POOL;
+    }
+
     /// @inheritdoc IPushCoreV3
     function createIncentivizedChatRequest(address requestReceiver, uint256 amount) external {
         if (amount < FEE_AMOUNT) {
