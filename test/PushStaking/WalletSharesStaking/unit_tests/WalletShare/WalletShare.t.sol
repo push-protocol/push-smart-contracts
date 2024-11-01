@@ -35,7 +35,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(adminStakedBlockBefore, adminStakedBlockAfter, "StakedBlock");
         assertEq(adminClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-        uint256 claimedRewards = pushStaking.usersRewardsClaimed(actor.admin);
+        uint256 claimedRewards = pushStaking.walletRewardsClaimed(actor.admin);
         uint256 expectedRewards = (coreProxy.WALLET_FEE_POOL() * 80) / 100;
         assertEq(balanceAdminBefore + expectedRewards, pushToken.balanceOf(actor.admin), "Balance");
         assertEq(expectedRewards, claimedRewards);
@@ -78,7 +78,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(bobStakedBlockBefore, bobStakedBlockAfter, "StakedBlock");
         assertEq(bobClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-        uint256 claimedRewards = pushStaking.usersRewardsClaimed(actor.bob_channel_owner);
+        uint256 claimedRewards = pushStaking.walletRewardsClaimed(actor.bob_channel_owner);
         uint256 expectedRewards = (coreProxy.WALLET_FEE_POOL() * 20) / 100;
         assertEq(balanceBobBefore + expectedRewards, pushToken.balanceOf(actor.bob_channel_owner), "Balance");
         assertEq(expectedRewards, claimedRewards);
@@ -109,7 +109,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(bobStakedBlockBefore, bobStakedBlockAfter, "StakedBlock");
         assertEq(bobClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-        uint256 claimedRewardsBob = pushStaking.usersRewardsClaimed(actor.bob_channel_owner);
+        uint256 claimedRewardsBob = pushStaking.walletRewardsClaimed(actor.bob_channel_owner);
 
         uint256 expectedRewardsBob = (coreProxy.WALLET_FEE_POOL() * 10) / 100;
         assertEq(balanceBobBefore + expectedRewardsBob, pushToken.balanceOf(actor.bob_channel_owner), "balanceBob");
@@ -119,7 +119,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
         assertEq(aliceStakedBlockBefore, aliceStakedBlockAfter, "StakedBlock");
         assertEq(aliceClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-        uint256 claimedRewardsAlice = pushStaking.usersRewardsClaimed(actor.alice_channel_owner);
+        uint256 claimedRewardsAlice = pushStaking.walletRewardsClaimed(actor.alice_channel_owner);
         uint256 expectedRewardsAlice = coreProxy.WALLET_FEE_POOL() * 50 / 100;
         assertEq(
             balanceAliceBefore + expectedRewardsAlice, pushToken.balanceOf(actor.alice_channel_owner), "balanceAlice"
@@ -157,7 +157,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
     //     assertEq(bobStakedBlockBefore, bobStakedBlockAfter, "StakedBlock");
     //     assertEq(bobClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-    //     uint256 claimedRewardsBob = pushStaking.usersRewardsClaimed(actor.bob_channel_owner);
+    //     uint256 claimedRewardsBob = pushStaking.walletRewardsClaimed(actor.bob_channel_owner);
 
     //     uint256 expectedRewardsBob = (coreProxy.WALLET_FEE_POOL() * 10) / 100;
     //     assertEq(balanceBobBefore + expectedRewardsBob, pushToken.balanceOf(actor.bob_channel_owner), "balanceBob");
@@ -167,7 +167,7 @@ contract WalletShareTest is BaseWalletSharesStaking {
     //     assertEq(aliceStakedBlockBefore, aliceStakedBlockAfter, "StakedBlock");
     //     assertEq(aliceClaimedBlockAfter, genesisEpoch + (getCurrentEpoch() - 1) * epochDuration, "ClaimedBlock");
 
-    //     uint256 claimedRewardsAlice = pushStaking.usersRewardsClaimed(actor.alice_channel_owner);
+    //     uint256 claimedRewardsAlice = pushStaking.walletRewardsClaimed(actor.alice_channel_owner);
 
     //     uint256 expectedRewardsAlice = coreProxy.WALLET_FEE_POOL() * 50 / 100;
     //     assertEq(

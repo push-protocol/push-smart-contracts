@@ -9,6 +9,7 @@ import { Errors } from "../libraries/Errors.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { GenericTypes } from "../libraries/DataTypes.sol";
 
 contract PushStaking is Initializable, PushStakingStorage {
     using SafeERC20 for IERC20;
@@ -16,8 +17,8 @@ contract PushStaking is Initializable, PushStakingStorage {
     event Staked(address indexed user, uint256 indexed amountStaked);
     event Unstaked(address indexed user, uint256 indexed amountUnstaked);
     event RewardsHarvested(address indexed user, uint256 indexed rewardAmount, uint256 fromEpoch, uint256 tillEpoch);
-    event NewSharesIssued(address indexed Wallet, uint256 indexed Shares);
-    event SharesRemoved(address indexed Wallet, uint256 indexed Shares);
+    event NewSharesIssued(address indexed wallet, uint256 indexed shares);
+    event SharesRemoved(address indexed wallet, uint256 indexed shares);
     event SharesDecreased(address indexed Wallet, uint256 indexed oldShares, uint256 newShares);
 
     function initialize(address _pushChannelAdmin, address _core, address _pushToken) public initializer {
@@ -78,11 +79,9 @@ contract PushStaking is Initializable, PushStakingStorage {
         emit NewSharesIssued(FOUNDATION, sharesToBeAllocated);
     }
 
-    /*
-     * Fetching shares for a wallet 
-     * 1. Internal helper function
-     * 2. helps in getting the shares to be assigned for a wallet based on params passed in this function
-    */
+    /**
+     * @notice Calcultes the share amount based on requested shares and total shares 
+     */
     function getSharesAmount(
         uint256 _totalShares,
         GenericTypes.Percentage memory _percentage
@@ -97,18 +96,13 @@ contract PushStaking is Initializable, PushStakingStorage {
         sharesToBeAllocated = (_percentage.percentageNumber * _totalShares)
             / ((100 * (10 ** _percentage.decimalPlaces)) - _percentage.percentageNumber);
     }
+    /**
+     * @notice allows Governance to add/increase wallet shares. 
+     * @notice If a wallet has already has a share, then it acts as a "increase share" function, given that the percenatge passed
+     * @notice should be greater than the already assigned percentge.
+     * Emits NewSharesIssued
+     */
 
-    /*
-     * Adding Wallet Share to a Wallet
-     * 1. addWalletShare(address wallet, uint256 percentageOfShares)
-     * 2. Can be called by governance.
-     * 3. Uses the formulae to derive the percent of shares to be assigned to a specific wallet
-     * 4. Updates WALLET_TOTAL_SHARES
-     * 5. Updates walletShareInfo mapping
-     * 6. Emits out an event.
-    * 7. If a wallet has already has a share, then it acts as a "increase share" function. And the percenatge passed
-     *    should be greater than the already assigned percentge.
-    */
     function addWalletShare(address _walletAddress, GenericTypes.Percentage memory _percentage) public onlyGovernance {
         if(_walletAddress == address(0)){
             revert Errors.InvalidArgument_WrongAddress(_walletAddress);
@@ -129,13 +123,12 @@ contract PushStaking is Initializable, PushStakingStorage {
         WALLET_TOTAL_SHARES = TotalShare + sharesToBeAllocated;
         emit NewSharesIssued(_walletAddress, sharesToBeAllocated);
     }
-    /*
-     * Removing Wallet Share from a Wallet
-     * 1. removes the shares from a wallet completely
-     * 2. Can be called by governance.
-     * 3. Updates WALLET_TOTAL_SHARES
-     * 4. Emits out an event.
-    */
+
+    /**
+     * @notice allows Governance to remove wallet shares. 
+     * @notice shares to be removed are given back to FOUNDATION
+     * Emits SharesRemoved
+     */
 
     function removeWalletShare(address _walletAddress) public onlyGovernance {
         if(_walletAddress == address(0) || _walletAddress == FOUNDATION) {
@@ -161,19 +154,12 @@ contract PushStaking is Initializable, PushStakingStorage {
         emit SharesDecreased(_walletAddress, sharesToBeRemoved, walletShareInfo[_walletAddress].walletShare);
     }
 
-    /*
-     *Reward Calculation for a Given Wallet
-     * 1. calculateWalletRewards(address wallet)
-     * 2. public helper function
-     * 3. Helps in calculating rewards for a specific wallet based on
-       * a. Their Wallet Share 
-        * b. Total Wallet Shares
-        * c. Total Rewards available in WALLET_TOTAL_SHARES
-     * 4. Once calculated rewards for a sepcific wallet can be updated in WalletToRewards mapping
-     * 5. Reward can be calculated for wallets similar they are calculated for Token holders in a specific epoch.
-        * Reward for a Given Wallet X = ( Wallet Share of X / WALLET_TOTAL_SHARES) * WALLET_FEE_POOL
-    */
-    //TODO logic yet to be finalized
+    /**
+     * @notice calculates rewards for share holders, for any given epoch. 
+     * @notice The rewards are calcluated based on -Their Wallet Share in that epoch, Total Wallet Shares in that epoch,
+     * @notice Total Rewards available in that epoch
+     * @dev Reward for a Given Wallet X in epoch i = ( Wallet Share of X in epoch i  * Rewards in epoch i) / WALLET_TOTAL_SHARES in epoch i
+     */
     function calculateWalletRewards(address _wallet, uint256 _epochId) public view returns (uint256) {
         return (walletShareInfo[_wallet].epochToWalletShares[_epochId] * epochRewardsForWallets[_epochId])
             / epochToTotalShares[_epochId];
@@ -192,7 +178,7 @@ contract PushStaking is Initializable, PushStakingStorage {
             rewards = rewards + claimableReward;
         }
 
-        usersRewardsClaimed[msg.sender] = usersRewardsClaimed[msg.sender] + rewards;
+        walletRewardsClaimed[msg.sender] = walletRewardsClaimed[msg.sender] + rewards;
         // set the lastClaimedBlock to blocknumer at the end of `_tillEpoch`
         uint256 _epoch_to_block_number = genesisEpoch + _tillEpoch * epochDuration;
         walletShareInfo[msg.sender].lastClaimedBlock = _epoch_to_block_number;
