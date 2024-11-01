@@ -15,6 +15,9 @@ contract PushCoreStorageV2 {
     /**
      * Staking V2 state variables *
      */
+
+    //UNUSED STATE VARIABLES START HERE
+
     mapping(address => uint256) public usersRewardsClaimed;
 
     uint256 public genesisEpoch; // Block number at which Stakig starts
@@ -25,11 +28,13 @@ contract PushCoreStorageV2 {
     uint256 public constant epochDuration = 21 * 7156; // 21 * number of blocks per day(7156) ~ 20 day approx
 
     /// @notice Stores all the individual epoch rewards
-    mapping(uint256 => uint256) public epochRewards;
+    mapping(uint256 => uint256) public epochRewards; 
     /// @notice Stores User's Fees Details
-    mapping(address => StakingTypes.UserFeesInfo) public userFeesInfo;
+    mapping(address => StakingTypes.UserFeesInfo) public userFeesInfo; 
     /// @notice Stores the total staked weight at a specific epoch.
-    mapping(uint256 => uint256) public epochToTotalStakedWeight;
+    mapping(uint256 => uint256) public epochToTotalStakedWeight; 
+    
+    //UNUSED STATE VARIABLES END HERE
 
     /**
      * Handling bridged information *
