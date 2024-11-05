@@ -27,7 +27,17 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         pushStaking.removeWalletShare(actor.admin);
     }
 
-    function test_RemoveWalletShare_SameEpoch() public validateShareInvariants {
+    function test_Revertwhen_RemovesBefore_1Epoch() public validateShareInvariants {
+        changePrank(actor.admin);
+        // Add wallet shares of bob
+        GenericTypes.Percentage memory percentAllocation = GenericTypes.Percentage({ percentageNumber: 20, decimalPlaces: 0 });
+        pushStaking.addWalletShare(actor.bob_channel_owner, percentAllocation);
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.PushStaking_InvalidEpoch_LessThanExpected.selector));
+        pushStaking.removeWalletShare(actor.bob_channel_owner);
+    }
+
+    function test_RemoveWalletShare() public validateShareInvariants {
         addPool(1000);
         changePrank(actor.admin);
         // Add wallet shares of bob
@@ -38,6 +48,8 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
         uint256 epochToTotalSharesBefore = pushStaking.epochToTotalShares(getCurrentEpoch());
         (uint256 bobWalletSharesBefore, , uint256 bobClaimedBlockBefore) = pushStaking.walletShareInfo(actor.bob_channel_owner);
         (uint256 foundationWalletSharesBefore, , uint256 foundationClaimedBlockBefore) = pushStaking.walletShareInfo(actor.admin);
+
+        roll(epochDuration * 2);
 
         emit SharesRemoved(actor.bob_channel_owner, bobWalletSharesBefore);
         // Remove wallet shares of bob
@@ -58,7 +70,7 @@ contract RemoveWalletShareTest is BaseWalletSharesStaking {
     }
 
     function test_RemoveWalletShare_SameEpoch_Rewards() public validateShareInvariants {
-        test_RemoveWalletShare_SameEpoch();
+        test_RemoveWalletShare();
 
         uint256 bobRewards = pushStaking.calculateWalletRewards(actor.bob_channel_owner, getCurrentEpoch());
         assertEq(bobRewards, 0);

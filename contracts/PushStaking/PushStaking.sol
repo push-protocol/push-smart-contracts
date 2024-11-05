@@ -10,6 +10,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { GenericTypes } from "../libraries/DataTypes.sol";
+import { BaseHelper } from "../libraries/BaseHelper.sol";
 
 contract PushStaking is Initializable, PushStakingStorage {
     using SafeERC20 for IERC20;
@@ -60,6 +61,10 @@ contract PushStaking is Initializable, PushStakingStorage {
         walletShareInfo[_foundation].lastClaimedBlock = _epoch_to_block_number;
 
         removeWalletShare(oldFoundation);
+    }
+
+    function getEpochToWalletShare(address wallet, uint epoch) public view returns(uint){
+        return walletShareInfo[wallet].epochToWalletShares[epoch];
     }
 
     function initializeStake(uint256 _walletTotalShares) external {
@@ -134,6 +139,9 @@ contract PushStaking is Initializable, PushStakingStorage {
         if(_walletAddress == address(0) || _walletAddress == FOUNDATION) {
             revert Errors.InvalidArgument_WrongAddress(_walletAddress);
         }
+        if (block.number <= walletShareInfo[_walletAddress].lastStakedBlock + epochDuration) {
+            revert Errors.PushStaking_InvalidEpoch_LessThanExpected();
+        }
         uint256 sharesToBeRemoved = walletShareInfo[_walletAddress].walletShare;
         _adjustWalletAndTotalStake(_walletAddress, 0, sharesToBeRemoved);
         _adjustWalletAndTotalStake(FOUNDATION, sharesToBeRemoved, 0);
@@ -142,17 +150,33 @@ contract PushStaking is Initializable, PushStakingStorage {
     }
 
     function decreaseWalletShare(
-        address _walletAddress,
-        GenericTypes.Percentage memory _percentage
-    )
-        external
-        onlyGovernance
-    {
-        uint256 sharesToBeRemoved = walletShareInfo[_walletAddress].walletShare;
-        removeWalletShare(_walletAddress);
-        addWalletShare(_walletAddress, _percentage);
-        emit SharesDecreased(_walletAddress, sharesToBeRemoved, walletShareInfo[_walletAddress].walletShare);
-    }
+            address _walletAddress,
+            GenericTypes.Percentage memory _percentage
+        )
+            external
+            onlyGovernance
+        {
+            if(_walletAddress == address(0) || _walletAddress == FOUNDATION) {
+               revert Errors.InvalidArgument_WrongAddress(_walletAddress);
+            }
+
+            uint currentEpoch = lastEpochRelative(genesisEpoch,block.number);
+
+            uint256 currentShares = walletShareInfo[_walletAddress].walletShare;
+            uint256 sharesToBeAllocated = BaseHelper.calcPercentage(WALLET_TOTAL_SHARES, _percentage);
+
+            if(sharesToBeAllocated >= currentShares){
+                revert Errors.InvalidArg_MoreThanExpected(currentShares, sharesToBeAllocated);
+            }
+            uint256 sharesToBeRemoved = currentShares - sharesToBeAllocated;
+            walletShareInfo[_walletAddress].walletShare = sharesToBeAllocated;
+            walletShareInfo[_walletAddress].epochToWalletShares[currentEpoch] = sharesToBeAllocated;
+
+            walletShareInfo[FOUNDATION].walletShare += sharesToBeRemoved;
+            walletShareInfo[FOUNDATION].epochToWalletShares[currentEpoch] += sharesToBeRemoved;
+
+            emit SharesDecreased(_walletAddress, currentShares, sharesToBeAllocated);
+       }
 
     /**
      * @notice calculates rewards for share holders, for any given epoch. 
