@@ -48,7 +48,7 @@ contract BaseWalletSharesStaking is BasePushStaking {
             aliceWalletShares +
             charlieWalletShares +
             tonyWalletShares;
-        assertEq(walletTotalShares, totalSharesSum);
+        assertEq(walletTotalShares, totalSharesSum,"wallet Share Sum");
     }
 
     /**
@@ -57,7 +57,7 @@ contract BaseWalletSharesStaking is BasePushStaking {
     function _validateEpochShares() internal {
         uint256 walletTotalShares = pushStaking.WALLET_TOTAL_SHARES();
         for (uint256 i=genesisEpoch; i<=getCurrentEpoch(); ) {
-            assertLe(pushStaking.epochToTotalShares(i), walletTotalShares);
+            assertLe(pushStaking.epochToTotalShares(i), walletTotalShares, "Epoch Shares");
             unchecked {
                 i++;
             }
