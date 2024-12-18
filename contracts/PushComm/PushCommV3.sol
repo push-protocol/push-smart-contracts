@@ -12,7 +12,7 @@ pragma solidity ^0.8.20;
  * @dev   Some imperative functionalities that the Push Communicator Protocol allows
  *        are Subscribing to a particular channel, Unsubscribing a channel, Sending
  *        Notifications to a particular recipient or all subscribers of a Channel etc.
- *
+ * @Custom:security-contact https://push.org/
  */
 import { PushCommStorageV2 } from "./PushCommStorageV2.sol";
 import { Errors } from "../libraries/Errors.sol";

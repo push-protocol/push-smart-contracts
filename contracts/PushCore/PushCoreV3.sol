@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
  * @dev This protocol will be specifically deployed on Ethereum Blockchain while the Communicator
  *      protocols can be deployed on Multiple Chains.
  *      The Push Core is more inclined towards the storing and handling the Channel related functionalties.
- *
+ * @Custom:security-contact https://push.org/
  */
 import { PushCoreStorageV1_5 } from "./PushCoreStorageV1_5.sol";
 import { PushCoreStorageV2 } from "./PushCoreStorageV2.sol";
