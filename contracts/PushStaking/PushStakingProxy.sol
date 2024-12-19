@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
  * @dev This protocol will be specifically deployed on Ethereum Blockchain and will be connected to Push Core
  *      contract in a way that the core contract handles all the funds and this contract handles the state 
  *      of stakers.
- * @Custom:security-contact https://push.org/
+ * @Custom:security-contact https://immunefi.com/bug-bounty/pushprotocol/information/
  */
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
