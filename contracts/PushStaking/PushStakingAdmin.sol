@@ -4,4 +4,6 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract EPNSCoreAdmin is ProxyAdmin {}
+contract PushStakingAdmin is ProxyAdmin {
+    constructor() ProxyAdmin() { }
+}
