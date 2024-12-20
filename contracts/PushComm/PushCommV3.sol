@@ -356,7 +356,7 @@ contract PushCommV3 is Initializable, PushCommStorageV2, IPushCommV3, PausableUp
 
     /// @inheritdoc IPushCommV3
     function removeDelegate(address _delegate) external {
-        if(delegatedNotificationSenders[msg.sender][_delegate] == false){
+        if(delegatedNotificationSenders[msg.sender][_delegate] == true){
             delegatedNotificationSenders[msg.sender][_delegate] = false;
             _unsubscribe(msg.sender, _delegate);
             emit RemoveDelegate(msg.sender, _delegate);
